@@ -3,5 +3,12 @@ pub enum ChessError {
     NoPieceAtPosition,
     InvalidMove,
     OwnPieceInDestination,
-    PlayerInCheck()
+    PlayerInCheck,
+}
+
+pub enum GameStatus {
+    Ongoing,
+    Stalemate,
+    Check,
+    Checkmate
 }
