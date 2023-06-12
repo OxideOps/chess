@@ -3,6 +3,7 @@ pub enum ChessError {
     NoPieceAtPosition,
     InvalidMove,
     PlayerInCheck,
+    NoValidMoves,
 }
 
 pub enum GameStatus {
