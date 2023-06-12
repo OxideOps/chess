@@ -1,4 +1,4 @@
-use crate::pieces::Piece;
+use crate::pieces::{Piece, Position};
 use crate::game::ChessError;
 
 pub struct Board {
@@ -8,25 +8,27 @@ pub struct Board {
 impl Board {
     pub fn new() -> Self {
         let squares: [[Option<Box<dyn Piece>>; 8]; 8] = Default::default();
-        Self { squares }
+        Self {
+            squares
+        }
     }
 
-    pub fn get_piece_at(&self, position: (usize, usize)) -> Option<&dyn Piece> {
-        let (x, y) = position;
-        self.squares[x][y].as_deref()
+    pub fn get_piece(&self, position: Position) -> Result<Option<&dyn Piece>, ChessError> {
+        if position.x > 7 || position.y > 7 {
+            return Err(ChessError::OutOfBounds)
+        }
+        Ok(self.squares[position.x][position.y].as_deref())
     }
 
-    pub fn move_piece(&mut self, from: (usize, usize), to: (usize, usize)) -> Result<(), ChessError> {
-        if let &Some(ref piece) = &self.squares[from.0][from.1] {
-            if piece.can_move(from, to) {
-                let piece = self.squares[from.0][from.1].take();
-                self.squares[to.0][to.1] = piece;
-                Ok(())
-            } else {
-                Err(ChessError::InvalidMove)
-            }
+    pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
+        let piece = self.get_piece(from)?
+            .ok_or(ChessError::NoPieceAtPosition)?;
+
+        if piece.can_move(from, to) {
+            self.squares[to.x][to.y] = self.squares[from.x][from.y].take();
+            Ok(())
         } else {
-            Err(ChessError::NoPieceAtPosition)
+            Err(ChessError::InvalidMove)
         }
     }
 }

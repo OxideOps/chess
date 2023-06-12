@@ -1,13 +1,14 @@
 pub trait Piece: {
     fn color(&self) -> Color;
-    fn can_move(&self, from: (usize, usize), to: (usize, usize)) -> bool;
+    fn position(&self) -> Position;
+    fn can_move(&self, from: Position, to: Position) -> bool;
     // Add other common methods here
 }
 
 #[derive(Copy, Clone)]
 pub struct Pawn {
     color: Color,
-    has_moved: bool,
+    position: Position,
 }
 
 impl Piece for Pawn {
@@ -15,8 +16,13 @@ impl Piece for Pawn {
         self.color
     }
 
-    fn can_move(&self, from: (usize, usize), to: (usize, usize)) -> bool {
-        self.has_moved
+    fn can_move(&self, from: Position, to: Position) -> bool {
+        //check if there is a valid move
+        false
+    }
+
+    fn position(&self) -> Position {
+        self.position
     }
 }
 
@@ -24,5 +30,11 @@ impl Piece for Pawn {
 pub enum Color {
     White,
     Black
+}
+
+#[derive(Clone, Copy)]
+pub struct Position {
+    pub x: usize,
+    pub y: usize,
 }
 
