@@ -26,9 +26,13 @@ impl Piece {
         mem::replace(self, Piece::None)
     }
 
+    pub fn move_piece_to(&self, board: &mut Board) {
+
+    }
+
     pub fn can_move(
         &self,
-        board: &mut Board,
+        board: &Board,
         to: Position,
         from: Position,
     ) -> Result<bool, ChessError> {
