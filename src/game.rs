@@ -10,5 +10,5 @@ pub enum GameStatus {
     Ongoing,
     Stalemate,
     Check,
-    Checkmate
+    Checkmate,
 }

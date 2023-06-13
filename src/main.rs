@@ -1,7 +1,5 @@
+mod board;
 mod game;
 mod pieces;
-mod board;
 
-fn main() {
-   
-}
+fn main() {}
