@@ -41,7 +41,7 @@ impl Board {
         ]
     }
 
-    pub fn is_in_bounds(&self, position: Position) -> Result<(), ChessError> {
+    pub fn is_in_bounds(position: Position) -> Result<(), ChessError> {
         if position.x > 7 || position.y > 7 {
             Err(ChessError::OutOfBounds)
         } else {
@@ -50,8 +50,8 @@ impl Board {
     }
 
     fn is_valid_move(&self, from: Position, to: Position) -> Result<(), ChessError> {
-        self.is_in_bounds(from)?;
-        self.is_in_bounds(to)?;
+        Self::is_in_bounds(from)?;
+        Self::is_in_bounds(to)?;
 
         let piece = &self.squares[from.x][from.y];
 
@@ -69,8 +69,8 @@ impl Board {
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
         // Check if 'from' and 'to' positions are in bounds
-        self.is_in_bounds(from)?;
-        self.is_in_bounds(to)?;
+        Self::is_in_bounds(from)?;
+        Self::is_in_bounds(to)?;
 
         if self.squares[from.x][from.y].is_none() {
             return Err(ChessError::NoPieceAtPosition);
