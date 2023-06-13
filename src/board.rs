@@ -4,7 +4,7 @@ use crate::pieces::{Piece, Player, Position};
 const BOARD_SIZE: usize = 8;
 
 pub struct Board {
-    squares: [[Piece; 8]; 8],
+    squares: [[Piece; BOARD_SIZE]; BOARD_SIZE],
 }
 
 impl Board {
@@ -22,17 +22,14 @@ impl Board {
         }
 
         // Initialize the other white and black pieces
-
-        for i in 0..BOARD_SIZE {
-            squares[0] = Board::get_back_rank(i, Player::White);
-            squares[BOARD_SIZE - 1] = Board::get_back_rank(i, Player::Black);
-        }
+        squares[0] = Board::get_back_rank(Player::White);
+        squares[BOARD_SIZE - 1] = Board::get_back_rank(Player::Black);
 
         Self { squares }
     }
 
-    fn get_back_rank(file: usize, player: Player) -> [Piece; 8] {
-        return [
+    fn get_back_rank(player: Player) -> [Piece; 8] {
+        [
             Piece::Rook(player),
             Piece::Knight(player),
             Piece::Bishop(player),
@@ -41,7 +38,7 @@ impl Board {
             Piece::Bishop(player),
             Piece::Knight(player),
             Piece::Rook(player),
-        ];
+        ]
     }
 
     pub fn is_in_bounds(&self, position: Position) -> Result<(), ChessError> {
