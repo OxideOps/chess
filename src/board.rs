@@ -58,21 +58,19 @@ impl Board {
             return Err(ChessError::NoPieceAtPosition);
         }
 
-        match *piece {
+        let is_valid = match *piece {
             Piece::Pawn(..) => {
-                //Err(ChessError::PawnError::SomeError)
-                return Ok(());
+                false
             }
-            Piece::Knight(..) => return Ok(()),
-            Piece::Bishop(..) => return Ok(()),
-            Piece::Rook(..) => {
-                //Err(ChessError::RookError::SomeOtherError)
-                return Ok(());
-            }
-            Piece::Queen(..) => return Ok(()),
-            Piece::King(..) => return Ok(()),
-            Piece::None => return Ok(()),
+            _ => true
+            
         };
+
+        //move is valid, do it
+        if is_valid {
+            self.squares[to.x][to.y] = piece.take();
+        }
+        
         Ok(())
     }
 }
