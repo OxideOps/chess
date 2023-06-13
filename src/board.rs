@@ -60,13 +60,13 @@ impl Board {
 
         match *piece {
             Piece::Pawn(..) => {
-                //Err(Piece::PawnError::SomeError)
+                //Err(ChessError::PawnError::SomeError)
                 return Ok(());
             }
             Piece::Knight(..) => return Ok(()),
             Piece::Bishop(..) => return Ok(()),
             Piece::Rook(..) => {
-                //Err(Piece::RookError::SomeOtherError)
+                //Err(ChessError::RookError::SomeOtherError)
                 return Ok(());
             }
             Piece::Queen(..) => return Ok(()),
