@@ -49,53 +49,38 @@ impl Board {
         }
     }
 
-    fn is_valid_move(&self, piece: &Piece, from: Position, to: Position) -> Result<bool, ChessError> {
+    fn is_valid_move(&self, from: Position, to: Position) -> Result<(), ChessError> {
+        self.is_in_bounds(from)?;
+        self.is_in_bounds(to)?;
+
+        let piece = &self.squares[from.x][from.y];
+
         match *piece {
-            Piece::Pawn(..) => {
-
-            }
-            Piece::Knight(..) => {
-
-            }
-            Piece::Bishop(..) => {
-
-            }
-            Piece::Rook(..) => {
-
-            }
-            Piece::Queen(..) => {
-
-            }
-            Piece::King(..) => {
-
-            }
-            Piece::None => {
-
-            }
+            Piece::Pawn(..) => {}
+            Piece::Knight(..) => {}
+            Piece::Bishop(..) => {}
+            Piece::Rook(..) => {}
+            Piece::Queen(..) => {}
+            Piece::King(..) => {}
+            Piece::None => return Err(ChessError::InvalidMove),
         };
-        Ok(false)
+        Ok(())
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
         // Check if 'from' and 'to' positions are in bounds
         self.is_in_bounds(from)?;
         self.is_in_bounds(to)?;
-    
-        let piece = &self.squares[from.x][from.y];
-    
-        if piece.is_none() {
+
+        if self.squares[from.x][from.y].is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
-    
         // Check if move is valid
-        if !self.is_valid_move(piece, from, to)? {
-            return Err(ChessError::InvalidMove);
-        }
-    
+        self.is_valid_move(from, to)?;
+
         // Perform the move
         self.squares[to.x][to.y] = self.squares[from.x][from.y].take();
-    
+
         Ok(())
     }
-    
 }

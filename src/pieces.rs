@@ -1,5 +1,3 @@
-use crate::{board::Board, game::ChessError};
-
 use std::mem;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -19,15 +17,11 @@ impl Piece {
     }
 
     pub fn is_some(&self) -> bool {
-        *self != Piece::None
+        !self.is_none()
     }
 
     pub fn take(&mut self) -> Piece {
         mem::replace(self, Piece::None)
-    }
-
-    pub fn move_piece_to(&self, board: &mut Board) {
-
     }
 }
 
