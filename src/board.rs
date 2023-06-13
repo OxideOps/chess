@@ -49,12 +49,12 @@ impl Board {
         }
     }
 
-    pub fn borrow_piece_at(&self, position: Position) -> Result<&Piece, ChessError> {
+    pub fn borrow_piece_at_mut(&mut self, position: Position) -> Result<&mut Piece, ChessError> {
         self.is_in_bounds(position)?;
-        Ok(&self.squares[position.x][position.y])
+        Ok(&mut self.squares[position.x][position.y])
     }
 
-    pub fn move_piece_to(&mut self,  mut piece: Piece, position: Position) -> Result<(), ChessError> {
+    pub fn move_piece_to(&mut self,  mut piece: &mut Piece, position: Position) -> Result<(), ChessError> {
         self.is_in_bounds(position)?;
         self.squares[position.x][position.y] = piece.take();
         Ok(())
@@ -63,15 +63,14 @@ impl Board {
     pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
         self.is_in_bounds(to)?;
 
-        let piece = self.borrow_piece_at(from)?;
+        let piece = self.borrow_piece_at_mut(from)?;
 
         if piece.is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
 
-        if piece.can_move(&self, to, from)? {
-            self.move_piece_to(*piece, to)?;
-            self.squares[from.x][from.y] = Piece::None;
+        if piece.can_move(self, to, from)? {
+            self.move_piece_to(piece, to)?;
         }
 
         Ok(())

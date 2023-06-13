@@ -32,12 +32,12 @@ impl Piece {
 
     pub fn can_move(
         &self,
-        board: &Board,
+        board: &mut Board,
         to: Position,
         from: Position,
     ) -> Result<bool, ChessError> {
-        let to_piece = board.borrow_piece_at(to)?;
-        let from_piece = board.borrow_piece_at(from)?;
+        let to_piece = board.borrow_piece_at_mut(to)?;
+        let from_piece = board.borrow_piece_at_mut(from)?;
 
         //Do logic for each piece
         match *self {
