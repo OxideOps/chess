@@ -59,9 +59,7 @@ impl Board {
 
     pub fn take_piece_at(&mut self, position: Position) -> Result<Piece, ChessError> {
         self.is_in_bounds(position)?;
-        let piece = self.squares[position.x][position.y];
-        self.squares[position.x][position.y] = Piece::None;
-        Ok(piece)
+        Ok(self.squares[position.x][position.y].take())
     }
 
     pub fn set_piece_at(&mut self, position: Position, piece: Piece) -> Result<(), ChessError> {
