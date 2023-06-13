@@ -54,19 +54,13 @@ impl Board {
         Ok(&self.squares[position.x][position.y])
     }
 
-    pub fn take_piece_at(&mut self, position: Position) -> Result<Piece, ChessError> {
+    pub fn move_piece_to(&mut self,  mut piece: Piece, position: Position) -> Result<(), ChessError> {
         self.is_in_bounds(position)?;
-        Ok(self.squares[position.x][position.y].take())
-    }
-
-    pub fn move_piece_to(&mut self,  piece: Piece, position: Position) -> Result<(), ChessError> {
-        self.is_in_bounds(position)?;
-        self.squares[position.x][position.y] = piece;
+        self.squares[position.x][position.y] = piece.take();
         Ok(())
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
-        self.is_in_bounds(from)?;
         self.is_in_bounds(to)?;
 
         let piece = self.borrow_piece_at(from)?;
