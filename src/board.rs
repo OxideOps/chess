@@ -69,7 +69,7 @@ impl Board {
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
         // Check if 'from' and 'to' positions are in bounds
-             self.is_in_bounds(from)?;
+        self.is_in_bounds(from)?;
         self.is_in_bounds(to)?;
 
         if self.squares[from.x][from.y].is_none() {
