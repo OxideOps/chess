@@ -1,5 +1,5 @@
-use crate::pieces::{Piece, Position, Player};
 use crate::game::ChessError;
+use crate::pieces::{Piece, Player, Position};
 
 const BOARD_SIZE: usize = 8;
 
@@ -24,7 +24,7 @@ impl Board {
         // Initialize the other white and black pieces
 
         for i in 0..BOARD_SIZE {
-            squares[0]              = Board::get_back_rank(i, Player::White);
+            squares[0] = Board::get_back_rank(i, Player::White);
             squares[BOARD_SIZE - 1] = Board::get_back_rank(i, Player::Black);
         }
 
@@ -65,7 +65,6 @@ impl Board {
     pub fn set_piece_at(&mut self, position: Position, piece: Piece) -> Result<(), ChessError> {
         self.is_in_bounds(position)?;
         self.squares[position.x][position.y] = piece;
-
         Ok(())
     }
 
@@ -73,14 +72,12 @@ impl Board {
         if self.borrow_piece_at(from)?.is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
-        
+
         let piece = self.take_piece_at(from)?;
 
         if piece.can_move(self, from, to)? {
             self.set_piece_at(to, piece)?;
         }
-        
         Ok(())
     }
 }
-

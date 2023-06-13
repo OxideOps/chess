@@ -25,8 +25,13 @@ impl Piece {
     pub fn take(&mut self) -> Piece {
         mem::replace(self, Piece::None)
     }
-    
-    pub fn can_move(&self, board: &mut Board, to: Position, from: Position) -> Result<bool, ChessError> {
+
+    pub fn can_move(
+        &self,
+        board: &mut Board,
+        to: Position,
+        from: Position,
+    ) -> Result<bool, ChessError> {
         let to_piece = board.borrow_piece_at(to)?;
         let from_piece = board.borrow_piece_at(from)?;
 
@@ -34,27 +39,17 @@ impl Piece {
         match *self {
             Piece::Pawn(..) => {
                 //Err(Piece::PawnError::SomeError)
-                return Ok(false)
+                return Ok(false);
             }
-            Piece::Knight(..) => {
-                return Ok(false)
-            }
-            Piece::Bishop(..) => {
-                return Ok(false)
-            }
+            Piece::Knight(..) => return Ok(false),
+            Piece::Bishop(..) => return Ok(false),
             Piece::Rook(..) => {
                 //Err(Piece::RookError::SomeOtherError)
-                return Ok(true)
+                return Ok(true);
             }
-            Piece::Queen(..) => {
-                return Ok(false)
-            }
-            Piece::King(..) => {
-                return Ok(false)
-            }
-            Piece::None => {
-                return Ok(false)
-            }
+            Piece::Queen(..) => return Ok(false),
+            Piece::King(..) => return Ok(false),
+            Piece::None => return Ok(false),
         };
         Ok(true)
     }
@@ -63,7 +58,7 @@ impl Piece {
 #[derive(Clone, Copy, PartialEq)]
 pub enum Player {
     White,
-    Black
+    Black,
 }
 
 #[derive(Clone, Copy)]
@@ -71,4 +66,3 @@ pub struct Position {
     pub x: usize,
     pub y: usize,
 }
-
