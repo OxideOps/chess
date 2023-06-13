@@ -49,30 +49,30 @@ impl Board {
         }
     }
 
-    pub fn borrow_piece_at_mut(&mut self, position: Position) -> Result<&mut Piece, ChessError> {
-        self.is_in_bounds(position)?;
-        Ok(&mut self.squares[position.x][position.y])
-    }
-
-    pub fn move_piece_to(&mut self,  mut piece: &mut Piece, position: Position) -> Result<(), ChessError> {
-        self.is_in_bounds(position)?;
-        self.squares[position.x][position.y] = piece.take();
-        Ok(())
-    }
-
     pub fn move_piece(&mut self, from: Position, to: Position) -> Result<(), ChessError> {
         self.is_in_bounds(to)?;
 
-        let piece = self.borrow_piece_at_mut(from)?;
+        let piece = &mut self.squares[from.x][from.y];
 
         if piece.is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
 
-        if piece.can_move(self, to, from)? {
-            self.move_piece_to(piece, to)?;
-        }
-
+        match *piece {
+            Piece::Pawn(..) => {
+                //Err(Piece::PawnError::SomeError)
+                return Ok(());
+            }
+            Piece::Knight(..) => return Ok(()),
+            Piece::Bishop(..) => return Ok(()),
+            Piece::Rook(..) => {
+                //Err(Piece::RookError::SomeOtherError)
+                return Ok(());
+            }
+            Piece::Queen(..) => return Ok(()),
+            Piece::King(..) => return Ok(()),
+            Piece::None => return Ok(()),
+        };
         Ok(())
     }
 }
