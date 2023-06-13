@@ -56,27 +56,13 @@ impl Board {
         let piece = &self.squares[from.x][from.y];
 
         match *piece {
-            Piece::Pawn(..) => {
-
-            }
-            Piece::Knight(..) => {
-
-            }
-            Piece::Bishop(..) => {
-
-            }
-            Piece::Rook(..) => {
-
-            }
-            Piece::Queen(..) => {
-
-            }
-            Piece::King(..) => {
-
-            }
-            Piece::None => {
-                return Err(ChessError::InvalidMove)
-            }
+            Piece::Pawn(..) => {}
+            Piece::Knight(..) => {}
+            Piece::Bishop(..) => {}
+            Piece::Rook(..) => {}
+            Piece::Queen(..) => {}
+            Piece::King(..) => {}
+            Piece::None => return Err(ChessError::InvalidMove),
         };
         Ok(())
     }
@@ -85,17 +71,16 @@ impl Board {
         // Check if 'from' and 'to' positions are in bounds
         self.is_in_bounds(from)?;
         self.is_in_bounds(to)?;
-    
+
         if self.squares[from.x][from.y].is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
         // Check if move is valid
         self.is_valid_move(from, to)?;
-    
+
         // Perform the move
         self.squares[to.x][to.y] = self.squares[from.x][from.y].take();
-    
+
         Ok(())
     }
-    
 }
