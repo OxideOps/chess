@@ -76,7 +76,6 @@ impl Board {
         }
 
         if piece.can_move(&self, to, from)? {
-            //for now 
             self.move_piece_to(*piece, to)?;
             self.squares[from.x][from.y] = Piece::None;
         }
