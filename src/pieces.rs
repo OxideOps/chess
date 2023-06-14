@@ -14,26 +14,26 @@ pub enum Piece {
 
 impl Piece {
     pub fn is_none(&self) -> bool {
-        *self == Piece::None
+        *self == Self::None
     }
 
     pub fn is_some(&self) -> bool {
         !self.is_none()
     }
 
-    pub fn take(&mut self) -> Piece {
-        mem::replace(self, Piece::None)
+    pub fn take(&mut self) -> Self {
+        mem::replace(self, Self::None)
     }
 
     pub fn borrow_player(&self) -> Result<&Player, ChessError> {
         match self {
-            &Piece::Pawn(ref player) => Ok(player),
-            &Piece::Knight(ref player) => Ok(player),
-            &Piece::Bishop(ref player) => Ok(player),
-            &Piece::Rook(ref player) => Ok(player),
-            &Piece::Queen(ref player) => Ok(player),
-            &Piece::King(ref player) => Ok(player),
-            &Piece::None => Err(ChessError::NoPieceAtPosition),
+            &Self::Pawn(ref player) => Ok(player),
+            &Self::Knight(ref player) => Ok(player),
+            &Self::Bishop(ref player) => Ok(player),
+            &Self::Rook(ref player) => Ok(player),
+            &Self::Queen(ref player) => Ok(player),
+            &Self::King(ref player) => Ok(player),
+            &Self::None => Err(ChessError::NoPieceAtPosition),
         }
     }
 }
