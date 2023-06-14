@@ -129,6 +129,18 @@ impl Board {
         Self::get_queen_directions()
     }
 
+    fn get_directions(piece: Piece) -> Vec<Direction> {
+        // not exactly sure how to handle pawns yet
+        match piece {
+            Piece::Rook(..) => Self::get_rook_directions(),
+            Piece::Bishop(..) => Self::get_bishop_directions(),
+            Piece::Knight(..) => Self::get_knight_directions(),
+            Piece::Queen(..) => Self::get_queen_directions(),
+            Piece::King(..) => Self::get_king_directions(),
+            _ => vec![],
+        }
+    }
+
     fn add_moves_in_direction(&mut self, start: Position, direction: Direction) {
         let mut position = start + direction;
 
