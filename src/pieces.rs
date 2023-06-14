@@ -1,4 +1,5 @@
 use std::mem;
+use std::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Piece {
@@ -13,15 +14,27 @@ pub enum Piece {
 
 impl Piece {
     pub fn is_none(&self) -> bool {
-        *self == Piece::None
+        *self == Self::None
     }
 
     pub fn is_some(&self) -> bool {
         !self.is_none()
     }
 
-    pub fn take(&mut self) -> Piece {
-        mem::replace(self, Piece::None)
+    pub fn take(&mut self) -> Self {
+        mem::replace(self, Self::None)
+    }
+
+    pub fn get_player(&self) -> Option<Player> {
+        match self {
+            Self::Pawn(player)
+            | Self::Knight(player)
+            | Self::Bishop(player)
+            | Self::Rook(player)
+            | Self::Queen(player)
+            | Self::King(player) => Some(*player),
+            _ => None,
+        }
     }
 }
 
@@ -31,8 +44,28 @@ pub enum Player {
     Black,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
+}
+
+impl Add for Position {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl AddAssign for Position {
+    fn add_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        };
+    }
 }
