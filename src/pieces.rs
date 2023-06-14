@@ -36,22 +36,28 @@ pub struct Position {
     pub y: usize,
 }
 
-impl Add for Position {
+#[derive(Clone, Copy)]
+pub struct Direction {
+    pub x: i8,
+    pub y: i8,
+}
+
+impl Add<Direction> for Position {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, dir: Direction) -> Self {
         Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            x: self.x.wrapping_add(dir.x as usize),
+            y: self.y.wrapping_add(dir.y as usize),
         }
     }
 }
 
-impl AddAssign for Position {
-    fn add_assign(&mut self, other: Self) {
+impl AddAssign<Direction> for Position {
+    fn add_assign(&mut self, other: Direction) {
         *self = Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            x: self.x.wrapping_add(other.x as usize),
+            y: self.y.wrapping_add(other.y as usize),
         };
     }
 }

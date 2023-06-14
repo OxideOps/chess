@@ -1,5 +1,5 @@
 use crate::game::{ChessError, ChessResult};
-use crate::pieces::{Piece, Player, Position};
+use crate::pieces::{Direction, Piece, Player, Position};
 use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
@@ -90,7 +90,46 @@ impl Board {
         Ok(())
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, direction: Position) {
+    fn get_rook_directions() -> Vec<Direction> {
+        vec![
+            Direction { x: 1, y: 0 },
+            Direction { x: -1, y: 0 },
+            Direction { x: 0, y: 1 },
+            Direction { x: 0, y: -1 },
+        ]
+    }
+
+    fn get_bishop_directions() -> Vec<Direction> {
+        vec![
+            Direction { x: 1, y: 1 },
+            Direction { x: 1, y: -1 },
+            Direction { x: -1, y: 1 },
+            Direction { x: -1, y: -1 },
+        ]
+    }
+
+    fn get_knight_directions() -> Vec<Direction> {
+        vec![
+            Direction { x: 1, y: 2 },
+            Direction { x: 1, y: -2 },
+            Direction { x: -1, y: 2 },
+            Direction { x: -1, y: -2 },
+            Direction { x: 2, y: 1 },
+            Direction { x: 2, y: -1 },
+            Direction { x: -2, y: 1 },
+            Direction { x: -2, y: -1 },
+        ]
+    }
+
+    fn get_queen_directions() -> Vec<Direction> {
+        [Self::get_rook_directions(), Self::get_bishop_directions()].concat()
+    }
+
+    fn get_king_directions() -> Vec<Direction> {
+        Self::get_queen_directions()
+    }
+
+    fn add_moves_in_direction(&mut self, start: Position, direction: Direction) {
         let mut position = start + direction;
 
         while Self::is_in_bounds(position).is_ok() {
