@@ -1,10 +1,13 @@
 use crate::game::ChessError;
 use crate::pieces::{Piece, Player, Position};
+use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
 
 pub struct Board {
     squares: [[Piece; BOARD_SIZE]; BOARD_SIZE],
+    moves: HashSet<(Position, Position)>,
+    player: Player,
 }
 
 impl Board {
@@ -25,7 +28,15 @@ impl Board {
         squares[0] = Self::get_back_rank(Player::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        Self { squares }
+        let mut moves = HashSet::new();
+
+        let mut player = Player::White;
+
+        Self {
+            squares,
+            moves,
+            player,
+        }
     }
 
     fn get_back_rank(player: Player) -> [Piece; 8] {
@@ -72,7 +83,7 @@ impl Board {
         Self::is_in_bounds(from)?;
         Self::is_in_bounds(to)?;
 
-        if self.squares[from.x][from.y].is_none() {
+        if self._get_piece(from).is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
         // Check if move is valid
@@ -82,5 +93,29 @@ impl Board {
         self.squares[to.x][to.y] = self.squares[from.x][from.y].take();
 
         Ok(())
+    }
+
+    pub fn get_piece(&self, position: Position) -> Result<Piece, ChessError> {
+        Self::is_in_bounds(position)?;
+        Ok(self._get_piece(position))
+    }
+
+    fn _get_piece(&self, position: Position) -> Piece {
+        self.squares[position.x][position.y]
+    }
+
+    fn add_moves_in_direction(&mut self, start: Position, direction: Position) {
+        let mut position = start + direction;
+        while Self::is_in_bounds(position).is_ok() {
+            if let Some(player) = self._get_piece(position).get_player() {
+                // allow capturing an opponent's piece
+                if player != self.player {
+                    self.moves.insert((start, position));
+                }
+                return;
+            }
+            self.moves.insert((start, position));
+            position += direction;
+        }
     }
 }
