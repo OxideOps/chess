@@ -1,3 +1,4 @@
+use crate::game::ChessError;
 use std::mem;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -22,6 +23,18 @@ impl Piece {
 
     pub fn take(&mut self) -> Piece {
         mem::replace(self, Piece::None)
+    }
+
+    pub fn borrow_player(&self) -> Result<&Player, ChessError> {
+        match self {
+            &Piece::Pawn(ref player) => Ok(player),
+            &Piece::Knight(ref player) => Ok(player),
+            &Piece::Bishop(ref player) => Ok(player),
+            &Piece::Rook(ref player) => Ok(player),
+            &Piece::Queen(ref player) => Ok(player),
+            &Piece::King(ref player) => Ok(player),
+            &Piece::None => Err(ChessError::NoPieceAtPosition),
+        }
     }
 }
 
