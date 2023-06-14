@@ -1,5 +1,5 @@
 use crate::game::{ChessError, ChessResult};
-use crate::pieces::{Direction, Piece, Player, Position};
+use crate::pieces::{Move, Piece, Player, Position};
 use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
@@ -76,12 +76,19 @@ impl Board {
         Self::is_in_bounds(from)?;
         Self::is_in_bounds(to)?;
         self.is_piece_some(from)?;
-
+    
         if let Some(piece) = self.get_piece(from) {
-            //self.moves.cointains...
+            let moves = Self::get_moves(piece);
+            for m in moves {
+                let new_pos = Position { x: from.x + m.dx as usize, y: from.y + m.dy as usize};
+                if new_pos == to {
+                    return Ok(());  // Move is valid
+                }
+            }
         }
         Err(ChessError::InvalidMove)
     }
+    
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
@@ -90,37 +97,24 @@ impl Board {
         Ok(())
     }
 
-    fn get_rook_directions() -> Vec<Direction> {
-        vec![
-            Direction { x: 1, y: 0 },
-            Direction { x: -1, y: 0 },
-            Direction { x: 0, y: 1 },
-            Direction { x: 0, y: -1 },
+    fn get_rook_directions() -> &'static [Move] {
+        &[Move { dx: 0, dy: 1 }]
+    }
+
+    fn get_bishop_directions() -> &'static [Move] {
+        &[
+            Move { dx: 1, dy: 0 }, 
+            Move { dx: -1, dy: 0 }, 
+            Move { dx: 0, dy: 1 }, 
+            Move { dx: 0, dy: -1 }
         ]
     }
 
-    fn get_bishop_directions() -> Vec<Direction> {
-        vec![
-            Direction { x: 1, y: 1 },
-            Direction { x: 1, y: -1 },
-            Direction { x: -1, y: 1 },
-            Direction { x: -1, y: -1 },
-        ]
+    fn get_knight_directions() {
+        
     }
-
-    fn get_knight_directions() -> Vec<Direction> {
-        vec![
-            Direction { x: 1, y: 2 },
-            Direction { x: 1, y: -2 },
-            Direction { x: -1, y: 2 },
-            Direction { x: -1, y: -2 },
-            Direction { x: 2, y: 1 },
-            Direction { x: 2, y: -1 },
-            Direction { x: -2, y: 1 },
-            Direction { x: -2, y: -1 },
-        ]
-    }
-
+    
+    /* 
     fn get_queen_directions() -> Vec<Direction> {
         [Self::get_rook_directions(), Self::get_bishop_directions()].concat()
     }
@@ -128,21 +122,21 @@ impl Board {
     fn get_king_directions() -> Vec<Direction> {
         Self::get_queen_directions()
     }
-
-    fn get_directions(piece: Piece) -> Vec<Direction> {
+    */
+    fn get_moves(piece: Piece) -> &'static [Move] {
         // not exactly sure how to handle pawns yet
         match piece {
             Piece::Rook(..) => Self::get_rook_directions(),
             Piece::Bishop(..) => Self::get_bishop_directions(),
-            Piece::Knight(..) => Self::get_knight_directions(),
-            Piece::Queen(..) => Self::get_queen_directions(),
-            Piece::King(..) => Self::get_king_directions(),
-            _ => vec![],
+            //Piece::Knight(..) => Self::get_knight_directions(),
+            //Piece::Queen(..) => Self::get_queen_directions(),
+            //Piece::King(..) => Self::get_king_directions(),
+            _ => Default::default()
         }
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, direction: Direction) {
-        let mut position = start + direction;
+    fn add_moves_in_direction(&mut self, start: Position, m: Move) {
+        let mut position = start + m;
 
         while Self::is_in_bounds(position).is_ok() {
             if let Some(piece) = self.get_piece(position) {
@@ -152,7 +146,7 @@ impl Board {
                 }
             }
             self.moves.insert((start, position));
-            position += direction;
+            position += m;
         }
     }
 }
