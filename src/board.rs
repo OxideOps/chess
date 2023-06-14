@@ -76,7 +76,7 @@ impl Board {
 
         //moving piece must be in bound and not `None`
         self.is_piece_some(from)?;
-        
+
         if let Some(piece) = self._get_piece(from) {
             match piece {
                 Piece::Pawn(..) => {}
@@ -87,8 +87,7 @@ impl Board {
                 Piece::King(..) => {}
             };
             Ok(())
-        }
-        else {
+        } else {
             Err(ChessError::NoPieceAtPosition)
         }
     }
@@ -120,7 +119,7 @@ impl Board {
                     self.moves.insert((start, position));
                 }
             } else {
-                return Err(ChessError::NoPieceAtPosition)
+                return Err(ChessError::NoPieceAtPosition);
             }
             self.moves.insert((start, position));
             position += direction;

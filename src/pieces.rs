@@ -19,7 +19,7 @@ impl Piece {
             | Self::Bishop(player)
             | Self::Rook(player)
             | Self::Queen(player)
-            | Self::King(player) => player
+            | Self::King(player) => player,
         }
     }
 }
