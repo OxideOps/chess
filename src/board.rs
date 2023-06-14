@@ -90,10 +90,7 @@ impl Board {
         Ok(())
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, direction: Position) -> ChessResult<()> {
-        Self::is_in_bounds(start)?;
-        self.is_piece_some(start)?;
-
+    fn add_moves_in_direction(&mut self, start: Position, direction: Position) {
         let mut position = start + direction;
 
         while Self::is_in_bounds(position).is_ok() {
@@ -106,6 +103,5 @@ impl Board {
             self.moves.insert((start, position));
             position += direction;
         }
-        Ok(())
     }
 }
