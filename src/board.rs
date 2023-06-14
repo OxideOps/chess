@@ -78,14 +78,7 @@ impl Board {
         self.is_piece_some(from)?;
 
         if let Some(piece) = self.get_piece(from) {
-            match piece {
-                Piece::Pawn(..) => {}
-                Piece::Knight(..) => {}
-                Piece::Bishop(..) => {}
-                Piece::Rook(..) => {}
-                Piece::Queen(..) => {}
-                Piece::King(..) => {}
-            };
+            //self.moves.cointains...
         }
         Err(ChessError::InvalidMove)
     }
