@@ -1,10 +1,8 @@
-use crate::game::ChessError;
+use crate::game::{ChessError, ChessResult};
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
-
-type ChessResult<T> = Result<T, ChessError>;
 
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
@@ -54,7 +52,11 @@ impl Board {
         ]
     }
 
-    pub fn is_in_bounds(position: Position) -> ChessResult<()> {
+    fn get_piece(&self, position: Position) -> Option<Piece> {
+        self.squares[position.x][position.y]
+    }
+
+    fn is_in_bounds(position: Position) -> ChessResult<()> {
         if position.x > 7 || position.y > 7 {
             Err(ChessError::OutOfBounds)
         } else {
@@ -63,7 +65,7 @@ impl Board {
     }
 
     fn is_piece_some(&self, position: Position) -> ChessResult<()> {
-        if self.get_piece(position)?.is_none() {
+        if let None = self.get_piece(position) {
             Err(ChessError::NoPieceAtPosition)
         } else {
             Ok(())
@@ -72,12 +74,13 @@ impl Board {
 
     fn is_move_valid(&self, from: Position, to: Position) -> ChessResult<()> {
         //we need ending position to be inbound
+        Self::is_in_bounds(from)?;
         Self::is_in_bounds(to)?;
 
         //moving piece must be in bound and not `None`
         self.is_piece_some(from)?;
 
-        if let Some(piece) = self._get_piece(from) {
+        if let Some(piece) = self.get_piece(from) {
             match piece {
                 Piece::Pawn(..) => {}
                 Piece::Knight(..) => {}
@@ -86,40 +89,29 @@ impl Board {
                 Piece::Queen(..) => {}
                 Piece::King(..) => {}
             };
-            Ok(())
-        } else {
-            Err(ChessError::NoPieceAtPosition)
         }
+        Err(ChessError::InvalidMove)
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
-        self.is_piece_some(from)?;
         self.is_move_valid(from, to)?;
-
-        self.squares[to.x][to.y] = self.squares[from.x][from.y].take();
+        self.squares[to.x][to.y] = self.get_piece(from).take();
 
         Ok(())
     }
 
-    pub fn get_piece(&self, position: Position) -> ChessResult<Option<Piece>> {
-        Self::is_in_bounds(position)?;
-        Ok(self._get_piece(position))
-    }
-
-    fn _get_piece(&self, position: Position) -> Option<Piece> {
-        self.squares[position.x][position.y]
-    }
-
     fn add_moves_in_direction(&mut self, start: Position, direction: Position) -> ChessResult<()> {
+        Self::is_in_bounds(start)?;
+        self.is_piece_some(start)?;
+
         let mut position = start + direction;
+
         while Self::is_in_bounds(position).is_ok() {
-            if let Some(piece) = self.get_piece(position)? {
+            if let Some(piece) = self.get_piece(position) {
                 // allow capturing an opponent's piece
                 if piece.get_player() != self.player {
                     self.moves.insert((start, position));
                 }
-            } else {
-                return Err(ChessError::NoPieceAtPosition);
             }
             self.moves.insert((start, position));
             position += direction;
