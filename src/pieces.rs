@@ -9,31 +9,17 @@ pub enum Piece {
     Rook(Player),
     Queen(Player),
     King(Player),
-    None,
 }
 
 impl Piece {
-    pub fn is_none(&self) -> bool {
-        *self == Self::None
-    }
-
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
-    }
-
-    pub fn take(&mut self) -> Self {
-        mem::replace(self, Self::None)
-    }
-
-    pub fn get_player(&self) -> Option<Player> {
-        match self {
+    pub fn get_player(&self) -> Player {
+        match *self {
             Self::Pawn(player)
             | Self::Knight(player)
             | Self::Bishop(player)
             | Self::Rook(player)
             | Self::Queen(player)
-            | Self::King(player) => Some(*player),
-            _ => None,
+            | Self::King(player) => player
         }
     }
 }
