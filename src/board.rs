@@ -73,11 +73,8 @@ impl Board {
     }
 
     fn is_move_valid(&self, from: Position, to: Position) -> ChessResult<()> {
-        //we need ending position to be inbound
         Self::is_in_bounds(from)?;
         Self::is_in_bounds(to)?;
-
-        //moving piece must be in bound and not `None`
         self.is_piece_some(from)?;
 
         if let Some(piece) = self.get_piece(from) {
