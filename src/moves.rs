@@ -6,10 +6,7 @@ pub struct Move {
 
 impl Move {
     pub fn new(dx: i8, dy: i8) -> Self {
-        Self {
-            dx,
-            dy,
-        }
+        Self { dx, dy }
     }
 }
 
