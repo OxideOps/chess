@@ -22,6 +22,17 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
+    pub fn get_moves(&self) -> &'static [Move] {
+        // not exactly sure how to handle pawns yet
+        match self {
+            Self::Rook(..) => Move::get_rook_moves(),
+            Self::Bishop(..) => Move::get_bishop_moves(),
+            Self::Knight(..) => Move::get_knight_moves(),
+            Self::Queen(..) => Move::get_queen_moves(),
+            Self::King(..) => Move::get_king_moves(),
+            _ => Default::default(),
+        }
+    }
     pub fn can_snipe(&self) -> bool {
         match self {
             Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) => true,
