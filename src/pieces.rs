@@ -1,4 +1,3 @@
-use std::mem;
 use std::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -37,27 +36,32 @@ pub struct Position {
 }
 
 #[derive(Clone, Copy)]
-pub struct Direction {
-    pub x: i8,
-    pub y: i8,
+pub struct Move {
+    pub dx: i8,
+    pub dy: i8,
 }
 
-impl Add<Direction> for Position {
+impl Move {
+    pub const PAWN_MOVES: &'static [Move] = &[Move { dx: 0, dy: 1 }];
+    
+}
+
+impl Add<Move> for Position {
     type Output = Self;
 
-    fn add(self, dir: Direction) -> Self {
+    fn add(self, m: Move) -> Self {
         Self {
-            x: self.x.wrapping_add(dir.x as usize),
-            y: self.y.wrapping_add(dir.y as usize),
+            x: self.x.wrapping_add(m.dx as usize),
+            y: self.y.wrapping_add(m.dy as usize),
         }
     }
 }
 
-impl AddAssign<Direction> for Position {
-    fn add_assign(&mut self, other: Direction) {
+impl AddAssign<Move> for Position {
+    fn add_assign(&mut self, other: Move) {
         *self = Self {
-            x: self.x.wrapping_add(other.x as usize),
-            y: self.y.wrapping_add(other.y as usize),
+            x: self.x.wrapping_add(other.dx as usize),
+            y: self.y.wrapping_add(other.dy as usize),
         };
     }
 }
