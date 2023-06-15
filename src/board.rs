@@ -91,18 +91,6 @@ impl Board {
         Ok(())
     }
 
-    fn get_moves(piece: Piece) -> &'static [Move] {
-        // not exactly sure how to handle pawns yet
-        match piece {
-            Piece::Rook(..) => Move::get_rook_moves(),
-            Piece::Bishop(..) => Move::get_bishop_moves(),
-            Piece::Knight(..) => Move::get_knight_moves(),
-            Piece::Queen(..) => Move::get_queen_moves(),
-            Piece::King(..) => Move::get_king_moves(),
-            _ => Default::default(),
-        }
-    }
-
     fn add_moves_in_direction(&mut self, start: Position, m: Move) {
         let mut position = start + m;
         while Self::is_in_bounds(position).is_ok() {
