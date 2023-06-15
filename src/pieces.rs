@@ -1,3 +1,4 @@
+use crate::moves::Move;
 use std::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -33,17 +34,6 @@ pub enum Player {
 pub struct Position {
     pub x: usize,
     pub y: usize,
-}
-
-#[derive(Clone, Copy)]
-pub struct Move {
-    pub dx: i8,
-    pub dy: i8,
-}
-
-impl Move {
-    pub const PAWN_MOVES: &'static [Move] = &[Move { dx: 0, dy: 1 }];
-    
 }
 
 impl Add<Move> for Position {
