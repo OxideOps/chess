@@ -1,29 +1,41 @@
-name: Rust
+name: Rust CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
-
-env:
-  CARGO_TERM_COLOR: always
+    branches: [main]
 
 jobs:
-  build:
+  check:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Rust
+
+    - name: Setup Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        override: true
-        components: rustfmt
+        override: true # This makes the stable toolchain default
+        components: rustfmt # This installs rustfmt
 
-    - name: Check formatting
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
+    - name: Cache target
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-target-
+
+    - name: Check Formatting
       run: cargo fmt -- --check
 
     - name: Build
