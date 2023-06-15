@@ -1,5 +1,5 @@
 // Integration tests go here.
-use chess::pieces::Piece;
+use chess::game;
 
 #[test]
 fn test_stuff() {}
