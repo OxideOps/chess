@@ -30,7 +30,7 @@ pub enum Player {
     Black,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
@@ -53,5 +53,21 @@ impl AddAssign<Move> for Position {
             x: self.x.wrapping_add(other.dx as usize),
             y: self.y.wrapping_add(other.dy as usize),
         };
+    }
+}
+
+// Add unit tests at the bottom of each file. Each tests module should only have access to super (non integration)
+#[cfg(test)]
+mod tests {
+    use super::Position;
+
+    #[test]
+    fn test_add_position() {
+        let p = Position { x: 1, y: 1 };
+        assert_eq!(p + p, Position { x: 2, y: 2 });
+
+        let mut q = p;
+        q += p;
+        assert_eq!(q, p + p)
     }
 }

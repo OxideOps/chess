@@ -1,6 +1,3 @@
-mod board;
-mod game;
-mod moves;
-mod pieces;
+use chess::game;
 
 fn main() {}
