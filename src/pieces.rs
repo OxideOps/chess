@@ -1,4 +1,4 @@
-use std::mem;
+use crate::moves::Move;
 use std::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -36,22 +36,22 @@ pub struct Position {
     pub y: usize,
 }
 
-impl Add for Position {
+impl Add<Move> for Position {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, m: Move) -> Self {
         Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            x: self.x.wrapping_add(m.dx as usize),
+            y: self.y.wrapping_add(m.dy as usize),
         }
     }
 }
 
-impl AddAssign for Position {
-    fn add_assign(&mut self, other: Self) {
+impl AddAssign<Move> for Position {
+    fn add_assign(&mut self, other: Move) {
         *self = Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
+            x: self.x.wrapping_add(other.dx as usize),
+            y: self.y.wrapping_add(other.dy as usize),
         };
     }
 }

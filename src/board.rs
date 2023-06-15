@@ -1,4 +1,5 @@
 use crate::game::{ChessError, ChessResult};
+use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
 
@@ -28,7 +29,7 @@ impl Board {
         squares[0] = Self::get_back_rank(Player::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        let mut moves = HashSet::new();
+        let moves = HashSet::new();
 
         let mut player = Player::White;
 
@@ -76,11 +77,11 @@ impl Board {
         Self::is_in_bounds(from)?;
         Self::is_in_bounds(to)?;
         self.is_piece_some(from)?;
-
-        if let Some(piece) = self.get_piece(from) {
-            //self.moves.cointains...
+        if self.moves.contains(&(from, to)) {
+            Ok(())
+        } else {
+            Err(ChessError::InvalidMove)
         }
-        Err(ChessError::InvalidMove)
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
@@ -90,8 +91,20 @@ impl Board {
         Ok(())
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, direction: Position) {
-        let mut position = start + direction;
+    fn get_moves(piece: Piece) -> &'static [Move] {
+        // not exactly sure how to handle pawns yet
+        match piece {
+            Piece::Rook(..) => Move::get_rook_moves(),
+            Piece::Bishop(..) => Move::get_bishop_moves(),
+            Piece::Knight(..) => Move::get_knight_moves(),
+            Piece::Queen(..) => Move::get_queen_moves(),
+            Piece::King(..) => Move::get_king_moves(),
+            _ => Default::default(),
+        }
+    }
+
+    fn add_moves_in_direction(&mut self, start: Position, m: Move) {
+        let mut position = start + m;
 
         while Self::is_in_bounds(position).is_ok() {
             if let Some(piece) = self.get_piece(position) {
@@ -101,7 +114,7 @@ impl Board {
                 }
             }
             self.moves.insert((start, position));
-            position += direction;
+            position += m;
         }
     }
 }
