@@ -22,6 +22,12 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
+    pub fn can_snipe(&self) -> bool {
+        match self {
+            Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

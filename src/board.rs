@@ -114,6 +114,11 @@ impl Board {
                 return;
             }
             self.moves.insert((start, position));
+            // if the piece cannot snipe (move multiple moves in one direction),
+            // return after the first move
+            if !self.get_piece(start).unwrap().can_snipe() {
+                return;
+            }
             position += m;
         }
     }
