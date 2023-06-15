@@ -110,4 +110,23 @@ impl Board {
             position += m;
         }
     }
+
+    fn add_moves(&mut self) {
+        for x in 0..8 {
+            for y in 0..8 {
+                if let Some(piece) = self.squares[x][y] {
+                    match piece {
+                        Piece::Pawn(..) => {
+                            // probably special case stuff
+                        }
+                        _ => {
+                            for m in piece.get_moves() {
+                                self.add_moves_in_direction(Position { x, y }, *m);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
