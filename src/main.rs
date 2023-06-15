@@ -1,3 +1,3 @@
-use chess::game;
+use chess::board;
 
 fn main() {}
