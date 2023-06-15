@@ -105,13 +105,13 @@ impl Board {
 
     fn add_moves_in_direction(&mut self, start: Position, m: Move) {
         let mut position = start + m;
-
         while Self::is_in_bounds(position).is_ok() {
             if let Some(piece) = self.get_piece(position) {
                 // allow capturing an opponent's piece
                 if piece.get_player() != self.player {
                     self.moves.insert((start, position));
                 }
+                return;
             }
             self.moves.insert((start, position));
             position += m;
