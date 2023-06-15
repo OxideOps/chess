@@ -109,12 +109,21 @@ impl Board {
             Move { dx: 0, dy: -1 }
         ]
     }
-
-    fn get_knight_directions() {
-        
+    /* 
+    fn get_knight_directions() -> Vec<Direction> {
+        vec![
+            Direction { x: 1, y: 2 },
+            Direction { x: 1, y: -2 },
+            Direction { x: -1, y: 2 },
+            Direction { x: -1, y: -2 },
+            Direction { x: 2, y: 1 },
+            Direction { x: 2, y: -1 },
+            Direction { x: -2, y: 1 },
+            Direction { x: -2, y: -1 },
+        ]
     }
     
-    /* 
+    
     fn get_queen_directions() -> Vec<Direction> {
         [Self::get_rook_directions(), Self::get_bishop_directions()].concat()
     }

@@ -41,6 +41,11 @@ pub struct Move {
     pub dy: i8,
 }
 
+impl Move {
+    pub const PAWN_MOVES: &'static [Move] = &[Move { dx: 0, dy: 1 }];
+    
+}
+
 impl Add<Move> for Position {
     type Output = Self;
 
