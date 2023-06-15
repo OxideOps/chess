@@ -5,6 +5,15 @@ pub struct Move {
 }
 
 impl Move {
+    pub fn new(dx: i8, dy: i8) -> Self {
+        Self {
+            dx,
+            dy,
+        }
+    }
+}
+
+impl Move {
     const QUEEN_MOVES: [Move; 8] = [
         Move { dx: 1, dy: 0 },
         Move { dx: -1, dy: 0 },

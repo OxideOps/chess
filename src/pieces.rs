@@ -42,6 +42,15 @@ pub struct Position {
     pub y: usize,
 }
 
+impl Position {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self {
+            x,
+            y,
+        }
+    }
+}
+
 impl Add<Move> for Position {
     type Output = Self;
 
@@ -65,15 +74,17 @@ impl AddAssign<Move> for Position {
 // Add unit tests at the bottom of each file. Each tests module should only have access to super (non integration)
 #[cfg(test)]
 mod tests {
-    use super::Position;
+    use super::*;
 
     #[test]
     fn test_add_position() {
-        let p = Position { x: 1, y: 1 };
-        assert_eq!(p + p, Position { x: 2, y: 2 });
+        let mut p = Position::new(0, 0);
+        let m_up = Move::new(0, 1);
+        let m_right = Move::new(1, 0);
 
-        let mut q = p;
-        q += p;
-        assert_eq!(q, p + p)
+        for _ in 0..10 {
+            p = p + m_right + m_up
+        }
+        assert_eq!(p, Position::new(10, 10))
     }
 }
