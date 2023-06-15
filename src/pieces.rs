@@ -42,12 +42,6 @@ pub struct Position {
     pub y: usize,
 }
 
-impl Position {
-    pub fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
-}
-
 impl Add<Move> for Position {
     type Output = Self;
 
@@ -75,13 +69,13 @@ mod tests {
 
     #[test]
     fn test_add_position() {
-        let mut p = Position::new(0, 0);
-        let m_up = Move::new(0, 1);
-        let m_right = Move::new(1, 0);
+        let mut p = Position { x: 0, y: 0 };
+        let m_up = Move { dx: 0, dy: 1 };
+        let m_right = Move { dx: 1, dy: 0 };
 
         for _ in 0..10 {
             p = p + m_right + m_up
         }
-        assert_eq!(p, Position::new(10, 10))
+        assert_eq!(p, Position { x: 10, y: 10 })
     }
 }
