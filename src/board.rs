@@ -91,13 +91,13 @@ impl Board {
         match self.get_piece(position).unwrap().get_player() {
             Player::White if position.y == 1 => true,
             Player::Black if position.y == 6 => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
         let advance_moves = Move::get_pawn_advance_moves(player, self.pawn_can_double_move(start));
-            
+
         for &m in advance_moves {
             let new_position = start + m;
             if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
