@@ -29,14 +29,10 @@ impl Board {
         squares[0] = Self::get_back_rank(Player::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        let moves = HashSet::new();
-
-        let mut player = Player::White;
-
         Self {
             squares,
-            moves,
-            player,
+            moves: HashSet::new(),
+            player: Player::White,
         }
     }
 
