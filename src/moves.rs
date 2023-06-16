@@ -65,11 +65,11 @@ impl Move {
     }
 
     pub fn get_rook_moves() -> &'static [Move] {
-        &Self::QUEEN_MOVES[0..=4]
+        &Self::QUEEN_MOVES[0..4]
     }
 
     pub fn get_bishop_moves() -> &'static [Move] {
-        &Self::QUEEN_MOVES[4..=8]
+        &Self::QUEEN_MOVES[4..8]
     }
 
     pub fn get_knight_moves() -> &'static [Move] {
