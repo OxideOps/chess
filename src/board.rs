@@ -119,10 +119,7 @@ impl Board {
         };
 
         for &m in capture_moves {
-            let new_position = Position {
-                x: start.x + (m.dx) as usize,
-                y: start.y + m.dy as usize,
-            };
+            let new_position = start + m;
             if Self::is_in_bounds(new_position).is_ok() {
                 if let Some(other_piece) = self.get_piece(new_position) {
                     if other_piece.get_player() != player {
