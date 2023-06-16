@@ -37,7 +37,7 @@ impl Move {
     pub fn get_pawn_capture_moves_black() -> &'static [Move] {
         &Self::QUEEN_MOVES[4..6]
     }
-    
+
     pub fn get_pawn_capture_moves_white() -> &'static [Move] {
         &Self::QUEEN_MOVES[6..8]
     }
