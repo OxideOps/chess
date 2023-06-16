@@ -28,7 +28,7 @@ impl Board {
         // Initialize the other white and black pieces
         squares[0] = Self::get_back_rank(Player::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
-        
+
         Self {
             squares,
             moves: HashSet::new(),
