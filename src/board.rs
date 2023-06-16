@@ -87,23 +87,77 @@ impl Board {
         Ok(())
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, m: Move) {
-        let mut position = start + m;
-        while Self::is_in_bounds(position).is_ok() {
-            if let Some(piece) = self.get_piece(position) {
-                // allow capturing an opponent's piece
-                if piece.get_player() != self.player {
-                    self.moves.insert((start, position));
+    fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
+        let direction = match player {
+            Player::White => -1,
+            Player::Black => 1,
+        };
+        let advance_moves = match player {
+            Player::White => Move::get_pawn_advance_moves_white(),
+            Player::Black => Move::get_pawn_advance_moves_black(),
+        };
+
+        for &m in advance_moves {
+            let new_position = Position { x: start.x + (direction * m.dx) as usize, y: start.y + m.dy as usize };
+            if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
+                self.moves.insert((start, new_position));
+                if ((player == Player::White && start.x == 6) || (player == Player::Black && start.x == 1))
+                    && self.get_piece(Position { x: start.x + (2 * direction * m.dx) as usize, y: start.y }).is_none() {
+                    self.moves.insert((start, Position { x: start.x + (2 * direction * m.dx) as usize, y: start.y }));
                 }
-                return;
             }
-            self.moves.insert((start, position));
-            // if the piece cannot snipe (move multiple moves in one direction),
-            // return after the first move
-            if !self.get_piece(start).unwrap().can_snipe() {
-                return;
+        }
+    }
+
+    fn add_pawn_capture_moves(&mut self, start: Position, player: Player) {
+        let direction = match player {
+            Player::White => -1,
+            Player::Black => 1,
+        };
+        let capture_moves = match player {
+            Player::White => Move::get_pawn_capture_moves_white(),
+            Player::Black => Move::get_pawn_capture_moves_black(),
+        };
+
+        for &m in capture_moves {
+            let new_position = Position { x: start.x + (direction * m.dx) as usize, y: start.y + m.dy as usize };
+            if Self::is_in_bounds(new_position).is_ok() {
+                if let Some(other_piece) = self.get_piece(new_position) {
+                    if other_piece.get_player() != player {
+                        self.moves.insert((start, new_position));
+                    }
+                }
             }
-            position += m;
+        }
+    }
+
+    fn add_moves_in_direction(&mut self, start: Position, piece: Piece) {
+        match piece {
+            Piece::Pawn(player) => {
+                self.add_pawn_advance_moves(start, player);
+                self.add_pawn_capture_moves(start, player);
+            },
+            _ => {
+                for &m in piece.get_moves() {
+                    let mut position = start + m;
+                    while Self::is_in_bounds(position).is_ok() {
+                        if let Some(piece) = self.get_piece(position) {
+                            // allow capturing an opponent's piece
+                            if piece.get_player() != self.player {
+                                self.moves.insert((start, position));
+                            }
+                            return;
+                        }
+                        self.moves.insert((start, position));
+                        // if the piece cannot snipe (move multiple moves in one direction),
+                        // return after the first move
+                        if !self.get_piece(start).unwrap().can_snipe() {
+                            return;
+                        }
+                        position += m;
+                    }
+                }
+            }
         }
     }
 
@@ -111,16 +165,8 @@ impl Board {
         for x in 0..8 {
             for y in 0..8 {
                 if let Some(piece) = self.squares[x][y] {
-                    match piece {
-                        Piece::Pawn(..) => {
-                            // probably special case stuff
-                        }
-                        _ => {
-                            for m in piece.get_moves() {
-                                self.add_moves_in_direction(Position { x, y }, *m);
-                            }
-                        }
-                    }
+                    let position = Position { x, y };
+                    self.add_moves_in_direction(position, piece);
                 }
             }
         }
