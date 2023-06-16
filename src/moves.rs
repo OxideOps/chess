@@ -1,3 +1,4 @@
+use crate::pieces::Player;
 use std::ops::Mul;
 
 #[derive(Clone, Copy)]
@@ -28,21 +29,33 @@ impl Move {
         Move { dx: -2, dy: -1 },
     ];
 
-    pub fn get_pawn_advance_moves_black() -> Move {
-        Self::QUEEN_MOVES[2]
-    }
-
-    pub fn get_pawn_advance_moves_white() -> Move {
-        Self::QUEEN_MOVES[3]
-    }
-
-    pub fn get_pawn_capture_moves_black() -> &'static [Move] {
-        &Self::QUEEN_MOVES[4..6]
+    pub fn get_pawn_advance_moves(player: Player, first_move: bool) -> &'static [Move] {
+        match player {
+            Player::White => {
+                if first_move {
+                    &[Move { dx: 0, dy: -1 }, Move { dx: 0, dy: -2 }]
+                } else {
+                    &Self::QUEEN_MOVES[3..4]
+                }
+            }
+            Player::Black => {
+                if first_move {
+                    &[Move { dx: 0, dy: 1 }, Move { dx: 0, dy: 2 }]
+                } else {
+                    &Self::QUEEN_MOVES[2..3]
+                }
+            }
+        }
     }
 
     pub fn get_pawn_capture_moves_white() -> &'static [Move] {
-        &Self::QUEEN_MOVES[6..8]
+        &[Move { dx: -1, dy: -1 }, Move { dx: 1, dy: -1 }]
     }
+
+    pub fn get_pawn_capture_moves_black() -> &'static [Move] {
+        &[Move { dx: 1, dy: 1 }, Move { dx: -1, dy: 1 }]
+    }
+
     pub fn get_queen_moves() -> &'static [Move] {
         &Self::QUEEN_MOVES
     }
@@ -52,11 +65,11 @@ impl Move {
     }
 
     pub fn get_rook_moves() -> &'static [Move] {
-        &Self::QUEEN_MOVES[0..4]
+        &Self::QUEEN_MOVES[0..=4]
     }
 
     pub fn get_bishop_moves() -> &'static [Move] {
-        &Self::QUEEN_MOVES[4..8]
+        &Self::QUEEN_MOVES[4..=8]
     }
 
     pub fn get_knight_moves() -> &'static [Move] {
