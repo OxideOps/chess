@@ -88,48 +88,39 @@ impl Board {
     }
 
     fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
-        let direction = match player {
-            Player::White => -1,
-            Player::Black => 1,
-        };
-        let advance_moves = match player {
+        let m = match player {
             Player::White => Move::get_pawn_advance_moves_white(),
             Player::Black => Move::get_pawn_advance_moves_black(),
         };
 
-        for &m in advance_moves {
-            let new_position = Position {
-                x: start.x + (direction * m.dx) as usize,
-                y: start.y + m.dy as usize,
-            };
-            if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
-                self.moves.insert((start, new_position));
-                if ((player == Player::White && start.x == 6)
-                    || (player == Player::Black && start.x == 1))
-                    && self
-                        .get_piece(Position {
-                            x: start.x + (2 * direction * m.dx) as usize,
-                            y: start.y,
-                        })
-                        .is_none()
-                {
-                    self.moves.insert((
-                        start,
-                        Position {
-                            x: start.x + (2 * direction * m.dx) as usize,
-                            y: start.y,
-                        },
-                    ));
-                }
+        let new_position = Position {
+            x: start.x + (m.dx) as usize,
+            y: start.y + m.dy as usize,
+        };
+
+        if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
+            self.moves.insert((start, new_position));
+            if ((player == Player::White && start.x == 6)
+                || (player == Player::Black && start.x == 1))
+                && self
+                    .get_piece(Position {
+                        x: start.x + (2 * m.dx) as usize,
+                        y: start.y,
+                    })
+                    .is_none()
+            {
+                self.moves.insert((
+                    start,
+                    Position {
+                        x: start.x + (2 * m.dx) as usize,
+                        y: start.y,
+                    },
+                ));
             }
         }
     }
 
     fn add_pawn_capture_moves(&mut self, start: Position, player: Player) {
-        let direction = match player {
-            Player::White => -1,
-            Player::Black => 1,
-        };
         let capture_moves = match player {
             Player::White => Move::get_pawn_capture_moves_white(),
             Player::Black => Move::get_pawn_capture_moves_black(),
@@ -137,7 +128,7 @@ impl Board {
 
         for &m in capture_moves {
             let new_position = Position {
-                x: start.x + (direction * m.dx) as usize,
+                x: start.x + (m.dx) as usize,
                 y: start.y + m.dy as usize,
             };
             if Self::is_in_bounds(new_position).is_ok() {

@@ -26,12 +26,12 @@ impl Move {
         Move { dx: -2, dy: -1 },
     ];
 
-    pub fn get_pawn_advance_moves_black() -> &'static [Move] {
-        &Self::QUEEN_MOVES[2..3]
+    pub fn get_pawn_advance_moves_black() -> Move {
+        Self::QUEEN_MOVES[2]
     }
 
-    pub fn get_pawn_advance_moves_white() -> &'static [Move] {
-        &Self::QUEEN_MOVES[3..4]
+    pub fn get_pawn_advance_moves_white() -> Move {
+        Self::QUEEN_MOVES[3]
     }
 
     pub fn get_pawn_capture_moves_black() -> &'static [Move] {
