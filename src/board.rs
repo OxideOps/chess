@@ -88,9 +88,9 @@ impl Board {
 
     fn pawn_can_double_move(&self, position: Position) -> bool {
         match self.get_piece(position).unwrap().get_player() {
-            Player::White => position.y == 1,
-            Player::Black => position.y == 6,
-        };
+            Player::White => return position.y == 1,
+            Player::Black => return position.y == 6,
+        }
         false
     }
 
