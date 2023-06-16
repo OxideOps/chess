@@ -83,20 +83,21 @@ impl Board {
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
         self.squares[to.x][to.y] = self.get_piece(from).take();
+
         Ok(())
     }
 
     fn pawn_can_double_move(&self, position: Position) -> bool {
         match self.get_piece(position).unwrap().get_player() {
-            Player::White => return position.y == 1,
-            Player::Black => return position.y == 6,
+            Player::White if position.y == 1 => true,
+            Player::Black if position.y == 6 => true,
+            _ => false
         }
-        false
     }
 
     fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
         let advance_moves = Move::get_pawn_advance_moves(player, self.pawn_can_double_move(start));
-
+            
         for &m in advance_moves {
             let new_position = start + m;
             if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
