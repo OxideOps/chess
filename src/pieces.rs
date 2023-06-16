@@ -12,8 +12,8 @@ pub enum Piece {
 }
 
 impl Piece {
-    pub fn get_player(&self) -> Player {
-        match *self {
+    pub fn get_player(self) -> Player {
+        match self {
             Self::Pawn(player)
             | Self::Knight(player)
             | Self::Bishop(player)
@@ -22,7 +22,7 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
-    pub fn get_moves(&self) -> &'static [Move] {
+    pub fn get_moves(self) -> &'static [Move] {
         // not exactly sure how to handle pawns yet
         match self {
             Self::Rook(..) => Move::get_rook_moves(),
@@ -33,7 +33,7 @@ impl Piece {
             _ => Default::default(),
         }
     }
-    pub fn can_snipe(&self) -> bool {
+    pub fn can_snipe(self) -> bool {
         match self {
             Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) => true,
             _ => false,
