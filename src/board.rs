@@ -184,8 +184,7 @@ impl Board {
         for x in 0..8 {
             for y in 0..8 {
                 if let Some(piece) = self.squares[x][y] {
-                    let position = Position { x, y };
-                    self.add_moves_in_direction(position, piece);
+                    self.add_moves_in_direction(Position { x, y }, piece);
                 }
             }
         }
