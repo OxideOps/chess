@@ -93,21 +93,13 @@ impl Board {
             Player::Black => Move::get_pawn_advance_moves_black(),
         };
 
-        let new_position = Position {
-            x: start.x + (m.dx) as usize,
-            y: start.y + m.dy as usize,
-        };
+        let new_position = start + m;
 
         if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
             self.moves.insert((start, new_position));
             if ((player == Player::White && start.x == 6)
                 || (player == Player::Black && start.x == 1))
-                && self
-                    .get_piece(Position {
-                        x: start.x + (2 * m.dx) as usize,
-                        y: start.y,
-                    })
-                    .is_none()
+                && self.get_piece(start + m * 2).is_none()
             {
                 self.moves.insert((
                     start,

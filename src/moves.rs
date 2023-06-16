@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 #[derive(Clone, Copy)]
 pub struct Move {
     pub dx: i8,
@@ -59,5 +61,16 @@ impl Move {
 
     pub fn get_knight_moves() -> &'static [Move] {
         &Self::KNIGHT_MOVES
+    }
+}
+
+impl Mul<i8> for Move {
+    type Output = Self;
+
+    fn mul(self, rhs: i8) -> Self::Output {
+        Self {
+            dx: self.dx * rhs,
+            dy: self.dy * rhs,
+        }
     }
 }
