@@ -1,7 +1,7 @@
 use crate::moves::Move;
 use std::ops::{Add, AddAssign};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Piece {
     Pawn(Player),
     Knight(Player),
@@ -41,7 +41,7 @@ impl Piece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Player {
     White,
     Black,

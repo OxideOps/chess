@@ -86,6 +86,27 @@ impl Board {
         Ok(())
     }
 
+    pub fn promote_piece(&mut self, position: Position, new_piece: Piece) -> ChessResult<()> {
+        // We should only be able to promote a pawn
+        if let Some(piece) = self.get_piece(position) {
+            if let Piece::Pawn(player) = piece {
+                // Only promote if the pawn is on the opposite end of the board
+                if (player == Player::White && position.y == 7)
+                    || (player == Player::Black && position.y == 0)
+                {
+                    self.squares[position.y][position.x] = Some(new_piece);
+                    Ok(())
+                } else {
+                    Err(ChessError::InvalidPromotion)
+                }
+            } else {
+                Err(ChessError::InvalidPromotion)
+            }
+        } else {
+            Err(ChessError::NoPieceAtPosition)
+        }
+    }
+
     fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
         let m = Move::get_pawn_advance_move(player);
         if let None = self.get_piece(position + m * 2) {
@@ -125,7 +146,7 @@ impl Board {
             }
         }
     }
-
+  
     fn add_moves_in_direction(&mut self, start: Position, piece: Piece) {
         match piece {
             Piece::Pawn(player) => {
@@ -161,5 +182,37 @@ impl Board {
                 }
             }
         }
+    }
+}
+
+// Add unit tests at the bottom of each file. Each tests module should only have access to super (non integration)
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_move_piece() {
+        let mut board: Board = Board::new();
+
+        board
+            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 })
+            .unwrap();
+        assert_eq!(
+            board.get_piece(Position { x: 0, y: 2 }).unwrap(),
+            Piece::Pawn(Player::White)
+        );
+    }
+
+    #[test]
+    fn test_promote_piece() {
+        let mut board: Board = Board::new();
+
+        board
+            .promote_piece(Position { x: 0, y: 1 }, Piece::Queen(Player::Black))
+            .unwrap();
+        assert_eq!(
+            board.get_piece(Position { x: 0, y: 1 }).unwrap(),
+            Piece::Queen(Player::Black)
+        );
     }
 }

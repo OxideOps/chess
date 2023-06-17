@@ -1,4 +1,5 @@
 pub type ChessResult<T> = Result<T, ChessError>;
+#[derive(Debug)]
 pub enum ChessError {
     OutOfBounds,           // Position is out of board bounds
     NoPieceAtPosition,     // There's no piece at the specified position
