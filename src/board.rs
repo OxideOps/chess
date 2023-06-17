@@ -83,27 +83,73 @@ impl Board {
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
         self.squares[to.x][to.y] = self.get_piece(from).take();
-
         Ok(())
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, m: Move) {
-        let mut position = start + m;
-        while Self::is_in_bounds(position).is_ok() {
-            if let Some(piece) = self.get_piece(position) {
-                // allow capturing an opponent's piece
-                if piece.get_player() != self.player {
-                    self.moves.insert((start, position));
+    fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
+        let m = Move::get_pawn_advance_move(player);
+        if let None = self.get_piece(position + m * 2) {
+            return match self.get_piece(position).unwrap().get_player() {
+                Player::White => position.y == 1,
+                Player::Black => position.y == 6,
+            };
+        }
+        false
+    }
+
+    fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
+        let m = Move::get_pawn_advance_move(player);
+        let new_position = start + m;
+        if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
+            self.moves.insert((start, new_position));
+            if self.pawn_can_double_move(start, player) {
+                self.moves.insert((start, new_position + m));
+            }
+        }
+    }
+
+    fn add_pawn_capture_moves(&mut self, start: Position, player: Player) {
+        let capture_moves = match player {
+            Player::White => Move::get_pawn_capture_moves_white(),
+            Player::Black => Move::get_pawn_capture_moves_black(),
+        };
+
+        for &m in capture_moves {
+            let new_position = start + m;
+            if Self::is_in_bounds(new_position).is_ok() {
+                if let Some(other_piece) = self.get_piece(new_position) {
+                    if other_piece.get_player() != player {
+                        self.moves.insert((start, new_position));
+                    }
                 }
-                return;
             }
-            self.moves.insert((start, position));
-            // if the piece cannot snipe (move multiple moves in one direction),
-            // return after the first move
-            if !self.get_piece(start).unwrap().can_snipe() {
-                return;
+        }
+    }
+
+    fn add_moves_in_direction(&mut self, start: Position, piece: Piece) {
+        match piece {
+            Piece::Pawn(player) => {
+                self.add_pawn_advance_moves(start, player);
+                self.add_pawn_capture_moves(start, player);
             }
-            position += m;
+            _ => {
+                for &m in piece.get_moves() {
+                    let mut position = start + m;
+                    while Self::is_in_bounds(position).is_ok() {
+                        if let Some(piece) = self.get_piece(position) {
+                            if piece.get_player() != self.player {
+                                self.moves.insert((start, position));
+                                break;
+                            }
+                        }
+                        self.moves.insert((start, position));
+                        if !self.get_piece(start).unwrap().can_snipe() {
+                            break;
+                        }
+                        position += m;
+                    }
+                }
+            }
         }
     }
 
@@ -111,16 +157,7 @@ impl Board {
         for x in 0..8 {
             for y in 0..8 {
                 if let Some(piece) = self.squares[x][y] {
-                    match piece {
-                        Piece::Pawn(..) => {
-                            // probably special case stuff
-                        }
-                        _ => {
-                            for m in piece.get_moves() {
-                                self.add_moves_in_direction(Position { x, y }, *m);
-                            }
-                        }
-                    }
+                    self.add_moves_in_direction(Position { x, y }, piece);
                 }
             }
         }

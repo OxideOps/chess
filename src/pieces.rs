@@ -56,7 +56,7 @@ pub struct Position {
 impl Add<Move> for Position {
     type Output = Self;
 
-    fn add(self, m: Move) -> Self {
+    fn add(self, m: Move) -> Self::Output {
         Self {
             x: self.x.wrapping_add(m.dx as usize),
             y: self.y.wrapping_add(m.dy as usize),
@@ -65,10 +65,10 @@ impl Add<Move> for Position {
 }
 
 impl AddAssign<Move> for Position {
-    fn add_assign(&mut self, other: Move) {
+    fn add_assign(&mut self, m: Move) {
         *self = Self {
-            x: self.x.wrapping_add(other.dx as usize),
-            y: self.y.wrapping_add(other.dy as usize),
+            x: self.x.wrapping_add(m.dx as usize),
+            y: self.y.wrapping_add(m.dy as usize),
         };
     }
 }
