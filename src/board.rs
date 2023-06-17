@@ -80,12 +80,17 @@ impl Board {
         }
     }
 
-    pub fn move_piece<F>(&mut self, from: Position, to: Position, promotion_callback: F) -> ChessResult<()>
+    pub fn move_piece<F>(
+        &mut self,
+        from: Position,
+        to: Position,
+        promotion_callback: F,
+    ) -> ChessResult<()>
     where
         F: Fn(Player) -> Piece,
     {
         self.is_move_valid(from, to)?;
-    
+
         if let Some(Piece::Pawn(player)) = self.get_piece(from).take() {
             if (player == Player::White && to.y == 7) || (player == Player::Black && to.y == 0) {
                 let promoted_piece = promotion_callback(player);
@@ -94,7 +99,6 @@ impl Board {
         }
         Ok(())
     }
-    
 
     pub fn promote_pawn(&mut self, position: Position, new_piece: Piece) -> ChessResult<()> {
         // The piece should be a pawn and should be on a promotion square
@@ -198,7 +202,9 @@ mod tests {
             .moves
             .insert((Position { x: 0, y: 1 }, Position { x: 0, y: 2 }));
         board
-            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 }, |player| Piece::Queen(Player::Black))
+            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 }, |player| {
+                Piece::Queen(Player::Black)
+            })
             .unwrap();
     }
 
