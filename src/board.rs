@@ -12,22 +12,27 @@ pub struct Board {
 }
 
 impl Board {
+    const RANK1: [Option<Piece>; 8] = Self::get_back_rank(Player::White);
+    const RANK8: [Option<Piece>; 8] = Self::get_back_rank(Player::Black);
+
     pub fn new() -> Self {
         let mut squares = [[None; BOARD_SIZE]; BOARD_SIZE];
 
         // Initialize white pawns
         for i in 0..8 {
-            squares[1][i] = Some(Piece::Pawn(Player::White));
+            squares[i][1] = Some(Piece::Pawn(Player::White));
         }
 
         // Initialize black pawns
         for i in 0..8 {
-            squares[6][i] = Some(Piece::Pawn(Player::Black));
+            squares[i][6] = Some(Piece::Pawn(Player::Black));
         }
 
         // Initialize the other white and black pieces
-        squares[0] = Self::get_back_rank(Player::White);
-        squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
+        for i in 0..8 {
+            squares[i][0] = Self::RANK1[i];
+            squares[i][BOARD_SIZE - 1] = Self::RANK8[i];
+        }
 
         Self {
             squares,
@@ -36,7 +41,7 @@ impl Board {
         }
     }
 
-    fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
+    const fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
         [
             Some(Piece::Rook(player)),
             Some(Piece::Knight(player)),
