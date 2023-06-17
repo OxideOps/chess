@@ -82,7 +82,15 @@ impl Board {
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
-        self.squares[to.x][to.y] = self.get_piece(from).take();
+        let mut piece = self.get_piece(from).take();
+
+        if let Some(Piece::Pawn(player)) = piece {
+            if (player == Player::White && to.y == 7) || (player == Player::Black && to.y == 0) {
+                // TODO: always promote to queen for now, need to handle this eventually
+                piece = Some(Piece::Queen(player));
+            }
+        }
+        self.squares[to.y][to.x] = piece;
         Ok(())
     }
 
@@ -154,12 +162,29 @@ impl Board {
     }
 
     fn add_moves(&mut self) {
-        for x in 0..8 {
-            for y in 0..8 {
+        for y in 0..8 {
+            for x in 0..8 {
                 if let Some(piece) = self.squares[y][x] {
                     self.add_moves_in_direction(Position { x, y }, piece);
                 }
             }
         }
+    }
+}
+
+// Add unit tests at the bottom of each file. Each tests module should only have access to super (non integration)
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_move_piece() {
+        let mut board: Board = Board::new();
+        board
+            .moves
+            .insert((Position { x: 0, y: 1 }, Position { x: 0, y: 2 }));
+        board
+            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 })
+            .unwrap();
     }
 }
