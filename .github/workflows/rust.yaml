@@ -35,6 +35,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-target-
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev
+
     - name: Check Formatting
       run: cargo fmt -- --check
 

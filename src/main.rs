@@ -41,7 +41,6 @@ impl Widget<String> for CustomWidget {
     }
 
     fn paint(&mut self, ctx: &mut PaintCtx, _data: &String, _env: &Env) {
-        println!("Here");
         let size = ctx.size();
         let rect = size.to_rect();
         ctx.fill(rect, &Color::WHITE);
