@@ -83,25 +83,28 @@ impl Board {
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
         self.squares[to.x][to.y] = self.get_piece(from).take();
-
         Ok(())
     }
 
-    fn pawn_can_double_move(&self, position: Position) -> bool {
-        match self.get_piece(position).unwrap().get_player() {
-            Player::White if position.y == 1 => true,
-            Player::Black if position.y == 6 => true,
-            _ => false,
+    fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
+        let m = Move::get_pawn_advance_move(player);
+        if let None = self.get_piece(position + m * 2) {
+            match self.get_piece(position).unwrap().get_player() {
+                Player::White if position.y == 1 => true,
+                Player::Black if position.y == 6 => true,
+                _ => false,
+            };
         }
+        false
     }
 
     fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
-        let advance_moves = Move::get_pawn_advance_moves(player, self.pawn_can_double_move(start));
-
-        for &m in advance_moves {
-            let new_position = start + m;
-            if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
-                self.moves.insert((start, new_position));
+        let m = Move::get_pawn_advance_move(player);
+        let new_position = start + m;
+        if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
+            self.moves.insert((start, new_position));
+            if self.pawn_can_double_move(start, player) {
+                self.moves.insert((start, new_position + m));
             }
         }
     }
@@ -135,17 +138,14 @@ impl Board {
                     let mut position = start + m;
                     while Self::is_in_bounds(position).is_ok() {
                         if let Some(piece) = self.get_piece(position) {
-                            // allow capturing an opponent's piece
                             if piece.get_player() != self.player {
                                 self.moves.insert((start, position));
+                                break;
                             }
-                            return;
                         }
                         self.moves.insert((start, position));
-                        // if the piece cannot snipe (move multiple moves in one direction),
-                        // return after the first move
                         if !self.get_piece(start).unwrap().can_snipe() {
-                            return;
+                            break;
                         }
                         position += m;
                     }
