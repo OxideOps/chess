@@ -49,7 +49,7 @@ impl Board {
         ]
     }
 
-    fn get_piece(&self, position: Position) -> Option<Piece> {
+    pub fn get_piece(&self, position: Position) -> Option<Piece> {
         self.squares[position.y][position.x]
     }
 
