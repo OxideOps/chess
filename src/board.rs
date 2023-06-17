@@ -50,7 +50,7 @@ impl Board {
     }
 
     fn get_piece(&self, position: Position) -> Option<Piece> {
-        self.squares[position.x][position.y]
+        self.squares[position.y][position.x]
     }
 
     fn is_in_bounds(position: Position) -> ChessResult<()> {
@@ -156,7 +156,7 @@ impl Board {
     fn add_moves(&mut self) {
         for x in 0..8 {
             for y in 0..8 {
-                if let Some(piece) = self.squares[x][y] {
+                if let Some(piece) = self.squares[y][x] {
                     self.add_moves_in_direction(Position { x, y }, piece);
                 }
             }
