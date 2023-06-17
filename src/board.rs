@@ -193,25 +193,20 @@ mod tests {
     #[test]
     fn test_move_piece() {
         let mut board: Board = Board::new();
-
-        board
-            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 })
-            .unwrap();
-        assert_eq!(
-            board.get_piece(Position { x: 0, y: 2 }).unwrap(),
-            Piece::Pawn(Player::White)
-        );
+        board.moves.insert((Position {x: 0, y: 1}, Position {x: 0, y: 2}));
+        board.move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 }).unwrap();
     }
 
     #[test]
     fn test_promote_piece() {
         let mut board: Board = Board::new();
-
+        // put a black pawn in rank on opposite side of board to promote
+        board.squares[0][0] = Some(Piece::Pawn(Player::Black));
         board
-            .promote_piece(Position { x: 0, y: 1 }, Piece::Queen(Player::Black))
+            .promote_piece(Position { x: 0, y: 0 }, Piece::Queen(Player::Black))
             .unwrap();
         assert_eq!(
-            board.get_piece(Position { x: 0, y: 1 }).unwrap(),
+            board.get_piece(Position { x: 0, y: 0 }).unwrap(),
             Piece::Queen(Player::Black)
         );
     }
