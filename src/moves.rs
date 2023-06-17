@@ -37,11 +37,11 @@ impl Move {
     }
 
     pub fn get_pawn_capture_moves_white() -> &'static [Self] {
-        &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }]
+        &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }]
     }
 
     pub fn get_pawn_capture_moves_black() -> &'static [Self] {
-        &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }]
+        &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }]
     }
 
     pub fn get_queen_moves() -> &'static [Self] {
