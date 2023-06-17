@@ -2,4 +2,4 @@
 pub mod board;
 mod game;
 mod moves;
-mod pieces;
+pub mod pieces;
