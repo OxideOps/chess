@@ -89,10 +89,9 @@ impl Board {
     fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
         let m = Move::get_pawn_advance_move(player);
         if let None = self.get_piece(position + m * 2) {
-            match self.get_piece(position).unwrap().get_player() {
-                Player::White if position.y == 1 => true,
-                Player::Black if position.y == 6 => true,
-                _ => false,
+            return match self.get_piece(position).unwrap().get_player() {
+                Player::White => position.y == 1,
+                Player::Black => position.y == 6,
             };
         }
         false

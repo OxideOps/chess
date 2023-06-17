@@ -30,15 +30,10 @@ impl Move {
     ];
 
     pub fn get_pawn_advance_move(player: Player) -> Self {
-        let dx;
-        let dy;
-
         match player {
-            Player::White => (dx, dy) = (0, -1),
-            Player::Black => (dx, dy) = (0, 1),
+            Player::White => Self { dx: 0, dy: -1 },
+            Player::Black => Self { dx: 0, dy: 1 },
         }
-
-        Self { dx, dy }
     }
 
     pub fn get_pawn_capture_moves_white() -> &'static [Self] {
