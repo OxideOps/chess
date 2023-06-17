@@ -80,36 +80,18 @@ impl Board {
         }
     }
 
-    pub fn move_piece<F>(
-        &mut self,
-        from: Position,
-        to: Position,
-        promotion_callback: F,
-    ) -> ChessResult<()>
-    where
-        F: Fn(Player) -> Piece,
-    {
+    pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
+        let mut piece = self.get_piece(from).take();
 
-        if let Some(Piece::Pawn(player)) = self.get_piece(from).take() {
+        if let Some(Piece::Pawn(player)) = piece {
             if (player == Player::White && to.y == 7) || (player == Player::Black && to.y == 0) {
-                let promoted_piece = promotion_callback(player);
-                self.promote_pawn(to, promoted_piece)?;
+                // TODO: always promote to queen for now, need to handle this eventually
+                piece = Some(Piece::Queen(player));
             }
         }
+        self.squares[to.y][to.x] = piece;
         Ok(())
-    }
-
-    pub fn promote_pawn(&mut self, position: Position, new_piece: Piece) -> ChessResult<()> {
-        // The piece should be a pawn and should be on a promotion square
-        if let Some(Piece::Pawn(player)) = self.get_piece(position) {
-            // Replace the pawn with the new piece
-            self.squares[position.y][position.x] = Some(new_piece);
-            Ok(())
-        } else {
-            // If the piece is not a pawn or not on a promotion square, return an error
-            Err(ChessError::InvalidPromotion)
-        }
     }
 
     fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
@@ -202,23 +184,7 @@ mod tests {
             .moves
             .insert((Position { x: 0, y: 1 }, Position { x: 0, y: 2 }));
         board
-            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 }, |player| {
-                Piece::Queen(Player::Black)
-            })
+            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 })
             .unwrap();
-    }
-
-    #[test]
-    fn test_promote_piece() {
-        let mut board: Board = Board::new();
-        // put a black pawn in rank on opposite side of board to promote
-        board.squares[0][0] = Some(Piece::Pawn(Player::Black));
-        board
-            .promote_pawn(Position { x: 0, y: 0 }, Piece::Queen(Player::Black))
-            .unwrap();
-        assert_eq!(
-            board.get_piece(Position { x: 0, y: 0 }).unwrap(),
-            Piece::Queen(Player::Black)
-        );
     }
 }
