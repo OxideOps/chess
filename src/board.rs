@@ -80,30 +80,31 @@ impl Board {
         }
     }
 
-    pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
+    pub fn move_piece<F>(&mut self, from: Position, to: Position, promotion_callback: F) -> ChessResult<()>
+    where
+        F: Fn(Player) -> Piece,
+    {
         self.is_move_valid(from, to)?;
-        self.squares[to.x][to.y] = self.get_piece(from).take();
+    
+        if let Some(Piece::Pawn(player)) = self.get_piece(from).take() {
+            if (player == Player::White && to.y == 7) || (player == Player::Black && to.y == 0) {
+                let promoted_piece = promotion_callback(player);
+                self.promote_pawn(to, promoted_piece)?;
+            }
+        }
         Ok(())
     }
+    
 
-    pub fn promote_piece(&mut self, position: Position, new_piece: Piece) -> ChessResult<()> {
-        // We should only be able to promote a pawn
-        if let Some(piece) = self.get_piece(position) {
-            if let Piece::Pawn(player) = piece {
-                // Only promote if the pawn is on the opposite end of the board
-                if (player == Player::White && position.y == 7)
-                    || (player == Player::Black && position.y == 0)
-                {
-                    self.squares[position.y][position.x] = Some(new_piece);
-                    Ok(())
-                } else {
-                    Err(ChessError::InvalidPromotion)
-                }
-            } else {
-                Err(ChessError::InvalidPromotion)
-            }
+    pub fn promote_pawn(&mut self, position: Position, new_piece: Piece) -> ChessResult<()> {
+        // The piece should be a pawn and should be on a promotion square
+        if let Some(Piece::Pawn(player)) = self.get_piece(position) {
+            // Replace the pawn with the new piece
+            self.squares[position.y][position.x] = Some(new_piece);
+            Ok(())
         } else {
-            Err(ChessError::NoPieceAtPosition)
+            // If the piece is not a pawn or not on a promotion square, return an error
+            Err(ChessError::InvalidPromotion)
         }
     }
 
@@ -146,7 +147,7 @@ impl Board {
             }
         }
     }
-  
+
     fn add_moves_in_direction(&mut self, start: Position, piece: Piece) {
         match piece {
             Piece::Pawn(player) => {
@@ -175,8 +176,8 @@ impl Board {
     }
 
     fn add_moves(&mut self) {
-        for x in 0..8 {
-            for y in 0..8 {
+        for y in 0..8 {
+            for x in 0..8 {
                 if let Some(piece) = self.squares[y][x] {
                     self.add_moves_in_direction(Position { x, y }, piece);
                 }
@@ -193,8 +194,12 @@ mod tests {
     #[test]
     fn test_move_piece() {
         let mut board: Board = Board::new();
-        board.moves.insert((Position {x: 0, y: 1}, Position {x: 0, y: 2}));
-        board.move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 }).unwrap();
+        board
+            .moves
+            .insert((Position { x: 0, y: 1 }, Position { x: 0, y: 2 }));
+        board
+            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 }, |player| Piece::Queen(Player::Black))
+            .unwrap();
     }
 
     #[test]
@@ -203,7 +208,7 @@ mod tests {
         // put a black pawn in rank on opposite side of board to promote
         board.squares[0][0] = Some(Piece::Pawn(Player::Black));
         board
-            .promote_piece(Position { x: 0, y: 0 }, Piece::Queen(Player::Black))
+            .promote_pawn(Position { x: 0, y: 0 }, Piece::Queen(Player::Black))
             .unwrap();
         assert_eq!(
             board.get_piece(Position { x: 0, y: 0 }).unwrap(),
