@@ -1,3 +1,6 @@
+use crate::board::Board;
+use crate::pieces::{Piece, Position};
+
 pub type ChessResult<T> = Result<T, ChessError>;
 #[derive(Debug)]
 pub enum ChessError {
@@ -18,4 +21,22 @@ pub enum GameStatus {
     Stalemate,
     Check,
     Checkmate,
+}
+
+pub struct Game {
+    board: Board,
+    status: GameStatus,
+}
+
+impl Game {
+    pub fn new() -> Self {
+        Self {
+            board: Board::new(),
+            status: GameStatus::Ongoing,
+        }
+    }
+
+    pub fn get_piece(&self, position: Position) -> Option<Piece> {
+        self.board.get_piece(position)
+    }
 }

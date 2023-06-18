@@ -1,8 +1,10 @@
-use crate::board::Board;
+use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
 use druid::piet::{ImageFormat, InterpolationMode};
-use druid::widget::prelude::*;
-use druid::{Color, Rect};
+use druid::{
+    BoxConstraints, Color, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
+    Rect, RenderContext, Size, UpdateCtx, Widget,
+};
 use image::io::Reader as ImageReader;
 use std::fs::read;
 
@@ -21,18 +23,16 @@ fn get_image(file_name: String) -> Vec<u8> {
 }
 
 pub struct ChessWidget {
-    board: Board,
+    game: Game,
 }
 
 impl ChessWidget {
     pub fn new() -> Self {
-        Self {
-            board: Board::new(),
-        }
+        Self { game: Game::new() }
     }
 
     fn get_image_file(&self, position: Position) -> Option<String> {
-        if let Some(piece) = self.board.get_piece(position) {
+        if let Some(piece) = self.game.get_piece(position) {
             let name = match piece {
                 Piece::Rook(..) => "Rook",
                 Piece::Bishop(..) => "Bishop",
