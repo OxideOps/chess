@@ -145,6 +145,13 @@ impl Widget<String> for ChessWidget {
                 self.mouse_down = Some(event.pos);
             }
             Event::MouseUp(event) => {
+                if let Some(mouse_down) = self.mouse_down {
+                    let from = Position::from(mouse_down);
+                    let to = Position::from(event.pos);
+                    self.game.move_piece(from, to).map_err(|chess_error| {
+                        println!("{:?}", chess_error);
+                    }).ok();
+                }
                 self.mouse_down = None;
             }
             Event::MouseMove(event) => {

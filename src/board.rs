@@ -29,11 +29,13 @@ impl Board {
         squares[0] = Self::get_back_rank(Player::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        Self {
+        let mut board = Self {
             squares,
             moves: HashSet::new(),
             player: Player::White,
-        }
+        };
+        board.add_moves();
+        board
     }
 
     fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
@@ -82,7 +84,7 @@ impl Board {
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
         self.is_move_valid(from, to)?;
-        let mut piece = self.get_piece(from).take();
+        let mut piece = self.get_piece(from);
 
         if let Some(Piece::Pawn(player)) = piece {
             if (player == Player::White && to.y == 7) || (player == Player::Black && to.y == 0) {
@@ -91,6 +93,7 @@ impl Board {
             }
         }
         self.squares[to.y][to.x] = piece;
+        self.squares[from.y][from.x] = None;
         Ok(())
     }
 

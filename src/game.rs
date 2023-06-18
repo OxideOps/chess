@@ -39,4 +39,8 @@ impl Game {
     pub fn get_piece(&self, position: Position) -> Option<Piece> {
         self.board.get_piece(position)
     }
+
+    pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
+        self.board.move_piece(from, to)
+    }
 }
