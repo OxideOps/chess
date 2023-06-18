@@ -159,10 +159,10 @@ impl ChessWidget {
 impl Widget<String> for ChessWidget {
     fn event(&mut self, ctx: &mut EventCtx, event: &Event, _data: &mut String, _env: &Env) {
         match event {
-            Event::MouseDown(mouse_event) => {
+            &Event::MouseDown(ref mouse_event) => {
                 self.mouse_down = Some(mouse_event.pos);
             }
-            Event::MouseUp(mouse_event) => {
+            &Event::MouseUp(ref mouse_event) => {
                 if let Some(mouse_down) = self.mouse_down {
                     let from = Position::from(mouse_down);
                     let to = self.get_dragged_piece_position(mouse_event.pos);
@@ -172,10 +172,11 @@ impl Widget<String> for ChessWidget {
                             println!("{:?}", chess_error);
                         })
                         .ok();
+                    self.mouse_down = None;
+                    ctx.request_paint();
                 }
-                self.mouse_down = None;
             }
-            Event::MouseMove(mouse_event) => {
+            &Event::MouseMove(ref mouse_event) => {
                 self.current_point = mouse_event.pos;
                 // if we are currently holding onto a piece, request a redraw
                 if let Some(mouse_down) = self.mouse_down {
