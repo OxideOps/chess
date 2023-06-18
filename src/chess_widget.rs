@@ -154,6 +154,14 @@ impl ChessWidget {
             y: mouse_up.y - y_offset,
         })
     }
+
+    fn get_dragged_piece_start_position(&self) -> Option<Position> {
+        if let Some(mouse_down) = self.mouse_down {
+            Some(Position::from(mouse_down))
+        } else {
+            None
+        }
+    }
 }
 
 impl Widget<String> for ChessWidget {
@@ -222,10 +230,17 @@ impl Widget<String> for ChessWidget {
 
         self.draw_background(ctx);
 
+        let dpsp = self.get_dragged_piece_start_position();
         for x in 0..8 {
             for y in 0..8 {
-                self.draw_square(ctx, Position { x, y });
+                if Some(Position { x, y }) != dpsp {
+                    self.draw_square(ctx, Position { x, y });
+                }
             }
+        }
+        // If we are dragging a piece, we need to draw it last in case it overlaps other pieces
+        if let Some(position) = dpsp {
+            self.draw_square(ctx, position);
         }
     }
 }
