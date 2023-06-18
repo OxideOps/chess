@@ -136,6 +136,24 @@ impl ChessWidget {
             );
         }
     }
+
+    // We want the square a dragged piece is considered to be on to be based on the center of
+    // the piece, not the location of the mouse. This requires offsetting based on the original
+    // mouse down location
+    fn get_dragged_piece_position(&self, mouse_up: Point) -> Position {
+        let mouse_down = self.mouse_down.unwrap();
+        let top_left = Point::from(Position::from(mouse_down));
+        let middle = Point {
+            x: top_left.x + WINDOW_SIZE / 16.0,
+            y: top_left.y + WINDOW_SIZE / 16.0,
+        };
+        let x_offset = mouse_down.x - middle.x;
+        let y_offset = mouse_down.y - middle.y;
+        Position::from(Point {
+            x: mouse_up.x - x_offset,
+            y: mouse_up.y - y_offset,
+        })
+    }
 }
 
 impl Widget<String> for ChessWidget {
@@ -147,10 +165,13 @@ impl Widget<String> for ChessWidget {
             Event::MouseUp(event) => {
                 if let Some(mouse_down) = self.mouse_down {
                     let from = Position::from(mouse_down);
-                    let to = Position::from(event.pos);
-                    self.game.move_piece(from, to).map_err(|chess_error| {
-                        println!("{:?}", chess_error);
-                    }).ok();
+                    let to = self.get_dragged_piece_position(event.pos);
+                    self.game
+                        .move_piece(from, to)
+                        .map_err(|chess_error| {
+                            println!("{:?}", chess_error);
+                        })
+                        .ok();
                 }
                 self.mouse_down = None;
             }
