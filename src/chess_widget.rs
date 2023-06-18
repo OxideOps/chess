@@ -31,29 +31,20 @@ impl ChessWidget {
         Self { game: Game::new() }
     }
 
-    fn get_image_file(&self, position: Position) -> Option<String> {
-        if let Some(piece) = self.game.get_piece(position) {
-            let name = match piece {
-                Piece::Rook(..) => "Rook",
-                Piece::Bishop(..) => "Bishop",
-                Piece::Pawn(..) => "Pawn",
-                Piece::Knight(..) => "Knight",
-                Piece::King(..) => "King",
-                Piece::Queen(..) => "Queen",
-            };
-            let player = match piece.get_player() {
-                Player::White => "white",
-                Player::Black => "black",
-            };
-            let background = match (position.x + position.y) % 2 {
-                0 => "Dark",
-                1 => "Light",
-                _ => "",
-            };
-            Some("images/".to_owned() + player + name + background + ".png")
-        } else {
-            None
-        }
+    fn get_image_file(&self, piece: Piece) -> String {
+        let name = match piece {
+            Piece::Rook(..) => "Rook",
+            Piece::Bishop(..) => "Bishop",
+            Piece::Pawn(..) => "Pawn",
+            Piece::Knight(..) => "Knight",
+            Piece::King(..) => "King",
+            Piece::Queen(..) => "Queen",
+        };
+        let player = match piece.get_player() {
+            Player::White => "white",
+            Player::Black => "black",
+        };
+        "images/".to_owned() + player + name + ".png"
     }
 
     fn draw_background(&self, ctx: &mut PaintCtx) {
@@ -69,10 +60,15 @@ impl ChessWidget {
     }
 
     fn draw_square(&self, ctx: &mut PaintCtx, position: Position) {
-        if let Some(image_file) = self.get_image_file(position) {
-            let image_data = get_image(image_file);
+        if let Some(piece) = self.game.get_piece(position) {
+            let image_data = get_image(self.get_image_file(piece));
             let image = ctx
-                .make_image(PIECE_SIZE, PIECE_SIZE, &image_data, ImageFormat::Rgb)
+                .make_image(
+                    PIECE_SIZE,
+                    PIECE_SIZE,
+                    &image_data,
+                    ImageFormat::RgbaSeparate,
+                )
                 .unwrap();
             let x0 = WINDOW_SIZE * position.x as f64 / 8.0;
             let y1 = WINDOW_SIZE * (1.0 - (position.y as f64) / 8.0);
