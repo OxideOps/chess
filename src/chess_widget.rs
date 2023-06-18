@@ -157,15 +157,15 @@ impl ChessWidget {
 }
 
 impl Widget<String> for ChessWidget {
-    fn event(&mut self, _ctx: &mut EventCtx, _event: &Event, _data: &mut String, _env: &Env) {
-        match _event {
-            Event::MouseDown(event) => {
-                self.mouse_down = Some(event.pos);
+    fn event(&mut self, ctx: &mut EventCtx, event: &Event, _data: &mut String, _env: &Env) {
+        match event {
+            Event::MouseDown(mouse_event) => {
+                self.mouse_down = Some(mouse_event.pos);
             }
-            Event::MouseUp(event) => {
+            Event::MouseUp(mouse_event) => {
                 if let Some(mouse_down) = self.mouse_down {
                     let from = Position::from(mouse_down);
-                    let to = self.get_dragged_piece_position(event.pos);
+                    let to = self.get_dragged_piece_position(mouse_event.pos);
                     self.game
                         .move_piece(from, to)
                         .map_err(|chess_error| {
@@ -175,12 +175,12 @@ impl Widget<String> for ChessWidget {
                 }
                 self.mouse_down = None;
             }
-            Event::MouseMove(event) => {
-                self.current_point = event.pos;
+            Event::MouseMove(mouse_event) => {
+                self.current_point = mouse_event.pos;
                 // if we are currently holding onto a piece, request a redraw
                 if let Some(mouse_down) = self.mouse_down {
                     if self.game.get_piece(Position::from(mouse_down)).is_some() {
-                        _ctx.request_paint();
+                        ctx.request_paint();
                     }
                 }
             }
