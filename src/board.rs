@@ -150,8 +150,8 @@ impl Board {
                         if let Some(piece) = self.get_piece(position) {
                             if piece.get_player() != self.player {
                                 self.moves.insert((start, position));
-                                break;
                             }
+                            break;
                         }
                         self.moves.insert((start, position));
                         if !self.get_piece(start).unwrap().can_snipe() {
