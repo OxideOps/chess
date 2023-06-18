@@ -180,8 +180,9 @@ impl Widget<String> for ChessWidget {
                             println!("{:?}", chess_error);
                         })
                         .ok();
+                    self.mouse_down = None;
+                    ctx.request_paint();
                 }
-                self.mouse_down = None;
             }
             Event::MouseMove(mouse_event) => {
                 self.current_point = mouse_event.pos;
