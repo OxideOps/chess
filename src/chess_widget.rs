@@ -1,7 +1,8 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
-use druid::piet::{ImageFormat, InterpolationMode};
 use druid::{
+    keyboard_types::Key,
+    piet::{ImageFormat, InterpolationMode},
     BoxConstraints, Color, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
     Point, Rect, RenderContext, Size, UpdateCtx, Widget,
 };
@@ -167,6 +168,10 @@ impl ChessWidget {
 impl Widget<String> for ChessWidget {
     fn event(&mut self, ctx: &mut EventCtx, event: &Event, _data: &mut String, _env: &Env) {
         match event {
+            //Let this widget receive keyboard Events
+            Event::WindowConnected => {
+                ctx.request_focus();
+            }
             Event::MouseDown(mouse_event) => {
                 self.mouse_down = Some(mouse_event.pos);
             }
@@ -193,6 +198,18 @@ impl Widget<String> for ChessWidget {
                     }
                 }
             }
+            Event::KeyDown(key_event) => match key_event.key {
+                Key::ArrowLeft => {
+                    println!("left arrow pressed down")
+                }
+                Key::ArrowRight => {
+                    println!("right arrow pressed down")
+                }
+                Key::Character(ref c) => {
+                    println!("'{}' pressed down", c.to_uppercase())
+                }
+                _ => {}
+            },
             _ => {}
         }
     }
