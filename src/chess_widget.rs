@@ -1,8 +1,10 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
 use druid::{
-    piet::{ImageFormat, InterpolationMode}, BoxConstraints, Color, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
-    Point, Rect, RenderContext, Size, UpdateCtx, Widget, keyboard_types::Key,
+    keyboard_types::Key,
+    piet::{ImageFormat, InterpolationMode},
+    BoxConstraints, Color, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
+    Point, Rect, RenderContext, Size, UpdateCtx, Widget,
 };
 use image::io::Reader as ImageReader;
 use std::fs::read;
@@ -47,8 +49,6 @@ pub struct ChessWidget {
     piece_images: [Vec<u8>; 12],
     mouse_down: Option<Point>,
     current_point: Point,
-    undo_moves: Vec<(Position, Position)>,
-    redo_moves: Vec<(Position, Position)>,
 }
 
 impl ChessWidget {
@@ -59,8 +59,6 @@ impl ChessWidget {
             piece_images: Self::get_image_files(),
             mouse_down: None,
             current_point: Point { x: 0.0, y: 0.0 },
-            undo_moves: Vec::new(),
-            redo_moves: Vec::new(),
         }
     }
 
@@ -200,28 +198,24 @@ impl Widget<String> for ChessWidget {
                     }
                 }
             }
-            Event::KeyDown(key_event) => {
-                match key_event.key {
-                    Key::ArrowLeft => { println!("left arrow pressed down") },
-                    Key::ArrowRight => { println!("right arrow pressed down") },
-                    Key::Character(ref c) => {
-                        println!("'{}' pressed down", c.to_uppercase())
-                    },
-                    _ => {}
+            Event::KeyDown(key_event) => match key_event.key {
+                Key::ArrowLeft => {
+                    println!("left arrow pressed down")
                 }
-            }
+                Key::ArrowRight => {
+                    println!("right arrow pressed down")
+                }
+                Key::Character(ref c) => {
+                    println!("'{}' pressed down", c.to_uppercase())
+                }
+                _ => {}
+            },
             _ => {}
         }
     }
 
-fn lifecycle(
-    &mut self,
-    ctx: &mut LifeCycleCtx,
-    event: &LifeCycle,
-    _data: &String,
-    _env: &Env,
-) {
-}
+    fn lifecycle(&mut self, ctx: &mut LifeCycleCtx, event: &LifeCycle, _data: &String, _env: &Env) {
+    }
 
     fn update(&mut self, _ctx: &mut UpdateCtx, _old_data: &String, _data: &String, _env: &Env) {}
 
