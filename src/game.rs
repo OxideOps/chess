@@ -1,5 +1,6 @@
 use crate::board::Board;
 use crate::pieces::{Piece, Player, Position};
+use crate::moves::Move;
 
 pub type ChessResult<T> = Result<T, ChessError>;
 #[derive(Debug)]
