@@ -1,5 +1,5 @@
 use crate::board::Board;
-use crate::pieces::{Piece, Position};
+use crate::pieces::{Piece, Player, Position};
 
 pub type ChessResult<T> = Result<T, ChessError>;
 #[derive(Debug)]
@@ -41,6 +41,12 @@ impl Game {
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
-        self.board.move_piece(from, to)
+        self.board.move_piece(from, to)?;
+        self.board.player = match self.board.player {
+            Player::White => Player::Black,
+            Player::Black => Player::White,
+        };
+        self.board.add_moves();
+        Ok(())
     }
 }
