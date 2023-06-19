@@ -41,6 +41,8 @@ impl Game {
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
-        self.board.move_piece(from, to)
+        self.board.move_piece(from, to)?;
+        self.board.next_turn();
+        Ok(())
     }
 }
