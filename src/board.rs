@@ -97,6 +97,14 @@ impl Board {
         Ok(())
     }
 
+    pub fn next_turn(&mut self) {
+        self.player = match self.player {
+            Player::White => Player::Black,
+            Player::Black => Player::White,
+        };
+        self.add_moves();
+    }
+
     fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
         let m = Move::get_pawn_advance_move(player);
         if let None = self.get_piece(position + m * 2) {
