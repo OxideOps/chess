@@ -214,8 +214,7 @@ impl Widget<String> for ChessWidget {
         }
     }
 
-    fn lifecycle(&mut self, ctx: &mut LifeCycleCtx, event: &LifeCycle, data: &String, env: &Env) {
-    }
+    fn lifecycle(&mut self, ctx: &mut LifeCycleCtx, event: &LifeCycle, data: &String, env: &Env) {}
 
     fn update(&mut self, ctx: &mut UpdateCtx, old_data: &String, data: &String, env: &Env) {}
 
