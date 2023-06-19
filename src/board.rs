@@ -8,7 +8,7 @@ const BOARD_SIZE: usize = 8;
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     moves: HashSet<(Position, Position)>,
-    pub player: Player,
+    player: Player,
 }
 
 impl Board {
@@ -164,14 +164,11 @@ impl Board {
         }
     }
 
-    pub fn add_moves(&mut self) {
-        self.moves.clear();
+    fn add_moves(&mut self) {
         for y in 0..8 {
             for x in 0..8 {
                 if let Some(piece) = self.squares[y][x] {
-                    if piece.get_player() == self.player {
-                        self.add_moves_in_direction(Position { x, y }, piece);
-                    }
+                    self.add_moves_in_direction(Position { x, y }, piece);
                 }
             }
         }
