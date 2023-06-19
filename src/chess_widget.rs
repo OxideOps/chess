@@ -166,7 +166,7 @@ impl ChessWidget {
 }
 
 impl Widget<String> for ChessWidget {
-    fn event(&mut self, ctx: &mut EventCtx, event: &Event, _data: &mut String, _env: &Env) {
+    fn event(&mut self, ctx: &mut EventCtx, event: &Event, data: &mut String, env: &Env) {
         match event {
             //Let this widget receive keyboard Events
             Event::WindowConnected => {
@@ -214,17 +214,17 @@ impl Widget<String> for ChessWidget {
         }
     }
 
-    fn lifecycle(&mut self, ctx: &mut LifeCycleCtx, event: &LifeCycle, _data: &String, _env: &Env) {
+    fn lifecycle(&mut self, ctx: &mut LifeCycleCtx, event: &LifeCycle, data: &String, env: &Env) {
     }
 
-    fn update(&mut self, _ctx: &mut UpdateCtx, _old_data: &String, _data: &String, _env: &Env) {}
+    fn update(&mut self, ctx: &mut UpdateCtx, old_data: &String, data: &String, env: &Env) {}
 
     fn layout(
         &mut self,
-        _layout_ctx: &mut LayoutCtx,
+        layout_ctx: &mut LayoutCtx,
         bc: &BoxConstraints,
-        _data: &String,
-        _env: &Env,
+        data: &String,
+        env: &Env,
     ) -> Size {
         if bc.is_width_bounded() | bc.is_height_bounded() {
             let size = Size::new(WINDOW_SIZE, WINDOW_SIZE);
@@ -234,7 +234,7 @@ impl Widget<String> for ChessWidget {
         }
     }
 
-    fn paint(&mut self, ctx: &mut PaintCtx, _data: &String, _env: &Env) {
+    fn paint(&mut self, ctx: &mut PaintCtx, data: &String, env: &Env) {
         let size = ctx.size();
         let rect = size.to_rect();
         ctx.fill(rect, &Color::WHITE);
