@@ -1,9 +1,8 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
-use druid::piet::PietImage;
 use druid::{
     keyboard_types::Key,
-    piet::{ImageFormat, InterpolationMode},
+    piet::{ImageFormat, InterpolationMode, PietImage},
     BoxConstraints, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx, Point,
     Rect, RenderContext, Size, UpdateCtx, Widget,
 };
