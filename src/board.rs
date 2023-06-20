@@ -1,3 +1,4 @@
+use crate::displacement::Displacement;
 use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
@@ -7,7 +8,7 @@ const BOARD_SIZE: usize = 8;
 
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
-    moves: HashSet<(Position, Position)>,
+    moves: HashSet<Move>,
     pub player: Player,
 }
 
@@ -71,11 +72,11 @@ impl Board {
         }
     }
 
-    fn is_move_valid(&self, from: Position, to: Position) -> ChessResult<()> {
-        Self::is_in_bounds(from)?;
-        Self::is_in_bounds(to)?;
-        self.is_piece_some(from)?;
-        if self.moves.contains(&(from, to)) {
+    fn is_move_valid(&self, m: Move) -> ChessResult<()> {
+        Self::is_in_bounds(m.from)?;
+        Self::is_in_bounds(m.to)?;
+        self.is_piece_some(m.from)?;
+        if self.moves.contains(&m) {
             Ok(())
         } else {
             Err(ChessError::InvalidMove)
@@ -83,17 +84,19 @@ impl Board {
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
-        self.is_move_valid(from, to)?;
-        let mut piece = self.get_piece(from);
+        let m = Move { from, to };
+        self.is_move_valid(m)?;
+        let mut piece = self.get_piece(m.from);
 
         if let Some(Piece::Pawn(player)) = piece {
-            if (player == Player::White && to.y == 7) || (player == Player::Black && to.y == 0) {
+            if (player == Player::White && m.to.y == 7) || (player == Player::Black && m.to.y == 0)
+            {
                 // TODO: always promote to queen for now, need to handle this eventually
                 piece = Some(Piece::Queen(player));
             }
         }
-        self.squares[to.y][to.x] = piece;
-        self.squares[from.y][from.x] = None;
+        self.squares[m.to.y][m.to.x] = piece;
+        self.squares[m.from.y][m.from.x] = None;
         Ok(())
     }
 
@@ -106,8 +109,8 @@ impl Board {
     }
 
     fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
-        let m = Move::get_pawn_advance_move(player);
-        if let None = self.get_piece(position + m * 2) {
+        let v = Displacement::get_pawn_advance_vector(player);
+        if let None = self.get_piece(position + v * 2) {
             return match self.get_piece(position).unwrap().get_player() {
                 Player::White => position.y == 1,
                 Player::Black => position.y == 6,
@@ -117,55 +120,64 @@ impl Board {
     }
 
     fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
-        let m = Move::get_pawn_advance_move(player);
-        let new_position = start + m;
+        let v = Displacement::get_pawn_advance_vector(player);
+        let new_position = start + v;
         if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
-            self.moves.insert((start, new_position));
+            self.moves.insert(Move {
+                from: start,
+                to: new_position,
+            });
             if self.pawn_can_double_move(start, player) {
-                self.moves.insert((start, new_position + m));
+                self.moves.insert(Move {
+                    from: start,
+                    to: new_position + v,
+                });
             }
         }
     }
 
     fn add_pawn_capture_moves(&mut self, start: Position, player: Player) {
-        let capture_moves = match player {
-            Player::White => Move::get_pawn_capture_moves_white(),
-            Player::Black => Move::get_pawn_capture_moves_black(),
+        let capture_vectors = match player {
+            Player::White => Displacement::get_white_pawn_capture_vectors(),
+            Player::Black => Displacement::get_black_pawn_capture_vectors(),
         };
 
-        for &m in capture_moves {
-            let new_position = start + m;
+        for &v in capture_vectors {
+            let new_position = start + v;
             if Self::is_in_bounds(new_position).is_ok() {
                 if let Some(other_piece) = self.get_piece(new_position) {
                     if other_piece.get_player() != player {
-                        self.moves.insert((start, new_position));
+                        self.moves.insert(Move {
+                            from: start,
+                            to: new_position,
+                        });
                     }
                 }
             }
         }
     }
 
-    fn add_moves_in_direction(&mut self, start: Position, piece: Piece) {
+    fn add_moves_in_direction(&mut self, from: Position, piece: Piece) {
         match piece {
             Piece::Pawn(player) => {
-                self.add_pawn_advance_moves(start, player);
-                self.add_pawn_capture_moves(start, player);
+                self.add_pawn_advance_moves(from, player);
+                self.add_pawn_capture_moves(from, player);
             }
             _ => {
-                for &m in piece.get_moves() {
-                    let mut position = start + m;
-                    while Self::is_in_bounds(position).is_ok() {
-                        if let Some(piece) = self.get_piece(position) {
+                for &v in piece.get_vectors() {
+                    let mut to = from + v;
+                    while Self::is_in_bounds(to).is_ok() {
+                        if let Some(piece) = self.get_piece(to) {
                             if piece.get_player() != self.player {
-                                self.moves.insert((start, position));
+                                self.moves.insert(Move { from, to });
                             }
                             break;
                         }
-                        self.moves.insert((start, position));
-                        if !self.get_piece(start).unwrap().can_snipe() {
+                        self.moves.insert(Move { from, to });
+                        if !self.get_piece(from).unwrap().can_snipe() {
                             break;
                         }
-                        position += m;
+                        to += v;
                     }
                 }
             }
@@ -194,11 +206,10 @@ mod tests {
     #[test]
     fn test_move_piece() {
         let mut board: Board = Board::new();
-        board
-            .moves
-            .insert((Position { x: 0, y: 1 }, Position { x: 0, y: 2 }));
-        board
-            .move_piece(Position { x: 0, y: 1 }, Position { x: 0, y: 2 })
-            .unwrap();
+
+        let from = Position { x: 0, y: 1 };
+        let to = Position { x: 0, y: 2 };
+        board.moves.insert(Move { from, to });
+        board.move_piece(from, to).unwrap();
     }
 }
