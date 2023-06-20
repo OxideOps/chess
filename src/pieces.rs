@@ -22,13 +22,13 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
-    pub fn get_moves(self) -> &'static [Displacement] {
+    pub fn get_vectors(self) -> &'static [Displacement] {
         match self {
-            Self::Rook(..) => Displacement::get_rook_moves(),
-            Self::Bishop(..) => Displacement::get_bishop_moves(),
-            Self::Knight(..) => Displacement::get_knight_moves(),
-            Self::Queen(..) => Displacement::get_queen_moves(),
-            Self::King(..) => Displacement::get_king_moves(),
+            Self::Rook(..) => Displacement::get_rook_vectors(),
+            Self::Bishop(..) => Displacement::get_bishop_vectors(),
+            Self::Knight(..) => Displacement::get_knight_vectors(),
+            Self::Queen(..) => Displacement::get_queen_vectors(),
+            Self::King(..) => Displacement::get_king_vectors(),
             _ => Default::default(),
         }
     }

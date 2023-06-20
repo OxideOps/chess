@@ -29,7 +29,7 @@ impl Displacement {
         Self { dx: -2, dy: -1 },
     ];
 
-    pub fn get_pawn_advance_vectors(player: Player) -> Self {
+    pub fn get_pawn_advance_vector(player: Player) -> Self {
         match player {
             Player::White => Self { dx: 0, dy: 1 },
             Player::Black => Self { dx: 0, dy: -1 },
@@ -44,23 +44,23 @@ impl Displacement {
         &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }]
     }
 
-    pub fn get_queen_moves() -> &'static [Self] {
+    pub fn get_queen_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS
     }
 
-    pub fn get_king_moves() -> &'static [Self] {
+    pub fn get_king_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS
     }
 
-    pub fn get_rook_moves() -> &'static [Self] {
+    pub fn get_rook_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS[0..4]
     }
 
-    pub fn get_bishop_moves() -> &'static [Self] {
+    pub fn get_bishop_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS[4..8]
     }
 
-    pub fn get_knight_moves() -> &'static [Self] {
+    pub fn get_knight_vectors() -> &'static [Self] {
         &Self::KNIGHT_VECTORS
     }
 }
