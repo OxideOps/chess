@@ -1,5 +1,6 @@
-use crate::game::{ChessError, ChessResult};
 use crate::displacement::Displacement;
+use crate::game::{ChessError, ChessResult};
+use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
 
@@ -7,7 +8,7 @@ const BOARD_SIZE: usize = 8;
 
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
-    moves: HashSet<(Position, Position)>,
+    moves: HashSet<Move>,
     pub player: Player,
 }
 
@@ -71,11 +72,11 @@ impl Board {
         }
     }
 
-    fn is_move_valid(&self, from: Position, to: Position) -> ChessResult<()> {
-        Self::is_in_bounds(from)?;
-        Self::is_in_bounds(to)?;
-        self.is_piece_some(from)?;
-        if self.moves.contains(&(from, to)) {
+    fn is_move_valid(&self, m: Move) -> ChessResult<()> {
+        Self::is_in_bounds(m.from)?;
+        Self::is_in_bounds(m.to)?;
+        self.is_piece_some(m.from)?;
+        if self.moves.contains(&m) {
             Ok(())
         } else {
             Err(ChessError::InvalidMove)

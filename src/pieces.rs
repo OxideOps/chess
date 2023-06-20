@@ -23,7 +23,6 @@ impl Piece {
         }
     }
     pub fn get_moves(self) -> &'static [Displacement] {
-        // not exactly sure how to handle pawns yet
         match self {
             Self::Rook(..) => Displacement::get_rook_moves(),
             Self::Bishop(..) => Displacement::get_bishop_moves(),
