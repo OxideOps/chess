@@ -1,5 +1,5 @@
 use crate::game::{ChessError, ChessResult};
-use crate::moves::Move;
+use crate::displacement::Displacement;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
 
@@ -106,7 +106,7 @@ impl Board {
     }
 
     fn pawn_can_double_move(&self, position: Position, player: Player) -> bool {
-        let m = Move::get_pawn_advance_move(player);
+        let m = Displacement::get_pawn_advance_vectors(player);
         if let None = self.get_piece(position + m * 2) {
             return match self.get_piece(position).unwrap().get_player() {
                 Player::White => position.y == 1,
@@ -117,7 +117,7 @@ impl Board {
     }
 
     fn add_pawn_advance_moves(&mut self, start: Position, player: Player) {
-        let m = Move::get_pawn_advance_move(player);
+        let m = Displacement::get_pawn_advance_vectors(player);
         let new_position = start + m;
         if Self::is_in_bounds(new_position).is_ok() && self.get_piece(new_position).is_none() {
             self.moves.insert((start, new_position));
@@ -129,8 +129,8 @@ impl Board {
 
     fn add_pawn_capture_moves(&mut self, start: Position, player: Player) {
         let capture_moves = match player {
-            Player::White => Move::get_pawn_capture_moves_white(),
-            Player::Black => Move::get_pawn_capture_moves_black(),
+            Player::White => Displacement::get_white_pawn_capture_vectors(),
+            Player::Black => Displacement::get_black_pawn_capture_vectors(),
         };
 
         for &m in capture_moves {

@@ -1,4 +1,4 @@
-use crate::moves::Move;
+use crate::displacement::Displacement;
 use std::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -22,14 +22,14 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
-    pub fn get_moves(self) -> &'static [Move] {
+    pub fn get_moves(self) -> &'static [Displacement] {
         // not exactly sure how to handle pawns yet
         match self {
-            Self::Rook(..) => Move::get_rook_moves(),
-            Self::Bishop(..) => Move::get_bishop_moves(),
-            Self::Knight(..) => Move::get_knight_moves(),
-            Self::Queen(..) => Move::get_queen_moves(),
-            Self::King(..) => Move::get_king_moves(),
+            Self::Rook(..) => Displacement::get_rook_moves(),
+            Self::Bishop(..) => Displacement::get_bishop_moves(),
+            Self::Knight(..) => Displacement::get_knight_moves(),
+            Self::Queen(..) => Displacement::get_queen_moves(),
+            Self::King(..) => Displacement::get_king_moves(),
             _ => Default::default(),
         }
     }
@@ -53,10 +53,10 @@ pub struct Position {
     pub y: usize,
 }
 
-impl Add<Move> for Position {
+impl Add<Displacement> for Position {
     type Output = Self;
 
-    fn add(self, m: Move) -> Self::Output {
+    fn add(self, m: Displacement) -> Self::Output {
         Self {
             x: self.x.wrapping_add(m.dx as usize),
             y: self.y.wrapping_add(m.dy as usize),
@@ -64,8 +64,8 @@ impl Add<Move> for Position {
     }
 }
 
-impl AddAssign<Move> for Position {
-    fn add_assign(&mut self, m: Move) {
+impl AddAssign<Displacement> for Position {
+    fn add_assign(&mut self, m: Displacement) {
         *self = Self {
             x: self.x.wrapping_add(m.dx as usize),
             y: self.y.wrapping_add(m.dy as usize),
@@ -81,8 +81,8 @@ mod tests {
     #[test]
     fn test_add_position() {
         let mut p = Position { x: 0, y: 0 };
-        let m_up = Move { dx: 0, dy: 1 };
-        let m_right = Move { dx: 1, dy: 0 };
+        let m_up = Displacement { dx: 0, dy: 1 };
+        let m_right = Displacement { dx: 1, dy: 0 };
 
         for _ in 0..10 {
             p = p + m_right + m_up

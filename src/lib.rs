@@ -2,5 +2,5 @@
 pub mod board;
 pub mod chess_widget;
 mod game;
-mod moves;
+mod displacement;
 mod pieces;
