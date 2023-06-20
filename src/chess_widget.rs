@@ -1,5 +1,6 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
+use druid::piet::PietImage;
 use druid::{
     keyboard_types::Key,
     piet::{ImageFormat, InterpolationMode},
@@ -8,12 +9,6 @@ use druid::{
 };
 use image::io::Reader as ImageReader;
 use std::fs::read;
-
-#[cfg(target_os = "macos")]
-type ImageType = druid::piet::QuartzImage;
-
-#[cfg(target_os = "linux")]
-type ImageType = druid::piet::CairoImage;
 
 pub const WINDOW_SIZE: f64 = 800.0;
 const BOARD_SIZE: usize = 816;
@@ -34,7 +29,7 @@ const IMAGE_FILES: [&str; 12] = [
     "images/blackQueen.png",
 ];
 
-fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> ImageType {
+fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> PietImage {
     let bytes = read(file_name).unwrap();
     let img = ImageReader::new(std::io::Cursor::new(bytes))
         .with_guessed_format()
@@ -67,8 +62,8 @@ impl From<Position> for Point {
 
 pub struct ChessWidget {
     game: Game,
-    board_image: Option<ImageType>,
-    piece_images: Option<[ImageType; 12]>,
+    board_image: Option<PietImage>,
+    piece_images: Option<[PietImage; 12]>,
     mouse_down: Option<Point>,
     current_point: Point,
 }
@@ -84,12 +79,12 @@ impl ChessWidget {
         }
     }
 
-    fn get_image_files(ctx: &mut PaintCtx) -> [ImageType; 12] {
+    fn get_image_files(ctx: &mut PaintCtx) -> [PietImage; 12] {
         IMAGE_FILES
             .map(|file_name| create_image(file_name, ctx, PIECE_SIZE, ImageFormat::RgbaSeparate))
     }
 
-    fn get_image_file(&self, piece: Piece) -> &ImageType {
+    fn get_image_file(&self, piece: Piece) -> &PietImage {
         let index = match piece {
             Piece::Rook(Player::White) => 0,
             Piece::Bishop(Player::White) => 1,
