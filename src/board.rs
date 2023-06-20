@@ -189,7 +189,7 @@ impl Board {
         for y in 0..8 {
             for x in 0..8 {
                 if let Some(piece) = self.squares[y][x] {
-                    if self.player == piece.get_player() {
+                    if piece.get_player() == self.player {
                         self.add_moves_in_direction(Position { x, y }, piece);
                     }
                 }
