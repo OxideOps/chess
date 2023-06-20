@@ -2,9 +2,9 @@ use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
 use druid::{
     keyboard_types::Key,
-    piet::{ImageFormat, InterpolationMode},
-    BoxConstraints, Color, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
-    Point, Rect, RenderContext, Size, UpdateCtx, Widget,
+    piet::{ImageFormat, InterpolationMode, PietImage},
+    BoxConstraints, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx, Point,
+    Rect, RenderContext, Size, UpdateCtx, Widget,
 };
 use image::io::Reader as ImageReader;
 use std::fs::read;
@@ -12,15 +12,31 @@ use std::fs::read;
 pub const WINDOW_SIZE: f64 = 800.0;
 const BOARD_SIZE: usize = 816;
 const PIECE_SIZE: usize = 102;
+const BOARD_FILE: &str = "images/board.png";
+const IMAGE_FILES: [&str; 12] = [
+    "images/whiteRook.png",
+    "images/whiteBishop.png",
+    "images/whitePawn.png",
+    "images/whiteKnight.png",
+    "images/whiteKing.png",
+    "images/whiteQueen.png",
+    "images/blackRook.png",
+    "images/blackBishop.png",
+    "images/blackPawn.png",
+    "images/blackKnight.png",
+    "images/blackKing.png",
+    "images/blackQueen.png",
+];
 
-fn get_image(file_name: &str) -> Vec<u8> {
+fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> PietImage {
     let bytes = read(file_name).unwrap();
     let img = ImageReader::new(std::io::Cursor::new(bytes))
         .with_guessed_format()
         .unwrap()
         .decode()
-        .unwrap();
-    img.into_bytes()
+        .unwrap()
+        .into_bytes();
+    ctx.make_image(size, size, &img, fmt).unwrap()
 }
 
 // convert from druid's 'Point' to our 'Position'
@@ -45,8 +61,8 @@ impl From<Position> for Point {
 
 pub struct ChessWidget {
     game: Game,
-    board_image: Vec<u8>,
-    piece_images: [Vec<u8>; 12],
+    board_image: Option<PietImage>,
+    piece_images: Option<[PietImage; 12]>,
     mouse_down: Option<Point>,
     current_point: Point,
 }
@@ -55,53 +71,39 @@ impl ChessWidget {
     pub fn new() -> Self {
         Self {
             game: Game::new(),
-            board_image: get_image("images/board.png"),
-            piece_images: Self::get_image_files(),
+            board_image: None,
+            piece_images: None,
             mouse_down: None,
-            current_point: Point { x: 0.0, y: 0.0 },
+            current_point: Default::default(),
         }
     }
 
-    fn get_image_files() -> [Vec<u8>; 12] {
-        [
-            get_image("images/whiteRook.png"),
-            get_image("images/whiteBishop.png"),
-            get_image("images/whitePawn.png"),
-            get_image("images/whiteKnight.png"),
-            get_image("images/whiteKing.png"),
-            get_image("images/whiteQueen.png"),
-            get_image("images/blackRook.png"),
-            get_image("images/blackBishop.png"),
-            get_image("images/blackPawn.png"),
-            get_image("images/blackKnight.png"),
-            get_image("images/blackKing.png"),
-            get_image("images/blackQueen.png"),
-        ]
+    fn get_image_files(ctx: &mut PaintCtx) -> [PietImage; 12] {
+        IMAGE_FILES
+            .map(|file_name| create_image(file_name, ctx, PIECE_SIZE, ImageFormat::RgbaSeparate))
     }
 
-    fn get_image_file(&self, piece: Piece) -> &Vec<u8> {
-        match piece {
-            Piece::Rook(Player::White) => &self.piece_images[0],
-            Piece::Bishop(Player::White) => &self.piece_images[1],
-            Piece::Pawn(Player::White) => &self.piece_images[2],
-            Piece::Knight(Player::White) => &self.piece_images[3],
-            Piece::King(Player::White) => &self.piece_images[4],
-            Piece::Queen(Player::White) => &self.piece_images[5],
-            Piece::Rook(Player::Black) => &self.piece_images[6],
-            Piece::Bishop(Player::Black) => &self.piece_images[7],
-            Piece::Pawn(Player::Black) => &self.piece_images[8],
-            Piece::Knight(Player::Black) => &self.piece_images[9],
-            Piece::King(Player::Black) => &self.piece_images[10],
-            Piece::Queen(Player::Black) => &self.piece_images[11],
-        }
+    fn get_image_file(&self, piece: Piece) -> &PietImage {
+        let index = match piece {
+            Piece::Rook(Player::White) => 0,
+            Piece::Bishop(Player::White) => 1,
+            Piece::Pawn(Player::White) => 2,
+            Piece::Knight(Player::White) => 3,
+            Piece::King(Player::White) => 4,
+            Piece::Queen(Player::White) => 5,
+            Piece::Rook(Player::Black) => 6,
+            Piece::Bishop(Player::Black) => 7,
+            Piece::Pawn(Player::Black) => 8,
+            Piece::Knight(Player::Black) => 9,
+            Piece::King(Player::Black) => 10,
+            Piece::Queen(Player::Black) => 11,
+        };
+        &self.piece_images.as_ref().unwrap()[index]
     }
 
     fn draw_background(&self, ctx: &mut PaintCtx) {
-        let image = ctx
-            .make_image(BOARD_SIZE, BOARD_SIZE, &self.board_image, ImageFormat::Rgb)
-            .unwrap();
         ctx.draw_image(
-            &image,
+            &self.board_image.as_ref().unwrap(),
             Rect::new(0.0, 0.0, WINDOW_SIZE, WINDOW_SIZE),
             InterpolationMode::Bilinear,
         );
@@ -109,14 +111,6 @@ impl ChessWidget {
 
     fn draw_square(&self, ctx: &mut PaintCtx, position: Position) {
         if let Some(piece) = self.game.get_piece(position) {
-            let image = ctx
-                .make_image(
-                    PIECE_SIZE,
-                    PIECE_SIZE,
-                    self.get_image_file(piece),
-                    ImageFormat::RgbaSeparate,
-                )
-                .unwrap();
             let mut p0 = Point::from(position);
             // if we are holding a piece, offset it's position by how far it's been dragged
             if let Some(mouse_down) = self.mouse_down {
@@ -126,7 +120,7 @@ impl ChessWidget {
                 }
             }
             ctx.draw_image(
-                &image,
+                &self.get_image_file(piece),
                 Rect::new(
                     p0.x,
                     p0.y,
@@ -162,6 +156,11 @@ impl ChessWidget {
         } else {
             None
         }
+    }
+
+    fn create_images(&mut self, ctx: &mut PaintCtx) {
+        self.board_image = Some(create_image(BOARD_FILE, ctx, BOARD_SIZE, ImageFormat::Rgb));
+        self.piece_images = Some(Self::get_image_files(ctx));
     }
 }
 
@@ -241,9 +240,9 @@ impl Widget<String> for ChessWidget {
     }
 
     fn paint(&mut self, ctx: &mut PaintCtx, _data: &String, _env: &Env) {
-        let size = ctx.size();
-        let rect = size.to_rect();
-        ctx.fill(rect, &Color::WHITE);
+        if self.board_image.is_none() || self.piece_images.is_none() {
+            self.create_images(ctx)
+        }
 
         self.draw_background(ctx);
 
