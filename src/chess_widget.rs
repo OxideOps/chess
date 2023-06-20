@@ -2,12 +2,18 @@ use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
 use druid::{
     keyboard_types::Key,
-    piet::{CairoImage, ImageFormat, InterpolationMode},
-    BoxConstraints, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
-    Point, Rect, RenderContext, Size, UpdateCtx, Widget,
+    piet::{ImageFormat, InterpolationMode},
+    BoxConstraints, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx, Point,
+    Rect, RenderContext, Size, UpdateCtx, Widget,
 };
 use image::io::Reader as ImageReader;
 use std::fs::read;
+
+#[cfg(target_os = "macos")]
+type ImageType = druid::piet::QuartzImage;
+
+#[cfg(target_os = "linux")]
+type ImageType = druid::piet::CairoImage;
 
 pub const WINDOW_SIZE: f64 = 800.0;
 const BOARD_SIZE: usize = 816;
@@ -28,7 +34,7 @@ const IMAGE_FILES: [&str; 12] = [
     "images/blackQueen.png",
 ];
 
-fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> CairoImage {
+fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> ImageType {
     let bytes = read(file_name).unwrap();
     let img = ImageReader::new(std::io::Cursor::new(bytes))
         .with_guessed_format()
@@ -61,8 +67,8 @@ impl From<Position> for Point {
 
 pub struct ChessWidget {
     game: Game,
-    board_image: Option<CairoImage>,
-    piece_images: Option<[CairoImage; 12]>,
+    board_image: Option<ImageType>,
+    piece_images: Option<[ImageType; 12]>,
     mouse_down: Option<Point>,
     current_point: Point,
 }
@@ -78,12 +84,12 @@ impl ChessWidget {
         }
     }
 
-    fn get_image_files(ctx: &mut PaintCtx) -> [CairoImage; 12] {
+    fn get_image_files(ctx: &mut PaintCtx) -> [ImageType; 12] {
         IMAGE_FILES
             .map(|file_name| create_image(file_name, ctx, PIECE_SIZE, ImageFormat::RgbaSeparate))
     }
 
-    fn get_image_file(&self, piece: Piece) -> &CairoImage {
+    fn get_image_file(&self, piece: Piece) -> &ImageType {
         let index = match piece {
             Piece::Rook(Player::White) => 0,
             Piece::Bishop(Player::White) => 1,
