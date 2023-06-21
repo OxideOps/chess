@@ -3,7 +3,6 @@ use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
-use std::mem;
 
 const BOARD_SIZE: usize = 8;
 
@@ -90,11 +89,12 @@ impl Board {
 
     pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
         self.is_move_valid(m)?;
-    
+
         if let Some(mut piece) = self.get_piece_mut(&m.from).take() {
             if let Piece::Pawn(player) = piece {
-                if (player == Player::White && m.to.y == BOARD_SIZE - 1) ||
-                   (player == Player::Black && m.to.y == 0) {
+                if (player == Player::White && m.to.y == BOARD_SIZE - 1)
+                    || (player == Player::Black && m.to.y == 0)
+                {
                     piece = Piece::Queen(player)
                 }
             }
