@@ -151,11 +151,7 @@ impl ChessWidget {
     }
 
     fn get_dragged_piece_start_position(&self) -> Option<Position> {
-        if let Some(mouse_down) = self.mouse_down {
-            Some(Position::from(mouse_down))
-        } else {
-            None
-        }
+        Some(Position::from(self.mouse_down?))
     }
 
     fn create_images(&mut self, ctx: &mut PaintCtx) {
