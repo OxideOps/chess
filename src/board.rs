@@ -3,6 +3,7 @@ use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
+use std::mem;
 
 const BOARD_SIZE: usize = 8;
 
@@ -56,6 +57,10 @@ impl Board {
         self.squares[pos.y][pos.x]
     }
 
+    pub fn get_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
+        &mut self.squares[pos.y][pos.x]
+    }
+
     fn is_in_bounds(pos: &Position) -> ChessResult<()> {
         if pos.x > 7 || pos.y > 7 {
             Err(ChessError::OutOfBounds)
@@ -84,18 +89,17 @@ impl Board {
     }
 
     pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
-        self.is_move_valid(&m)?;
-        let mut piece = self.get_piece(&m.from);
-
-        if let Some(Piece::Pawn(player)) = piece {
-            if (player == Player::White && m.to.y == 7) || (player == Player::Black && m.to.y == 0)
-            {
-                // TODO: always promote to queen for now, need to handle this eventually
-                piece = Some(Piece::Queen(player));
+        self.is_move_valid(m)?;
+    
+        if let Some(mut piece) = self.get_piece_mut(&m.from).take() {
+            if let Piece::Pawn(player) = piece {
+                if (player == Player::White && m.to.y == BOARD_SIZE - 1) ||
+                   (player == Player::Black && m.to.y == 0) {
+                    piece = Piece::Queen(player)
+                }
             }
+            self.squares[m.to.y][m.to.x] = Some(piece);
         }
-        self.squares[m.to.y][m.to.x] = piece;
-        self.squares[m.from.y][m.from.x] = None;
         Ok(())
     }
 
