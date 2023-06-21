@@ -175,7 +175,7 @@ impl Widget<String> for ChessWidget {
                     let from = Position::from(mouse_down);
                     let to = self.get_dragged_piece_position(mouse_event.pos);
                     self.game
-                        .move_piece(&from, &to)
+                        .move_piece(from, to)
                         .map_err(|chess_error| {
                             println!("{:?}", chess_error);
                         })

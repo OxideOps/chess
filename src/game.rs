@@ -1,4 +1,5 @@
 use crate::board::Board;
+use crate::moves::Move;
 use crate::pieces::{Piece, Position};
 
 pub type ChessResult<T> = Result<T, ChessError>;
@@ -40,8 +41,8 @@ impl Game {
         self.board.get_piece(position)
     }
 
-    pub fn move_piece(&mut self, from: &Position, to: &Position) -> ChessResult<()> {
-        self.board.move_piece(from, to)?;
+    pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
+        self.board.move_piece(&Move { from, to })?;
         self.board.next_turn();
         Ok(())
     }
