@@ -110,7 +110,7 @@ impl ChessWidget {
     }
 
     fn draw_square(&self, ctx: &mut PaintCtx, position: Position) {
-        if let Some(piece) = self.game.get_piece(position) {
+        if let Some(piece) = self.game.get_piece(&position) {
             let mut p0 = Point::from(position);
             // if we are holding a piece, offset it's position by how far it's been dragged
             if let Some(mouse_down) = self.mouse_down {
@@ -175,7 +175,7 @@ impl Widget<String> for ChessWidget {
                     let from = Position::from(mouse_down);
                     let to = self.get_dragged_piece_position(mouse_event.pos);
                     self.game
-                        .move_piece(from, to)
+                        .move_piece(&from, &to)
                         .map_err(|chess_error| {
                             println!("{:?}", chess_error);
                         })
@@ -188,7 +188,7 @@ impl Widget<String> for ChessWidget {
                 self.current_point = mouse_event.pos;
                 // if we are currently holding onto a piece, request a redraw
                 if let Some(mouse_down) = self.mouse_down {
-                    if self.game.get_piece(Position::from(mouse_down)).is_some() {
+                    if self.game.get_piece(&Position::from(mouse_down)).is_some() {
                         ctx.request_paint();
                     }
                 }
