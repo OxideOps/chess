@@ -110,21 +110,24 @@ impl Board {
     fn add_pawn_advance_moves(&mut self, from: Position, player: Player) {
         let v = Displacement::get_pawn_advance_vector(player);
         let mut to = from + v;
-        if Self::is_in_bounds(&to).is_ok() && self.get_piece(&to).is_none() {
+        
+        if self.get_piece(&to).is_some() {
+            return
+        }
+    
+        self.moves.insert(Move { from, to });
+    
+        to += v;
+        let is_double_move = match self.get_piece(&from).unwrap().get_player() {
+            Player::White => to.y == 1,
+            Player::Black => to.y == 6,
+        };
+    
+        if is_double_move && self.get_piece(&to).is_none() {
             self.moves.insert(Move { from, to });
-            //check for double move
-            to += v;
-            if self.get_piece(&to).is_none() {
-                let can_double_move = match self.get_piece(&from).unwrap().get_player() {
-                    Player::White => to.y == 1,
-                    Player::Black => to.y == 6,
-                };
-                if can_double_move {
-                    self.moves.insert(Move { from, to });
-                }
-            }
         }
     }
+    
 
     fn add_pawn_capture_moves(&mut self, from: Position, player: Player) {
         let capture_vectors = match player {
