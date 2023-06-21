@@ -63,25 +63,22 @@ impl Board {
             Ok(())
         }
     }
+    
+    fn is_move_valid(&self, mv: &Move) -> ChessResult<()> {
+        Self::is_in_bounds(&mv.from)?;
+        Self::is_in_bounds(&mv.to)?;
 
-    fn is_piece_some(&self, pos: &Position) -> ChessResult<()> {
-        if let None = self.get_piece(pos) {
+        if let Some(piece) = self.get_piece(&mv.from) {
+            if self.moves.contains(mv) {
+                Ok(())
+            } else {
+                Err(ChessError::InvalidMove)
+            }
+        } else {
             Err(ChessError::NoPieceAtPosition)
-        } else {
-            Ok(())
         }
     }
 
-    fn is_move_valid(&self, m: &Move) -> ChessResult<()> {
-        Self::is_in_bounds(&m.from)?;
-        Self::is_in_bounds(&m.to)?;
-        self.is_piece_some(&m.from)?;
-        if self.moves.contains(m) {
-            Ok(())
-        } else {
-            Err(ChessError::InvalidMove)
-        }
-    }
 
     pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
         self.is_move_valid(&m)?;
@@ -100,29 +97,24 @@ impl Board {
     }
 
     pub fn next_turn(&mut self) {
-        self.player = match self.player {
-            Player::White => Player::Black,
-            Player::Black => Player::White,
-        };
+        self.player = if self.player == Player::White { Player::Black } else { Player::White };
         self.add_moves();
     }
+
 
     fn add_pawn_advance_moves(&mut self, from: Position, player: Player) {
         let v = Displacement::get_pawn_advance_vector(player);
         let mut to = from + v;
-        
+
         if self.get_piece(&to).is_some() {
-            return
+            return;
         }
-    
+
         self.moves.insert(Move { from, to });
-    
+
         to += v;
-        let is_double_move = match self.get_piece(&from).unwrap().get_player() {
-            Player::White => to.y == 1,
-            Player::Black => to.y == 6,
-        };
-    
+        let is_double_move = [to.y == 1, to.y == 6][player as usize];
+
         if is_double_move && self.get_piece(&to).is_none() {
             self.moves.insert(Move { from, to });
         }
