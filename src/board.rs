@@ -63,7 +63,7 @@ impl Board {
             Ok(())
         }
     }
-  
+
     fn is_move_valid(&self, mv: &Move) -> ChessResult<()> {
         Self::is_in_bounds(&mv.from)?;
         Self::is_in_bounds(&mv.to)?;
@@ -96,7 +96,11 @@ impl Board {
     }
 
     pub fn next_turn(&mut self) {
-        self.player = if self.player == Player::White { Player::Black } else { Player::White };
+        self.player = if self.player == Player::White {
+            Player::Black
+        } else {
+            Player::White
+        };
         self.add_moves();
     }
 
@@ -117,7 +121,6 @@ impl Board {
             self.moves.insert(Move { from, to });
         }
     }
-    
 
     fn add_pawn_capture_moves(&mut self, from: Position, player: Player) {
         let capture_vectors = match player {
