@@ -56,7 +56,7 @@ impl Board {
         self.squares[pos.y][pos.x]
     }
 
-    pub fn get_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
+    fn get_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
         &mut self.squares[pos.y][pos.x]
     }
 
@@ -104,9 +104,10 @@ impl Board {
     }
 
     pub fn next_turn(&mut self) {
-        self.player = match self.player {
-            Player::White => Player::Black,
-            Player::Black => Player::White,
+        self.player = if self.player == Player::White {
+            Player::Black
+        } else {
+            Player::White
         };
         self.add_moves();
     }
