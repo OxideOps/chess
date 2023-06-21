@@ -63,7 +63,7 @@ impl Board {
             Ok(())
         }
     }
-    
+  
     fn is_move_valid(&self, mv: &Move) -> ChessResult<()> {
         Self::is_in_bounds(&mv.from)?;
         Self::is_in_bounds(&mv.to)?;
@@ -78,7 +78,6 @@ impl Board {
             Err(ChessError::NoPieceAtPosition)
         }
     }
-
 
     pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
         self.is_move_valid(&m)?;
@@ -100,7 +99,6 @@ impl Board {
         self.player = if self.player == Player::White { Player::Black } else { Player::White };
         self.add_moves();
     }
-
 
     fn add_pawn_advance_moves(&mut self, from: Position, player: Player) {
         let v = Displacement::get_pawn_advance_vector(player);
