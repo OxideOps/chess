@@ -116,8 +116,8 @@ impl Board {
             to += v;
             if self.get_piece(&to).is_none() {
                 let can_double_move = match self.get_piece(&from).unwrap().get_player() {
-                    Player::White => to.y == 1,
-                    Player::Black => to.y == 6,
+                    Player::White => from.y == 1,
+                    Player::Black => from.y == 6,
                 };
                 if can_double_move {
                     self.moves.insert(Move { from, to });
@@ -135,7 +135,7 @@ impl Board {
         for &v in capture_vectors {
             let to = from + v;
             if Self::is_in_bounds(&to).is_ok() {
-                if let Some(other_piece) = self.get_piece(&from) {
+                if let Some(other_piece) = self.get_piece(&to) {
                     if other_piece.get_player() != player {
                         self.moves.insert(Move { from, to });
                     }
