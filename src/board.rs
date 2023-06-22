@@ -91,12 +91,10 @@ impl Board {
         self.is_move_valid(mv)?;
 
         if let Some(mut piece) = self.get_piece_mut(&mv.from).take() {
-            if let Piece::Pawn(player) = piece {
-                if (player == Player::White && mv.to.y == BOARD_SIZE - 1)
-                    || (player == Player::Black && mv.to.y == 0)
-                {
-                    piece = Piece::Queen(player)
-                }
+            if (self.player == Player::White && mv.to.y == BOARD_SIZE - 1)
+                || (self.player == Player::Black && mv.to.y == 0)
+            {
+                piece = Piece::Queen(self.player)
             }
             self.squares[mv.to.y][mv.to.x] = Some(piece);
         }
