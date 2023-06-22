@@ -76,29 +76,29 @@ impl Board {
         }
     }
 
-    fn is_move_valid(&self, m: &Move) -> ChessResult<()> {
-        Self::is_in_bounds(&m.from)?;
-        Self::is_in_bounds(&m.to)?;
-        self.is_piece_some(&m.from)?;
-        if self.moves.contains(m) {
+    fn is_move_valid(&self, mv: &Move) -> ChessResult<()> {
+        Self::is_in_bounds(&mv.from)?;
+        Self::is_in_bounds(&mv.to)?;
+        self.is_piece_some(&mv.from)?;
+        if self.moves.contains(mv) {
             Ok(())
         } else {
             Err(ChessError::InvalidMove)
         }
     }
 
-    pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
-        self.is_move_valid(m)?;
+    pub fn move_piece(&mut self, mv: &Move) -> ChessResult<()> {
+        self.is_move_valid(mv)?;
 
-        if let Some(mut piece) = self.get_piece_mut(&m.from).take() {
+        if let Some(mut piece) = self.get_piece_mut(&mv.from).take() {
             if let Piece::Pawn(player) = piece {
-                if (player == Player::White && m.to.y == BOARD_SIZE - 1)
-                    || (player == Player::Black && m.to.y == 0)
+                if (player == Player::White && mv.to.y == BOARD_SIZE - 1)
+                    || (player == Player::Black && mv.to.y == 0)
                 {
                     piece = Piece::Queen(player)
                 }
             }
-            self.squares[m.to.y][m.to.x] = Some(piece);
+            self.squares[mv.to.y][mv.to.x] = Some(piece);
         }
         Ok(())
     }
@@ -193,8 +193,8 @@ mod tests {
         let mut board: Board = Board::new();
         let from = Position { x: 0, y: 1 };
         let to = Position { x: 0, y: 2 };
-        let m = Move { from, to };
-        board.moves.insert(m);
-        board.move_piece(&m).unwrap();
+        let mv = Move { from, to };
+        board.moves.insert(mv);
+        board.move_piece(&mv).unwrap();
     }
 }
