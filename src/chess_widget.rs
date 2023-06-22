@@ -7,7 +7,6 @@ use druid::{
     Rect, RenderContext, Size, UpdateCtx, Widget,
 };
 use image::io::Reader as ImageReader;
-use lazy_static::lazy_static;
 use std::fs::read;
 use std::sync::Mutex;
 
@@ -30,10 +29,8 @@ const IMAGE_FILES: [&str; 12] = [
     "images/blackQueen.png",
 ];
 
-lazy_static! {
-    static ref WIDTH: Mutex<f64> = Mutex::new(WINDOW_SIZE);
-    static ref HEIGHT: Mutex<f64> = Mutex::new(WINDOW_SIZE);
-}
+static WIDTH: Mutex<f64> = Mutex::new(WINDOW_SIZE);
+static HEIGHT: Mutex<f64> = Mutex::new(WINDOW_SIZE);
 
 fn get_window_width() -> f64 {
     *WIDTH.lock().unwrap()
