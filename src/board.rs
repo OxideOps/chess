@@ -108,8 +108,8 @@ impl Board {
         self.add_moves();
     }
 
-    fn add_pawn_advance_moves(&mut self, from: Position, player: &Player) {
-        let v = Displacement::get_pawn_advance_vector(player);
+    fn add_pawn_advance_moves(&mut self, from: Position, player: Player) {
+        let v = Displacement::get_pawn_advance_vector(&player);
         let mut to = from + v;
         if Self::is_in_bounds(&to).is_ok() && self.get_piece(&to).is_none() {
             self.moves.insert(Move { from, to });
@@ -124,7 +124,7 @@ impl Board {
         }
     }
 
-    fn add_pawn_capture_moves(&mut self, from: Position, player: &Player) {
+    fn add_pawn_capture_moves(&mut self, from: Position, player: Player) {
         let capture_vectors = match player {
             Player::White => Displacement::get_white_pawn_capture_vectors(),
             Player::Black => Displacement::get_black_pawn_capture_vectors(),
@@ -134,7 +134,7 @@ impl Board {
             let to = from + v;
             if Self::is_in_bounds(&to).is_ok() {
                 if let Some(piece) = self.get_piece(&to) {
-                    if &piece.get_player() != player {
+                    if piece.get_player() != player {
                         self.moves.insert(Move { from, to });
                     }
                 }
@@ -146,8 +146,8 @@ impl Board {
         if let &Some(piece) = self.get_piece(&from) {
             if piece.get_player() == self.player {
                 if let Piece::Pawn(player) = piece {
-                    self.add_pawn_advance_moves(from, &player);
-                    self.add_pawn_capture_moves(from, &player);
+                    self.add_pawn_advance_moves(from, player);
+                    self.add_pawn_capture_moves(from, player);
                 } else {
                     for &v in piece.get_vectors() {
                         let mut to = from + v;
