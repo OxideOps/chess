@@ -52,11 +52,11 @@ impl Board {
         ]
     }
 
-    pub fn get_piece(&self, pos: &Position) -> Option<Piece> {
-        self.squares[pos.y][pos.x]
+    pub fn get_piece(&self, pos: &Position) -> &Option<Piece> {
+        &self.squares[pos.y][pos.x]
     }
 
-    fn borrow_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
+    fn get_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
         &mut self.squares[pos.y][pos.x]
     }
 
@@ -90,7 +90,7 @@ impl Board {
     pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
         self.is_move_valid(m)?;
 
-        if let Some(mut piece) = self.borrow_piece_mut(&m.from).take() {
+        if let Some(mut piece) = self.get_piece_mut(&m.from).take() {
             if let Piece::Pawn(player) = piece {
                 if (player == Player::White && m.to.y == BOARD_SIZE - 1)
                     || (player == Player::Black && m.to.y == 0)

@@ -83,7 +83,7 @@ impl ChessWidget {
             .map(|file_name| create_image(file_name, ctx, PIECE_SIZE, ImageFormat::RgbaSeparate))
     }
 
-    fn get_image_file(&self, piece: Piece) -> &PietImage {
+    fn get_image_file(&self, piece: &Piece) -> &PietImage {
         let index = match piece {
             Piece::Rook(Player::White) => 0,
             Piece::Bishop(Player::White) => 1,
