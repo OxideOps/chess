@@ -139,6 +139,7 @@ version = "0.1.0"
 dependencies = [
  "druid",
  "image",
+ "lazy_static",
 ]
 
 [[package]]

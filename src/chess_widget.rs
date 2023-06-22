@@ -7,7 +7,9 @@ use druid::{
     Rect, RenderContext, Size, UpdateCtx, Widget,
 };
 use image::io::Reader as ImageReader;
+use lazy_static::lazy_static;
 use std::fs::read;
+use std::sync::Mutex;
 
 pub const WINDOW_SIZE: f64 = 800.0;
 const BOARD_SIZE: usize = 816;
@@ -28,6 +30,27 @@ const IMAGE_FILES: [&str; 12] = [
     "images/blackQueen.png",
 ];
 
+lazy_static! {
+    static ref WIDTH: Mutex<f64> = Mutex::new(WINDOW_SIZE);
+    static ref HEIGHT: Mutex<f64> = Mutex::new(WINDOW_SIZE);
+}
+
+fn get_window_width() -> f64 {
+    *WIDTH.lock().unwrap()
+}
+
+fn get_window_height() -> f64 {
+    *HEIGHT.lock().unwrap()
+}
+
+fn set_window_width(width: f64) {
+    *WIDTH.lock().unwrap() = width;
+}
+
+fn set_window_height(height: f64) {
+    *HEIGHT.lock().unwrap() = height;
+}
+
 fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> PietImage {
     let bytes = read(file_name).unwrap();
     let img = ImageReader::new(std::io::Cursor::new(bytes))
@@ -43,8 +66,8 @@ fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageForm
 impl From<Point> for Position {
     fn from(point: Point) -> Position {
         Position {
-            x: (8.0 * point.x / WINDOW_SIZE).floor() as usize,
-            y: (8.0 * (1.0 - point.y / WINDOW_SIZE)).floor() as usize,
+            x: (8.0 * point.x / get_window_width()).floor() as usize,
+            y: (8.0 * (1.0 - point.y / get_window_height())).floor() as usize,
         }
     }
 }
@@ -53,8 +76,8 @@ impl From<Point> for Position {
 impl From<Position> for Point {
     fn from(position: Position) -> Point {
         Point {
-            x: WINDOW_SIZE * position.x as f64 / 8.0,
-            y: WINDOW_SIZE * (7.0 - position.y as f64) / 8.0,
+            x: get_window_width() * position.x as f64 / 8.0,
+            y: get_window_height() * (7.0 - position.y as f64) / 8.0,
         }
     }
 }
@@ -104,7 +127,7 @@ impl ChessWidget {
     fn draw_background(&self, ctx: &mut PaintCtx) {
         ctx.draw_image(
             &self.board_image.as_ref().unwrap(),
-            Rect::new(0.0, 0.0, WINDOW_SIZE, WINDOW_SIZE),
+            Rect::new(0.0, 0.0, get_window_width(), get_window_height()),
             InterpolationMode::Bilinear,
         );
     }
@@ -124,8 +147,8 @@ impl ChessWidget {
                 Rect::new(
                     p0.x,
                     p0.y,
-                    p0.x + WINDOW_SIZE / 8.0,
-                    p0.y + WINDOW_SIZE / 8.0,
+                    p0.x + get_window_width() / 8.0,
+                    p0.y + get_window_height() / 8.0,
                 ),
                 InterpolationMode::Bilinear,
             );
@@ -139,8 +162,8 @@ impl ChessWidget {
         let mouse_down = self.mouse_down.unwrap();
         let top_left = Point::from(Position::from(mouse_down));
         let middle = Point {
-            x: top_left.x + WINDOW_SIZE / 16.0,
-            y: top_left.y + WINDOW_SIZE / 16.0,
+            x: top_left.x + get_window_width() / 16.0,
+            y: top_left.y + get_window_height() / 16.0,
         };
         let x_offset = mouse_down.x - middle.x;
         let y_offset = mouse_down.y - middle.y;
@@ -165,6 +188,13 @@ impl Widget<String> for ChessWidget {
         match event {
             //Let this widget receive keyboard Events
             Event::WindowConnected => {
+                #[cfg(windows)]
+                {
+                    let insets = ctx.window().content_insets();
+                    set_window_width(WINDOW_SIZE - insets.x0 - insets.x1);
+                    set_window_height(WINDOW_SIZE - insets.y0 - insets.y1);
+                    ctx.request_paint();
+                }
                 ctx.request_focus();
             }
             Event::MouseDown(mouse_event) => {
@@ -228,7 +258,7 @@ impl Widget<String> for ChessWidget {
         _env: &Env,
     ) -> Size {
         if bc.is_width_bounded() | bc.is_height_bounded() {
-            let size = Size::new(WINDOW_SIZE, WINDOW_SIZE);
+            let size = Size::new(get_window_width(), get_window_height());
             bc.constrain(size)
         } else {
             bc.max()
