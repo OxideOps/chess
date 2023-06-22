@@ -56,7 +56,7 @@ impl Board {
         self.squares[pos.y][pos.x]
     }
 
-    fn get_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
+    fn borrow_piece_mut(&mut self, pos: &Position) -> &mut Option<Piece> {
         &mut self.squares[pos.y][pos.x]
     }
 
@@ -90,7 +90,7 @@ impl Board {
     pub fn move_piece(&mut self, m: &Move) -> ChessResult<()> {
         self.is_move_valid(m)?;
 
-        if let Some(mut piece) = self.get_piece_mut(&m.from).take() {
+        if let Some(mut piece) = self.borrow_piece_mut(&m.from).take() {
             if let Piece::Pawn(player) = piece {
                 if (player == Player::White && m.to.y == BOARD_SIZE - 1)
                     || (player == Player::Black && m.to.y == 0)
@@ -104,11 +104,7 @@ impl Board {
     }
 
     pub fn next_turn(&mut self) {
-        self.player = if self.player == Player::White {
-            Player::Black
-        } else {
-            Player::White
-        };
+        self.player = [Player::Black, Player::White][self.player as usize];
         self.add_moves();
     }
 
@@ -120,11 +116,8 @@ impl Board {
             //check for double move
             to += v;
             if self.get_piece(&to).is_none() {
-                let can_double_move = match self.get_piece(&from).unwrap().get_player() {
-                    Player::White => from.y == 1,
-                    Player::Black => from.y == 6,
-                };
-                if can_double_move {
+                let player = self.get_piece(&from).unwrap().get_player();
+                if [from.y == 1, from.y == 6][player as usize] {
                     self.moves.insert(Move { from, to });
                 }
             }
