@@ -36,12 +36,11 @@ impl Displacement {
         }
     }
 
-    pub fn get_white_pawn_capture_vectors() -> &'static [Self] {
-        &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }]
-    }
-
-    pub fn get_black_pawn_capture_vectors() -> &'static [Self] {
-        &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }]
+    pub fn get_pawn_capture_vectors(player: Player) -> &'static [Self] {
+        match player {
+            Player::White => &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }],
+            Player::Black => &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }],
+        }
     }
 
     pub fn get_queen_vectors() -> &'static [Self] {

@@ -1,5 +1,5 @@
 use crate::displacement::Displacement;
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Not};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Piece {
@@ -12,6 +12,12 @@ pub enum Piece {
 }
 
 impl Piece {
+    pub fn is_pawn(self) -> bool {
+        match self {
+            Piece::Pawn(..) => true,
+            _ => false,
+        }
+    }
     pub fn get_player(self) -> Player {
         match self {
             Self::Pawn(player)
@@ -44,6 +50,16 @@ impl Piece {
 pub enum Player {
     White,
     Black,
+}
+
+impl Not for Player {
+    type Output = Self;
+    fn not(self) -> Self::Output {
+        match self {
+            Self::White => Self::Black,
+            Self::Black => Self::White,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
