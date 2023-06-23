@@ -148,7 +148,7 @@ impl Board {
     fn add_moves_for_piece(&mut self, from: Position) {
         if let Some(piece) = self.get_piece(&from) {
             if piece.get_player() == self.player {
-                if let Piece::Pawn(..) = piece {
+                if piece.is_pawn() {
                     self.add_pawn_advance_moves(from);
                     self.add_pawn_capture_moves(from);
                 } else {
