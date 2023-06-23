@@ -89,18 +89,20 @@ impl Board {
     }
 
     fn can_promote_piece(&self, at: &Position) -> bool {
-        (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
+        if self.get_piece(&at).unwrap().is_pawn() {
+            return (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
+        }
+        false
     }
 
     pub fn move_piece(&mut self, mv: &Move) -> ChessResult<()> {
         self.is_move_valid(mv)?;
 
         let mut piece = self.take_piece(&mv.from);
-        if self.can_promote_piece(&mv.from) {
+        if self.can_promote_piece(&mv.to) {
             piece = Some(Piece::Queen(self.player))
         }
         self.squares[mv.to.y][mv.to.x] = piece;
-
         Ok(())
     }
 
@@ -134,12 +136,7 @@ impl Board {
     }
 
     fn add_pawn_capture_moves(&mut self, from: Position) {
-        let capture_vectors = match self.player {
-            Player::White => Displacement::get_white_pawn_capture_vectors(),
-            Player::Black => Displacement::get_black_pawn_capture_vectors(),
-        };
-
-        for &v in capture_vectors {
+        for &v in Displacement::get_pawn_capture_vectors(self.player) {
             let to = from + v;
             if Self::is_in_bounds(&to).is_ok() {
                 if let Some(piece) = self.get_piece(&to) {

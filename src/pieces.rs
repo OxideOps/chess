@@ -12,6 +12,12 @@ pub enum Piece {
 }
 
 impl Piece {
+    pub fn is_pawn(self) -> bool {
+        match self {
+            Piece::Pawn(..) => true,
+            _ => false,
+        }
+    }
     pub fn get_player(self) -> Player {
         match self {
             Self::Pawn(player)
