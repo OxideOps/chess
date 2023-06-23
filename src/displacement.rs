@@ -40,7 +40,7 @@ impl Displacement {
         match player {
             Player::White => &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }],
             Player::Black => &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }],
-        }   
+        }
     }
 
     pub fn get_queen_vectors() -> &'static [Self] {

@@ -89,20 +89,17 @@ impl Board {
     }
 
     fn can_promote_piece(&self, at: &Position) -> bool {
-        if self.get_piece(&at).unwrap().is_pawn() {
-            return (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
-        }
-        false
+        (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
     }
 
     pub fn move_piece(&mut self, mv: &Move) -> ChessResult<()> {
         self.is_move_valid(mv)?;
 
-        let mut piece = self.take_piece(&mv.from);
-        if self.can_promote_piece(&mv.to) {
-            piece = Some(Piece::Queen(self.player))
+        let mut piece = self.take_piece(&mv.from).unwrap();
+        if piece.is_pawn() && self.can_promote_piece(&mv.to) {
+            piece = Piece::Queen(self.player)
         }
-        self.squares[mv.to.y][mv.to.x] = piece;
+        self.squares[mv.to.y][mv.to.x] = Some(piece);
         Ok(())
     }
 
