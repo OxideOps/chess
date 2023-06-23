@@ -81,6 +81,7 @@ impl Board {
         Self::is_in_bounds(mv.from)?;
         Self::is_in_bounds(mv.to)?;
         self.is_piece_some(mv.from)?;
+
         if self.moves.contains(mv) {
             Ok(())
         } else {
@@ -88,17 +89,19 @@ impl Board {
         }
     }
 
+    fn can_promote_piece(&self, at: Position) -> bool {
+        (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
+    }
+
     pub fn move_piece(&mut self, mv: &Move) -> ChessResult<()> {
         self.is_move_valid(mv)?;
 
         let mut piece = self.take_piece(mv.from);
-
-        if self.player == Player::White && mv.to.y == 7 || self.player == Player::Black && mv.to.y == 0
-        {
+        if self.can_promote_piece(mv.from) {
             piece = Some(Piece::Queen(self.player))
         }
         self.squares[mv.to.y][mv.to.x] = piece;
-        
+
         Ok(())
     }
 
@@ -112,7 +115,7 @@ impl Board {
             return match player {
                 Player::White => from.y == 1,
                 Player::Black => from.y == 6,
-            }
+            };
         }
         false
     }

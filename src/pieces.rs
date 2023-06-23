@@ -51,7 +51,7 @@ impl Not for Player {
     fn not(self) -> Self::Output {
         match self {
             Self::White => Self::Black,
-            Self::Black => Self::White
+            Self::Black => Self::White,
         }
     }
 }
