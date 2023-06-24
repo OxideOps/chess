@@ -18,6 +18,6 @@ impl fmt::Display for Move {
         let from_rank = ranks[self.from.y];
         let to_rank = ranks[self.to.y];
 
-        write!(f, "{}{}->{}{}", from_file, from_rank, to_file, to_rank)
+        write!(f, "{}{} -> {}{}", from_file, from_rank, to_file, to_rank)
     }
 }
