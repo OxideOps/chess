@@ -1,6 +1,6 @@
 use crate::displacement::Displacement;
 use std::fmt;
-use std::ops::{Add, AddAssign, Not};
+use std::ops::{Add, AddAssign, Not, Sub};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Piece {
@@ -99,6 +99,17 @@ impl Add<Displacement> for Position {
         Self {
             x: self.x.wrapping_add(m.dx as usize),
             y: self.y.wrapping_add(m.dy as usize),
+        }
+    }
+}
+
+impl Sub<Displacement> for Position {
+    type Output = Self;
+
+    fn sub(self, m: Displacement) -> Self::Output {
+        Self {
+            x: self.x.wrapping_sub(m.dx as usize),
+            y: self.y.wrapping_sub(m.dy as usize),
         }
     }
 }
