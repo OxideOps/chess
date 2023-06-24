@@ -82,7 +82,7 @@ impl Board {
         self.squares[from.y][from.x].take()
     }
 
-    fn is_in_bounds(at: &Position) -> ChessResult<()> {
+    fn is_in_bounds(at: &Position) -> ChessResult {
         if at.x > 7 || at.y > 7 {
             Err(ChessError::OutOfBounds)
         } else {
@@ -90,7 +90,7 @@ impl Board {
         }
     }
 
-    fn is_piece_some(&self, at: &Position) -> ChessResult<()> {
+    fn is_piece_some(&self, at: &Position) -> ChessResult {
         if let None = self.get_piece(at) {
             Err(ChessError::NoPieceAtPosition)
         } else {
@@ -98,7 +98,7 @@ impl Board {
         }
     }
 
-    fn is_move_valid(&self, mv: &Move) -> ChessResult<()> {
+    fn is_move_valid(&self, mv: &Move) -> ChessResult {
         Self::is_in_bounds(&mv.from)?;
         Self::is_in_bounds(&mv.to)?;
         self.is_piece_some(&mv.from)?;
@@ -114,7 +114,7 @@ impl Board {
         (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
     }
 
-    pub fn move_piece(&mut self, mv: &Move) -> ChessResult<()> {
+    pub fn move_piece(&mut self, mv: &Move) -> ChessResult {
         self.is_move_valid(mv)?;
 
         let mut piece = self.take_piece(&mv.from).unwrap();
@@ -122,8 +122,6 @@ impl Board {
             piece = Piece::Queen(self.player)
         }
         self.squares[mv.to.y][mv.to.x] = Some(piece);
-        println!("{} : {}", piece, mv);
-
         self.handle_castling_the_rook(mv);
         self.update_castling_rights();
         Ok(())
