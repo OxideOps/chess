@@ -47,7 +47,7 @@ impl Game {
 
             self.board.move_piece(&mv)?;
             println!("{} : {}", piece, mv);
-    
+
             self.board.next_turn();
         }
         Ok(())
