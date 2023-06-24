@@ -45,7 +45,7 @@ impl Game {
         let mv = Move { from, to };
         self.board.move_piece(&mv)?;
         println!("{} : {}", self.board.get_piece(&from).unwrap(), mv);
-        
+
         self.board.next_turn();
         Ok(())
     }
