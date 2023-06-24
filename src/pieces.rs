@@ -1,5 +1,6 @@
 use crate::displacement::Displacement;
 use std::ops::{Add, AddAssign, Not};
+use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Piece {
@@ -18,6 +19,7 @@ impl Piece {
             _ => false,
         }
     }
+
     pub fn get_player(self) -> Player {
         match self {
             Self::Pawn(player)
@@ -28,6 +30,7 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
+
     pub fn get_vectors(self) -> &'static [Displacement] {
         match self {
             Self::Rook(..) => Displacement::get_rook_vectors(),
@@ -38,6 +41,7 @@ impl Piece {
             _ => Default::default(),
         }
     }
+
     pub fn can_snipe(self) -> bool {
         match self {
             Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) => true,
@@ -59,6 +63,16 @@ impl Not for Player {
             Self::White => Self::Black,
             Self::Black => Self::White,
         }
+    }
+}
+
+impl fmt::Display for Player {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let player_string = match self {
+            Player::White => "White",
+            Player::Black => "Black",
+        };
+        write!(f, "{}", player_string)
     }
 }
 

@@ -100,6 +100,7 @@ impl Board {
             piece = Piece::Queen(self.player)
         }
         self.squares[mv.to.y][mv.to.x] = Some(piece);
+        println!("{}: {}", self.player, mv);
         Ok(())
     }
 
