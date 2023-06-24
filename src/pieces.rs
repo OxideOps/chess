@@ -1,6 +1,6 @@
 use crate::displacement::Displacement;
-use std::ops::{Add, AddAssign, Not};
 use std::fmt;
+use std::ops::{Add, AddAssign, Not};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Piece {
