@@ -201,9 +201,7 @@ impl Widget<String> for ChessWidget {
                 if let Some(mouse_down) = self.mouse_down {
                     let from = Position::from(mouse_down);
                     let to = self.get_dragged_piece_position(mouse_event.pos);
-                    self.game
-                        .move_piece(from, to)
-                        .ok();
+                    self.game.move_piece(from, to).ok();
                     self.mouse_down = None;
                     ctx.request_paint();
                 }
