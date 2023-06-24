@@ -8,4 +8,6 @@ pub fn main() {
     AppLauncher::with_window(window)
         .launch("Druid + Piet".to_string())
         .expect("launch failed");
+
+    println!("---Game ended---")
 }

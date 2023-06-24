@@ -2,7 +2,7 @@ use crate::board::Board;
 use crate::moves::Move;
 use crate::pieces::{Piece, Position};
 
-pub type ChessResult<T> = Result<T, ChessError>;
+pub type ChessResult = Result<(), ChessError>;
 #[derive(Debug)]
 pub enum ChessError {
     OutOfBounds,           // Position is out of board bounds
@@ -41,8 +41,13 @@ impl Game {
         self.board.get_piece(position)
     }
 
-    pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult<()> {
-        self.board.move_piece(&Move { from, to })?;
+    pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
+        let mv = Move { from, to };
+        let piece = self.board.get_piece(&from).unwrap();
+
+        self.board.move_piece(&mv)?;
+        println!("{} : {}", piece, mv);
+
         self.board.next_turn();
         Ok(())
     }

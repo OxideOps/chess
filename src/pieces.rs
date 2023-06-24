@@ -1,4 +1,5 @@
 use crate::displacement::Displacement;
+use std::fmt;
 use std::ops::{Add, AddAssign, Not};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -18,6 +19,7 @@ impl Piece {
             _ => false,
         }
     }
+
     pub fn get_player(self) -> Player {
         match self {
             Self::Pawn(player)
@@ -28,6 +30,7 @@ impl Piece {
             | Self::King(player) => player,
         }
     }
+
     pub fn get_vectors(self) -> &'static [Displacement] {
         match self {
             Self::Rook(..) => Displacement::get_rook_vectors(),
@@ -38,11 +41,32 @@ impl Piece {
             _ => Default::default(),
         }
     }
+
     pub fn can_snipe(self) -> bool {
         match self {
             Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) => true,
             _ => false,
         }
+    }
+}
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let piece = match self {
+            Piece::Pawn(Player::White) => "♟ (w)",
+            Piece::Knight(Player::White) => "♞ (w)",
+            Piece::Bishop(Player::White) => "♝ (w)",
+            Piece::Rook(Player::White) => "♜ (w)",
+            Piece::Queen(Player::White) => "♛ (w)",
+            Piece::King(Player::White) => "♚ (w)",
+            Piece::Pawn(Player::Black) => "♙ (b)",
+            Piece::Knight(Player::Black) => "♘(b)",
+            Piece::Bishop(Player::Black) => "♗ (b)",
+            Piece::Rook(Player::Black) => "♖ (b)",
+            Piece::Queen(Player::Black) => "♕ (b)",
+            Piece::King(Player::Black) => "♔ (b)",
+        };
+        write!(f, "{}", piece)
     }
 }
 
