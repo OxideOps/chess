@@ -6,10 +6,27 @@ use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
 
+enum CastleRights {
+    WhiteKingside,
+    WhiteQueenside,
+    BlackKingside,
+    BlackQueenside,
+}
+
+impl CastleRights {
+    pub const WHITE_KING: Position = Position { x: 4, y: 0 };
+    pub const BLACK_KING: Position = Position { x: 4, y: 7 };
+    pub const WHITE_KINGSIDE_ROOK: Position = Position { x: 7, y: 0 };
+    pub const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
+    pub const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
+    pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
+}
+
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     moves: HashSet<Move>,
     pub player: Player,
+    castle_rights: [bool; 4],
 }
 
 impl Board {
@@ -34,6 +51,7 @@ impl Board {
             squares,
             moves: HashSet::new(),
             player: Player::White,
+            castle_rights: [true, true, true, true],
         };
         board.add_moves();
         board
@@ -54,6 +72,10 @@ impl Board {
 
     pub fn get_piece(&self, from: &Position) -> Option<Piece> {
         self.squares[from.y][from.x]
+    }
+
+    fn set_piece(&mut self, at: &Position, piece: Option<Piece>) {
+        self.squares[at.y][at.x] = piece;
     }
 
     pub fn take_piece(&mut self, from: &Position) -> Option<Piece> {
@@ -100,6 +122,8 @@ impl Board {
             piece = Piece::Queen(self.player)
         }
         self.squares[mv.to.y][mv.to.x] = Some(piece);
+        self.handle_castling_the_rook(mv);
+        self.update_castling_rights();
         Ok(())
     }
 
@@ -173,6 +197,90 @@ impl Board {
         }
     }
 
+    fn has_piece(&self, position: &Position) -> bool {
+        self.get_piece(position).is_some()
+    }
+
+    fn add_castle_moves(&mut self) {
+        let (king_square, kingside, queenside) = match self.player {
+            Player::White => (
+                CastleRights::WHITE_KING,
+                CastleRights::WhiteKingside,
+                CastleRights::WhiteQueenside,
+            ),
+            Player::Black => (
+                CastleRights::BLACK_KING,
+                CastleRights::BlackKingside,
+                CastleRights::BlackQueenside,
+            ),
+        };
+
+        if self.castle_rights[kingside as usize]
+            && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
+        {
+            self.moves.insert(Move {
+                from: king_square,
+                to: king_square + Displacement::RIGHT * 2,
+            });
+        }
+
+        if self.castle_rights[queenside as usize]
+            && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
+        {
+            self.moves.insert(Move {
+                from: king_square,
+                to: king_square + Displacement::LEFT * 2,
+            });
+        }
+    }
+
+    fn update_castling_rights(&mut self) {
+        if self.get_piece(&CastleRights::WHITE_KINGSIDE_ROOK) != Some(Piece::Rook(Player::White)) {
+            self.castle_rights[CastleRights::WhiteKingside as usize] = false;
+        }
+        if self.get_piece(&CastleRights::WHITE_QUEENSIDE_ROOK) != Some(Piece::Rook(Player::White)) {
+            self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
+        }
+        if self.get_piece(&CastleRights::BLACK_KINGSIDE_ROOK) != Some(Piece::Rook(Player::Black)) {
+            self.castle_rights[CastleRights::BlackKingside as usize] = false;
+        }
+        if self.get_piece(&CastleRights::BLACK_QUEENSIDE_ROOK) != Some(Piece::Rook(Player::Black)) {
+            self.castle_rights[CastleRights::BlackQueenside as usize] = false;
+        }
+        if self.get_piece(&CastleRights::WHITE_KING) != Some(Piece::King(Player::White)) {
+            self.castle_rights[CastleRights::WhiteKingside as usize] = false;
+            self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
+        }
+        if self.get_piece(&CastleRights::BLACK_KING) != Some(Piece::King(Player::Black)) {
+            self.castle_rights[CastleRights::BlackKingside as usize] = false;
+            self.castle_rights[CastleRights::BlackQueenside as usize] = false;
+        }
+    }
+
+    fn handle_castling_the_rook(&mut self, mv: &Move) {
+        let (king, kingside_rook, queenside_rook) = match self.player {
+            Player::White => (
+                CastleRights::WHITE_KING,
+                CastleRights::WHITE_KINGSIDE_ROOK,
+                CastleRights::WHITE_QUEENSIDE_ROOK,
+            ),
+            Player::Black => (
+                CastleRights::BLACK_KING,
+                CastleRights::BLACK_KINGSIDE_ROOK,
+                CastleRights::BLACK_QUEENSIDE_ROOK,
+            ),
+        };
+        if mv.from == king {
+            if mv.to == king + Displacement::RIGHT * 2 {
+                let rook = self.take_piece(&kingside_rook);
+                self.set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
+            } else if mv.to == king + Displacement::LEFT * 2 {
+                let rook = self.take_piece(&queenside_rook);
+                self.set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
+            }
+        }
+    }
+
     pub fn add_moves(&mut self) {
         self.moves.clear();
         for y in 0..8 {
@@ -180,6 +288,7 @@ impl Board {
                 self.add_moves_for_piece(Position { x, y })
             }
         }
+        self.add_castle_moves();
     }
 }
 
