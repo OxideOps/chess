@@ -27,6 +27,7 @@ pub struct Board {
     moves: HashSet<Move>,
     pub player: Player,
     castle_rights: [bool; 4],
+    en_passant_square: Option<Position>,
 }
 
 impl Board {
@@ -52,6 +53,7 @@ impl Board {
             moves: HashSet::new(),
             player: Player::White,
             castle_rights: [true, true, true, true],
+            en_passant_square: None,
         };
         board.add_moves();
         board
@@ -123,7 +125,9 @@ impl Board {
         }
         self.squares[mv.to.y][mv.to.x] = Some(piece);
         self.handle_castling_the_rook(mv);
+        self.handle_capturing_en_passant(&mv.to);
         self.update_castling_rights();
+        self.update_en_passant(&mv);
         Ok(())
     }
 
@@ -164,6 +168,9 @@ impl Board {
                     if piece.get_player() != self.player {
                         self.moves.insert(Move { from, to });
                     }
+                }
+                if Some(to) == self.en_passant_square {
+                    self.moves.insert(Move { from, to });
                 }
             }
         }
@@ -278,6 +285,33 @@ impl Board {
                 let rook = self.take_piece(&queenside_rook);
                 self.set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
             }
+        }
+    }
+
+    fn was_double_move(&self, mv: &Move) -> bool {
+        if let Some(Piece::Pawn(player)) = self.get_piece(&mv.to) {
+            return match player {
+                Player::White => mv.from.y == 1 && mv.to.y == 3,
+                Player::Black => mv.from.y == 6 && mv.to.y == 4,
+            };
+        }
+        false
+    }
+
+    fn update_en_passant(&mut self, mv: &Move) {
+        self.en_passant_square = if self.was_double_move(mv) {
+            Some(mv.from + Displacement::get_pawn_advance_vector(self.player))
+        } else {
+            None
+        }
+    }
+
+    fn handle_capturing_en_passant(&mut self, to: &Position) {
+        if Some(*to) == self.en_passant_square {
+            self.set_piece(
+                &(*to - Displacement::get_pawn_advance_vector(self.player)),
+                None,
+            );
         }
     }
 
