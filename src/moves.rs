@@ -15,8 +15,8 @@ impl fmt::Display for Move {
         let from_file = files[self.from.x];
         let to_file = files[self.to.x];
 
-        let from_rank = ranks[8 - self.from.y - 1];
-        let to_rank = ranks[8 - self.to.y - 1];
+        let from_rank = ranks[self.from.y];
+        let to_rank = ranks[self.to.y];
 
         write!(f, "{}{}->{}{}", from_file, from_rank, to_file, to_rank)
     }

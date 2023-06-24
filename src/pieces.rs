@@ -50,6 +50,26 @@ impl Piece {
     }
 }
 
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let emoji = match self {
+            Piece::Pawn(Player::White) => "♙ (w)",
+            Piece::Knight(Player::White) => "♘ (w)",
+            Piece::Bishop(Player::White) => "♗ (w)",
+            Piece::Rook(Player::White) => "♖ (w)",
+            Piece::Queen(Player::White) => "♕ (w)",
+            Piece::King(Player::White) => "♔ (w)",
+            Piece::Pawn(Player::Black) => "♟ (b)",
+            Piece::Knight(Player::Black) => "♞ (b)",
+            Piece::Bishop(Player::Black) => "♝ (b)",
+            Piece::Rook(Player::Black) => "♜ (b)",
+            Piece::Queen(Player::Black) => "♛ (b)",
+            Piece::King(Player::Black) => "♚ (b)",
+        };
+        write!(f, "{}", emoji)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Player {
     White,
@@ -63,16 +83,6 @@ impl Not for Player {
             Self::White => Self::Black,
             Self::Black => Self::White,
         }
-    }
-}
-
-impl fmt::Display for Player {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let player_string = match self {
-            Player::White => "White",
-            Player::Black => "Black",
-        };
-        write!(f, "{}", player_string)
     }
 }
 
