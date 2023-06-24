@@ -28,6 +28,10 @@ impl Displacement {
         Self { dx: -2, dy: 1 },
         Self { dx: -2, dy: -1 },
     ];
+    pub const UP: Self = Self { dx: 0, dy: 1 };
+    pub const DOWN: Self = Self { dx: 0, dy: -1 };
+    pub const RIGHT: Self = Self { dx: 1, dy: 0 };
+    pub const LEFT: Self = Self { dx: -1, dy: 0 };
 
     pub fn get_pawn_advance_vector(player: Player) -> Self {
         match player {
