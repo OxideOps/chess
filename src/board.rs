@@ -123,7 +123,7 @@ impl Board {
         }
         self.squares[mv.to.y][mv.to.x] = Some(piece);
         println!("{} : {}", piece, mv);
-      
+
         self.handle_castling_the_rook(mv);
         self.update_castling_rights();
         Ok(())
