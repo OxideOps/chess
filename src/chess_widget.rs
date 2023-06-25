@@ -8,7 +8,7 @@ use druid::{
 };
 use image::io::Reader as ImageReader;
 use std::fs::read;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 pub const WINDOW_SIZE: f64 = 800.0;
 const BOARD_SIZE: usize = 816;
@@ -29,23 +29,23 @@ const IMAGE_FILES: [&str; 12] = [
     "images/blackQueen.png",
 ];
 
-static WIDTH: Mutex<f64> = Mutex::new(WINDOW_SIZE);
-static HEIGHT: Mutex<f64> = Mutex::new(WINDOW_SIZE);
+static WIDTH: RwLock<f64> = RwLock::new(WINDOW_SIZE);
+static HEIGHT: RwLock<f64> = RwLock::new(WINDOW_SIZE);
 
 fn get_window_width() -> f64 {
-    *WIDTH.lock().unwrap()
+    *WIDTH.read().unwrap()
 }
 
 fn get_window_height() -> f64 {
-    *HEIGHT.lock().unwrap()
+    *HEIGHT.read().unwrap()
 }
 
 fn set_window_width(width: f64) {
-    *WIDTH.lock().unwrap() = width;
+    *WIDTH.write().unwrap() = width;
 }
 
 fn set_window_height(height: f64) {
-    *HEIGHT.lock().unwrap() = height;
+    *HEIGHT.write().unwrap() = height;
 }
 
 fn create_image(file_name: &str, ctx: &mut PaintCtx, size: usize, fmt: ImageFormat) -> PietImage {
