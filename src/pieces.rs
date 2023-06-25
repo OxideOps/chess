@@ -60,7 +60,7 @@ impl fmt::Display for Piece {
             Piece::Queen(Player::White) => "♛ (w)",
             Piece::King(Player::White) => "♚ (w)",
             Piece::Pawn(Player::Black) => "♙ (b)",
-            Piece::Knight(Player::Black) => "♘(b)",
+            Piece::Knight(Player::Black) => "♘ (b)",
             Piece::Bishop(Player::Black) => "♗ (b)",
             Piece::Rook(Player::Black) => "♖ (b)",
             Piece::Queen(Player::Black) => "♕ (b)",
