@@ -180,8 +180,8 @@ impl ChessWidget {
     }
 }
 
-impl Widget<String> for ChessWidget {
-    fn event(&mut self, ctx: &mut EventCtx, event: &Event, _data: &mut String, _env: &Env) {
+impl Widget<()> for ChessWidget {
+    fn event(&mut self, ctx: &mut EventCtx, event: &Event, _data: &mut (), _env: &Env) {
         match event {
             //Let this widget receive keyboard Events
             Event::WindowConnected => {
@@ -231,22 +231,15 @@ impl Widget<String> for ChessWidget {
         }
     }
 
-    fn lifecycle(
-        &mut self,
-        _ctx: &mut LifeCycleCtx,
-        _event: &LifeCycle,
-        _data: &String,
-        _env: &Env,
-    ) {
-    }
+    fn lifecycle(&mut self, _ctx: &mut LifeCycleCtx, _event: &LifeCycle, _data: &(), _env: &Env) {}
 
-    fn update(&mut self, _ctx: &mut UpdateCtx, _old_data: &String, _data: &String, _env: &Env) {}
+    fn update(&mut self, _ctx: &mut UpdateCtx, _old_data: &(), _data: &(), _env: &Env) {}
 
     fn layout(
         &mut self,
         _layout_ctx: &mut LayoutCtx,
         bc: &BoxConstraints,
-        _data: &String,
+        _data: &(),
         _env: &Env,
     ) -> Size {
         if bc.is_width_bounded() | bc.is_height_bounded() {
@@ -257,7 +250,7 @@ impl Widget<String> for ChessWidget {
         }
     }
 
-    fn paint(&mut self, ctx: &mut PaintCtx, _data: &String, _env: &Env) {
+    fn paint(&mut self, ctx: &mut PaintCtx, _data: &(), _env: &Env) {
         if self.board_image.is_none() || self.piece_images.is_none() {
             self.create_images(ctx)
         }
