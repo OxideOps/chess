@@ -6,7 +6,7 @@ pub fn main() {
         .title(LocalizedString::new("Chess"))
         .window_size((WINDOW_SIZE, WINDOW_SIZE));
     AppLauncher::with_window(window)
-        .launch("Druid + Piet".to_string())
+        .launch(())
         .expect("launch failed");
 
     println!("---Game ended---")
