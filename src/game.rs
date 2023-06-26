@@ -29,14 +29,16 @@ pub struct Game {
     status: GameStatus,
 }
 
-impl Game {
-    pub fn new() -> Self {
+impl Default for Game {
+    fn default() -> Self {
         Self {
-            board: Board::new(),
             status: GameStatus::Ongoing,
+            ..Default::default()
         }
     }
+}
 
+impl Game {
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.board.get_piece(position)
     }
