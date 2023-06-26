@@ -17,26 +17,22 @@ pub enum ChessError {
     EmptyPieceMove,        // Trying to move an empty piece
 }
 
+#[derive(Default)]
 pub enum GameStatus {
+    #[default]
     Ongoing,
     Stalemate,
     Check,
     Checkmate,
 }
 
+#[derive(Default)]
 pub struct Game {
     board: Board,
     status: GameStatus,
 }
 
 impl Game {
-    pub fn new() -> Self {
-        Self {
-            board: Board::new(),
-            status: GameStatus::Ongoing,
-        }
-    }
-
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.board.get_piece(position)
     }

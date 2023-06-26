@@ -79,6 +79,7 @@ impl From<Position> for Point {
     }
 }
 
+#[derive(Default)]
 pub struct ChessWidget {
     game: Game,
     board_image: Option<PietImage>,
@@ -88,16 +89,6 @@ pub struct ChessWidget {
 }
 
 impl ChessWidget {
-    pub fn new() -> Self {
-        Self {
-            game: Game::new(),
-            board_image: None,
-            piece_images: None,
-            mouse_down: None,
-            current_point: Default::default(),
-        }
-    }
-
     fn get_image_files(ctx: &mut PaintCtx) -> [PietImage; 12] {
         IMAGE_FILES
             .map(|file_name| create_image(file_name, ctx, PIECE_SIZE, ImageFormat::RgbaSeparate))

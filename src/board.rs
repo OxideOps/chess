@@ -30,8 +30,8 @@ pub struct Board {
     en_passant_square: Option<Position>,
 }
 
-impl Board {
-    pub fn new() -> Self {
+impl Default for Board {
+    fn default() -> Self {
         let mut squares = [[None; BOARD_SIZE]; BOARD_SIZE];
 
         // Initialize white pawns
@@ -58,7 +58,9 @@ impl Board {
         board.add_moves();
         board
     }
+}
 
+impl Board {
     fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
         [
             Some(Piece::Rook(player)),
@@ -333,7 +335,7 @@ mod tests {
 
     #[test]
     fn test_move_piece() {
-        let mut board: Board = Board::new();
+        let mut board: Board = Board::default();
         let from = Position { x: 0, y: 1 };
         let to = Position { x: 0, y: 2 };
         let mv = Move { from, to };
