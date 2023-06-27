@@ -2,7 +2,7 @@ use crate::board::Board;
 use crate::moves::Move;
 use crate::pieces::{Piece, Position};
 
-/// A result type for chess operations. 
+/// A result type for chess operations.
 /// It's either an `Ok(())`, indicating the operation succeeded,
 /// or an `Err(ChessError)` indicating the operation failed with a specific error.
 pub type ChessResult = Result<(), ChessError>;
@@ -48,13 +48,13 @@ pub struct Game {
 }
 
 impl Game {
-    /// Gets the piece at the given position on the board. 
+    /// Gets the piece at the given position on the board.
     /// Returns `None` if there is no piece at the position.
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.board.get_piece(position)
     }
 
-    /// Attempts to move a piece from one position to another on the board. 
+    /// Attempts to move a piece from one position to another on the board.
     /// Returns a `ChessResult`, indicating whether the move was successful.
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
         if let Some(piece) = self.board.get_piece(&from) {
@@ -73,7 +73,8 @@ impl Game {
     /// Attempts to undo the last move.
     /// Returns a `ChessResult`, indicating whether the undo was successful.
     pub fn undo(&mut self) -> ChessResult {
-        self.board.move_piece(&self.move_history[self.current_move].inverse())?;
+        self.board
+            .move_piece(&self.move_history[self.current_move].inverse())?;
         self.current_move -= 1;
         Ok(())
     }
@@ -81,7 +82,8 @@ impl Game {
     /// Attempts to redo the last move.
     /// Returns a `ChessResult`, indicating whether the redo was successful.
     pub fn redo(&mut self) -> ChessResult {
-        self.board.move_piece(&self.move_history[self.current_move])?;
+        self.board
+            .move_piece(&self.move_history[self.current_move])?;
         self.current_move += 1;
         Ok(())
     }
