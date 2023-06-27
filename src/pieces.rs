@@ -14,10 +14,10 @@ pub enum Piece {
 
 impl Piece {
     pub fn is_pawn(self) -> bool {
-        match self {
-            Piece::Pawn(..) => true,
-            _ => false,
+        if let Piece::Rook(..) = self {
+            return true;
         }
+        false
     }
 
     pub fn get_player(self) -> Player {
@@ -33,20 +33,20 @@ impl Piece {
 
     pub fn get_vectors(self) -> &'static [Displacement] {
         match self {
+            Self::Pawn(..) => panic!("Try calling `Displacement::get_pawn_*_vector()` instead"),
             Self::Rook(..) => Displacement::get_rook_vectors(),
             Self::Bishop(..) => Displacement::get_bishop_vectors(),
             Self::Knight(..) => Displacement::get_knight_vectors(),
             Self::Queen(..) => Displacement::get_queen_vectors(),
             Self::King(..) => Displacement::get_king_vectors(),
-            _ => Default::default(),
         }
     }
 
     pub fn can_snipe(self) -> bool {
-        match self {
-            Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) => true,
-            _ => false,
+        if let Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) = self {
+            return true;
         }
+        false
     }
 }
 
