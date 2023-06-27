@@ -37,10 +37,6 @@ impl Default for Board {
         // Initialize white pawns
         for i in 0..8 {
             squares[1][i] = Some(Piece::Pawn(Player::White));
-        }
-
-        // Initialize black pawns
-        for i in 0..8 {
             squares[6][i] = Some(Piece::Pawn(Player::Black));
         }
 
@@ -129,7 +125,7 @@ impl Board {
         self.handle_castling_the_rook(mv);
         self.handle_capturing_en_passant(&mv.to);
         self.update_castling_rights();
-        self.update_en_passant(&mv);
+        self.update_en_passant(mv);
         Ok(())
     }
 
