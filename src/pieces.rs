@@ -14,7 +14,7 @@ pub enum Piece {
 
 impl Piece {
     pub fn is_pawn(self) -> bool {
-        if let Piece::Rook(..) = self {
+        if let Piece::Pawn(..) = self {
             return true;
         }
         false
