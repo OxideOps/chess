@@ -322,8 +322,6 @@ impl Board {
         }
         self.add_castle_moves();
     }
-
-    pub fn replay(&mut self) {}
 }
 
 // Add unit tests at the bottom of each file. Each tests module should only have access to super (non integration)
