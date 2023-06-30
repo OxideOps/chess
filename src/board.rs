@@ -84,8 +84,8 @@ impl Board {
     /// 
     /// assert_eq!(Piece::King(Player::White), king_piece);
     /// ```
-    pub fn get_piece(&self, from: &Position) -> Option<Piece> {
-        self.squares[from.y][from.x]
+    pub fn get_piece(&self, at: &Position) -> Option<Piece> {
+        self.squares[at.y][at.x]
     }
 
     fn set_piece(&mut self, at: &Position, piece: Option<Piece>) {
@@ -105,11 +105,10 @@ impl Board {
     }
 
     fn is_piece_some(&self, at: &Position) -> ChessResult {
-        if let None = self.get_piece(at) {
-            Err(ChessError::NoPieceAtPosition)
-        } else {
-            Ok(())
-        }
+        if !self.has_piece(at) {
+            return Err(ChessError::NoPieceAtPosition)
+        } 
+        Ok(())
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
