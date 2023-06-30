@@ -22,6 +22,7 @@ impl CastleRights {
     pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
 }
 
+/// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     moves: HashSet<Move>,
