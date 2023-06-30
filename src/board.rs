@@ -163,12 +163,9 @@ impl Board {
             let to = from + v;
             if Self::is_in_bounds(&to).is_ok() {
                 if let Some(piece) = self.get_piece(&to) {
-                    if piece.get_player() != self.player {
+                    if piece.get_player() != self.player || Some(to) == self.en_passant_square {
                         self.moves.insert(Move { from, to });
                     }
-                }
-                if Some(to) == self.en_passant_square {
-                    self.moves.insert(Move { from, to });
                 }
             }
         }
