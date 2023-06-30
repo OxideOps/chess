@@ -71,9 +71,9 @@ impl Board {
         ]
     }
 
-    /// Given a `Position`, returns the `Option<Piece>` at that position in the `Board`.
+    /// Returns the `Option<Piece>` at the given `Position` in the `Board`.
     /// 
-    /// # Example
+    /// # Examples
     /// 
     /// ```
     /// use chess::{board::Board, pieces::{Player, Piece, Position}};
@@ -82,7 +82,7 @@ impl Board {
     /// let king_position = Position { x: 4, y: 0 };
     /// let king_piece = board.get_piece(&king_position).unwrap();
     /// 
-    /// assert_eq!(Piece::King(Player::White), king_piece);
+    /// assert_eq!(king_piece, Piece::King(Player::White));
     /// ```
     pub fn get_piece(&self, at: &Position) -> Option<Piece> {
         self.squares[at.y][at.x]
@@ -92,6 +92,20 @@ impl Board {
         self.squares[at.y][at.x] = piece;
     }
 
+    /// Takes the `Option<Piece>` out of the `Board` at the given `Position`, leaving `None` in its place
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
+    /// 
+    /// let board = Board::default();
+    /// let king_position = Position { x: 4, y: 0 };
+    /// let king_piece = board.take_piece(&king_position).unwrap();
+    /// 
+    /// assert_eq!(king_piece, Piece::King(Player::White));
+    /// assert_eq!(board.get_piece(&king_position), None);
+    /// ```
     pub fn take_piece(&mut self, from: &Position) -> Option<Piece> {
         self.squares[from.y][from.x].take()
     }
