@@ -71,6 +71,19 @@ impl Board {
         ]
     }
 
+    /// Given a `Position`, returns the `Option<Piece>` at that position in the `Board`.
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
+    /// 
+    /// let board = Board::default();
+    /// let king_position = Position { x: 4, y: 0 };
+    /// let king_piece = board.get_piece(&king_position).unwrap();
+    /// 
+    /// assert_eq!(Piece::King(Player::White), king_piece);
+    /// ```
     pub fn get_piece(&self, from: &Position) -> Option<Piece> {
         self.squares[from.y][from.x]
     }
