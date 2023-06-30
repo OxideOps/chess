@@ -1,14 +1,5 @@
-use chess::chess_widget::{ChessWidget, WINDOW_SIZE};
-use druid::{AppLauncher, LocalizedString, WindowDesc};
+use chess::app::App;
 
 pub fn main() {
-    AppLauncher::with_window(
-        WindowDesc::new(ChessWidget::default())
-            .title(LocalizedString::new("Chess"))
-            .window_size((WINDOW_SIZE, WINDOW_SIZE)),
-    )
-    .launch(())
-    .expect("launch failed");
-
-    println!("---Game ended---")
+    dioxus_desktop::launch(App);
 }
