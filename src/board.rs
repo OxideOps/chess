@@ -76,6 +76,8 @@ impl Board {
     }
 }
 
+
+
 #[derive(PartialEq)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
@@ -139,14 +141,14 @@ impl BoardState {
     /// ```
     /// use chess::{board::BoardState, pieces::{Player, Piece, Position}, moves::Move};
     ///
-    /// let mut board: BoardState = BoardState::default();
+    /// let mut state: BoardState = BoardState::default();
     /// let from = Position { x: 0, y: 1 };
     /// let to = Position { x: 0, y: 2 };
     /// let mv = Move { from, to };
-    /// board.move_piece(&mv).unwrap();
+    /// state.move_piece(&mv).unwrap();
     ///
-    /// assert_eq!(board.get_piece(&from), None);
-    /// assert_eq!(board.get_piece(&to), Some(Piece::Pawn(Player::White)));
+    /// assert_eq!(state.board.get_piece(&from), None);
+    /// assert_eq!(state.board.get_piece(&to), Some(Piece::Pawn(Player::White)));
     /// ```
     pub fn move_piece(&mut self, mv: &Move) -> ChessResult {
         self.is_move_valid(mv)?;
