@@ -95,13 +95,13 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
             },
-            (0..8).flat_map(|x| 
-                (0..8).map(move |y| 
+            (0..8).flat_map(|x|
+                (0..8).map(move |y|
                     Position { x, y }
                 )
             )
-            .filter_map(|pos| 
-                GAME.read().unwrap().get_piece(&pos).map(|piece| 
+            .filter_map(|pos|
+                GAME.read().unwrap().get_piece(&pos).map(|piece|
                     (pos, piece)
                 )
             )
