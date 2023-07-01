@@ -24,7 +24,7 @@ impl CastleRights {
 
 /// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
 #[derive(PartialEq)]
-pub struct Board {
+pub struct BoardState {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     moves: HashSet<Move>,
     pub player: Player,
@@ -32,7 +32,7 @@ pub struct Board {
     en_passant_square: Option<Position>,
 }
 
-impl Default for Board {
+impl Default for BoardState {
     fn default() -> Self {
         let mut squares = [[None; BOARD_SIZE]; BOARD_SIZE];
 
@@ -58,7 +58,7 @@ impl Default for Board {
     }
 }
 
-impl Board {
+impl BoardState {
     fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
         [
             Some(Piece::Rook(player)),
@@ -72,14 +72,14 @@ impl Board {
         ]
     }
 
-    /// Returns the `Option<Piece>` at the given `Position` in the `Board`.
+    /// Returns the `Option<Piece>` at the given `Position` in the `BoardState`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
+    /// use chess::{board::BoardState, pieces::{Player, Piece, Position}};
     ///
-    /// let board = Board::default();
+    /// let board = BoardState::default();
     /// let king_position = Position { x: 4, y: 0 };
     /// let king_piece = board.get_piece(&king_position).unwrap();
     ///
@@ -93,14 +93,14 @@ impl Board {
         self.squares[at.y][at.x] = piece;
     }
 
-    /// Takes the `Option<Piece>` out of the `Board` at the given `Position`, leaving `None` in its place
+    /// Takes the `Option<Piece>` out of the `BoardState` at the given `Position`, leaving `None` in its place
     ///
     /// # Examples
     ///
     /// ```
-    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
+    /// use chess::{board::BoardState, pieces::{Player, Piece, Position}};
     ///
-    /// let mut board = Board::default();
+    /// let mut board = BoardState::default();
     /// let king_position = Position { x: 4, y: 0 };
     /// let king_piece = board.take_piece(&king_position).unwrap();
     ///
@@ -147,9 +147,9 @@ impl Board {
     /// # Examples
     ///
     /// ```
-    /// use chess::{board::Board, pieces::{Player, Piece, Position}, moves::Move};
+    /// use chess::{board::BoardState, pieces::{Player, Piece, Position}, moves::Move};
     ///
-    /// let mut board: Board = Board::default();
+    /// let mut board: BoardState = BoardState::default();
     /// let from = Position { x: 0, y: 1 };
     /// let to = Position { x: 0, y: 2 };
     /// let mv = Move { from, to };

@@ -1,4 +1,4 @@
-use crate::board::Board;
+use crate::board::BoardState;
 use crate::moves::Move;
 use crate::pieces::{Piece, Position};
 
@@ -28,7 +28,7 @@ pub enum GameStatus {
 
 #[derive(Default, PartialEq)]
 pub struct Game {
-    board: Board,
+    board: BoardState,
     status: GameStatus,
 }
 
