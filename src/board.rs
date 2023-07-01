@@ -22,43 +22,32 @@ impl CastleRights {
     pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
 }
 
-/// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
-#[derive(PartialEq)]
-pub struct BoardState {
-    squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
-    moves: HashSet<Move>,
-    pub player: Player,
-    castle_rights: [bool; 4],
-    en_passant_square: Option<Position>,
-}
+#[derive(Clone, Copy)]
+pub struct Board([[Option<Piece>; BOARD_SIZE]; BOARD_SIZE]);
 
-impl Default for BoardState {
+impl Default for Board {
     fn default() -> Self {
-        let mut squares = [[None; BOARD_SIZE]; BOARD_SIZE];
+        let mut board = [[None; BOARD_SIZE]; BOARD_SIZE];
 
         // Initialize white pawns
         for i in 0..8 {
-            squares[1][i] = Some(Piece::Pawn(Player::White));
-            squares[6][i] = Some(Piece::Pawn(Player::Black));
+            board[1][i] = Some(Piece::Pawn(Player::White));
+            board[6][i] = Some(Piece::Pawn(Player::Black));
         }
 
         // Initialize the other white and black pieces
-        squares[0] = Self::get_back_rank(Player::White);
-        squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
+        board[0] = Self::get_back_rank(Player::White);
+        board[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        let mut board = Self {
-            squares,
-            moves: HashSet::new(),
-            player: Player::White,
-            castle_rights: [true, true, true, true],
-            en_passant_square: None,
-        };
-        board.add_moves();
-        board
+        Self(board)
     }
 }
 
-impl BoardState {
+impl Board {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
         [
             Some(Piece::Rook(player)),
@@ -86,14 +75,14 @@ impl BoardState {
     /// assert_eq!(king_piece, Piece::King(Player::White));
     /// ```
     pub fn get_piece(&self, at: &Position) -> Option<Piece> {
-        self.squares[at.y][at.x]
+        self.0[at.y][at.x]
     }
 
-    fn set_piece(&mut self, at: &Position, piece: Option<Piece>) {
-        self.squares[at.y][at.x] = piece;
+    pub fn set_piece(&mut self, at: &Position, piece: Option<Piece>) {
+        self.0[at.y][at.x] = piece;
     }
 
-    /// Takes the `Option<Piece>` out of the `BoardState` at the given `Position`, leaving `None` in its place
+        /// Takes the `Option<Piece>` out of the `BoardState` at the given `Position`, leaving `None` in its place
     ///
     /// # Examples
     ///
@@ -108,8 +97,31 @@ impl BoardState {
     /// assert_eq!(board.get_piece(&king_position), None);
     /// ```
     pub fn take_piece(&mut self, from: &Position) -> Option<Piece> {
-        self.squares[from.y][from.x].take()
+        self.0[from.y][from.x].take()
     }
+}
+
+/// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
+pub struct BoardState {
+    board: Board,
+    moves: HashSet<Move>,
+    pub player: Player,
+    castle_rights: [bool; 4],
+    en_passant_square: Option<Position>,
+}
+
+impl Default for BoardState {
+
+}
+
+impl BoardState {
+
+
+
+
+
+
+
 
     fn is_in_bounds(at: &Position) -> ChessResult {
         if at.x > 7 || at.y > 7 {
@@ -165,7 +177,7 @@ impl BoardState {
         if piece.is_pawn() && self.can_promote_piece(&mv.to) {
             piece = Piece::Queen(self.player)
         }
-        self.squares[mv.to.y][mv.to.x] = Some(piece);
+        self.board[mv.to.y][mv.to.x] = Some(piece);
         self.handle_castling_the_rook(mv);
         self.handle_capturing_en_passant(&mv.to);
         self.update_castling_rights();
