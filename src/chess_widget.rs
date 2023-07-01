@@ -65,25 +65,26 @@ fn get_piece_image_file(piece: Piece) -> &'static str {
 
 #[inline_props]
 pub fn ChessWidget(cx: Scope) -> Element {
-    let mouse_down: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let dragging_point: &UseState<Option<ClientPoint>> = use_state(cx, || None);
+    let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
+    let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
 
     render! {
         style { include_str!("../styles/chess_widget.css") }
         div {
-            onmousedown: |event| mouse_down.set(Some(event.client_coordinates())),
+            onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
             onmouseup: move |event| {
-                if let Some(point) = mouse_down.get() {
-                    let from = Position::from(*point);
-                    let to = get_dragged_piece_position(point, &event.client_coordinates());
+                if let Some(mouse_down) = mouse_down_state.get() {
+                    let from = Position::from(*mouse_down);
+                    let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
                     GAME.write().unwrap().move_piece(from, to).ok();
-                    mouse_down.set(None);
+                    mouse_down_state.set(None);
+                    dragging_point_state.set(None);
                 }
             },
             onmousemove: |event| {
-                if let Some(point) = mouse_down.get() {
-                    if GAME.read().unwrap().get_piece(&Position::from(*point)).is_some() {
-                        dragging_point.set(Some(event.client_coordinates()));
+                if let Some(mouse_down) = mouse_down_state.get() {
+                    if GAME.read().unwrap().get_piece(&Position::from(*mouse_down)).is_some() {
+                        dragging_point_state.set(Some(event.client_coordinates()));
                     }
                 }
             },
@@ -93,17 +94,35 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 style: "left: 0; top: 0;",
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
-            }
-            (0..8).flat_map(|x| (0..8).map(move |y| Position { x, y }))
-            .filter_map(|pos| GAME.read().unwrap().get_piece(&pos).map(|piece| (pos, piece)))
-            .map(|(pos, piece)| rsx! {
-                img {
-                    src: "{get_piece_image_file(piece)}",
-                    class: "images",
-                    style: "left: {WIDGET_SIZE * pos.x as u32 / 8}px; \
-                            top:  {WIDGET_SIZE * (7 - pos.y as u32) / 8}px;",
-                    width: "{WIDGET_SIZE / 8}",
-                    height: "{WIDGET_SIZE / 8}",
+            },
+            (0..8).flat_map(|x|
+                (0..8).map(move |y|
+                    Position { x, y }
+                )
+            )
+            .filter_map(|pos|
+                GAME.read().unwrap().get_piece(&pos).map(|piece|
+                    (pos, piece)
+                )
+            )
+            .map(|(pos, piece)| {
+                let mut top_left = ClientPoint::from(pos);
+                if let Some(mouse_down) = mouse_down_state.get() {
+                    if let Some(dragging_point) = dragging_point_state.get() {
+                        if pos == Position::from(*mouse_down) {
+                            top_left.x += dragging_point.x - mouse_down.x;
+                            top_left.y += dragging_point.y - mouse_down.y;
+                        }
+                    }
+                }
+                rsx! {
+                    img {
+                        src: "{get_piece_image_file(piece)}",
+                        class: "images",
+                        style: "left: {top_left.x}px; top: {top_left.y}px;",
+                        width: "{WIDGET_SIZE / 8}",
+                        height: "{WIDGET_SIZE / 8}",
+                    }
                 }
             })
         }
