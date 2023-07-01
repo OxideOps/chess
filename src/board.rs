@@ -272,16 +272,24 @@ impl BoardState {
     }
 
     fn update_castling_rights(&mut self) {
-        if self.board.get_piece(&CastleRights::WHITE_KINGSIDE_ROOK) != Some(Piece::Rook(Player::White)) {
+        if self.board.get_piece(&CastleRights::WHITE_KINGSIDE_ROOK)
+            != Some(Piece::Rook(Player::White))
+        {
             self.castle_rights[CastleRights::WhiteKingside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::WHITE_QUEENSIDE_ROOK) != Some(Piece::Rook(Player::White)) {
+        if self.board.get_piece(&CastleRights::WHITE_QUEENSIDE_ROOK)
+            != Some(Piece::Rook(Player::White))
+        {
             self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::BLACK_KINGSIDE_ROOK) != Some(Piece::Rook(Player::Black)) {
+        if self.board.get_piece(&CastleRights::BLACK_KINGSIDE_ROOK)
+            != Some(Piece::Rook(Player::Black))
+        {
             self.castle_rights[CastleRights::BlackKingside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::BLACK_QUEENSIDE_ROOK) != Some(Piece::Rook(Player::Black)) {
+        if self.board.get_piece(&CastleRights::BLACK_QUEENSIDE_ROOK)
+            != Some(Piece::Rook(Player::Black))
+        {
             self.castle_rights[CastleRights::BlackQueenside as usize] = false;
         }
         if self.board.get_piece(&CastleRights::WHITE_KING) != Some(Piece::King(Player::White)) {
@@ -310,10 +318,12 @@ impl BoardState {
         if mv.from == king {
             if mv.to == king + Displacement::RIGHT * 2 {
                 let rook = self.board.take_piece(&kingside_rook);
-                self.board.set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
+                self.board
+                    .set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
             } else if mv.to == king + Displacement::LEFT * 2 {
                 let rook = self.board.take_piece(&queenside_rook);
-                self.board.set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
+                self.board
+                    .set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
             }
         }
     }
