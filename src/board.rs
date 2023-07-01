@@ -142,18 +142,18 @@ impl Board {
     }
 
     /// Performs a `Move` if valid.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use chess::{board::Board, pieces::{Player, Piece, Position}, moves::Move};
-    /// 
+    ///
     /// let mut board: Board = Board::default();
     /// let from = Position { x: 0, y: 1 };
     /// let to = Position { x: 0, y: 2 };
     /// let mv = Move { from, to };
     /// board.move_piece(&mv).unwrap();
-    /// 
+    ///
     /// assert_eq!(board.get_piece(&from), None);
     /// assert_eq!(board.get_piece(&to), Some(Piece::Pawn(Player::White)));
     /// ```
