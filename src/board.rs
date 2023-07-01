@@ -194,10 +194,8 @@ impl Board {
         if Self::is_in_bounds(&to).is_ok() && self.get_piece(&to).is_none() {
             self.moves.insert(Move { from, to });
             to += v;
-            if self.get_piece(&to).is_none() {
-                if self.can_double_move(&from) {
-                    self.moves.insert(Move { from, to });
-                }
+            if self.get_piece(&to).is_none() && self.can_double_move(&from) {
+                self.moves.insert(Move { from, to });
             }
         }
     }
