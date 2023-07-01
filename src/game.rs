@@ -17,7 +17,7 @@ pub enum ChessError {
     EmptyPieceMove,
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub enum GameStatus {
     #[default]
     Ongoing,
@@ -26,7 +26,7 @@ pub enum GameStatus {
     Checkmate,
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Game {
     board: Board,
     status: GameStatus,

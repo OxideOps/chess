@@ -23,6 +23,7 @@ impl CastleRights {
 }
 
 /// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
+#[derive(PartialEq)]
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     moves: HashSet<Move>,

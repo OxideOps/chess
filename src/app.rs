@@ -1,4 +1,5 @@
 use crate::chess_widget::ChessWidget;
+use crate::game::Game;
 use dioxus::prelude::*;
 use dioxus_desktop::{use_window, PhysicalSize};
 
@@ -10,6 +11,9 @@ pub fn App(cx: Scope) -> Element {
         height: WINDOW_SIZE,
     });
     render! {
-        ChessWidget {size: WINDOW_SIZE},
+        ChessWidget {
+            size: WINDOW_SIZE,
+            game: Game::default(),
+        },
     }
 }
