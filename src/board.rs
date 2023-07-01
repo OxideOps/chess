@@ -22,6 +22,7 @@ impl CastleRights {
     pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
 }
 
+/// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
 pub struct Board {
     squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
     moves: HashSet<Move>,
@@ -70,14 +71,41 @@ impl Board {
         ]
     }
 
-    pub fn get_piece(&self, from: &Position) -> Option<Piece> {
-        self.squares[from.y][from.x]
+    /// Returns the `Option<Piece>` at the given `Position` in the `Board`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
+    ///
+    /// let board = Board::default();
+    /// let king_position = Position { x: 4, y: 0 };
+    /// let king_piece = board.get_piece(&king_position).unwrap();
+    ///
+    /// assert_eq!(king_piece, Piece::King(Player::White));
+    /// ```
+    pub fn get_piece(&self, at: &Position) -> Option<Piece> {
+        self.squares[at.y][at.x]
     }
 
     fn set_piece(&mut self, at: &Position, piece: Option<Piece>) {
         self.squares[at.y][at.x] = piece;
     }
 
+    /// Takes the `Option<Piece>` out of the `Board` at the given `Position`, leaving `None` in its place
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
+    ///
+    /// let mut board = Board::default();
+    /// let king_position = Position { x: 4, y: 0 };
+    /// let king_piece = board.take_piece(&king_position).unwrap();
+    ///
+    /// assert_eq!(king_piece, Piece::King(Player::White));
+    /// assert_eq!(board.get_piece(&king_position), None);
+    /// ```
     pub fn take_piece(&mut self, from: &Position) -> Option<Piece> {
         self.squares[from.y][from.x].take()
     }
@@ -91,11 +119,10 @@ impl Board {
     }
 
     fn is_piece_some(&self, at: &Position) -> ChessResult {
-        if let None = self.get_piece(at) {
-            Err(ChessError::NoPieceAtPosition)
-        } else {
-            Ok(())
+        if !self.has_piece(at) {
+            return Err(ChessError::NoPieceAtPosition);
         }
+        Ok(())
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
@@ -114,6 +141,22 @@ impl Board {
         (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
     }
 
+    /// Performs a `Move` if valid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chess::{board::Board, pieces::{Player, Piece, Position}, moves::Move};
+    ///
+    /// let mut board: Board = Board::default();
+    /// let from = Position { x: 0, y: 1 };
+    /// let to = Position { x: 0, y: 2 };
+    /// let mv = Move { from, to };
+    /// board.move_piece(&mv).unwrap();
+    ///
+    /// assert_eq!(board.get_piece(&from), None);
+    /// assert_eq!(board.get_piece(&to), Some(Piece::Pawn(Player::White)));
+    /// ```
     pub fn move_piece(&mut self, mv: &Move) -> ChessResult {
         self.is_move_valid(mv)?;
 
@@ -321,21 +364,5 @@ impl Board {
             }
         }
         self.add_castle_moves();
-    }
-}
-
-// Add unit tests at the bottom of each file. Each tests module should only have access to super (non integration)
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_move_piece() {
-        let mut board: Board = Board::default();
-        let from = Position { x: 0, y: 1 };
-        let to = Position { x: 0, y: 2 };
-        let mv = Move { from, to };
-        board.moves.insert(mv);
-        board.move_piece(&mv).unwrap();
     }
 }
