@@ -94,9 +94,17 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 style: "left: 0; top: 0;",
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
-            }
-            (0..8).flat_map(|x| (0..8).map(move |y| Position { x, y }))
-            .filter_map(|pos| GAME.read().unwrap().get_piece(&pos).map(|piece| (pos, piece)))
+            },
+            (0..8).flat_map(|x| 
+                (0..8).map(move |y| 
+                    Position { x, y }
+                )
+            )
+            .filter_map(|pos| 
+                GAME.read().unwrap().get_piece(&pos).map(|piece| 
+                    (pos, piece)
+                )
+            )
             .map(|(pos, piece)| {
                 let mut top_left = ClientPoint::from(pos);
                 if let Some(mouse_down) = mouse_down_state.get() {
