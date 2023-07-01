@@ -24,7 +24,7 @@ impl CastleRights {
 
 type Square = Option<Piece>;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(PartialEq)]
 pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
@@ -76,31 +76,27 @@ impl Board {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(PartialEq)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Player,
     pub board: Board,
     valid_moves: HashSet<Move>,
     castle_rights: [bool; 4],
-    en_passant_square: Option<Position>,
+    en_passant_position: Option<Position>,
 }
 
 impl Default for BoardState {
     fn default() -> Self {
-        Self {
+        let mut state = Self {
             board: Board::new(),
             valid_moves: HashSet::new(),
             player: Player::White,
             castle_rights: [true, true, true, true],
-            en_passant_square: None,
-        }
-    }
-}
-
-impl BoardState {
-    fn new() -> Self {
-        Self::default()
+            en_passant_position: None,
+        };
+        state.add_moves();
+        state
     }
 }
 
@@ -203,7 +199,7 @@ impl BoardState {
                         self.valid_moves.insert(Move { from, to });
                     }
                 }
-                if Some(to) == self.en_passant_square {
+                if Some(to) == self.en_passant_position {
                     self.valid_moves.insert(Move { from, to });
                 }
             }
@@ -333,7 +329,7 @@ impl BoardState {
     }
 
     fn update_en_passant(&mut self, mv: &Move) {
-        self.en_passant_square = if self.was_double_move(mv) {
+        self.en_passant_position = if self.was_double_move(mv) {
             Some(mv.from + Displacement::get_pawn_advance_vector(self.player))
         } else {
             None
@@ -341,7 +337,7 @@ impl BoardState {
     }
 
     fn handle_capturing_en_passant(&mut self, to: &Position) {
-        if Some(*to) == self.en_passant_square {
+        if Some(*to) == self.en_passant_position {
             self.board.set_piece(
                 &(*to - Displacement::get_pawn_advance_vector(self.player)),
                 None,
