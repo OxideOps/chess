@@ -1,4 +1,4 @@
-use crate::board::Board;
+use crate::board::BoardState;
 use crate::moves::Move;
 use crate::pieces::{Piece, Position};
 
@@ -28,23 +28,23 @@ pub enum GameStatus {
 
 #[derive(Default, PartialEq)]
 pub struct Game {
-    board: Board,
+    board_state: BoardState,
     status: GameStatus,
 }
 
 impl Game {
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
-        self.board.get_piece(position)
+        self.board_state.board.get_piece(position)
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
-        if let Some(piece) = self.board.get_piece(&from) {
+        if let Some(piece) = self.board_state.board.get_piece(&from) {
             let mv = Move { from, to };
 
-            self.board.move_piece(&mv)?;
+            self.board_state.move_piece(&mv)?;
             println!("{} : {}", piece, mv);
 
-            self.board.next_turn();
+            self.board_state.next_turn();
         }
         Ok(())
     }

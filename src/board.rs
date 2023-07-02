@@ -22,15 +22,10 @@ impl CastleRights {
     pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
 }
 
-/// A chess board implemented as a 2D array, where each element is an `Option<Piece>`.
+type Square = Option<Piece>;
+
 #[derive(PartialEq)]
-pub struct Board {
-    squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
-    moves: HashSet<Move>,
-    pub player: Player,
-    castle_rights: [bool; 4],
-    en_passant_square: Option<Position>,
-}
+pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
     fn default() -> Self {
@@ -46,20 +41,16 @@ impl Default for Board {
         squares[0] = Self::get_back_rank(Player::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        let mut board = Self {
-            squares,
-            moves: HashSet::new(),
-            player: Player::White,
-            castle_rights: [true, true, true, true],
-            en_passant_square: None,
-        };
-        board.add_moves();
-        board
+        Self(squares)
     }
 }
 
 impl Board {
-    fn get_back_rank(player: Player) -> [Option<Piece>; 8] {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    fn get_back_rank(player: Player) -> [Square; 8] {
         [
             Some(Piece::Rook(player)),
             Some(Piece::Knight(player)),
@@ -72,45 +63,44 @@ impl Board {
         ]
     }
 
-    /// Returns the `Option<Piece>` at the given `Position` in the `Board`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
-    ///
-    /// let board = Board::default();
-    /// let king_position = Position { x: 4, y: 0 };
-    /// let king_piece = board.get_piece(&king_position).unwrap();
-    ///
-    /// assert_eq!(king_piece, Piece::King(Player::White));
-    /// ```
-    pub fn get_piece(&self, at: &Position) -> Option<Piece> {
-        self.squares[at.y][at.x]
+    pub fn get_piece(&self, at: &Position) -> Square {
+        self.0[at.y][at.x]
     }
 
-    fn set_piece(&mut self, at: &Position, piece: Option<Piece>) {
-        self.squares[at.y][at.x] = piece;
+    pub fn set_piece(&mut self, at: &Position, sq: Square) {
+        self.0[at.y][at.x] = sq;
     }
 
-    /// Takes the `Option<Piece>` out of the `Board` at the given `Position`, leaving `None` in its place
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use chess::{board::Board, pieces::{Player, Piece, Position}};
-    ///
-    /// let mut board = Board::default();
-    /// let king_position = Position { x: 4, y: 0 };
-    /// let king_piece = board.take_piece(&king_position).unwrap();
-    ///
-    /// assert_eq!(king_piece, Piece::King(Player::White));
-    /// assert_eq!(board.get_piece(&king_position), None);
-    /// ```
-    pub fn take_piece(&mut self, from: &Position) -> Option<Piece> {
-        self.squares[from.y][from.x].take()
+    pub fn take_piece(&mut self, from: &Position) -> Square {
+        self.0[from.y][from.x].take()
     }
+}
 
+#[derive(PartialEq)]
+/// A struct encapsulating the state for the `Board`.
+pub struct BoardState {
+    pub player: Player,
+    pub board: Board,
+    valid_moves: HashSet<Move>,
+    castle_rights: [bool; 4],
+    en_passant_position: Option<Position>,
+}
+
+impl Default for BoardState {
+    fn default() -> Self {
+        let mut state = Self {
+            board: Board::new(),
+            valid_moves: HashSet::new(),
+            player: Player::White,
+            castle_rights: [true, true, true, true],
+            en_passant_position: None,
+        };
+        state.add_moves();
+        state
+    }
+}
+
+impl BoardState {
     fn is_in_bounds(at: &Position) -> ChessResult {
         if at.x > 7 || at.y > 7 {
             Err(ChessError::OutOfBounds)
@@ -131,7 +121,7 @@ impl Board {
         Self::is_in_bounds(&mv.to)?;
         self.is_piece_some(&mv.from)?;
 
-        if self.moves.contains(mv) {
+        if self.valid_moves.contains(mv) {
             Ok(())
         } else {
             Err(ChessError::InvalidMove)
@@ -147,25 +137,25 @@ impl Board {
     /// # Examples
     ///
     /// ```
-    /// use chess::{board::Board, pieces::{Player, Piece, Position}, moves::Move};
+    /// use chess::{board::BoardState, pieces::{Player, Piece, Position}, moves::Move};
     ///
-    /// let mut board: Board = Board::default();
+    /// let mut state: BoardState = BoardState::default();
     /// let from = Position { x: 0, y: 1 };
     /// let to = Position { x: 0, y: 2 };
     /// let mv = Move { from, to };
-    /// board.move_piece(&mv).unwrap();
+    /// state.move_piece(&mv).unwrap();
     ///
-    /// assert_eq!(board.get_piece(&from), None);
-    /// assert_eq!(board.get_piece(&to), Some(Piece::Pawn(Player::White)));
+    /// assert_eq!(state.board.get_piece(&from), None);
+    /// assert_eq!(state.board.get_piece(&to), Some(Piece::Pawn(Player::White)));
     /// ```
     pub fn move_piece(&mut self, mv: &Move) -> ChessResult {
         self.is_move_valid(mv)?;
 
-        let mut piece = self.take_piece(&mv.from).unwrap();
+        let mut piece = self.board.take_piece(&mv.from).unwrap();
         if piece.is_pawn() && self.can_promote_piece(&mv.to) {
             piece = Piece::Queen(self.player)
         }
-        self.squares[mv.to.y][mv.to.x] = Some(piece);
+        self.board.0[mv.to.y][mv.to.x] = Some(piece);
         self.handle_castling_the_rook(mv);
         self.handle_capturing_en_passant(&mv.to);
         self.update_castling_rights();
@@ -179,7 +169,7 @@ impl Board {
     }
 
     fn can_double_move(&self, from: &Position) -> bool {
-        if let Piece::Pawn(player) = self.get_piece(from).unwrap() {
+        if let Piece::Pawn(player) = self.board.get_piece(from).unwrap() {
             return match player {
                 Player::White => from.y == 1,
                 Player::Black => from.y == 6,
@@ -191,11 +181,11 @@ impl Board {
     fn add_pawn_advance_moves(&mut self, from: Position) {
         let v = Displacement::get_pawn_advance_vector(self.player);
         let mut to = from + v;
-        if Self::is_in_bounds(&to).is_ok() && self.get_piece(&to).is_none() {
-            self.moves.insert(Move { from, to });
+        if Self::is_in_bounds(&to).is_ok() && self.board.get_piece(&to).is_none() {
+            self.valid_moves.insert(Move { from, to });
             to += v;
-            if self.get_piece(&to).is_none() && self.can_double_move(&from) {
-                self.moves.insert(Move { from, to });
+            if self.board.get_piece(&to).is_none() && self.can_double_move(&from) {
+                self.valid_moves.insert(Move { from, to });
             }
         }
     }
@@ -204,20 +194,20 @@ impl Board {
         for &v in Displacement::get_pawn_capture_vectors(self.player) {
             let to = from + v;
             if Self::is_in_bounds(&to).is_ok() {
-                if let Some(piece) = self.get_piece(&to) {
+                if let Some(piece) = self.board.get_piece(&to) {
                     if piece.get_player() != self.player {
-                        self.moves.insert(Move { from, to });
+                        self.valid_moves.insert(Move { from, to });
                     }
                 }
-                if Some(to) == self.en_passant_square {
-                    self.moves.insert(Move { from, to });
+                if Some(to) == self.en_passant_position {
+                    self.valid_moves.insert(Move { from, to });
                 }
             }
         }
     }
 
     fn add_moves_for_piece(&mut self, from: Position) {
-        if let Some(piece) = self.get_piece(&from) {
+        if let Some(piece) = self.board.get_piece(&from) {
             if piece.get_player() == self.player {
                 if piece.is_pawn() {
                     self.add_pawn_advance_moves(from);
@@ -226,14 +216,14 @@ impl Board {
                     for &v in piece.get_vectors() {
                         let mut to = from + v;
                         while Self::is_in_bounds(&to).is_ok() {
-                            if let Some(piece) = self.get_piece(&to) {
+                            if let Some(piece) = self.board.get_piece(&to) {
                                 if piece.get_player() != self.player {
-                                    self.moves.insert(Move { from, to });
+                                    self.valid_moves.insert(Move { from, to });
                                 }
                                 break;
                             }
-                            self.moves.insert(Move { from, to });
-                            if !self.get_piece(&from).unwrap().can_snipe() {
+                            self.valid_moves.insert(Move { from, to });
+                            if !self.board.get_piece(&from).unwrap().can_snipe() {
                                 break;
                             }
                             to += v;
@@ -245,7 +235,7 @@ impl Board {
     }
 
     fn has_piece(&self, position: &Position) -> bool {
-        self.get_piece(position).is_some()
+        self.board.get_piece(position).is_some()
     }
 
     fn add_castle_moves(&mut self) {
@@ -265,7 +255,7 @@ impl Board {
         if self.castle_rights[kingside as usize]
             && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
         {
-            self.moves.insert(Move {
+            self.valid_moves.insert(Move {
                 from: king_square,
                 to: king_square + Displacement::RIGHT * 2,
             });
@@ -274,7 +264,7 @@ impl Board {
         if self.castle_rights[queenside as usize]
             && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
         {
-            self.moves.insert(Move {
+            self.valid_moves.insert(Move {
                 from: king_square,
                 to: king_square + Displacement::LEFT * 2,
             });
@@ -282,23 +272,31 @@ impl Board {
     }
 
     fn update_castling_rights(&mut self) {
-        if self.get_piece(&CastleRights::WHITE_KINGSIDE_ROOK) != Some(Piece::Rook(Player::White)) {
+        if self.board.get_piece(&CastleRights::WHITE_KINGSIDE_ROOK)
+            != Some(Piece::Rook(Player::White))
+        {
             self.castle_rights[CastleRights::WhiteKingside as usize] = false;
         }
-        if self.get_piece(&CastleRights::WHITE_QUEENSIDE_ROOK) != Some(Piece::Rook(Player::White)) {
+        if self.board.get_piece(&CastleRights::WHITE_QUEENSIDE_ROOK)
+            != Some(Piece::Rook(Player::White))
+        {
             self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
         }
-        if self.get_piece(&CastleRights::BLACK_KINGSIDE_ROOK) != Some(Piece::Rook(Player::Black)) {
+        if self.board.get_piece(&CastleRights::BLACK_KINGSIDE_ROOK)
+            != Some(Piece::Rook(Player::Black))
+        {
             self.castle_rights[CastleRights::BlackKingside as usize] = false;
         }
-        if self.get_piece(&CastleRights::BLACK_QUEENSIDE_ROOK) != Some(Piece::Rook(Player::Black)) {
+        if self.board.get_piece(&CastleRights::BLACK_QUEENSIDE_ROOK)
+            != Some(Piece::Rook(Player::Black))
+        {
             self.castle_rights[CastleRights::BlackQueenside as usize] = false;
         }
-        if self.get_piece(&CastleRights::WHITE_KING) != Some(Piece::King(Player::White)) {
+        if self.board.get_piece(&CastleRights::WHITE_KING) != Some(Piece::King(Player::White)) {
             self.castle_rights[CastleRights::WhiteKingside as usize] = false;
             self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
         }
-        if self.get_piece(&CastleRights::BLACK_KING) != Some(Piece::King(Player::Black)) {
+        if self.board.get_piece(&CastleRights::BLACK_KING) != Some(Piece::King(Player::Black)) {
             self.castle_rights[CastleRights::BlackKingside as usize] = false;
             self.castle_rights[CastleRights::BlackQueenside as usize] = false;
         }
@@ -319,17 +317,19 @@ impl Board {
         };
         if mv.from == king {
             if mv.to == king + Displacement::RIGHT * 2 {
-                let rook = self.take_piece(&kingside_rook);
-                self.set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
+                let rook = self.board.take_piece(&kingside_rook);
+                self.board
+                    .set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
             } else if mv.to == king + Displacement::LEFT * 2 {
-                let rook = self.take_piece(&queenside_rook);
-                self.set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
+                let rook = self.board.take_piece(&queenside_rook);
+                self.board
+                    .set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
             }
         }
     }
 
     fn was_double_move(&self, mv: &Move) -> bool {
-        if let Some(Piece::Pawn(player)) = self.get_piece(&mv.to) {
+        if let Some(Piece::Pawn(player)) = self.board.get_piece(&mv.to) {
             return match player {
                 Player::White => mv.from.y == 1 && mv.to.y == 3,
                 Player::Black => mv.from.y == 6 && mv.to.y == 4,
@@ -339,7 +339,7 @@ impl Board {
     }
 
     fn update_en_passant(&mut self, mv: &Move) {
-        self.en_passant_square = if self.was_double_move(mv) {
+        self.en_passant_position = if self.was_double_move(mv) {
             Some(mv.from + Displacement::get_pawn_advance_vector(self.player))
         } else {
             None
@@ -347,8 +347,8 @@ impl Board {
     }
 
     fn handle_capturing_en_passant(&mut self, to: &Position) {
-        if Some(*to) == self.en_passant_square {
-            self.set_piece(
+        if Some(*to) == self.en_passant_position {
+            self.board.set_piece(
                 &(*to - Displacement::get_pawn_advance_vector(self.player)),
                 None,
             );
@@ -356,7 +356,7 @@ impl Board {
     }
 
     pub fn add_moves(&mut self) {
-        self.moves.clear();
+        self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
                 self.add_moves_for_piece(Position { x, y })
