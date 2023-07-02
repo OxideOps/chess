@@ -70,8 +70,9 @@ impl fmt::Display for Piece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Player {
+    #[default]
     White,
     Black,
 }

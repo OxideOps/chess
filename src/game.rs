@@ -30,33 +30,26 @@ pub enum GameStatus {
     Checkmate,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Game {
     state: BoardState,
     valid_moves: HashSet<Move>,
     status: GameStatus,
 }
 
-impl Default for Game {
-    fn default() -> Self {
-        let (state, valid_moves, status) = Default::default();
-        let mut game = Game {
-            state,
-            valid_moves,
-            status,
-        };
-        game.add_moves();
-        game
-    }
-}
-
 impl Game {
     pub fn new() -> Self {
-        Self::default()
+        let mut game = Self::default();
+        game.add_moves();
+        game
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.state.get_piece(position)
+    }
+
+    pub fn get_board_state(&self) -> &BoardState {
+        &self.state
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
@@ -193,15 +186,18 @@ impl Game {
                 self.add_moves_for_piece(Position::new(x, y))
             }
         }
-        self.add_castle_moves();
+        self.add_castling_moves()
     }
 
-    fn add_castle_moves(&mut self) {
+    pub fn add_castling_moves(&mut self) {
         let (king_square, kingside, queenside) =
             CastlingRights::get_castling_info(self.state.player);
 
-        if self.state.castle_rights[kingside as usize]
-            && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
+        if self.state.castling_rights.has_castling_right(kingside)
+            && !(1..=2).any(|i| {
+                self.state
+                    .has_piece(&(king_square + Displacement::RIGHT * i))
+            })
         {
             self.valid_moves.insert(Move {
                 from: king_square,
@@ -209,8 +205,11 @@ impl Game {
             });
         }
 
-        if self.state.castle_rights[queenside as usize]
-            && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
+        if self.state.castling_rights.has_castling_right(queenside)
+            && !(1..=3).any(|i| {
+                self.state
+                    .has_piece(&(king_square + Displacement::LEFT * i))
+            })
         {
             self.valid_moves.insert(Move {
                 from: king_square,

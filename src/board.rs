@@ -60,24 +60,13 @@ impl Board {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Default)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Player,
-    pub board: Board,
-    pub castle_rights: [bool; 4],
+    board: Board,
+    pub castling_rights: CastlingRights,
     pub en_passant_position: Option<Position>,
-}
-
-impl Default for BoardState {
-    fn default() -> Self {
-        Self {
-            board: Board::new(),
-            player: Player::White,
-            castle_rights: [true, true, true, true],
-            en_passant_position: None,
-        }
-    }
 }
 
 impl BoardState {
@@ -120,9 +109,10 @@ impl BoardState {
     }
 
     fn update(&mut self, mv: &Move) {
-        self.handle_castling_the_rook(mv);
+        self.castling_rights
+            .handle_castling_the_rook(mv, &mut self.board, self.player);
+        self.castling_rights.update_castling_rights(&self.board);
         self.handle_capturing_en_passant(&mv.to);
-        self.update_castling_rights();
         self.update_en_passant(mv);
         self.player = !self.player;
     }
@@ -131,41 +121,7 @@ impl BoardState {
         self.board.get_piece(position).is_some()
     }
 
-    fn update_castling_rights(&mut self) {
-        for &(position, piece, rights) in CastlingRights::rook_positions().as_ref() {
-            if self.board.get_piece(&position) != Some(piece) {
-                self.castle_rights[rights as usize] = false;
-            }
-        }
-
-        for &(position, piece, kingside_rights, queenside_rights) in
-            CastlingRights::king_positions().as_ref()
-        {
-            if self.board.get_piece(&position) != Some(piece) {
-                self.castle_rights[kingside_rights as usize] = false;
-                self.castle_rights[queenside_rights as usize] = false;
-            }
-        }
-    }
-
-    fn handle_castling_the_rook(&mut self, mv: &Move) {
-        let (king, kingside_rook, queenside_rook) =
-            CastlingRights::get_castling_positions(self.player);
-
-        if mv.from == king {
-            if mv.to == king + Displacement::RIGHT * 2 {
-                let rook = self.board.take_piece(&kingside_rook);
-                self.board
-                    .set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
-            } else if mv.to == king + Displacement::LEFT * 2 {
-                let rook = self.board.take_piece(&queenside_rook);
-                self.board
-                    .set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
-            }
-        }
-    }
-
-    fn was_double_move(&self, mv: &Move) -> bool {
+    pub fn was_double_move(&self, mv: &Move) -> bool {
         if let Some(Piece::Pawn(player)) = self.board.get_piece(&mv.to) {
             return match player {
                 Player::White => mv.from.y == 1 && mv.to.y == 3,
@@ -175,20 +131,20 @@ impl BoardState {
         false
     }
 
-    fn update_en_passant(&mut self, mv: &Move) {
-        self.en_passant_position = if self.was_double_move(mv) {
-            Some(mv.from + Displacement::get_pawn_advance_vector(self.player))
-        } else {
-            None
-        }
-    }
-
     fn handle_capturing_en_passant(&mut self, to: &Position) {
         if Some(*to) == self.en_passant_position {
             self.board.set_piece(
                 &(*to - Displacement::get_pawn_advance_vector(self.player)),
                 None,
             );
+        }
+    }
+
+    fn update_en_passant(&mut self, mv: &Move) {
+        self.en_passant_position = if self.was_double_move(mv) {
+            Some(mv.from + Displacement::get_pawn_advance_vector(self.player))
+        } else {
+            None
         }
     }
 }
