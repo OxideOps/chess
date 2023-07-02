@@ -68,6 +68,8 @@ impl Game {
 
             self.is_move_valid(&mv)?;
             self.state.move_piece(&mv);
+            self.handle_capturing_en_passant(&mv.to);
+            self.update_en_passant(&mv);
             self.add_moves();
 
             println!("{} : {}", piece, mv);
@@ -160,33 +162,30 @@ impl Game {
                 self.add_moves_for_piece(Position::new(x, y))
             }
         }
-        self.add_castle_moves();
+        self.state.castling_rights.add_castling_moves(&mut self.valid_moves, &self.state)
     }
 
-    fn add_castle_moves(&mut self) {
-        let (king_square, kingside, queenside) =
-            CastlingRights::get_castling_info(self.state.player);
 
-        if self.state.castle_rights[kingside as usize]
-            && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
-        {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::RIGHT * 2,
-            });
-        }
-
-        if self.state.castle_rights[queenside as usize]
-            && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
-        {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::LEFT * 2,
-            });
-        }
-    }
 
     pub fn has_piece(&self, position: &Position) -> bool {
         self.state.has_piece(position)
     }
+
+    fn handle_capturing_en_passant(&mut self, to: &Position) {
+        if Some(*to) == self.state.en_passant_position {
+            self.state.set_piece(
+                &(*to - Displacement::get_pawn_advance_vector(self.state.player)),
+                None,
+            );
+        }
+    }
+
+    fn update_en_passant(&mut self, mv: &Move) {
+        self.state.en_passant_position = if self.state.was_double_move(mv) {
+            Some(mv.from + Displacement::get_pawn_advance_vector(self.state.player))
+        } else {
+            None
+        }
+    }
+    
 }
