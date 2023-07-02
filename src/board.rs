@@ -224,18 +224,7 @@ impl BoardState {
     }
 
     fn add_castle_moves(&mut self) {
-        let (king_square, kingside, queenside) = match self.player {
-            Player::White => (
-                CastlingRights::WHITE_KING,
-                CastlingRights::WhiteKingside,
-                CastlingRights::WhiteQueenside,
-            ),
-            Player::Black => (
-                CastlingRights::BLACK_KING,
-                CastlingRights::BlackKingside,
-                CastlingRights::BlackQueenside,
-            ),
-        };
+        let (king_square, kingside, queenside) = CastlingRights::get_castling_info(self.player);
 
         if self.castle_rights[kingside as usize]
             && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))

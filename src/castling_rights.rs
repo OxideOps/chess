@@ -72,4 +72,21 @@ impl CastlingRights {
             ),
         }
     }
+
+        
+        
+    pub fn get_castling_info(player: Player) -> (Position, CastlingRights, CastlingRights) {
+        match player {
+            Player::White => (
+                CastlingRights::WHITE_KING,
+                CastlingRights::WhiteKingside,
+                CastlingRights::WhiteQueenside,
+            ),
+            Player::Black => (
+                CastlingRights::BLACK_KING,
+                CastlingRights::BlackKingside,
+                CastlingRights::BlackQueenside,
+            ),
+        }
+    }
 }
