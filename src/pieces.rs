@@ -92,6 +92,12 @@ pub struct Position {
     pub y: usize,
 }
 
+impl Position {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+}
+
 impl Add<Displacement> for Position {
     type Output = Self;
 

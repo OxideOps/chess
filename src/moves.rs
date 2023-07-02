@@ -7,6 +7,12 @@ pub struct Move {
     pub to: Position,
 }
 
+impl Move {
+    pub fn new(from: Position, to: Position) -> Self {
+        Self { from, to }
+    }
+}
+
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
