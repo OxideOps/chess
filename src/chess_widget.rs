@@ -31,19 +31,12 @@ impl From<&Position> for ClientPoint {
 // the piece, not the location of the mouse. This requires offsetting based on the original
 // mouse down location
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
-    let top_left = ClientPoint::from(&Position::from(mouse_down));
-    let middle = ClientPoint {
-        x: top_left.x + WIDGET_SIZE as f64 / 16.0,
-        y: top_left.y + WIDGET_SIZE as f64 / 16.0,
-        ..Default::default()
-    };
-    let x_offset = mouse_down.x - middle.x;
-    let y_offset = mouse_down.y - middle.y;
-    Position::from(&ClientPoint {
-        x: mouse_up.x - x_offset,
-        y: mouse_up.y - y_offset,
-        ..Default::default()
-    })
+    let top_left = ClientPoint::from(&mouse_down.into());
+    (&ClientPoint::new(
+        top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
+        top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
+    ))
+        .into()
 }
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
@@ -72,7 +65,7 @@ fn draw_piece<'a>(
     let mut top_left = ClientPoint::from(pos);
     if let Some(mouse_down) = mouse_down_state {
         if let Some(dragging_point) = dragging_point_state {
-            if *pos == Position::from(mouse_down) {
+            if *pos == mouse_down.into() {
                 top_left.x += dragging_point.x - mouse_down.x;
                 top_left.y += dragging_point.y - mouse_down.y;
             }
@@ -93,7 +86,7 @@ fn draw_piece<'a>(
 pub fn ChessWidget(cx: Scope) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let dragged_piece_position = mouse_down_state.get().as_ref().map(|m| Position::from(m));
+    let dragged_piece_position = mouse_down_state.get().as_ref().map(|m| m.into());
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position { x, y }))
         .filter_map(|pos| {
@@ -110,7 +103,7 @@ pub fn ChessWidget(cx: Scope) -> Element {
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
             onmouseup: move |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    let from = Position::from(mouse_down);
+                    let from = mouse_down.into();
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
                     GAME.write().unwrap().move_piece(from, to).ok();
                     mouse_down_state.set(None);
@@ -119,7 +112,7 @@ pub fn ChessWidget(cx: Scope) -> Element {
             },
             onmousemove: |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    if GAME.read().unwrap().get_piece(&Position::from(mouse_down)).is_some() {
+                    if GAME.read().unwrap().has_piece(&mouse_down.into()) {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
                 }
