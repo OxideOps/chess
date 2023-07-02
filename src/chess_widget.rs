@@ -32,14 +32,11 @@ impl From<&Position> for ClientPoint {
 // mouse down location
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
     let top_left = ClientPoint::from(&mouse_down.into());
-    let middle = ClientPoint {
-        x: top_left.x + WIDGET_SIZE as f64 / 16.0,
-        y: top_left.y + WIDGET_SIZE as f64 / 16.0,
-        ..Default::default()
-    };
-    let x_offset = mouse_down.x - middle.x;
-    let y_offset = mouse_down.y - middle.y;
-    (&ClientPoint::new(mouse_up.x - x_offset, mouse_up.y - y_offset)).into()
+    (&ClientPoint::new(
+        top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
+        top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
+    ))
+        .into()
 }
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
