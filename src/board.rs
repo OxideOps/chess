@@ -1,26 +1,10 @@
 use crate::displacement::Displacement;
-use crate::game::{ChessError, ChessResult};
+use crate::game::{ChessError, ChessResult, CastlingRights};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
-
-enum CastleRights {
-    WhiteKingside,
-    WhiteQueenside,
-    BlackKingside,
-    BlackQueenside,
-}
-
-impl CastleRights {
-    pub const WHITE_KING: Position = Position { x: 4, y: 0 };
-    pub const BLACK_KING: Position = Position { x: 4, y: 7 };
-    pub const WHITE_KINGSIDE_ROOK: Position = Position { x: 7, y: 0 };
-    pub const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
-    pub const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
-    pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
-}
 
 type Square = Option<Piece>;
 
@@ -241,14 +225,14 @@ impl BoardState {
     fn add_castle_moves(&mut self) {
         let (king_square, kingside, queenside) = match self.player {
             Player::White => (
-                CastleRights::WHITE_KING,
-                CastleRights::WhiteKingside,
-                CastleRights::WhiteQueenside,
+                CastlingRights::WHITE_KING,
+                CastlingRights::WhiteKingside,
+                CastlingRights::WhiteQueenside,
             ),
             Player::Black => (
-                CastleRights::BLACK_KING,
-                CastleRights::BlackKingside,
-                CastleRights::BlackQueenside,
+                CastlingRights::BLACK_KING,
+                CastlingRights::BlackKingside,
+                CastlingRights::BlackQueenside,
             ),
         };
 
@@ -272,47 +256,47 @@ impl BoardState {
     }
 
     fn update_castling_rights(&mut self) {
-        if self.board.get_piece(&CastleRights::WHITE_KINGSIDE_ROOK)
+        if self.board.get_piece(&CastlingRights::WHITE_KINGSIDE_ROOK)
             != Some(Piece::Rook(Player::White))
         {
-            self.castle_rights[CastleRights::WhiteKingside as usize] = false;
+            self.castle_rights[CastlingRights::WhiteKingside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::WHITE_QUEENSIDE_ROOK)
+        if self.board.get_piece(&CastlingRights::WHITE_QUEENSIDE_ROOK)
             != Some(Piece::Rook(Player::White))
         {
-            self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
+            self.castle_rights[CastlingRights::WhiteQueenside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::BLACK_KINGSIDE_ROOK)
+        if self.board.get_piece(&CastlingRights::BLACK_KINGSIDE_ROOK)
             != Some(Piece::Rook(Player::Black))
         {
-            self.castle_rights[CastleRights::BlackKingside as usize] = false;
+            self.castle_rights[CastlingRights::BlackKingside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::BLACK_QUEENSIDE_ROOK)
+        if self.board.get_piece(&CastlingRights::BLACK_QUEENSIDE_ROOK)
             != Some(Piece::Rook(Player::Black))
         {
-            self.castle_rights[CastleRights::BlackQueenside as usize] = false;
+            self.castle_rights[CastlingRights::BlackQueenside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::WHITE_KING) != Some(Piece::King(Player::White)) {
-            self.castle_rights[CastleRights::WhiteKingside as usize] = false;
-            self.castle_rights[CastleRights::WhiteQueenside as usize] = false;
+        if self.board.get_piece(&CastlingRights::WHITE_KING) != Some(Piece::King(Player::White)) {
+            self.castle_rights[CastlingRights::WhiteKingside as usize] = false;
+            self.castle_rights[CastlingRights::WhiteQueenside as usize] = false;
         }
-        if self.board.get_piece(&CastleRights::BLACK_KING) != Some(Piece::King(Player::Black)) {
-            self.castle_rights[CastleRights::BlackKingside as usize] = false;
-            self.castle_rights[CastleRights::BlackQueenside as usize] = false;
+        if self.board.get_piece(&CastlingRights::BLACK_KING) != Some(Piece::King(Player::Black)) {
+            self.castle_rights[CastlingRights::BlackKingside as usize] = false;
+            self.castle_rights[CastlingRights::BlackQueenside as usize] = false;
         }
     }
 
     fn handle_castling_the_rook(&mut self, mv: &Move) {
         let (king, kingside_rook, queenside_rook) = match self.player {
             Player::White => (
-                CastleRights::WHITE_KING,
-                CastleRights::WHITE_KINGSIDE_ROOK,
-                CastleRights::WHITE_QUEENSIDE_ROOK,
+                CastlingRights::WHITE_KING,
+                CastlingRights::WHITE_KINGSIDE_ROOK,
+                CastlingRights::WHITE_QUEENSIDE_ROOK,
             ),
             Player::Black => (
-                CastleRights::BLACK_KING,
-                CastleRights::BLACK_KINGSIDE_ROOK,
-                CastleRights::BLACK_QUEENSIDE_ROOK,
+                CastlingRights::BLACK_KING,
+                CastlingRights::BLACK_KINGSIDE_ROOK,
+                CastlingRights::BLACK_QUEENSIDE_ROOK,
             ),
         };
         if mv.from == king {
