@@ -132,6 +132,27 @@ impl BoardState {
         self.board.get_piece(position).is_some()
     }
 
+    fn add_castle_moves(&mut self) {
+        let (king_square, kingside, queenside) = CastlingRights::get_castling_info(self.player);
+
+        if self.castle_rights[kingside as usize]
+            && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
+        {
+            self.valid_moves.insert(Move {
+                from: king_square,
+                to: king_square + Displacement::RIGHT * 2,
+            });
+        }
+
+        if self.castle_rights[queenside as usize]
+            && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
+        {
+            self.valid_moves.insert(Move {
+                from: king_square,
+                to: king_square + Displacement::LEFT * 2,
+            });
+        }
+    }
     fn update_castling_rights(&mut self) {
         for &(position, piece, rights) in CastlingRights::rook_positions().as_ref() {
             if self.board.get_piece(&position) != Some(piece) {
