@@ -160,9 +160,31 @@ impl Game {
                 self.add_moves_for_piece(Position::new(x, y))
             }
         }
-        self.state.castling_rights.add_castling_moves(&mut self.valid_moves, &self.state)
+        self.add_castling_moves()
     }
 
+    pub fn add_castling_moves(&mut self) {
+        let (king_square, kingside, queenside) =
+            CastlingRights::get_castling_info(self.state.player);
+
+        if self.state.castling_rights.has_castling_right(kingside)
+            && !(1..=2).any(|i| self.state.has_piece(&(king_square + Displacement::RIGHT * i)))
+        {
+            self.valid_moves.insert(Move {
+                from: king_square,
+                to: king_square + Displacement::RIGHT * 2,
+            });
+        }
+
+        if self.state.castling_rights.has_castling_right(queenside)
+            && !(1..=3).any(|i| self.state.has_piece(&(king_square + Displacement::LEFT * i)))
+        {
+            self.valid_moves.insert(Move {
+                from: king_square,
+                to: king_square + Displacement::LEFT * 2,
+            });
+        }
+    }
 
 
     pub fn has_piece(&self, position: &Position) -> bool {

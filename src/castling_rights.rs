@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{pieces::{Piece, Player, Position}, board::BoardState, displacement::Displacement, moves::Move};
+use crate::{pieces::{Piece, Player, Position}, board::{BoardState, Board}, displacement::Displacement, moves::Move};
 
 #[derive(Clone, Copy)]
 pub enum CastlingRightsKind {
@@ -102,60 +102,38 @@ impl CastlingRights {
         }
     }
 
-    pub fn update_castling_rights(&mut self, state: &BoardState) {
-        for &(position, piece, rights) in CastlingRights::rook_positions().as_ref() {
-            if state.get_piece(&position) != Some(piece) {
+    pub fn update_castling_rights(&mut self, board: &Board) {
+        for (position, piece, rights) in CastlingRights::rook_positions() {
+            if board.get_piece(&position) != Some(piece) {
                 self.0[rights as usize] = false;
             }
         }
 
-        for &(position, piece, kingside_rights, queenside_rights) in
-            CastlingRights::king_positions().as_ref()
+        for (position, piece, kingside_rights, queenside_rights) in CastlingRights::king_positions()
         {
-            if state.get_piece(&position) != Some(piece) {
+            if board.get_piece(&position) != Some(piece) {
                 self.0[kingside_rights as usize] = false;
                 self.0[queenside_rights as usize] = false;
             }
         }
     }
 
-    pub fn add_castling_moves(&self, valid_moves: &mut HashSet<Move>, state: &BoardState) {
-        let (king_square, kingside, queenside) =
-            CastlingRights::get_castling_info(state.player);
-
-        if self.0[kingside as usize]
-            && !(1..=2).any(|i| state.has_piece(&(king_square + Displacement::RIGHT * i)))
-        {
-            valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::RIGHT * 2,
-            });
-        }
-
-        if self.0[queenside as usize]
-            && !(1..=3).any(|i| state.has_piece(&(king_square + Displacement::LEFT * i)))
-        {
-            valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::LEFT * 2,
-            });
-        }
-    }
-
-    pub fn handle_castling_the_rook(&mut self, mv: &Move, state: &mut BoardState) {
+    pub fn handle_castling_the_rook(&mut self, mv: &Move, board: &mut Board, player: Player) {
         let (king, kingside_rook, queenside_rook) =
-            CastlingRights::get_castling_positions(state.player);
+            CastlingRights::get_castling_positions(player);
 
         if mv.from == king {
             if mv.to == king + Displacement::RIGHT * 2 {
-                let rook = state.take_piece(&kingside_rook);
-                state.set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
+                let rook = board.take_piece(&kingside_rook);
+                board.set_piece(&(kingside_rook + Displacement::LEFT * 2), rook);
             } else if mv.to == king + Displacement::LEFT * 2 {
-                let rook = state.take_piece(&queenside_rook);
-                state.set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
+                let rook = board.take_piece(&queenside_rook);
+                board.set_piece(&(queenside_rook + Displacement::RIGHT * 3), rook);
             }
         }
     }
 
-
+    pub fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
+        self.0[right as usize]
+    }
 }
