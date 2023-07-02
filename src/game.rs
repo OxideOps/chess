@@ -58,6 +58,10 @@ impl Game {
         self.state.get_piece(position)
     }
 
+    pub fn get_board_state(&self) -> &BoardState {
+        &self.state
+    }
+
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
         if let Some(piece) = self.state.get_piece(&from) {
             let mv = Move::new(from, to);

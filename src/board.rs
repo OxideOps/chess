@@ -64,7 +64,7 @@ impl Board {
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Player,
-    pub board: Board,
+    board: Board,
     pub castle_rights: [bool; 4],
     pub en_passant_position: Option<Position>,
 }
@@ -83,10 +83,6 @@ impl Default for BoardState {
 impl BoardState {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn get_current_state(&self) -> &Self {
-        self
     }
 
     pub fn get_piece(&self, at: &Position) -> Square {
