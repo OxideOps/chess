@@ -63,10 +63,46 @@ fn get_piece_image_file(piece: Piece) -> &'static str {
     }
 }
 
+fn draw_piece<'a>(
+    piece: Piece,
+    pos: Position,
+    mouse_down_state: &Option<ClientPoint>,
+    dragging_point_state: &Option<ClientPoint>,
+) -> LazyNodes<'a, 'static> {
+    let mut top_left = ClientPoint::from(pos);
+    if let Some(mouse_down) = mouse_down_state {
+        if let Some(dragging_point) = dragging_point_state {
+            if pos == Position::from(*mouse_down) {
+                top_left.x += dragging_point.x - mouse_down.x;
+                top_left.y += dragging_point.y - mouse_down.y;
+            }
+        }
+    }
+    rsx! {
+        img {
+            src: "{get_piece_image_file(piece)}",
+            class: "images",
+            style: "left: {top_left.x}px; top: {top_left.y}px;",
+            width: "{WIDGET_SIZE / 8}",
+            height: "{WIDGET_SIZE / 8}",
+        }
+    }
+}
+
 #[inline_props]
 pub fn ChessWidget(cx: Scope) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
+    let dragged_piece_position = mouse_down_state.get().as_ref().map(|m| Position::from(*m));
+    let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
+        .flat_map(|x| (0..8).map(move |y| Position { x, y }))
+        .filter_map(|pos| {
+            GAME.read()
+                .unwrap()
+                .get_piece(&pos)
+                .map(|piece| (pos, piece))
+        })
+        .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
 
     render! {
         style { include_str!("../styles/chess_widget.css") }
@@ -95,36 +131,13 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
             },
-            (0..8).flat_map(|x|
-                (0..8).map(move |y|
-                    Position { x, y }
-                )
-            )
-            .filter_map(|pos|
-                GAME.read().unwrap().get_piece(&pos).map(|piece|
-                    (pos, piece)
-                )
-            )
-            .map(|(pos, piece)| {
-                let mut top_left = ClientPoint::from(pos);
-                if let Some(mouse_down) = mouse_down_state.get() {
-                    if let Some(dragging_point) = dragging_point_state.get() {
-                        if pos == Position::from(*mouse_down) {
-                            top_left.x += dragging_point.x - mouse_down.x;
-                            top_left.y += dragging_point.y - mouse_down.y;
-                        }
-                    }
-                }
-                rsx! {
-                    img {
-                        src: "{get_piece_image_file(piece)}",
-                        class: "images",
-                        style: "left: {top_left.x}px; top: {top_left.y}px;",
-                        width: "{WIDGET_SIZE / 8}",
-                        height: "{WIDGET_SIZE / 8}",
-                    }
-                }
-            })
+
+            pieces
+                .into_iter()
+                .chain(dragged.into_iter())
+                .map(|(pos, piece)| {
+                    draw_piece(piece, pos, mouse_down_state.get(), dragging_point_state.get())
+                })
         }
     }
 }
