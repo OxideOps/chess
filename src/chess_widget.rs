@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 use std::sync::RwLock;
 
 const WIDGET_SIZE: u32 = 800;
-static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::default()));
+static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
 
 impl From<&ClientPoint> for Position {
     fn from(point: &ClientPoint) -> Position {
