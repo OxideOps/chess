@@ -30,28 +30,18 @@ pub enum GameStatus {
     Checkmate,
 }
 
+#[derive(Default)]
 pub struct Game {
     state: BoardState,
     valid_moves: HashSet<Move>,
     status: GameStatus,
 }
 
-impl Default for Game {
-    fn default() -> Self {
-        let (state, valid_moves, status) = Default::default();
-        let mut game = Game {
-            state,
-            valid_moves,
-            status,
-        };
-        game.add_moves();
-        game
-    }
-}
-
 impl Game {
     pub fn new() -> Self {
-        Self::default()
+        let mut game = Self::default();
+        game.add_moves();
+        game
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
