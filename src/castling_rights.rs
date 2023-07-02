@@ -1,7 +1,5 @@
-use std::collections::HashSet;
-
 use crate::{
-    board::{Board, BoardState},
+    board::Board,
     displacement::Displacement,
     moves::Move,
     pieces::{Piece, Player, Position},
@@ -123,7 +121,7 @@ impl CastlingRights {
         }
     }
 
-    pub fn handle_castling_the_rook(&mut self, mv: &Move, board: &mut Board, player: Player) {
+    pub fn handle_castling_the_rook(&self, mv: &Move, board: &mut Board, player: Player) {
         let (king, kingside_rook, queenside_rook) = CastlingRights::get_castling_positions(player);
 
         if mv.from == king {
