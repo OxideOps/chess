@@ -51,9 +51,7 @@ impl Default for Game {
 
 impl Game {
     pub fn new() -> Self {
-        let mut game = Game::default();
-        game.add_moves();
-        game
+        Self::default()
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
