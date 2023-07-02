@@ -121,11 +121,11 @@ impl BoardState {
     }
 
     fn update(&mut self, mv: &Move) {
-        self.player = !self.player;
         self.handle_castling_the_rook(mv);
         self.handle_capturing_en_passant(&mv.to);
         self.update_castling_rights();
         self.update_en_passant(mv);
+        self.player = !self.player;
     }
 
     pub fn has_piece(&self, position: &Position) -> bool {
