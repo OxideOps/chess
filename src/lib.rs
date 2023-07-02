@@ -2,6 +2,7 @@
 #![allow(non_snake_case)]
 pub mod app;
 pub mod board;
+pub mod castling_rights;
 pub mod chess_widget;
 pub mod displacement;
 pub mod game;
