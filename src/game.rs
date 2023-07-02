@@ -164,9 +164,7 @@ impl Game {
             CastlingRights::get_castling_info(self.state.player);
 
         if self.state.castle_rights[kingside as usize]
-            && !(1..=2).any(|i| {
-                self.has_piece(&(king_square + Displacement::RIGHT * i))
-            })
+            && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
         {
             self.valid_moves.insert(Move {
                 from: king_square,
@@ -175,9 +173,7 @@ impl Game {
         }
 
         if self.state.castle_rights[queenside as usize]
-            && !(1..=3).any(|i| {
-                self.has_piece(&(king_square + Displacement::LEFT * i))
-            })
+            && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
         {
             self.valid_moves.insert(Move {
                 from: king_square,
