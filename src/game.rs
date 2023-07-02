@@ -32,23 +32,6 @@ pub struct Game {
     status: GameStatus,
 }
 
-#[derive(Clone, Copy)]
-pub enum CastlingRights {
-    WhiteKingside,
-    WhiteQueenside,
-    BlackKingside,
-    BlackQueenside,
-}
-
-impl CastlingRights {
-    pub const WHITE_KING: Position = Position { x: 4, y: 0 };
-    pub const BLACK_KING: Position = Position { x: 4, y: 7 };
-    pub const WHITE_KINGSIDE_ROOK: Position = Position { x: 7, y: 0 };
-    pub const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
-    pub const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
-    pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
-}
-
 impl Game {
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.board_state.board.get_piece(position)

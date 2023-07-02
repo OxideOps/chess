@@ -1,5 +1,6 @@
+use crate::castling_rights::CastlingRights;
 use crate::displacement::Displacement;
-use crate::game::{CastlingRights, ChessError, ChessResult};
+use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
@@ -256,51 +257,13 @@ impl BoardState {
     }
 
     fn update_castling_rights(&mut self) {
-        let rook_positions = [
-            (
-                CastlingRights::WHITE_KINGSIDE_ROOK,
-                Piece::Rook(Player::White),
-                CastlingRights::WhiteKingside,
-            ),
-            (
-                CastlingRights::WHITE_QUEENSIDE_ROOK,
-                Piece::Rook(Player::White),
-                CastlingRights::WhiteQueenside,
-            ),
-            (
-                CastlingRights::BLACK_KINGSIDE_ROOK,
-                Piece::Rook(Player::Black),
-                CastlingRights::BlackKingside,
-            ),
-            (
-                CastlingRights::BLACK_QUEENSIDE_ROOK,
-                Piece::Rook(Player::Black),
-                CastlingRights::BlackQueenside,
-            ),
-        ];
-
-        let king_positions = [
-            (
-                CastlingRights::WHITE_KING,
-                Piece::King(Player::White),
-                CastlingRights::WhiteKingside,
-                CastlingRights::WhiteQueenside,
-            ),
-            (
-                CastlingRights::BLACK_KING,
-                Piece::King(Player::Black),
-                CastlingRights::BlackKingside,
-                CastlingRights::BlackQueenside,
-            ),
-        ];
-
-        for &(position, piece, rights) in rook_positions.as_ref() {
+        for &(position, piece, rights) in CastlingRights::rook_positions().as_ref() {
             if self.board.get_piece(&position) != Some(piece) {
                 self.castle_rights[rights as usize] = false;
             }
         }
 
-        for &(position, piece, rights1, rights2) in king_positions.as_ref() {
+        for &(position, piece, rights1, rights2) in CastlingRights::king_positions().as_ref() {
             if self.board.get_piece(&position) != Some(piece) {
                 self.castle_rights[rights1 as usize] = false;
                 self.castle_rights[rights2 as usize] = false;
@@ -309,18 +272,9 @@ impl BoardState {
     }
 
     fn handle_castling_the_rook(&mut self, mv: &Move) {
-        let (king, kingside_rook, queenside_rook) = match self.player {
-            Player::White => (
-                CastlingRights::WHITE_KING,
-                CastlingRights::WHITE_KINGSIDE_ROOK,
-                CastlingRights::WHITE_QUEENSIDE_ROOK,
-            ),
-            Player::Black => (
-                CastlingRights::BLACK_KING,
-                CastlingRights::BLACK_KINGSIDE_ROOK,
-                CastlingRights::BLACK_QUEENSIDE_ROOK,
-            ),
-        };
+        let (king, kingside_rook, queenside_rook) =
+            CastlingRights::handle_capturing_the_rook(self.player);
+
         if mv.from == king {
             if mv.to == king + Displacement::RIGHT * 2 {
                 let rook = self.board.take_piece(&kingside_rook);
