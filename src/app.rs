@@ -9,6 +9,7 @@ pub fn App(cx: Scope) -> Element {
         width: WINDOW_SIZE,
         height: WINDOW_SIZE,
     });
+    use_window(cx).set_title("Chess");
     render! {
         ChessWidget {},
     }
