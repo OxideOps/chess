@@ -66,27 +66,46 @@ impl Board {
 pub struct BoardState {
     pub player: Player,
     pub board: Board,
-    valid_moves: HashSet<Move>,
-    castle_rights: [bool; 4],
-    en_passant_position: Option<Position>,
+    pub castle_rights: [bool; 4],
+    pub en_passant_position: Option<Position>,
 }
 
 impl Default for BoardState {
     fn default() -> Self {
-        let mut state = Self {
+        Self {
             board: Board::new(),
-            valid_moves: HashSet::new(),
             player: Player::White,
             castle_rights: [true, true, true, true],
             en_passant_position: None,
-        };
-        state.add_moves();
-        state
+        }
     }
 }
 
 impl BoardState {
-    fn is_in_bounds(at: &Position) -> ChessResult {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn get_piece(&self, at: &Position) -> Square {
+        self.board.get_piece(at)
+    }
+
+    fn can_promote_piece(&self, at: &Position) -> bool {
+        (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
+    }
+
+    pub fn move_piece(&mut self, mv: &Move) {
+        let mut piece = self.board.take_piece(&mv.from).unwrap();
+        if piece.is_pawn() && self.can_promote_piece(&mv.to) {
+            piece = Piece::Queen(self.player)
+        }
+        self.board
+            .set_piece(&Position::new(mv.to.x, mv.to.y), Some(piece));
+
+        self.update(mv)
+    }
+
+    pub fn is_in_bounds(at: &Position) -> ChessResult {
         if at.x > 7 || at.y > 7 {
             Err(ChessError::OutOfBounds)
         } else {
@@ -94,155 +113,23 @@ impl BoardState {
         }
     }
 
-    fn is_piece_some(&self, at: &Position) -> ChessResult {
-        if !self.has_piece(at) {
+    pub fn is_piece_some(&self, at: &Position) -> ChessResult {
+        if self.board.get_piece(at).is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
         Ok(())
     }
 
-    fn is_move_valid(&self, mv: &Move) -> ChessResult {
-        Self::is_in_bounds(&mv.from)?;
-        Self::is_in_bounds(&mv.to)?;
-        self.is_piece_some(&mv.from)?;
-
-        if self.valid_moves.contains(mv) {
-            Ok(())
-        } else {
-            Err(ChessError::InvalidMove)
-        }
-    }
-
-    fn can_promote_piece(&self, at: &Position) -> bool {
-        (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
-    }
-
-    /// Performs a `Move` if valid.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use chess::{board::BoardState, pieces::{Player, Piece, Position}, moves::Move};
-    ///
-    /// let mut state: BoardState = BoardState::default();
-    /// let from = Position { x: 0, y: 1 };
-    /// let to = Position { x: 0, y: 2 };
-    /// let mv = Move { from, to };
-    /// state.move_piece(&mv).unwrap();
-    ///
-    /// assert_eq!(state.board.get_piece(&from), None);
-    /// assert_eq!(state.board.get_piece(&to), Some(Piece::Pawn(Player::White)));
-    /// ```
-    pub fn move_piece(&mut self, mv: &Move) -> ChessResult {
-        self.is_move_valid(mv)?;
-
-        let mut piece = self.board.take_piece(&mv.from).unwrap();
-        if piece.is_pawn() && self.can_promote_piece(&mv.to) {
-            piece = Piece::Queen(self.player)
-        }
-        self.board.0[mv.to.y][mv.to.x] = Some(piece);
+    fn update(&mut self, mv: &Move) {
         self.handle_castling_the_rook(mv);
         self.handle_capturing_en_passant(&mv.to);
         self.update_castling_rights();
         self.update_en_passant(mv);
-        Ok(())
-    }
-
-    pub fn next_turn(&mut self) {
         self.player = !self.player;
-        self.add_moves();
     }
 
-    fn can_double_move(&self, from: &Position) -> bool {
-        if let Piece::Pawn(player) = self.board.get_piece(from).unwrap() {
-            return match player {
-                Player::White => from.y == 1,
-                Player::Black => from.y == 6,
-            };
-        }
-        false
-    }
-
-    fn add_pawn_advance_moves(&mut self, from: Position) {
-        let v = Displacement::get_pawn_advance_vector(self.player);
-        let mut to = from + v;
-        if Self::is_in_bounds(&to).is_ok() && self.board.get_piece(&to).is_none() {
-            self.valid_moves.insert(Move { from, to });
-            to += v;
-            if self.board.get_piece(&to).is_none() && self.can_double_move(&from) {
-                self.valid_moves.insert(Move { from, to });
-            }
-        }
-    }
-
-    fn add_pawn_capture_moves(&mut self, from: Position) {
-        for &v in Displacement::get_pawn_capture_vectors(self.player) {
-            let to = from + v;
-            if Self::is_in_bounds(&to).is_ok() {
-                if let Some(piece) = self.board.get_piece(&to) {
-                    if piece.get_player() != self.player {
-                        self.valid_moves.insert(Move { from, to });
-                    }
-                }
-                if Some(to) == self.en_passant_position {
-                    self.valid_moves.insert(Move { from, to });
-                }
-            }
-        }
-    }
-
-    fn add_moves_for_piece(&mut self, from: Position) {
-        if let Some(piece) = self.board.get_piece(&from) {
-            if piece.get_player() == self.player {
-                if piece.is_pawn() {
-                    self.add_pawn_advance_moves(from);
-                    self.add_pawn_capture_moves(from);
-                } else {
-                    for &v in piece.get_vectors() {
-                        let mut to = from + v;
-                        while Self::is_in_bounds(&to).is_ok() {
-                            if let Some(piece) = self.board.get_piece(&to) {
-                                if piece.get_player() != self.player {
-                                    self.valid_moves.insert(Move { from, to });
-                                }
-                                break;
-                            }
-                            self.valid_moves.insert(Move { from, to });
-                            if !self.board.get_piece(&from).unwrap().can_snipe() {
-                                break;
-                            }
-                            to += v;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn has_piece(&self, position: &Position) -> bool {
+    pub fn has_piece(&self, position: &Position) -> bool {
         self.board.get_piece(position).is_some()
-    }
-
-    fn add_castle_moves(&mut self) {
-        let (king_square, kingside, queenside) = CastlingRights::get_castling_info(self.player);
-
-        if self.castle_rights[kingside as usize]
-            && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
-        {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::RIGHT * 2,
-            });
-        }
-
-        if self.castle_rights[queenside as usize]
-            && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
-        {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::LEFT * 2,
-            });
-        }
     }
 
     fn update_castling_rights(&mut self) {
@@ -304,15 +191,5 @@ impl BoardState {
                 None,
             );
         }
-    }
-
-    pub fn add_moves(&mut self) {
-        self.valid_moves.clear();
-        for y in 0..8 {
-            for x in 0..8 {
-                self.add_moves_for_piece(Position { x, y })
-            }
-        }
-        self.add_castle_moves();
     }
 }
