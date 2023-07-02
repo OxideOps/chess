@@ -119,6 +119,8 @@ impl BoardState {
     fn update(&mut self, mv: &Move) {
         self.castling_rights.handle_castling_the_rook(mv, self);
         self.castling_rights.update_castling_rights(self);
+        self.handle_capturing_en_passant(&mv.to);
+        self.update_en_passant(mv);
         self.player = !self.player;
     }
 
@@ -134,6 +136,23 @@ impl BoardState {
             };
         }
         false
+    }
+
+    fn handle_capturing_en_passant(&mut self, to: &Position) {
+        if Some(*to) == self.en_passant_position {
+            self.set_piece(
+                &(*to - Displacement::get_pawn_advance_vector(self.player)),
+                None,
+            );
+        }
+    }
+
+    fn update_en_passant(&mut self, mv: &Move) {
+        self.en_passant_position = if self.was_double_move(mv) {
+            Some(mv.from + Displacement::get_pawn_advance_vector(self.player))
+        } else {
+            None
+        }
     }
 
 }

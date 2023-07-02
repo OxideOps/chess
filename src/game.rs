@@ -68,8 +68,6 @@ impl Game {
 
             self.is_move_valid(&mv)?;
             self.state.move_piece(&mv);
-            self.handle_capturing_en_passant(&mv.to);
-            self.update_en_passant(&mv);
             self.add_moves();
 
             println!("{} : {}", piece, mv);
@@ -169,23 +167,6 @@ impl Game {
 
     pub fn has_piece(&self, position: &Position) -> bool {
         self.state.has_piece(position)
-    }
-
-    fn handle_capturing_en_passant(&mut self, to: &Position) {
-        if Some(*to) == self.state.en_passant_position {
-            self.state.set_piece(
-                &(*to - Displacement::get_pawn_advance_vector(self.state.player)),
-                None,
-            );
-        }
-    }
-
-    fn update_en_passant(&mut self, mv: &Move) {
-        self.state.en_passant_position = if self.state.was_double_move(mv) {
-            Some(mv.from + Displacement::get_pawn_advance_vector(self.state.player))
-        } else {
-            None
-        }
     }
     
 }
