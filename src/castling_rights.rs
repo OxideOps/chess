@@ -58,7 +58,7 @@ impl CastlingRights {
         ]
     }
 
-    pub fn handle_capturing_the_rook(player: Player) -> (Position, Position, Position) {
+    pub fn get_castling_positions(player: Player) -> (Position, Position, Position) {
         match player {
             Player::White => (
                 CastlingRights::WHITE_KING,

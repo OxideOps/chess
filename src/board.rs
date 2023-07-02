@@ -263,17 +263,17 @@ impl BoardState {
             }
         }
 
-        for &(position, piece, rights1, rights2) in CastlingRights::king_positions().as_ref() {
+        for &(position, piece, king_rights, queen_rights) in CastlingRights::king_positions().as_ref() {
             if self.board.get_piece(&position) != Some(piece) {
-                self.castle_rights[rights1 as usize] = false;
-                self.castle_rights[rights2 as usize] = false;
+                self.castle_rights[king_rights as usize] = false;
+                self.castle_rights[queen_rights as usize] = false;
             }
         }
     }
 
     fn handle_castling_the_rook(&mut self, mv: &Move) {
         let (king, kingside_rook, queenside_rook) =
-            CastlingRights::handle_capturing_the_rook(self.player);
+            CastlingRights::get_castling_positions(self.player);
 
         if mv.from == king {
             if mv.to == king + Displacement::RIGHT * 2 {
