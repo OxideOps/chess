@@ -32,6 +32,7 @@ pub struct Game {
     status: GameStatus,
 }
 
+#[derive(Clone, Copy)]
 pub enum CastlingRights {
     WhiteKingside,
     WhiteQueenside,

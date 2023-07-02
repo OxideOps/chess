@@ -256,33 +256,29 @@ impl BoardState {
     }
 
     fn update_castling_rights(&mut self) {
-        if self.board.get_piece(&CastlingRights::WHITE_KINGSIDE_ROOK)
-            != Some(Piece::Rook(Player::White))
-        {
-            self.castle_rights[CastlingRights::WhiteKingside as usize] = false;
+        let rook_positions = [
+            (CastlingRights::WHITE_KINGSIDE_ROOK, Piece::Rook(Player::White), CastlingRights::WhiteKingside),
+            (CastlingRights::WHITE_QUEENSIDE_ROOK, Piece::Rook(Player::White), CastlingRights::WhiteQueenside),
+            (CastlingRights::BLACK_KINGSIDE_ROOK, Piece::Rook(Player::Black), CastlingRights::BlackKingside),
+            (CastlingRights::BLACK_QUEENSIDE_ROOK, Piece::Rook(Player::Black), CastlingRights::BlackQueenside),
+        ];
+    
+        let king_positions = [
+            (CastlingRights::WHITE_KING, Piece::King(Player::White), CastlingRights::WhiteKingside, CastlingRights::WhiteQueenside),
+            (CastlingRights::BLACK_KING, Piece::King(Player::Black), CastlingRights::BlackKingside, CastlingRights::BlackQueenside),
+        ];
+    
+        for &(position, piece, rights) in rook_positions.as_ref() {
+            if self.board.get_piece(&position) != Some(piece) {
+                self.castle_rights[rights as usize] = false;
+            }
         }
-        if self.board.get_piece(&CastlingRights::WHITE_QUEENSIDE_ROOK)
-            != Some(Piece::Rook(Player::White))
-        {
-            self.castle_rights[CastlingRights::WhiteQueenside as usize] = false;
-        }
-        if self.board.get_piece(&CastlingRights::BLACK_KINGSIDE_ROOK)
-            != Some(Piece::Rook(Player::Black))
-        {
-            self.castle_rights[CastlingRights::BlackKingside as usize] = false;
-        }
-        if self.board.get_piece(&CastlingRights::BLACK_QUEENSIDE_ROOK)
-            != Some(Piece::Rook(Player::Black))
-        {
-            self.castle_rights[CastlingRights::BlackQueenside as usize] = false;
-        }
-        if self.board.get_piece(&CastlingRights::WHITE_KING) != Some(Piece::King(Player::White)) {
-            self.castle_rights[CastlingRights::WhiteKingside as usize] = false;
-            self.castle_rights[CastlingRights::WhiteQueenside as usize] = false;
-        }
-        if self.board.get_piece(&CastlingRights::BLACK_KING) != Some(Piece::King(Player::Black)) {
-            self.castle_rights[CastlingRights::BlackKingside as usize] = false;
-            self.castle_rights[CastlingRights::BlackQueenside as usize] = false;
+    
+        for &(position, piece, rights1, rights2) in king_positions.as_ref() {
+            if self.board.get_piece(&position) != Some(piece) {
+                self.castle_rights[rights1 as usize] = false;
+                self.castle_rights[rights2 as usize] = false;
+            }
         }
     }
 
