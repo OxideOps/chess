@@ -257,23 +257,49 @@ impl BoardState {
 
     fn update_castling_rights(&mut self) {
         let rook_positions = [
-            (CastlingRights::WHITE_KINGSIDE_ROOK, Piece::Rook(Player::White), CastlingRights::WhiteKingside),
-            (CastlingRights::WHITE_QUEENSIDE_ROOK, Piece::Rook(Player::White), CastlingRights::WhiteQueenside),
-            (CastlingRights::BLACK_KINGSIDE_ROOK, Piece::Rook(Player::Black), CastlingRights::BlackKingside),
-            (CastlingRights::BLACK_QUEENSIDE_ROOK, Piece::Rook(Player::Black), CastlingRights::BlackQueenside),
+            (
+                CastlingRights::WHITE_KINGSIDE_ROOK,
+                Piece::Rook(Player::White),
+                CastlingRights::WhiteKingside,
+            ),
+            (
+                CastlingRights::WHITE_QUEENSIDE_ROOK,
+                Piece::Rook(Player::White),
+                CastlingRights::WhiteQueenside,
+            ),
+            (
+                CastlingRights::BLACK_KINGSIDE_ROOK,
+                Piece::Rook(Player::Black),
+                CastlingRights::BlackKingside,
+            ),
+            (
+                CastlingRights::BLACK_QUEENSIDE_ROOK,
+                Piece::Rook(Player::Black),
+                CastlingRights::BlackQueenside,
+            ),
         ];
-    
+
         let king_positions = [
-            (CastlingRights::WHITE_KING, Piece::King(Player::White), CastlingRights::WhiteKingside, CastlingRights::WhiteQueenside),
-            (CastlingRights::BLACK_KING, Piece::King(Player::Black), CastlingRights::BlackKingside, CastlingRights::BlackQueenside),
+            (
+                CastlingRights::WHITE_KING,
+                Piece::King(Player::White),
+                CastlingRights::WhiteKingside,
+                CastlingRights::WhiteQueenside,
+            ),
+            (
+                CastlingRights::BLACK_KING,
+                Piece::King(Player::Black),
+                CastlingRights::BlackKingside,
+                CastlingRights::BlackQueenside,
+            ),
         ];
-    
+
         for &(position, piece, rights) in rook_positions.as_ref() {
             if self.board.get_piece(&position) != Some(piece) {
                 self.castle_rights[rights as usize] = false;
             }
         }
-    
+
         for &(position, piece, rights1, rights2) in king_positions.as_ref() {
             if self.board.get_piece(&position) != Some(piece) {
                 self.castle_rights[rights1 as usize] = false;
