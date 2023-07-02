@@ -13,6 +13,7 @@ pub enum CastlingRightsKind {
     BlackQueenside,
 }
 
+#[derive(Clone)]
 pub struct CastlingRights([bool; 4]);
 
 impl Default for CastlingRights {

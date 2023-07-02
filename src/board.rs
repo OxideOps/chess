@@ -60,7 +60,7 @@ impl Board {
     }
 }
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, Default)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Player,
