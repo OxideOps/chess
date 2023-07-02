@@ -120,7 +120,7 @@ impl BoardState {
         Ok(())
     }
 
-    pub fn update(&mut self, mv: &Move) {
+    fn update(&mut self, mv: &Move) {
         self.player = !self.player;
         self.handle_castling_the_rook(mv);
         self.handle_capturing_en_passant(&mv.to);
