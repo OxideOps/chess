@@ -21,7 +21,7 @@ pub enum ChessError {
     EmptyPieceMove,
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub enum GameStatus {
     #[default]
     Ongoing,
@@ -30,6 +30,7 @@ pub enum GameStatus {
     Checkmate,
 }
 
+#[derive(Clone)]
 pub struct Game {
     state: BoardState,
     valid_moves: HashSet<Move>,
@@ -65,10 +66,28 @@ impl Game {
             self.is_move_valid(&mv)?;
             self.state.move_piece(&mv);
             self.add_moves();
+            self.remove_self_checks();
 
             println!("{} : {}", piece, mv);
         }
         Ok(())
+    }
+
+    fn has_check(&self) -> bool {
+        self.valid_moves
+            .iter()
+            .any(|m| self.get_piece(&m.to) == Some(Piece::King(!self.state.player)))
+    }
+
+    fn remove_self_checks(&mut self) {
+        for mv in self.valid_moves.clone() {
+            let mut next_turn = self.clone();
+            next_turn.state.move_piece(&mv);
+            next_turn.add_moves();
+            if next_turn.has_check() {
+                self.valid_moves.remove(&mv);
+            }
+        }
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
