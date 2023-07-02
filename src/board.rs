@@ -109,7 +109,8 @@ impl BoardState {
     }
 
     fn update(&mut self, mv: &Move) {
-        self.castling_rights.handle_castling_the_rook(mv, &mut self.board, self.player);
+        self.castling_rights
+            .handle_castling_the_rook(mv, &mut self.board, self.player);
         self.castling_rights.update_castling_rights(&self.board);
         self.handle_capturing_en_passant(&mv.to);
         self.update_en_passant(mv);
@@ -146,5 +147,4 @@ impl BoardState {
             None
         }
     }
-
 }

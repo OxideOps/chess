@@ -1,6 +1,11 @@
 use std::collections::HashSet;
 
-use crate::{pieces::{Piece, Player, Position}, board::{BoardState, Board}, displacement::Displacement, moves::Move};
+use crate::{
+    board::{Board, BoardState},
+    displacement::Displacement,
+    moves::Move,
+    pieces::{Piece, Player, Position},
+};
 
 #[derive(Clone, Copy)]
 pub enum CastlingRightsKind {
@@ -119,8 +124,7 @@ impl CastlingRights {
     }
 
     pub fn handle_castling_the_rook(&mut self, mv: &Move, board: &mut Board, player: Player) {
-        let (king, kingside_rook, queenside_rook) =
-            CastlingRights::get_castling_positions(player);
+        let (king, kingside_rook, queenside_rook) = CastlingRights::get_castling_positions(player);
 
         if mv.from == king {
             if mv.to == king + Displacement::RIGHT * 2 {
