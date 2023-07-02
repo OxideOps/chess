@@ -85,6 +85,10 @@ impl BoardState {
         Self::default()
     }
 
+    pub fn get_current_state(&self) -> &Self {
+        self
+    }
+
     pub fn get_piece(&self, at: &Position) -> Square {
         self.board.get_piece(at)
     }
