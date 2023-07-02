@@ -29,19 +29,19 @@ pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
     fn default() -> Self {
-        let mut board = [[None; BOARD_SIZE]; BOARD_SIZE];
+        let mut squares = [[None; BOARD_SIZE]; BOARD_SIZE];
 
         // Initialize white pawns
         for i in 0..8 {
-            board[1][i] = Some(Piece::Pawn(Player::White));
-            board[6][i] = Some(Piece::Pawn(Player::Black));
+            squares[1][i] = Some(Piece::Pawn(Player::White));
+            squares[6][i] = Some(Piece::Pawn(Player::Black));
         }
 
         // Initialize the other white and black pieces
-        board[0] = Self::get_back_rank(Player::White);
-        board[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
+        squares[0] = Self::get_back_rank(Player::White);
+        squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
 
-        Self(board)
+        Self(squares)
     }
 }
 
