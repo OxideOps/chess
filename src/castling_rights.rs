@@ -73,8 +73,6 @@ impl CastlingRights {
         }
     }
 
-        
-        
     pub fn get_castling_info(player: Player) -> (Position, CastlingRights, CastlingRights) {
         match player {
             Player::White => (
