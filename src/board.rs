@@ -1,5 +1,5 @@
 use crate::displacement::Displacement;
-use crate::game::{ChessError, ChessResult, CastlingRights};
+use crate::game::{CastlingRights, ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 use std::collections::HashSet;
