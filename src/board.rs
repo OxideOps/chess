@@ -263,10 +263,12 @@ impl BoardState {
             }
         }
 
-        for &(position, piece, king_rights, queen_rights) in CastlingRights::king_positions().as_ref() {
+        for &(position, piece, kingside_rights, queenside_rights) in
+            CastlingRights::king_positions().as_ref()
+        {
             if self.board.get_piece(&position) != Some(piece) {
-                self.castle_rights[king_rights as usize] = false;
-                self.castle_rights[queen_rights as usize] = false;
+                self.castle_rights[kingside_rights as usize] = false;
+                self.castle_rights[queenside_rights as usize] = false;
             }
         }
     }
