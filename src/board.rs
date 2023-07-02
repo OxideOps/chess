@@ -76,8 +76,6 @@ impl Board {
     }
 }
 
-
-
 #[derive(PartialEq)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
