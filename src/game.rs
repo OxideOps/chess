@@ -165,8 +165,7 @@ impl Game {
 
         if self.state.castle_rights[kingside as usize]
             && !(1..=2).any(|i| {
-                self.state
-                    .has_piece(&(king_square + Displacement::RIGHT * i))
+                self.has_piece(&(king_square + Displacement::RIGHT * i))
             })
         {
             self.valid_moves.insert(Move {
@@ -177,8 +176,7 @@ impl Game {
 
         if self.state.castle_rights[queenside as usize]
             && !(1..=3).any(|i| {
-                self.state
-                    .has_piece(&(king_square + Displacement::LEFT * i))
+                self.has_piece(&(king_square + Displacement::LEFT * i))
             })
         {
             self.valid_moves.insert(Move {
@@ -186,5 +184,9 @@ impl Game {
                 to: king_square + Displacement::LEFT * 2,
             });
         }
+    }
+
+    pub fn has_piece(&self, position: &Position) -> bool {
+        self.state.has_piece(position)
     }
 }

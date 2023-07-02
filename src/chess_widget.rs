@@ -118,7 +118,7 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 }
             },
             onmousemove: |event| {
-                if let Some(mouse_down) = mouse_down_state.get() {
+                if let Some(mouse_down ) = mouse_down_state.get() {
                     if GAME.read().unwrap().get_piece(&Position::from(mouse_down)).is_some() {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
