@@ -3,7 +3,6 @@ use crate::displacement::Displacement;
 use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
-use std::collections::HashSet;
 
 const BOARD_SIZE: usize = 8;
 
