@@ -78,14 +78,6 @@ impl BoardState {
         self.board.get_piece(at)
     }
 
-    pub fn set_piece(&mut self, at: &Position, sq: Square) {
-        self.board.set_piece(at, sq)
-    }
-
-    pub fn take_piece(&mut self, from: &Position) -> Square {
-        self.board.take_piece(from)
-    }
-
     fn can_promote_piece(&self, at: &Position) -> bool {
         (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
     }
@@ -140,7 +132,7 @@ impl BoardState {
 
     fn handle_capturing_en_passant(&mut self, to: &Position) {
         if Some(*to) == self.en_passant_position {
-            self.set_piece(
+            self.board.set_piece(
                 &(*to - Displacement::get_pawn_advance_vector(self.player)),
                 None,
             );
