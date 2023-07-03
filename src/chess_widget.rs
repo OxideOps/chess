@@ -86,7 +86,7 @@ fn draw_piece<'a>(
 pub fn ChessWidget(cx: Scope) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let dragged_piece_position = mouse_down_state.get().as_ref().map(|m| m.into());
+    let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position { x, y }))
         .filter_map(|pos| {
