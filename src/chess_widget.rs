@@ -100,6 +100,7 @@ pub fn ChessWidget(cx: Scope) -> Element {
     render! {
         style { include_str!("../styles/chess_widget.css") }
         div {
+            tabindex: 0, //focus this div
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
             onmouseup: move |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
@@ -118,10 +119,12 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 }
             },
             onkeypress: |event| {
-                todo!("Get keyboard input working");
                 match event.key() {
-                    Key::Character(c) if c == "r" => {
-                        todo!("Handle keyboard input")
+                    Key::Character(c) => {
+                        println!("{c} pressed");
+                    }
+                    Key::ArrowLeft => {
+                        println!("left arrow pressed");
                     }
                     _ => {}
                 }
