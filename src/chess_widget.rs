@@ -117,7 +117,8 @@ pub fn ChessWidget(cx: Scope) -> Element {
                     }
                 }
             },
-            onkeydown: |event| {
+            onkeypress: |event| {
+                todo!("Get keyboard input working");
                 match event.key() {
                     Key::Character(c) if c == "r" => {
                         todo!("Handle keyboard input")
