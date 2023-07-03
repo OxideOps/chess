@@ -3,10 +3,8 @@
 target = "index.html"
 # Build in release mode.
 release = true
-# The output dir for all final assets.
-dist = "docs"
 # The public URL from which assets are to be served.
-public_url = "https://event-horizon-technologies.github.io/chess/"
+public_url = "https://event-horizon-technologies.github.io/chess-web/"
 # Whether to include hash values in the output file names.
 filehash = true
 
@@ -27,7 +25,5 @@ open = false
 no_autoreload = false
 
 [clean]
-# The output dir for all final assets.
-dist = "docs"
 # Optionally perform a cargo clean.
 cargo = true
