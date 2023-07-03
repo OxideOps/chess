@@ -1,14 +1,16 @@
-name: Push WASM to Github Page when PR is merged
+name: Push WASM to Github Page main is updated
 
 on:
-  pull_request_target:
-    types: [ closed ]
+  push:
+    branches:
+      - main
 
 jobs:
-  slack-notification:
+  deployment:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
 
     steps:
+    - uses: actions/checkout@v2
+
     - name: Update deployment repo
       run: ./deploy-web.sh
