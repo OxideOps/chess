@@ -1,6 +1,6 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
-use dioxus::html::geometry::ClientPoint;
+use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
@@ -86,7 +86,7 @@ fn draw_piece<'a>(
 pub fn ChessWidget(cx: Scope) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let dragged_piece_position = mouse_down_state.get().as_ref().map(|m| m.into());
+    let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position { x, y }))
         .filter_map(|pos| {
@@ -100,8 +100,11 @@ pub fn ChessWidget(cx: Scope) -> Element {
     render! {
         style { include_str!("../styles/chess_widget.css") }
         div {
+            autofocus: true,
+            tabindex: 0,
+
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| {
+            onmouseup: |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
                     let from = mouse_down.into();
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
@@ -115,6 +118,17 @@ pub fn ChessWidget(cx: Scope) -> Element {
                     if GAME.read().unwrap().has_piece(&mouse_down.into()) {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
+                }
+            },
+            onkeydown: |event| {
+                match event.key() {
+                    Key::Character(c) => {
+                        println!("{c} pressed");
+                    }
+                    Key::ArrowLeft => {
+                        println!("left arrow pressed");
+                    }
+                    _ => {}
                 }
             },
             img {
