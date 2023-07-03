@@ -104,7 +104,7 @@ pub fn ChessWidget(cx: Scope) -> Element {
             tabindex: 0,
 
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| {
+            onmouseup: |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
                     let from = mouse_down.into();
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
