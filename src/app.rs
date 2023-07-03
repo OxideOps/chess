@@ -14,6 +14,7 @@ pub fn App(cx: Scope) -> Element {
             height: WINDOW_SIZE,
         });
         use_window(cx).set_title("Chess");
+        use_window(cx).set_focus();
     }
     render! {
         ChessWidget {},
