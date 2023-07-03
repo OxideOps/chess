@@ -1,6 +1,6 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
-use dioxus::html::geometry::ClientPoint;
+use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
@@ -115,6 +115,11 @@ pub fn ChessWidget(cx: Scope) -> Element {
                     if GAME.read().unwrap().has_piece(&mouse_down.into()) {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
+                }
+            },
+            onkeydown: |event| {
+                if let Key::Character(c) = event.key() {
+                    todo!("Get keyboard input working")
                 }
             },
             img {
