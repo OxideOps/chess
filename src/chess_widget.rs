@@ -118,8 +118,11 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 }
             },
             onkeydown: |event| {
-                if let Key::Character(c) = event.key() {
-                    todo!("Get keyboard input working")
+                match event.key() {
+                    Key::Character(c) if c == "r" => {
+                        todo!("Handle keyboard input")
+                    }
+                    _ => {}
                 }
             },
             img {
