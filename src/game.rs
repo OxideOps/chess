@@ -1,4 +1,4 @@
-use crate::board::{BoardState, Board};
+use crate::board::{Board, BoardState};
 use crate::castling_rights::CastlingRights;
 use crate::displacement::Displacement;
 use crate::moves::Move;
@@ -49,7 +49,7 @@ impl History {
     fn get_current_state_mut(&mut self) -> &mut BoardState {
         &mut self.0.last_mut().unwrap().0
     }
-    
+
     fn get_current_state(&self) -> &BoardState {
         &self.0.last().unwrap().0
     }
@@ -64,7 +64,6 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
-
         let mut game = Self::default();
         game.add_moves();
         game
@@ -95,7 +94,8 @@ impl Game {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
-        self.history.add_info(self.history.get_current_state().clone(), *mv)
+        self.history
+            .add_info(self.history.get_current_state().clone(), *mv)
     }
 
     fn update_status(&mut self) {
@@ -117,9 +117,9 @@ impl Game {
     }
 
     fn has_check(&self) -> bool {
-        self.valid_moves
-            .iter()
-            .any(|m| self.get_piece(&m.to) == Some(Piece::King(!self.history.get_current_state().player)))
+        self.valid_moves.iter().any(|m| {
+            self.get_piece(&m.to) == Some(Piece::King(!self.history.get_current_state().player))
+        })
     }
 
     fn remove_self_checks(&mut self) {
@@ -148,10 +148,14 @@ impl Game {
     fn add_pawn_advance_moves(&mut self, from: Position) {
         let v = Displacement::get_pawn_advance_vector(self.history.get_current_state().player);
         let mut to = from + v;
-        if BoardState::is_in_bounds(&to).is_ok() && self.history.get_current_state().get_piece(&to).is_none() {
+        if BoardState::is_in_bounds(&to).is_ok()
+            && self.history.get_current_state().get_piece(&to).is_none()
+        {
             self.valid_moves.insert(Move { from, to });
             to += v;
-            if self.history.get_current_state().get_piece(&to).is_none() && self.can_double_move(&from) {
+            if self.history.get_current_state().get_piece(&to).is_none()
+                && self.can_double_move(&from)
+            {
                 self.valid_moves.insert(Move { from, to });
             }
         }
@@ -200,7 +204,13 @@ impl Game {
                                 break;
                             }
                             self.valid_moves.insert(Move { from, to });
-                            if !self.history.get_current_state().get_piece(&from).unwrap().can_snipe() {
+                            if !self
+                                .history
+                                .get_current_state()
+                                .get_piece(&from)
+                                .unwrap()
+                                .can_snipe()
+                            {
                                 break;
                             }
                             to += v;
@@ -225,9 +235,14 @@ impl Game {
         let (king_square, kingside, queenside) =
             CastlingRights::get_castling_info(self.history.get_current_state().player);
 
-        if self.history.get_current_state().castling_rights.has_castling_right(kingside)
+        if self
+            .history
+            .get_current_state()
+            .castling_rights
+            .has_castling_right(kingside)
             && !(1..=2).any(|i| {
-                self.history.get_current_state()
+                self.history
+                    .get_current_state()
                     .has_piece(&(king_square + Displacement::RIGHT * i))
             })
         {
@@ -237,9 +252,14 @@ impl Game {
             });
         }
 
-        if self.history.get_current_state().castling_rights.has_castling_right(queenside)
+        if self
+            .history
+            .get_current_state()
+            .castling_rights
+            .has_castling_right(queenside)
             && !(1..=3).any(|i| {
-                self.history.get_current_state()
+                self.history
+                    .get_current_state()
                     .has_piece(&(king_square + Displacement::LEFT * i))
             })
         {
