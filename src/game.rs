@@ -28,19 +28,20 @@ pub enum GameStatus {
     Stalemate,
     Check,
     Checkmate,
+    Replay
 }
 
 #[derive(Clone)]
 pub struct History {
     history: Vec<(BoardState, Move)>,
-    current_move: usize,
+    current_turn: usize,
 }
 
 impl Default for History {
     fn default() -> Self {
         let mut history = Self {
             history: Vec::new(),
-            current_move: 0,
+            current_turn: 0,
         };
         history.add_info(Default::default(), Default::default());
         history
@@ -50,11 +51,11 @@ impl Default for History {
 impl History {
     fn add_info(&mut self, state: BoardState, mv: Move) {
         self.history.push((state, mv));
-        self.current_move += 1
+        self.current_turn += 1
     }
 
     fn get_current_state_mut(&mut self) -> &mut BoardState {
-        &mut self.history[self.current_move - 1].0
+        &mut self.history[self.current_turn - 1].0
     }
 
     fn get_current_state(&self) -> &BoardState {
@@ -62,23 +63,23 @@ impl History {
     }
 
     fn resume(&mut self) {
-        self.current_move = self.history.len()
+        self.current_turn = self.history.len()
     }
 
     fn previous_state(&mut self) {
-        if self.current_move > 1 {
-            self.current_move -= 1
+        if self.current_turn > 1 {
+            self.current_turn -= 1
         }
     }
 
     fn next_state(&mut self) {
-        if self.current_move < self.history.len() {
-            self.current_move += 1
+        if self.current_turn < self.history.len() {
+            self.current_turn += 1
         }
     }
 
     fn initial_state(&mut self) {
-        self.current_move = 1
+        self.current_turn = 1
     }
 }
 
@@ -105,31 +106,38 @@ impl Game {
     }
 
     pub fn go_back_a_turn(&mut self) {
+        self.status = GameStatus::Replay;
         self.history.previous_state()
     }
 
     pub fn go_forward_a_turn(&mut self) {
+        self.status = GameStatus::Replay;
         self.history.next_state()
     }
 
     pub fn go_to_beginning(&mut self) {
+        self.status = GameStatus::Replay;
         self.history.initial_state()
     }
 
     pub fn resume(&mut self) {
+        self.status = GameStatus::Ongoing;
         self.history.resume()
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
-        if let Some(piece) = self.history.get_current_state().get_piece(&from) {
-            let mv = Move::new(from, to);
-
-            self.is_move_valid(&mv)?;
-            self.history.get_current_state_mut().move_piece(&mv);
-            self.update(&mv);
-
-            println!("{} : {}", piece, mv);
+        if self.status == GameStatus::Ongoing {
+            if let Some(piece) = self.history.get_current_state().get_piece(&from) {
+                let mv = Move::new(from, to);
+    
+                self.is_move_valid(&mv)?;
+                self.history.get_current_state_mut().move_piece(&mv);
+                self.update(&mv);
+    
+                println!("{} : {}", piece, mv);
+            }
         }
+        //do nothing for now if not in GameStatus::Ongoing
         Ok(())
     }
 
