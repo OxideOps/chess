@@ -31,11 +31,17 @@ pub enum GameStatus {
 }
 
 #[derive(Clone)]
-pub struct History(Vec<(BoardState, Move)>);
+pub struct History {
+    history: Vec<(BoardState, Move)>,
+    current_move: usize
+}
 
 impl Default for History {
     fn default() -> Self {
-        let mut history: History = History(Vec::new());
+        let mut history = Self {
+            history: Vec::new(),
+            current_move: 0
+        };
         history.add_info(Default::default(), Default::default());
         history
     }
@@ -43,15 +49,32 @@ impl Default for History {
 
 impl History {
     fn add_info(&mut self, state: BoardState, mv: Move) {
-        self.0.push((state, mv))
+        self.history.push((state, mv));
+        self.current_move += 1
     }
 
     fn get_current_state_mut(&mut self) -> &mut BoardState {
-        &mut self.0.last_mut().unwrap().0
+        &mut self.history[self.current_move - 1].0
     }
 
     fn get_current_state(&self) -> &BoardState {
-        &self.0.last().unwrap().0
+        &self.history.last().unwrap().0
+    }
+
+    fn resume(&mut self) {
+        self.current_move = self.history.len()
+    }
+
+    fn previous_state(&mut self) {
+        if self.current_move > 1 {
+            self.current_move -= 1
+        }
+    }
+
+    fn next_state(&mut self) {
+        if self.current_move < self.history.len() {
+            self.current_move += 1
+        }
     }
 }
 
@@ -75,6 +98,18 @@ impl Game {
 
     pub fn get_board_state(&self) -> &BoardState {
         self.history.get_current_state()
+    }
+
+    pub fn go_back_a_turn(&mut self) {
+        self.history.previous_state()
+    }
+    
+    pub fn go_forward_a_turn(&mut self) {
+        self.history.next_state()
+    }
+
+    pub fn resume(&mut self) {
+        self.history.resume()
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {

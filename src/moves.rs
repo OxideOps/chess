@@ -11,6 +11,13 @@ impl Move {
     pub fn new(from: Position, to: Position) -> Self {
         Self { from, to }
     }
+
+    pub fn inverse(&self) -> Self {
+        Self {
+            from: self.to,
+            to: self.from,
+        }
+    }
 }
 
 impl fmt::Display for Move {
