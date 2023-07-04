@@ -1,10 +1,10 @@
-use std::collections::HashSet;
-
 use crate::board::BoardState;
 use crate::castling_rights::CastlingRights;
 use crate::displacement::Displacement;
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
+
+use std::collections::HashSet;
 
 pub type ChessResult = Result<(), ChessError>;
 #[derive(Debug)]
@@ -35,6 +35,7 @@ pub struct Game {
     state: BoardState,
     valid_moves: HashSet<Move>,
     status: GameStatus,
+    history: Vec<BoardState>,
 }
 
 impl Game {
@@ -58,13 +59,17 @@ impl Game {
 
             self.is_move_valid(&mv)?;
             self.state.move_piece(&mv);
-            self.add_moves();
-            self.remove_self_checks();
-            self.update_status();
+            self.update();
 
             println!("{} : {}", piece, mv);
         }
         Ok(())
+    }
+
+    fn update(&mut self) {
+        self.add_moves();
+        self.remove_self_checks();
+        self.update_status();
     }
 
     fn update_status(&mut self) {
