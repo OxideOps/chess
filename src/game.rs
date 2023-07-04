@@ -28,22 +28,22 @@ pub enum GameStatus {
     Stalemate,
     Check,
     Checkmate,
-    Replay
+    Replay,
 }
-
+type Turn = (BoardState, Move);
 #[derive(Clone)]
 pub struct History {
-    history: Vec<(BoardState, Move)>,
+    history: Vec<Turn>,
     current_turn: usize,
 }
 
 impl Default for History {
     fn default() -> Self {
         let mut history = Self {
-            history: Vec::new(),
+            history: Vec::default(),
             current_turn: 0,
         };
-        history.add_info(Default::default(), Default::default());
+        history.add_info(BoardState::default(), Move::default());
         history
     }
 }
@@ -81,6 +81,14 @@ impl History {
     fn initial_state(&mut self) {
         self.current_turn = 1
     }
+
+    fn is_replaying(&mut self) -> bool {
+        self.current_turn != self.history.len()
+    }
+
+    fn get_current_player(&self) -> Player {
+        self.history[self.current_turn - 1].0.player
+    }
 }
 
 #[derive(Clone, Default)]
@@ -101,7 +109,7 @@ impl Game {
         self.history.get_current_state().get_piece(position)
     }
 
-    pub fn get_board_state(&self) -> &BoardState {
+    fn get_board_state(&self) -> &BoardState {
         self.history.get_current_state()
     }
 
@@ -125,15 +133,21 @@ impl Game {
         self.history.resume()
     }
 
+    pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
+        self.history.add_info(next_state, mv);
+    }
+
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
         if self.status == GameStatus::Ongoing {
-            if let Some(piece) = self.history.get_current_state().get_piece(&from) {
+            if let Some(piece) = self.get_piece(&from) {
                 let mv = Move::new(from, to);
-    
                 self.is_move_valid(&mv)?;
-                self.history.get_current_state_mut().move_piece(&mv);
+
+                let mut next_state = self.get_board_state().clone();
+                next_state.move_piece(&mv);
+                self.history.add_info(next_state, mv);
                 self.update(&mv);
-    
+
                 println!("{} : {}", piece, mv);
             }
         }
@@ -145,25 +159,24 @@ impl Game {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
-        self.history
-            .add_info(self.history.get_current_state().clone(), *mv)
     }
 
     fn update_status(&mut self) {
-        let mut next_turn = self.clone();
-        let next_turn_state = next_turn.history.get_current_state_mut();
-        next_turn_state.player = !next_turn_state.player;
-        next_turn.add_moves();
-        if next_turn.has_check() {
-            if self.valid_moves.is_empty() {
-                self.status = GameStatus::Checkmate;
-            } else {
-                self.status = GameStatus::Check;
+        if self.status != GameStatus::Replay {
+            if self.has_check() {
+                if self.valid_moves.is_empty() {
+                    self.status = GameStatus::Checkmate;
+                } else {
+                    self.status = GameStatus::Check;
+                }
+                return;
             }
-        } else if self.valid_moves.is_empty() {
-            self.status = GameStatus::Stalemate;
-        } else {
-            self.status = GameStatus::Ongoing;
+
+            if self.valid_moves.is_empty() {
+                self.status = GameStatus::Stalemate;
+            } else {
+                self.status = GameStatus::Ongoing;
+            }
         }
     }
 
@@ -272,7 +285,7 @@ impl Game {
         }
     }
 
-    pub fn add_moves(&mut self) {
+    fn add_moves(&mut self) {
         self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
@@ -282,7 +295,7 @@ impl Game {
         self.add_castling_moves()
     }
 
-    pub fn add_castling_moves(&mut self) {
+    fn add_castling_moves(&mut self) {
         let (king_square, kingside, queenside) =
             CastlingRights::get_castling_info(self.history.get_current_state().player);
 
