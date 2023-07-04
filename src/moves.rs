@@ -1,7 +1,7 @@
 use crate::pieces::Position;
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Move {
     pub from: Position,
     pub to: Position,

@@ -1,4 +1,4 @@
-use crate::board::BoardState;
+use crate::board::{BoardState, Board};
 use crate::castling_rights::CastlingRights;
 use crate::displacement::Displacement;
 use crate::moves::Move;
@@ -30,18 +30,33 @@ pub enum GameStatus {
     Checkmate,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct History(Vec<(BoardState, Move)>);
+
+impl Default for History {
+    fn default() -> Self {
+        let mut history: History = History(Vec::new());
+        history.add_info(Default::default(), Default::default());
+        history
+    }
+}
 
 impl History {
     fn add_info(&mut self, state: BoardState, mv: Move) {
         self.0.push((state, mv))
     }
+
+    fn get_current_state_mut(&mut self) -> &mut BoardState {
+        &mut self.0.last_mut().unwrap().0
+    }
+    
+    fn get_current_state(&self) -> &BoardState {
+        &self.0.last().unwrap().0
+    }
 }
 
 #[derive(Clone, Default)]
 pub struct Game {
-    state: BoardState,
     valid_moves: HashSet<Move>,
     status: GameStatus,
     history: History,
@@ -49,25 +64,26 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
+
         let mut game = Self::default();
         game.add_moves();
         game
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
-        self.state.get_piece(position)
+        self.history.get_current_state().get_piece(position)
     }
 
     pub fn get_board_state(&self) -> &BoardState {
-        &self.state
+        self.history.get_current_state()
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
-        if let Some(piece) = self.state.get_piece(&from) {
+        if let Some(piece) = self.history.get_current_state().get_piece(&from) {
             let mv = Move::new(from, to);
 
             self.is_move_valid(&mv)?;
-            self.state.move_piece(&mv);
+            self.history.get_current_state_mut().move_piece(&mv);
             self.update(&mv);
 
             println!("{} : {}", piece, mv);
@@ -79,12 +95,13 @@ impl Game {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
-        self.history.add_info(self.state.clone(), *mv)
+        self.history.add_info(self.history.get_current_state().clone(), *mv)
     }
 
     fn update_status(&mut self) {
         let mut next_turn = self.clone();
-        next_turn.state.player = !next_turn.state.player;
+        let next_turn_state = next_turn.history.get_current_state_mut();
+        next_turn_state.player = !next_turn_state.player;
         next_turn.add_moves();
         if next_turn.has_check() {
             if self.valid_moves.is_empty() {
@@ -102,13 +119,13 @@ impl Game {
     fn has_check(&self) -> bool {
         self.valid_moves
             .iter()
-            .any(|m| self.get_piece(&m.to) == Some(Piece::King(!self.state.player)))
+            .any(|m| self.get_piece(&m.to) == Some(Piece::King(!self.history.get_current_state().player)))
     }
 
     fn remove_self_checks(&mut self) {
         for mv in self.valid_moves.clone() {
             let mut next_turn = self.clone();
-            next_turn.state.move_piece(&mv);
+            next_turn.history.get_current_state_mut().move_piece(&mv);
             next_turn.add_moves();
             if next_turn.has_check() {
                 self.valid_moves.remove(&mv);
@@ -119,7 +136,7 @@ impl Game {
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
         BoardState::is_in_bounds(&mv.from)?;
         BoardState::is_in_bounds(&mv.to)?;
-        self.state.is_piece_some(&mv.from)?;
+        self.history.get_current_state().is_piece_some(&mv.from)?;
 
         if self.valid_moves.contains(mv) {
             Ok(())
@@ -129,19 +146,19 @@ impl Game {
     }
 
     fn add_pawn_advance_moves(&mut self, from: Position) {
-        let v = Displacement::get_pawn_advance_vector(self.state.player);
+        let v = Displacement::get_pawn_advance_vector(self.history.get_current_state().player);
         let mut to = from + v;
-        if BoardState::is_in_bounds(&to).is_ok() && self.state.get_piece(&to).is_none() {
+        if BoardState::is_in_bounds(&to).is_ok() && self.history.get_current_state().get_piece(&to).is_none() {
             self.valid_moves.insert(Move { from, to });
             to += v;
-            if self.state.get_piece(&to).is_none() && self.can_double_move(&from) {
+            if self.history.get_current_state().get_piece(&to).is_none() && self.can_double_move(&from) {
                 self.valid_moves.insert(Move { from, to });
             }
         }
     }
 
     fn can_double_move(&self, from: &Position) -> bool {
-        if let Piece::Pawn(player) = self.state.get_piece(from).unwrap() {
+        if let Piece::Pawn(player) = self.history.get_current_state().get_piece(from).unwrap() {
             return match player {
                 Player::White => from.y == 1,
                 Player::Black => from.y == 6,
@@ -151,15 +168,15 @@ impl Game {
     }
 
     fn add_pawn_capture_moves(&mut self, from: Position) {
-        for &v in Displacement::get_pawn_capture_vectors(self.state.player) {
+        for &v in Displacement::get_pawn_capture_vectors(self.history.get_current_state().player) {
             let to = from + v;
             if BoardState::is_in_bounds(&to).is_ok() {
-                if let Some(piece) = self.state.get_piece(&to) {
-                    if piece.get_player() != self.state.player {
+                if let Some(piece) = self.history.get_current_state().get_piece(&to) {
+                    if piece.get_player() != self.history.get_current_state().player {
                         self.valid_moves.insert(Move::new(from, to));
                     }
                 }
-                if Some(to) == self.state.en_passant_position {
+                if Some(to) == self.history.get_current_state().en_passant_position {
                     self.valid_moves.insert(Move::new(from, to));
                 }
             }
@@ -167,8 +184,8 @@ impl Game {
     }
 
     fn add_moves_for_piece(&mut self, from: Position) {
-        if let Some(piece) = self.state.get_piece(&from) {
-            if piece.get_player() == self.state.player {
+        if let Some(piece) = self.history.get_current_state().get_piece(&from) {
+            if piece.get_player() == self.history.get_current_state().player {
                 if piece.is_pawn() {
                     self.add_pawn_advance_moves(from);
                     self.add_pawn_capture_moves(from);
@@ -176,14 +193,14 @@ impl Game {
                     for &v in piece.get_vectors() {
                         let mut to = from + v;
                         while BoardState::is_in_bounds(&to).is_ok() {
-                            if let Some(piece) = self.state.get_piece(&to) {
-                                if piece.get_player() != self.state.player {
+                            if let Some(piece) = self.history.get_current_state().get_piece(&to) {
+                                if piece.get_player() != self.history.get_current_state().player {
                                     self.valid_moves.insert(Move { from, to });
                                 }
                                 break;
                             }
                             self.valid_moves.insert(Move { from, to });
-                            if !self.state.get_piece(&from).unwrap().can_snipe() {
+                            if !self.history.get_current_state().get_piece(&from).unwrap().can_snipe() {
                                 break;
                             }
                             to += v;
@@ -206,11 +223,11 @@ impl Game {
 
     pub fn add_castling_moves(&mut self) {
         let (king_square, kingside, queenside) =
-            CastlingRights::get_castling_info(self.state.player);
+            CastlingRights::get_castling_info(self.history.get_current_state().player);
 
-        if self.state.castling_rights.has_castling_right(kingside)
+        if self.history.get_current_state().castling_rights.has_castling_right(kingside)
             && !(1..=2).any(|i| {
-                self.state
+                self.history.get_current_state()
                     .has_piece(&(king_square + Displacement::RIGHT * i))
             })
         {
@@ -220,9 +237,9 @@ impl Game {
             });
         }
 
-        if self.state.castling_rights.has_castling_right(queenside)
+        if self.history.get_current_state().castling_rights.has_castling_right(queenside)
             && !(1..=3).any(|i| {
-                self.state
+                self.history.get_current_state()
                     .has_piece(&(king_square + Displacement::LEFT * i))
             })
         {
@@ -234,6 +251,6 @@ impl Game {
     }
 
     pub fn has_piece(&self, position: &Position) -> bool {
-        self.state.has_piece(position)
+        self.history.get_current_state().has_piece(position)
     }
 }
