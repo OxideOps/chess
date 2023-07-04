@@ -122,11 +122,17 @@ pub fn ChessWidget(cx: Scope) -> Element {
             },
             onkeydown: |event| {
                 match event.key() {
-                    Key::Character(c) => {
-                        println!("{c} pressed");
-                    }
                     Key::ArrowLeft => {
-                        println!("left arrow pressed");
+                        GAME.write().unwrap().go_back_a_turn()
+                    },
+                    Key::ArrowRight => {
+                        GAME.write().unwrap().go_forward_a_turn()
+                    },
+                    Key::ArrowUp => {
+                        GAME.write().unwrap().resume()
+                    },
+                    Key::ArrowDown => {
+                        GAME.write().unwrap().go_to_beginning()
                     }
                     _ => {}
                 }
