@@ -76,6 +76,10 @@ impl History {
             self.current_move += 1
         }
     }
+
+    fn initial_state(&mut self) {
+        self.current_move = 1
+    }
 }
 
 #[derive(Clone, Default)]
@@ -106,6 +110,10 @@ impl Game {
 
     pub fn go_forward_a_turn(&mut self) {
         self.history.next_state()
+    }
+
+    pub fn go_to_beginning(&mut self) {
+        self.history.initial_state()
     }
 
     pub fn resume(&mut self) {
