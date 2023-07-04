@@ -1,16 +1,26 @@
-name: Push WASM to Github Page main is updated
-
+name: Build and Deploy
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
+permissions:
+  contents: write
+  packages: read
 jobs:
-  deployment:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
+    container:
+      image: ghcr.io/event-horizon-technologies/chess:docker
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-    - name: Update deployment repo
-      run: ./deploy-web.sh
+      - name: Build
+        run: trunk build
+
+      - name: Deploy to GH Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist

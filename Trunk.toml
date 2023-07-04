@@ -4,7 +4,7 @@ target = "index.html"
 # Build in release mode.
 release = true
 # The public URL from which assets are to be served.
-public_url = "https://event-horizon-technologies.github.io/chess-web/"
+public_url = "https://event-horizon-technologies.github.io/chess/"
 # Whether to include hash values in the output file names.
 filehash = true
 
