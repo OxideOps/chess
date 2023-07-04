@@ -33,14 +33,14 @@ pub enum GameStatus {
 #[derive(Clone)]
 pub struct History {
     history: Vec<(BoardState, Move)>,
-    current_move: usize
+    current_move: usize,
 }
 
 impl Default for History {
     fn default() -> Self {
         let mut history = Self {
             history: Vec::new(),
-            current_move: 0
+            current_move: 0,
         };
         history.add_info(Default::default(), Default::default());
         history
@@ -103,7 +103,7 @@ impl Game {
     pub fn go_back_a_turn(&mut self) {
         self.history.previous_state()
     }
-    
+
     pub fn go_forward_a_turn(&mut self) {
         self.history.next_state()
     }
