@@ -31,11 +31,20 @@ pub enum GameStatus {
 }
 
 #[derive(Clone, Default)]
+pub struct History(Vec<(BoardState, Move)>);
+
+impl History {
+    fn add_info(&mut self, state: BoardState, mv: Move) {
+        self.0.push((state, mv))
+    }
+}
+
+#[derive(Clone, Default)]
 pub struct Game {
     state: BoardState,
     valid_moves: HashSet<Move>,
     status: GameStatus,
-    history: Vec<BoardState>,
+    history: History,
 }
 
 impl Game {
@@ -59,17 +68,18 @@ impl Game {
 
             self.is_move_valid(&mv)?;
             self.state.move_piece(&mv);
-            self.update();
+            self.update(&mv);
 
             println!("{} : {}", piece, mv);
         }
         Ok(())
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, mv: &Move) {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
+        self.history.add_info(self.state.clone(), *mv)
     }
 
     fn update_status(&mut self) {
