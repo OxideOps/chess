@@ -21,7 +21,7 @@ pub enum ChessError {
     EmptyPieceMove,
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Copy, Default, PartialEq, Debug)]
 pub enum GameStatus {
     #[default]
     Ongoing,
@@ -29,6 +29,15 @@ pub enum GameStatus {
     Check,
     Checkmate,
     Replay,
+}
+
+impl GameStatus {
+    pub fn update(&mut self, status: GameStatus) {
+        if *self != status {
+            println!("GameStatus changing from {:?} to {:?}", *self, status)
+        }
+        *self = status;
+    }
 }
 type Turn = (BoardState, Move);
 #[derive(Clone)]
@@ -82,12 +91,8 @@ impl History {
         self.current_turn = 1
     }
 
-    fn is_replaying(&mut self) -> bool {
-        self.current_turn != self.history.len()
-    }
-
-    fn get_current_player(&self) -> Player {
-        self.history[self.current_turn - 1].0.player
+    fn is_ongoing(&mut self) -> bool {
+        self.current_turn == self.history.len()
     }
 }
 
@@ -114,22 +119,26 @@ impl Game {
     }
 
     pub fn go_back_a_turn(&mut self) {
-        self.status = GameStatus::Replay;
+        self.status.update(GameStatus::Replay);
         self.history.previous_state()
     }
 
     pub fn go_forward_a_turn(&mut self) {
-        self.status = GameStatus::Replay;
-        self.history.next_state()
+        if self.status == GameStatus::Replay {
+            self.history.next_state();
+            if self.history.is_ongoing() {
+                self.status.update(GameStatus::Ongoing)
+            }
+        }
     }
 
     pub fn go_to_beginning(&mut self) {
-        self.status = GameStatus::Replay;
+        self.status.update(GameStatus::Replay);
         self.history.initial_state()
     }
 
     pub fn resume(&mut self) {
-        self.status = GameStatus::Ongoing;
+        self.status.update(GameStatus::Ongoing);
         self.history.resume()
     }
 
@@ -146,7 +155,7 @@ impl Game {
                 let mut next_state = self.get_board_state().clone();
                 next_state.move_piece(&mv);
                 self.history.add_info(next_state, mv);
-                self.update(&mv);
+                self.update();
 
                 println!("{} : {}", piece, mv);
             }
@@ -155,7 +164,7 @@ impl Game {
         Ok(())
     }
 
-    fn update(&mut self, mv: &Move) {
+    fn update(&mut self) {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
@@ -176,6 +185,10 @@ impl Game {
                 self.status = GameStatus::Stalemate;
             } else {
                 self.status = GameStatus::Ongoing;
+            }
+
+            if !self.history.is_ongoing() {
+                self.status.update(GameStatus::Replay)
             }
         }
     }

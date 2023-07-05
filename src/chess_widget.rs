@@ -123,7 +123,8 @@ pub fn ChessWidget(cx: Scope) -> Element {
             onkeydown: |event| {
                 match event.key() {
                     Key::ArrowLeft => {
-                        GAME.write().unwrap().go_back_a_turn()
+                        GAME.write().unwrap().go_back_a_turn();
+                        cx.needs_update()
                     },
                     Key::ArrowRight => {
                         GAME.write().unwrap().go_forward_a_turn()
@@ -132,12 +133,12 @@ pub fn ChessWidget(cx: Scope) -> Element {
                         GAME.write().unwrap().resume()
                     },
                     Key::ArrowDown => {
-                        GAME.write().unwrap().go_to_beginning()
+                        GAME.write().unwrap().go_to_beginning();
                     }
                     _ => {
                         println!("Functionality not implemented for key: {:?}", event.key())
                     }
-                }
+                };
             },
             img {
                 src: "images/board.png",
