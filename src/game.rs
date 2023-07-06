@@ -1,4 +1,4 @@
-use crate::board::{Board, BoardState};
+use crate::board::BoardState;
 use crate::castling_rights::CastlingRights;
 use crate::displacement::Displacement;
 use crate::moves::Move;
@@ -39,36 +39,28 @@ impl GameStatus {
         *self = status;
     }
 }
-type Turn = (BoardState, Move);
-#[derive(Clone)]
+
+#[derive(Clone, Default)]
 pub struct History {
-    history: Vec<Turn>,
+    history: Vec<(BoardState, Move)>,
     current_turn: usize,
 }
 
-impl Default for History {
-    fn default() -> Self {
-        let mut history = Self {
-            history: Vec::default(),
-            current_turn: 0,
-        };
-        history.add_info(BoardState::default(), Move::default());
-        history
-    }
-}
-
 impl History {
+    pub fn with_state(state: BoardState) -> Self {
+        Self {
+            history: vec![(state, Move::default())],
+            ..Default::default()
+        }
+    }
+
     fn add_info(&mut self, state: BoardState, mv: Move) {
         self.history.push((state, mv));
         self.current_turn += 1
     }
 
-    fn get_current_state_mut(&mut self) -> &mut BoardState {
-        &mut self.history[self.current_turn - 1].0
-    }
-
     fn get_current_state(&self) -> &BoardState {
-        &self.history.last().unwrap().0
+        &self.history[self.current_turn - 1].0
     }
 
     fn resume(&mut self) {
@@ -96,26 +88,42 @@ impl History {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
     status: GameStatus,
     history: History,
 }
 
+impl Default for Game {
+    fn default() -> Self {
+        Game::with_state(BoardState::default())
+    }
+}
+
 impl Game {
     pub fn new() -> Self {
-        let mut game = Self::default();
-        game.add_moves();
-        game
+        Game::default()
+    }
+
+    pub fn with_state(state: BoardState) -> Self {
+        Self {
+            history: History::with_state(state),
+            ..Default::default()
+        }
+        .add_moves()
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.history.get_current_state().get_piece(position)
     }
 
-    fn get_board_state(&self) -> &BoardState {
+    fn get_current_state(&self) -> &BoardState {
         self.history.get_current_state()
+    }
+
+    fn get_current_player(&self) -> Player {
+        self.get_current_state().player
     }
 
     pub fn go_back_a_turn(&mut self) {
@@ -151,10 +159,8 @@ impl Game {
             if let Some(piece) = self.get_piece(&from) {
                 let mv = Move::new(from, to);
                 self.is_move_valid(&mv)?;
-
-                let mut next_state = self.get_board_state().clone();
-                next_state.move_piece(&mv);
-                self.history.add_info(next_state, mv);
+                self.history
+                    .add_info(self.get_current_state().clone().move_piece(&mv), mv);
                 self.update();
 
                 println!("{} : {}", piece, mv);
@@ -194,20 +200,19 @@ impl Game {
     }
 
     fn has_check(&self) -> bool {
-        self.valid_moves.iter().any(|m| {
-            self.get_piece(&m.to) == Some(Piece::King(!self.history.get_current_state().player))
-        })
+        self.valid_moves
+            .iter()
+            .any(|m| self.get_piece(&m.to) == Some(Piece::King(!self.get_current_player())))
     }
 
     fn remove_self_checks(&mut self) {
-        for mv in self.valid_moves.clone() {
-            let mut next_turn = self.clone();
-            next_turn.history.get_current_state_mut().move_piece(&mv);
-            next_turn.add_moves();
-            if next_turn.has_check() {
-                self.valid_moves.remove(&mv);
-            }
-        }
+        let player = self.get_current_player();
+        self.valid_moves.retain(|&mv| {
+            let mut future_board = self.get_board_state().clone();
+            let mut future_game = Game::with_state(future_board);
+            future_board.move_piece(&mv);
+            !future_board.is_king_attacked(player)
+        });
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
@@ -298,14 +303,15 @@ impl Game {
         }
     }
 
-    fn add_moves(&mut self) {
+    fn add_moves(mut self) -> Self {
         self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
                 self.add_moves_for_piece(Position::new(x, y))
             }
         }
-        self.add_castling_moves()
+        self.add_castling_moves();
+        self
     }
 
     fn add_castling_moves(&mut self) {
