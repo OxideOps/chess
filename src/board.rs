@@ -82,7 +82,7 @@ impl BoardState {
         (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
     }
 
-    pub fn move_piece(mut self, mv: &Move) -> Self {
+    pub fn move_piece(&mut self, mv: &Move) {
         let mut piece = self.board.take_piece(&mv.from).unwrap();
         if piece.is_pawn() && self.can_promote_piece(&mv.to) {
             piece = Piece::Queen(self.player)
@@ -90,8 +90,7 @@ impl BoardState {
         self.board
             .set_piece(&Position::new(mv.to.x, mv.to.y), Some(piece));
 
-        self.update(mv);
-        self
+        self.update(mv)
     }
 
     pub fn is_in_bounds(at: &Position) -> ChessResult {

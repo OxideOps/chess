@@ -5,6 +5,7 @@ use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
 
 use std::collections::HashSet;
+use std::future;
 
 pub type ChessResult = Result<(), ChessError>;
 #[derive(Debug)]
@@ -54,8 +55,8 @@ impl History {
         }
     }
 
-    fn add_info(&mut self, state: BoardState, mv: Move) {
-        self.history.push((state, mv));
+    fn add_info(&mut self, next_state: BoardState, mv: Move) {
+        self.history.push((next_state, mv));
         self.current_turn += 1
     }
 
@@ -97,7 +98,7 @@ pub struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Game::with_state(BoardState::default())
+        Game::with_history(History::with_state(BoardState::default()))
     }
 }
 
@@ -106,12 +107,17 @@ impl Game {
         Game::default()
     }
 
-    pub fn with_state(state: BoardState) -> Self {
-        Self {
-            history: History::with_state(state),
+    pub fn with_history(history: History) -> Self {
+        let mut game = Self {
+            history,
             ..Default::default()
-        }
-        .add_moves()
+        };
+        game.add_moves();
+        game
+    }
+
+    pub fn with_state(state: BoardState) -> Self {
+        Game::with_history(History::with_state(state))
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
@@ -159,8 +165,10 @@ impl Game {
             if let Some(piece) = self.get_piece(&from) {
                 let mv = Move::new(from, to);
                 self.is_move_valid(&mv)?;
-                self.history
-                    .add_info(self.get_current_state().clone().move_piece(&mv), mv);
+
+                let mut next_state = self.get_current_state().clone();
+                next_state.move_piece(&mv);
+                self.history.add_info(next_state, mv);
                 self.update();
 
                 println!("{} : {}", piece, mv);
@@ -173,7 +181,7 @@ impl Game {
     fn update(&mut self) {
         self.add_moves();
         self.remove_self_checks();
-        self.update_status();
+        self.update_status()
     }
 
     fn update_status(&mut self) {
@@ -206,13 +214,13 @@ impl Game {
     }
 
     fn remove_self_checks(&mut self) {
-        let player = self.get_current_player();
+        let future_board = self.get_current_state().clone();
         self.valid_moves.retain(|&mv| {
-            let mut future_board = self.get_board_state().clone();
-            let mut future_game = Game::with_state(future_board);
-            future_board.move_piece(&mv);
-            !future_board.is_king_attacked(player)
-        });
+            let mut future_game = Game::with_state(future_board.clone());
+            future_game.move_piece(mv.from, mv.to).ok();
+            future_game.add_moves();
+            !future_game.has_check()
+        })
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
@@ -303,15 +311,14 @@ impl Game {
         }
     }
 
-    fn add_moves(mut self) -> Self {
+    fn add_moves(&mut self) {
         self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
                 self.add_moves_for_piece(Position::new(x, y))
             }
         }
-        self.add_castling_moves();
-        self
+        self.add_castling_moves()
     }
 
     fn add_castling_moves(&mut self) {
