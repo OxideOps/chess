@@ -63,6 +63,10 @@ impl History {
         &self.history[self.current_turn - 1].0
     }
 
+    fn clone_current_state(&self) -> BoardState {
+        self.get_current_state().clone()
+    }
+
     fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move) {
         &self.history[turn]
     }
@@ -101,13 +105,13 @@ pub struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Game::with_history(History::with_state(BoardState::default()))
+        Game::with_state(BoardState::default())
     }
 }
 
 impl Game {
     pub fn new() -> Self {
-        Game::default()
+        Self::default()
     }
 
     pub fn with_history(history: History) -> Self {
@@ -129,6 +133,10 @@ impl Game {
 
     fn get_current_state(&self) -> &BoardState {
         self.history.get_current_state()
+    }
+
+    fn clone_current_state(&self) -> BoardState {
+        self.get_current_state().clone()
     }
 
     fn get_current_player(&self) -> Player {
@@ -186,12 +194,12 @@ impl Game {
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
-        if self.status == GameStatus::Ongoing {
+        if self.status != GameStatus::Replay {
             if let Some(piece) = self.get_piece(&from) {
                 let mv = Move::new(from, to);
                 self.is_move_valid(&mv)?;
 
-                let mut next_state = self.get_current_state().clone();
+                let mut next_state = self.clone_current_state();
                 next_state.move_piece(&mv);
                 self.history.add_info(next_state, mv);
                 self.update();
@@ -199,7 +207,6 @@ impl Game {
                 println!("{} : {}", piece, mv);
             }
         }
-        //do nothing for now if not in GameStatus::Ongoing
         Ok(())
     }
 
@@ -210,19 +217,23 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.status == GameStatus::Replay {
-            return;
+        if self.status == GameStatus::Replay && self.history.is_ongoing(){
+            self.status.update(GameStatus::Ongoing);
+            return
         }
+        if self.status == GameStatus::Ongoing && !self.history.is_ongoing() {
+            self.status.update(GameStatus::Replay);
+            return
+        }
+        
+        let king_is_under_attack = self.is_king_under_attack();
+        let valid_moves_is_empty = self.valid_moves.is_empty();
 
-        let king_under_attack = self.is_king_under_attack();
-        let valid_moves_empty = self.valid_moves.is_empty();
-        let attacking_king = self.is_attacking_king();
-
-        if !king_under_attack && valid_moves_empty {
+        if !king_is_under_attack && valid_moves_is_empty {
             self.status.update(GameStatus::Stalemate);
-        } else if king_under_attack && valid_moves_empty {
+        } else if king_is_under_attack && valid_moves_is_empty {
             self.status.update(GameStatus::Checkmate);
-        } else if attacking_king {
+        } else if king_is_under_attack {
             self.status.update(GameStatus::Check);
         }
     }
@@ -234,13 +245,13 @@ impl Game {
     }
 
     fn is_king_under_attack(&self) -> bool {
-        let mut enemy_board = self.get_current_state().clone();
+        let mut enemy_board = self.clone_current_state();
         enemy_board.player = !enemy_board.player;
         Game::with_state(enemy_board).is_attacking_king()
     }
 
     fn remove_self_checks(&mut self) {
-        let current_board = self.get_current_state().clone();
+        let current_board = self.clone_current_state();
         self.valid_moves.retain(|mv| {
             let mut future_board = current_board.clone();
             future_board.move_piece(mv);
@@ -283,7 +294,7 @@ impl Game {
     }
 
     fn add_pawn_capture_moves(&mut self, from: Position) {
-        for &v in Displacement::get_pawn_capture_vectors(self.history.get_current_state().player) {
+        for &v in Displacement::get_pawn_capture_vectors(self.get_current_player()) {
             let to = from + v;
             if BoardState::is_in_bounds(&to).is_ok() {
                 if let Some(piece) = self.get_piece(&to) {
