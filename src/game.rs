@@ -1,5 +1,5 @@
 use crate::board::BoardState;
-use crate::castling_rights::CastlingRights;
+use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
@@ -143,6 +143,12 @@ impl Game {
         self.get_piece(at).unwrap().can_snipe()
     }
 
+    fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
+        self.get_current_state()
+            .castling_rights
+            .has_castling_right(right)
+    }
+
     pub fn go_back_a_turn(&mut self) {
         self.status.update(GameStatus::Replay);
         self.history.previous_state()
@@ -167,7 +173,7 @@ impl Game {
         self.history.resume()
     }
 
-    pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
+    fn add_info(&mut self, next_state: BoardState, mv: Move) {
         self.history.add_info(next_state, mv);
     }
 
@@ -326,10 +332,7 @@ impl Game {
         let (king_square, kingside, queenside) =
             CastlingRights::get_castling_info(self.get_current_player());
 
-        if self
-            .get_current_state()
-            .castling_rights
-            .has_castling_right(kingside)
+        if self.has_castling_right(kingside)
             && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
         {
             self.valid_moves.insert(Move {
@@ -338,11 +341,7 @@ impl Game {
             });
         }
 
-        if self
-            .history
-            .get_current_state()
-            .castling_rights
-            .has_castling_right(queenside)
+        if self.has_castling_right(queenside)
             && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
         {
             self.valid_moves.insert(Move {
