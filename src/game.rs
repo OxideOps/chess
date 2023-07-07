@@ -119,7 +119,7 @@ impl Game {
         if BoardState::is_in_bounds(&to).is_ok() && self.state.get_piece(&to).is_none() {
             self.valid_moves.insert(Move { from, to });
             to += v;
-            if self.state.get_piece(&to).is_none() && self.can_double_move(&from) {
+            if BoardState::is_in_bounds(&to).is_ok() && self.state.get_piece(&to).is_none() && self.can_double_move(&from) {
                 self.valid_moves.insert(Move { from, to });
             }
         }
