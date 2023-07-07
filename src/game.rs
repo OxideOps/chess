@@ -217,15 +217,15 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.status == GameStatus::Replay && self.history.is_ongoing(){
+        if self.status == GameStatus::Replay && self.history.is_ongoing() {
             self.status.update(GameStatus::Ongoing);
-            return
+            return;
         }
         if self.status == GameStatus::Ongoing && !self.history.is_ongoing() {
             self.status.update(GameStatus::Replay);
-            return
+            return;
         }
-        
+
         let king_is_under_attack = self.is_king_under_attack();
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
