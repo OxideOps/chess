@@ -124,7 +124,7 @@ impl Game {
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
-        self.history.get_current_state().get_piece(position)
+        self.get_current_state().get_piece(position)
     }
 
     fn get_current_state(&self) -> &BoardState {
@@ -140,7 +140,7 @@ impl Game {
     }
 
     pub fn has_piece(&self, position: &Position) -> bool {
-        self.history.get_current_state().has_piece(position)
+        self.get_current_state().has_piece(position)
     }
 
     fn piece_can_snipe(&self, at: &Position) -> bool {
