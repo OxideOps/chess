@@ -116,8 +116,9 @@ impl Game {
 
     pub fn with_history(history: History) -> Self {
         let mut game = Self {
+            valid_moves: HashSet::default(),
+            status: GameStatus::default(),
             history,
-            ..Default::default()
         };
         game.add_moves();
         game
