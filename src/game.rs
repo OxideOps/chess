@@ -63,6 +63,10 @@ impl History {
         &self.history[self.current_turn - 1].0
     }
 
+    fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move) {
+        &self.history[turn]
+    }
+
     fn resume(&mut self) {
         self.current_turn = self.history.len()
     }
@@ -141,6 +145,10 @@ impl Game {
 
     fn piece_can_snipe(&self, at: &Position) -> bool {
         self.get_piece(at).unwrap().can_snipe()
+    }
+
+    fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move){
+        self.history.get_info_for_turn(turn)
     }
 
     fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
