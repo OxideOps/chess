@@ -147,7 +147,7 @@ impl Game {
         self.get_piece(at).unwrap().can_snipe()
     }
 
-    fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move){
+    fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move) {
         self.history.get_info_for_turn(turn)
     }
 
