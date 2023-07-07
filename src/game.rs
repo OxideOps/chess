@@ -105,7 +105,7 @@ pub struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Game::with_state(BoardState::default())
+        Self::with_state(BoardState::default())
     }
 }
 
@@ -124,7 +124,7 @@ impl Game {
     }
 
     pub fn with_state(state: BoardState) -> Self {
-        Game::with_history(History::with_state(state))
+        Self::with_history(History::with_state(state))
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
@@ -136,7 +136,7 @@ impl Game {
     }
 
     fn clone_current_state(&self) -> BoardState {
-        self.get_current_state().clone()
+        self.history.clone_current_state()
     }
 
     fn get_current_player(&self) -> Player {
@@ -247,7 +247,7 @@ impl Game {
     fn is_king_under_attack(&self) -> bool {
         let mut enemy_board = self.clone_current_state();
         enemy_board.player = !enemy_board.player;
-        Game::with_state(enemy_board).is_attacking_king()
+        Self::with_state(enemy_board).is_attacking_king()
     }
 
     fn remove_self_checks(&mut self) {
@@ -255,7 +255,7 @@ impl Game {
         self.valid_moves.retain(|mv| {
             let mut future_board = current_board.clone();
             future_board.move_piece(mv);
-            !Game::with_state(future_board).is_attacking_king()
+            !Self::with_state(future_board).is_attacking_king()
         })
     }
 
