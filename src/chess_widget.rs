@@ -1,5 +1,6 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
+
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
@@ -122,14 +123,23 @@ pub fn ChessWidget(cx: Scope) -> Element {
             },
             onkeydown: |event| {
                 match event.key() {
-                    Key::Character(c) => {
-                        println!("{c} pressed");
-                    }
                     Key::ArrowLeft => {
-                        println!("left arrow pressed");
+                        GAME.write().unwrap().go_back_a_turn();
+                    },
+                    Key::ArrowRight => {
+                        GAME.write().unwrap().go_forward_a_turn()
+                    },
+                    Key::ArrowUp => {
+                        GAME.write().unwrap().resume()
+                    },
+                    Key::ArrowDown => {
+                        GAME.write().unwrap().go_to_beginning();
                     }
-                    _ => {}
-                }
+                    _ => {
+                        println!("Functionality not implemented for key: {:?}", event.key())
+                    }
+                };
+                cx.needs_update()
             },
             img {
                 src: "images/board.png",

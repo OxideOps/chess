@@ -1,7 +1,7 @@
 use crate::pieces::Position;
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Move {
     pub from: Position,
     pub to: Position,
@@ -10,6 +10,13 @@ pub struct Move {
 impl Move {
     pub fn new(from: Position, to: Position) -> Self {
         Self { from, to }
+    }
+
+    pub fn inverse(&self) -> Self {
+        Self {
+            from: self.to,
+            to: self.from,
+        }
     }
 }
 
