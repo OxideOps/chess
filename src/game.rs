@@ -199,9 +199,9 @@ impl Game {
                 let mut next_state = self.clone_current_state();
                 next_state.move_piece(&mv);
                 self.history.add_info(next_state, mv);
-                self.update();
 
                 println!("{} : {}", piece, mv);
+                self.update();
             }
         }
         Ok(())
