@@ -50,7 +50,7 @@ impl History {
     pub fn with_state(state: BoardState) -> Self {
         Self {
             history: vec![(state, Move::default())],
-            ..Default::default()
+            current_turn: 1,
         }
     }
 
@@ -91,7 +91,7 @@ impl History {
         self.current_turn = 1
     }
 
-    fn is_ongoing(&mut self) -> bool {
+    fn is_replaying(&self) -> bool {
         self.current_turn == self.history.len()
     }
 }
@@ -167,26 +167,18 @@ impl Game {
     }
 
     pub fn go_back_a_turn(&mut self) {
-        self.status.update(GameStatus::Replay);
         self.history.previous_state()
     }
 
     pub fn go_forward_a_turn(&mut self) {
-        if self.status == GameStatus::Replay {
-            self.history.next_state();
-            if self.history.is_ongoing() {
-                self.status.update(GameStatus::Ongoing)
-            }
-        }
+        self.history.next_state();
     }
 
     pub fn go_to_beginning(&mut self) {
-        self.status.update(GameStatus::Replay);
         self.history.initial_state()
     }
 
     pub fn resume(&mut self) {
-        self.status.update(GameStatus::Ongoing);
         self.history.resume()
     }
 
@@ -218,24 +210,21 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.status == GameStatus::Replay && self.history.is_ongoing() {
-            self.status.update(GameStatus::Ongoing);
-            return;
-        }
-        if self.status == GameStatus::Ongoing && !self.history.is_ongoing() {
+        if self.history.is_replaying() {
             self.status.update(GameStatus::Replay);
             return;
         }
-
         let king_is_under_attack = self.is_king_under_attack();
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
         if !king_is_under_attack && valid_moves_is_empty {
-            self.status.update(GameStatus::Stalemate);
+            self.status.update(GameStatus::Stalemate)
         } else if king_is_under_attack && valid_moves_is_empty {
-            self.status.update(GameStatus::Checkmate);
+            self.status.update(GameStatus::Checkmate)
         } else if king_is_under_attack {
-            self.status.update(GameStatus::Check);
+            self.status.update(GameStatus::Check)
+        } else {
+            self.status.update(GameStatus::Ongoing)
         }
     }
 
