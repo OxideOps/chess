@@ -112,7 +112,7 @@ impl BoardState {
         self.castling_rights
             .handle_castling_the_rook(mv, &mut self.board, self.player);
         self.castling_rights.update_castling_rights(&self.board);
-        self.handle_capturing_en_passant(&mv.to);
+        self.handle_capturing_en_passant(mv.to);
         self.update_en_passant(mv);
         self.player = !self.player;
     }
@@ -131,10 +131,10 @@ impl BoardState {
         false
     }
 
-    fn handle_capturing_en_passant(&mut self, to: &Position) {
-        if Some(*to) == self.en_passant_position {
+    fn handle_capturing_en_passant(&mut self, to: Position) {
+        if Some(to) == self.en_passant_position {
             self.board.set_piece(
-                &(*to - Displacement::get_pawn_advance_vector(self.player)),
+                &(to - Displacement::get_pawn_advance_vector(self.player)),
                 None,
             );
         }
