@@ -140,7 +140,7 @@ impl Game {
         self.history.clone_current_state()
     }
 
-    fn get_current_player(&self) -> Player {
+    pub fn get_current_player(&self) -> Player {
         self.get_current_state().player
     }
 

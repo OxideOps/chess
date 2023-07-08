@@ -1,6 +1,7 @@
 use crate::displacement::Displacement;
 use std::fmt;
 use std::ops::{Add, AddAssign, Not, Sub};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Piece {
@@ -87,7 +88,7 @@ impl Not for Player {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct Position {
     pub x: usize,
     pub y: usize,

@@ -1,13 +1,29 @@
 use crate::game::Game;
 use crate::pieces::{Piece, Player, Position};
 
+use crate::moves::Move;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
 
 const WIDGET_SIZE: u32 = 800;
+const GAME_ID: u32 = 1234;
 static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum PlayerType {
+    Local,
+    Remote,
+    Bot,
+}
+
+fn current_player_type(cx: Scope<ChessWidgetProps>) -> PlayerType {
+    match GAME.read().unwrap().get_current_player() {
+        Player::White => cx.props.white_player,
+        Player::Black => cx.props.black_player,
+    }
+}
 
 impl From<&ClientPoint> for Position {
     fn from(point: &ClientPoint) -> Position {
@@ -84,7 +100,7 @@ fn draw_piece<'a>(
 }
 
 #[inline_props]
-pub fn ChessWidget(cx: Scope) -> Element {
+pub fn ChessWidget(cx: Scope, white_player: PlayerType, black_player: PlayerType) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
@@ -97,6 +113,10 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 .map(|piece| (pos, piece))
         })
         .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
+    let ws = use_coroutine(cx, |rx: UnboundedReceiver<Move>| async move {
+        // Connect to some sort of service
+        // Wait for data on the service
+    });
 
     render! {
         style { include_str!("../styles/chess_widget.css") }
