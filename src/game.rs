@@ -92,7 +92,7 @@ impl History {
     }
 
     fn is_replaying(&self) -> bool {
-        self.current_turn == self.history.len()
+        self.current_turn != self.history.len()
     }
 }
 
