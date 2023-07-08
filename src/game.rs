@@ -167,19 +167,23 @@ impl Game {
     }
 
     pub fn go_back_a_turn(&mut self) {
-        self.history.previous_state()
+        self.history.previous_state();
+        self.update_status()
     }
 
     pub fn go_forward_a_turn(&mut self) {
         self.history.next_state();
+        self.update_status();
     }
 
     pub fn go_to_beginning(&mut self) {
-        self.history.initial_state()
+        self.history.initial_state();
+        self.update_status()
     }
 
     pub fn resume(&mut self) {
-        self.history.resume()
+        self.history.resume();
+        self.update_status()
     }
 
     fn add_info(&mut self, next_state: BoardState, mv: Move) {

@@ -125,7 +125,6 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 match event.key() {
                     Key::ArrowLeft => {
                         GAME.write().unwrap().go_back_a_turn();
-                        cx.needs_update()
                     },
                     Key::ArrowRight => {
                         GAME.write().unwrap().go_forward_a_turn()
@@ -140,6 +139,7 @@ pub fn ChessWidget(cx: Scope) -> Element {
                         println!("Functionality not implemented for key: {:?}", event.key())
                     }
                 };
+                cx.needs_update()
             },
             img {
                 src: "images/board.png",
