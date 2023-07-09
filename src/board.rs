@@ -3,12 +3,14 @@ use crate::displacement::Displacement;
 use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 const BOARD_SIZE: usize = 8;
 
 type Square = Option<Piece>;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Hash)]
 pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
@@ -60,7 +62,7 @@ impl Board {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Hash)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Color,
@@ -146,5 +148,11 @@ impl BoardState {
         } else {
             None
         }
+    }
+
+    pub fn get_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
     }
 }

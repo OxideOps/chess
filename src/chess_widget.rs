@@ -1,20 +1,22 @@
-use crate::game::Game;
+use crate::game::{Game, GameStatus};
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
 use crate::player::{Player, PlayerKind};
 
-use anyhow::Result;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
-use futures_util::stream::SplitStream;
-use futures_util::{SinkExt, StreamExt};
+use futures::executor;
+use futures_util::{
+    stream::{SplitSink, SplitStream},
+    SinkExt, StreamExt,
+};
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
 use tokio::net::TcpStream;
-use tokio_tungstenite::tungstenite::Message::Text;
-use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 use url::Url;
 
+type WriteStream = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 type ReadStream = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 
 const WIDGET_SIZE: u32 = 800;
@@ -26,6 +28,10 @@ fn get_current_player_kind(cx: Scope<ChessWidgetProps>) -> PlayerKind {
         Color::White => cx.props.white_player.kind,
         Color::Black => cx.props.black_player.kind,
     }
+}
+
+fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
+    [cx.props.white_player.kind, cx.props.black_player.kind].contains(&PlayerKind::Remote)
 }
 
 impl From<&ClientPoint> for Position {
@@ -102,9 +108,44 @@ fn draw_piece<'a>(
     }
 }
 
-async fn listen_for_remote_moves(mut read: ReadStream) {
-    while let Some(message) = read.next().await {
-        let data = message.unwrap().into_text().unwrap();
+async fn create_socket(
+    cx: Scope<'_, ChessWidgetProps>,
+) -> (Option<WriteStream>, Option<ReadStream>) {
+    if has_remote_player(cx) {
+        let (write, read) =
+            connect_async(Url::parse(&format!("ws://localhost:3000/{GAME_ID}")).unwrap())
+                .await
+                .unwrap()
+                .0
+                .split();
+        (Some(write), Some(read))
+    } else {
+        (None, None)
+    }
+}
+
+async fn write_to_socket(mut rx: UnboundedReceiver<Move>, write_stream: Option<WriteStream>) {
+    if let Some(mut socket) = write_stream {
+        while let Some(mv) = rx.next().await {
+            println!("Sending move {mv:?}");
+            socket
+                .send(Message::Text(serde_json::to_string(&mv).unwrap()))
+                .await
+                .unwrap();
+        }
+    }
+}
+
+async fn read_from_socket(read_stream: Option<ReadStream>, board_state_hash: UseState<u64>) {
+    if let Some(mut stream) = read_stream {
+        while let Some(message) = stream.next().await {
+            let data = message.unwrap().into_text().unwrap();
+            let mv: Move = serde_json::from_str(&data).unwrap();
+            println!("Got move {mv:?}");
+            if GAME.write().unwrap().move_piece(mv.from, mv.to).is_ok() {
+                board_state_hash.set(GAME.read().unwrap().get_real_state_hash());
+            }
+        }
     }
 }
 
@@ -112,7 +153,9 @@ async fn listen_for_remote_moves(mut read: ReadStream) {
 pub fn ChessWidget(cx: Scope, white_player: Player, black_player: Player) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
+    let board_state_hash = use_state(cx, || GAME.read().unwrap().get_real_state_hash());
     let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
+    let (write_stream, read_stream) = executor::block_on(create_socket(cx));
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position { x, y }))
         .filter_map(|pos| {
@@ -122,21 +165,12 @@ pub fn ChessWidget(cx: Scope, white_player: Player, black_player: Player) -> Ele
                 .map(|piece| (pos, piece))
         })
         .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
-    let game_socket = use_coroutine(cx, |mut rx: UnboundedReceiver<Move>| async move {
-        let (ws_stream, _) = connect_async(Url::parse(&format!("ws://localhost:3000/ws")).unwrap())
-            .await
-            .unwrap();
-        let (mut write, mut read) = ws_stream.split();
-
-        tokio::spawn(listen_for_remote_moves(read));
-
-        while let Some(mv) = rx.next().await {
-            println!("{mv:?}");
-            write
-                .send(Text(serde_json::to_string(&mv).unwrap()))
-                .await
-                .unwrap();
-        }
+    let read_socket = use_coroutine(cx, |_rx: UnboundedReceiver<()>| {
+        let board_state_hash = board_state_hash.to_owned();
+        read_from_socket(read_stream, board_state_hash)
+    });
+    let write_socket = use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
+        write_to_socket(rx, write_stream)
     });
 
     render! {
@@ -150,10 +184,14 @@ pub fn ChessWidget(cx: Scope, white_player: Player, black_player: Player) -> Ele
                 if let Some(mouse_down) = mouse_down_state.get() {
                     let from = mouse_down.into();
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-                    if get_current_player_kind(cx) == PlayerKind::Local {
-                        GAME.write().unwrap().move_piece(from, to).map(|_| {
-                            game_socket.send(Move::new(from, to));
-                        }).ok();
+                    if get_current_player_kind(cx) == PlayerKind::Local
+                        && GAME.read().unwrap().status != GameStatus::Replay
+                        && GAME.write().unwrap().move_piece(from, to).is_ok()
+                    {
+                        if has_remote_player(cx) {
+                            write_socket.send(Move::new(from, to));
+                        }
+                        board_state_hash.set(GAME.read().unwrap().get_real_state_hash());
                     }
                     mouse_down_state.set(None);
                     dragging_point_state.set(None);

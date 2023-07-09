@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::{Add, AddAssign, Not, Sub};
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Hash)]
 pub enum Piece {
     Pawn(Color),
     Knight(Color),
@@ -71,7 +71,7 @@ impl fmt::Display for Piece {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Debug, Default, Hash)]
 pub enum Color {
     #[default]
     White,
