@@ -348,19 +348,17 @@ impl Game {
         if self.has_castling_right(kingside)
             && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
         {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::RIGHT * 2,
-            });
+            self.valid_moves.insert(Move::new(
+                king_square,
+                king_square + Displacement::RIGHT * 2,
+            ));
         }
 
         if self.has_castling_right(queenside)
             && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
         {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::LEFT * 2,
-            });
+            self.valid_moves
+                .insert(Move::new(king_square, king_square + Displacement::LEFT * 2));
         }
     }
 }
