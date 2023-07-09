@@ -3,6 +3,7 @@ use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
 use crate::moves::Move;
 use crate::pieces::{Piece, Player, Position};
+use crate::timer::Timer;
 
 use std::collections::HashSet;
 
