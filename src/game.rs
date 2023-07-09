@@ -265,14 +265,14 @@ impl Game {
         }
     }
 
-    fn add_pawn_advance_moves(&mut self, from: Position) {
+    fn add_pawn_advance_moves(&mut self, from: &Position) {
         let v = Displacement::get_pawn_advance_vector(self.get_current_player());
-        let mut to = from + v;
+        let mut to = *from + v;
         if BoardState::is_in_bounds(&to).is_ok() && self.get_piece(&to).is_none() {
-            self.valid_moves.insert(Move { from, to });
+            self.valid_moves.insert(Move::new(*from, to));
             to += v;
             if self.can_double_move(&from) && self.get_piece(&to).is_none() {
-                self.valid_moves.insert(Move { from, to });
+                self.valid_moves.insert(Move::new(*from, to));
             }
         }
     }
@@ -287,23 +287,23 @@ impl Game {
         false
     }
 
-    fn add_pawn_capture_moves(&mut self, from: Position) {
+    fn add_pawn_capture_moves(&mut self, from: &Position) {
         for &v in Displacement::get_pawn_capture_vectors(self.get_current_player()) {
-            let to = from + v;
+            let to = *from + v;
             if BoardState::is_in_bounds(&to).is_ok() {
                 if let Some(piece) = self.get_piece(&to) {
                     if piece.get_player() != self.get_current_player() {
-                        self.valid_moves.insert(Move::new(from, to));
+                        self.valid_moves.insert(Move::new(*from, to));
                     }
                 }
                 if Some(to) == self.get_current_state().en_passant_position {
-                    self.valid_moves.insert(Move::new(from, to));
+                    self.valid_moves.insert(Move::new(*from, to));
                 }
             }
         }
     }
 
-    fn add_moves_for_piece(&mut self, from: Position) {
+    fn add_moves_for_piece(&mut self, from: &Position) {
         if let Some(piece) = self.get_piece(&from) {
             if piece.get_player() == self.get_current_player() {
                 if piece.is_pawn() {
@@ -311,15 +311,15 @@ impl Game {
                     self.add_pawn_capture_moves(from);
                 } else {
                     for &v in piece.get_vectors() {
-                        let mut to = from + v;
+                        let mut to = *from + v;
                         while BoardState::is_in_bounds(&to).is_ok() {
                             if let Some(piece) = self.get_piece(&to) {
                                 if piece.get_player() != self.get_current_player() {
-                                    self.valid_moves.insert(Move { from, to });
+                                    self.valid_moves.insert(Move::new(*from, to));
                                 }
                                 break;
                             }
-                            self.valid_moves.insert(Move { from, to });
+                            self.valid_moves.insert(Move::new(*from, to));
                             if !self.piece_can_snipe(&from) {
                                 break;
                             }
@@ -335,7 +335,7 @@ impl Game {
         self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
-                self.add_moves_for_piece(Position::new(x, y))
+                self.add_moves_for_piece(&Position::new(x, y))
             }
         }
         self.add_castling_moves()
@@ -348,19 +348,17 @@ impl Game {
         if self.has_castling_right(kingside)
             && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
         {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::RIGHT * 2,
-            });
+            self.valid_moves.insert(Move::new(
+                king_square,
+                king_square + Displacement::RIGHT * 2,
+            ));
         }
 
         if self.has_castling_right(queenside)
             && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
         {
-            self.valid_moves.insert(Move {
-                from: king_square,
-                to: king_square + Displacement::LEFT * 2,
-            });
+            self.valid_moves
+                .insert(Move::new(king_square, king_square + Displacement::LEFT * 2));
         }
     }
 }
