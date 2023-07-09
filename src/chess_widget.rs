@@ -6,13 +6,16 @@ use crate::player::{Player, PlayerKind};
 use anyhow::Result;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
-use futures_util::StreamExt;
+use futures_util::stream::SplitStream;
+use futures_util::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
 use tokio::net::TcpStream;
-use tokio_tungstenite::tungstenite::Error;
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use tokio_tungstenite::tungstenite::Message::Text;
+use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use url::Url;
+
+type ReadStream = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 
 const WIDGET_SIZE: u32 = 800;
 const GAME_ID: u32 = 1234;
@@ -99,13 +102,10 @@ fn draw_piece<'a>(
     }
 }
 
-async fn open_socket() -> Result<()> {
-    let (ws_stream, _) = connect_async(Url::parse("localhost:3000")?).await?;
-    let (write, mut read) = ws_stream.split();
+async fn listen_for_remote_moves(mut read: ReadStream) {
     while let Some(message) = read.next().await {
-        let data = message?.into_text()?;
+        let data = message.unwrap().into_text().unwrap();
     }
-    Ok(())
 }
 
 #[inline_props]
@@ -122,8 +122,21 @@ pub fn ChessWidget(cx: Scope, white_player: Player, black_player: Player) -> Ele
                 .map(|piece| (pos, piece))
         })
         .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
-    let game_socket = use_coroutine(cx, |mv| async move {
-        open_socket().await.ok();
+    let game_socket = use_coroutine(cx, |mut rx: UnboundedReceiver<Move>| async move {
+        let (ws_stream, _) = connect_async(Url::parse(&format!("ws://localhost:3000/ws")).unwrap())
+            .await
+            .unwrap();
+        let (mut write, mut read) = ws_stream.split();
+
+        tokio::spawn(listen_for_remote_moves(read));
+
+        while let Some(mv) = rx.next().await {
+            println!("{mv:?}");
+            write
+                .send(Text(serde_json::to_string(&mv).unwrap()))
+                .await
+                .unwrap();
+        }
     });
 
     render! {
