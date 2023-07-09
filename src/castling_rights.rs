@@ -2,7 +2,7 @@ use crate::{
     board::Board,
     displacement::Displacement,
     moves::Move,
-    pieces::{Piece, Player, Position},
+    pieces::{Color, Piece, Position},
 };
 
 #[derive(Clone, Copy)]
@@ -38,22 +38,22 @@ impl CastlingRights {
         [
             (
                 CastlingRights::WHITE_KINGSIDE_ROOK,
-                Piece::Rook(Player::White),
+                Piece::Rook(Color::White),
                 CastlingRightsKind::WhiteKingside,
             ),
             (
                 CastlingRights::WHITE_QUEENSIDE_ROOK,
-                Piece::Rook(Player::White),
+                Piece::Rook(Color::White),
                 CastlingRightsKind::WhiteQueenside,
             ),
             (
                 CastlingRights::BLACK_KINGSIDE_ROOK,
-                Piece::Rook(Player::Black),
+                Piece::Rook(Color::Black),
                 CastlingRightsKind::BlackKingside,
             ),
             (
                 CastlingRights::BLACK_QUEENSIDE_ROOK,
-                Piece::Rook(Player::Black),
+                Piece::Rook(Color::Black),
                 CastlingRightsKind::BlackQueenside,
             ),
         ]
@@ -63,27 +63,27 @@ impl CastlingRights {
         [
             (
                 CastlingRights::WHITE_KING,
-                Piece::King(Player::White),
+                Piece::King(Color::White),
                 CastlingRightsKind::WhiteKingside,
                 CastlingRightsKind::WhiteQueenside,
             ),
             (
                 CastlingRights::BLACK_KING,
-                Piece::King(Player::Black),
+                Piece::King(Color::Black),
                 CastlingRightsKind::BlackKingside,
                 CastlingRightsKind::BlackQueenside,
             ),
         ]
     }
 
-    pub fn get_castling_positions(player: Player) -> (Position, Position, Position) {
+    pub fn get_castling_positions(player: Color) -> (Position, Position, Position) {
         match player {
-            Player::White => (
+            Color::White => (
                 CastlingRights::WHITE_KING,
                 CastlingRights::WHITE_KINGSIDE_ROOK,
                 CastlingRights::WHITE_QUEENSIDE_ROOK,
             ),
-            Player::Black => (
+            Color::Black => (
                 CastlingRights::BLACK_KING,
                 CastlingRights::BLACK_KINGSIDE_ROOK,
                 CastlingRights::BLACK_QUEENSIDE_ROOK,
@@ -91,14 +91,14 @@ impl CastlingRights {
         }
     }
 
-    pub fn get_castling_info(player: Player) -> (Position, CastlingRightsKind, CastlingRightsKind) {
+    pub fn get_castling_info(player: Color) -> (Position, CastlingRightsKind, CastlingRightsKind) {
         match player {
-            Player::White => (
+            Color::White => (
                 CastlingRights::WHITE_KING,
                 CastlingRightsKind::WhiteKingside,
                 CastlingRightsKind::WhiteQueenside,
             ),
-            Player::Black => (
+            Color::Black => (
                 CastlingRights::BLACK_KING,
                 CastlingRightsKind::BlackKingside,
                 CastlingRightsKind::BlackQueenside,
@@ -122,7 +122,7 @@ impl CastlingRights {
         }
     }
 
-    pub fn handle_castling_the_rook(&self, mv: &Move, board: &mut Board, player: Player) {
+    pub fn handle_castling_the_rook(&self, mv: &Move, board: &mut Board, player: Color) {
         let (king, kingside_rook, queenside_rook) = CastlingRights::get_castling_positions(player);
 
         if mv.from == king {

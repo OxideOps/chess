@@ -1,27 +1,27 @@
 use crate::game::Game;
-use crate::pieces::{Piece, Player, Position};
-
 use crate::moves::Move;
+use crate::pieces::{Color, Piece, Position};
+use crate::player::{Player, PlayerKind};
+
+use anyhow::Result;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
+use futures_util::StreamExt;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
+use tokio::net::TcpStream;
+use tokio_tungstenite::tungstenite::Error;
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use url::Url;
 
 const WIDGET_SIZE: u32 = 800;
 const GAME_ID: u32 = 1234;
 static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
 
-#[derive(Clone, Copy, PartialEq)]
-pub enum PlayerType {
-    Local,
-    Remote,
-    Bot,
-}
-
-fn current_player_type(cx: Scope<ChessWidgetProps>) -> PlayerType {
+fn get_current_player_kind(cx: Scope<ChessWidgetProps>) -> PlayerKind {
     match GAME.read().unwrap().get_current_player() {
-        Player::White => cx.props.white_player,
-        Player::Black => cx.props.black_player,
+        Color::White => cx.props.white_player.kind,
+        Color::Black => cx.props.black_player.kind,
     }
 }
 
@@ -58,18 +58,18 @@ fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) 
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
     match piece {
-        Piece::Rook(Player::White) => "images/whiteRook.png",
-        Piece::Bishop(Player::White) => "images/whiteBishop.png",
-        Piece::Pawn(Player::White) => "images/whitePawn.png",
-        Piece::Knight(Player::White) => "images/whiteKnight.png",
-        Piece::King(Player::White) => "images/whiteKing.png",
-        Piece::Queen(Player::White) => "images/whiteQueen.png",
-        Piece::Rook(Player::Black) => "images/blackRook.png",
-        Piece::Bishop(Player::Black) => "images/blackBishop.png",
-        Piece::Pawn(Player::Black) => "images/blackPawn.png",
-        Piece::Knight(Player::Black) => "images/blackKnight.png",
-        Piece::King(Player::Black) => "images/blackKing.png",
-        Piece::Queen(Player::Black) => "images/blackQueen.png",
+        Piece::Rook(Color::White) => "images/whiteRook.png",
+        Piece::Bishop(Color::White) => "images/whiteBishop.png",
+        Piece::Pawn(Color::White) => "images/whitePawn.png",
+        Piece::Knight(Color::White) => "images/whiteKnight.png",
+        Piece::King(Color::White) => "images/whiteKing.png",
+        Piece::Queen(Color::White) => "images/whiteQueen.png",
+        Piece::Rook(Color::Black) => "images/blackRook.png",
+        Piece::Bishop(Color::Black) => "images/blackBishop.png",
+        Piece::Pawn(Color::Black) => "images/blackPawn.png",
+        Piece::Knight(Color::Black) => "images/blackKnight.png",
+        Piece::King(Color::Black) => "images/blackKing.png",
+        Piece::Queen(Color::Black) => "images/blackQueen.png",
     }
 }
 
@@ -99,8 +99,17 @@ fn draw_piece<'a>(
     }
 }
 
+async fn open_socket() -> Result<()> {
+    let (ws_stream, _) = connect_async(Url::parse("localhost:3000")?).await?;
+    let (write, mut read) = ws_stream.split();
+    while let Some(message) = read.next().await {
+        let data = message?.into_text()?;
+    }
+    Ok(())
+}
+
 #[inline_props]
-pub fn ChessWidget(cx: Scope, white_player: PlayerType, black_player: PlayerType) -> Element {
+pub fn ChessWidget(cx: Scope, white_player: Player, black_player: Player) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
@@ -113,9 +122,8 @@ pub fn ChessWidget(cx: Scope, white_player: PlayerType, black_player: PlayerType
                 .map(|piece| (pos, piece))
         })
         .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
-    let ws = use_coroutine(cx, |rx: UnboundedReceiver<Move>| async move {
-        // Connect to some sort of service
-        // Wait for data on the service
+    let game_socket = use_coroutine(cx, |mv| async move {
+        open_socket().await.ok();
     });
 
     render! {
@@ -129,7 +137,11 @@ pub fn ChessWidget(cx: Scope, white_player: PlayerType, black_player: PlayerType
                 if let Some(mouse_down) = mouse_down_state.get() {
                     let from = mouse_down.into();
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-                    GAME.write().unwrap().move_piece(from, to).ok();
+                    if get_current_player_kind(cx) == PlayerKind::Local {
+                        GAME.write().unwrap().move_piece(from, to).map(|_| {
+                            game_socket.send(Move::new(from, to));
+                        }).ok();
+                    }
                     mouse_down_state.set(None);
                     dragging_point_state.set(None);
                 }

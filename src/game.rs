@@ -2,7 +2,7 @@ use crate::board::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
 use crate::moves::Move;
-use crate::pieces::{Piece, Player, Position};
+use crate::pieces::{Color, Piece, Position};
 
 use std::collections::HashSet;
 
@@ -13,11 +13,11 @@ pub enum ChessError {
     NoPieceAtPosition,
     InvalidMove,
     OwnPieceInDestination,
-    PlayerInCheck,
+    ColorInCheck,
     Checkmate,
     Stalemate,
     InvalidPromotion,
-    NotPlayersTurn,
+    NotColorsTurn,
     EmptyPieceMove,
 }
 
@@ -140,7 +140,7 @@ impl Game {
         self.history.clone_current_state()
     }
 
-    pub fn get_current_player(&self) -> Player {
+    pub fn get_current_player(&self) -> Color {
         self.get_current_state().player
     }
 
@@ -280,8 +280,8 @@ impl Game {
     fn can_double_move(&self, from: &Position) -> bool {
         if let Piece::Pawn(player) = self.get_piece(from).unwrap() {
             return match player {
-                Player::White => from.y == 1,
-                Player::Black => from.y == 6,
+                Color::White => from.y == 1,
+                Color::Black => from.y == 6,
             };
         }
         false
