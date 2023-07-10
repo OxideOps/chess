@@ -97,11 +97,11 @@ impl History {
     }
 }
 
-#[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
     status: GameStatus,
     history: History,
+    timer: Timer,
 }
 
 impl Default for Game {
@@ -115,10 +115,17 @@ impl Game {
         Self::default()
     }
 
+    pub fn with_active_timer() -> Self {
+        let mut game = Self::default();
+        game.timer.start();
+        game
+    }
+
     pub fn with_history(history: History) -> Self {
         let mut game = Self {
             valid_moves: HashSet::default(),
             status: GameStatus::default(),
+            timer: Timer::default(),
             history,
         };
         game.add_moves();
@@ -211,7 +218,11 @@ impl Game {
     fn update(&mut self) {
         self.add_moves();
         self.remove_self_checks();
-        self.update_status()
+        self.update_status();
+
+        self.timer.next();
+        let time = self.timer.get_duration(self.get_current_player());
+        println!("{time:?}")
     }
 
     fn update_status(&mut self) {
