@@ -37,8 +37,8 @@ impl Timer {
         }
     }
 
-    pub fn get_duration(&self, player: Player) -> MutexGuard<Duration>{
-        match player  {
+    pub fn get_duration(&self, player: Player) -> MutexGuard<Duration> {
+        match player {
             Player::White => self.white.lock().unwrap(),
             Player::Black => self.white.lock().unwrap(),
         }
