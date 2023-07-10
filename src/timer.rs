@@ -19,11 +19,17 @@ enum Command {
     Stop,
 }
 
+impl Default for Timer {
+    fn default() -> Self {
+        Timer::with_duration(Duration::from_secs(60))
+    }
+}
+
 impl Timer {
-    fn new() -> Self {
+    fn with_duration(duration: Duration) -> Self {
         let (tx, _) = mpsc::channel();
-        let white = Arc::new(Mutex::new(Duration::from_secs(600))); // 10 minutes
-        let black = Arc::new(Mutex::new(Duration::from_secs(600))); // 10 minutes
+        let white = Arc::new(Mutex::new(duration)); 
+        let black = Arc::new(Mutex::new(duration)); 
         let active = Arc::new(Mutex::new("white"));
 
         Timer {
@@ -66,7 +72,7 @@ impl Timer {
                         "white"
                     };
                 }
-                Ok(Command::Stop) | Err(_) => {}
+                Ok(Command::Stop) | Err(..) => {}
             }
 
             // Decrement the active timer
