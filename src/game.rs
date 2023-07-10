@@ -221,8 +221,6 @@ impl Game {
         self.update_status();
 
         self.timer.next();
-        let time = self.timer.get_duration(self.get_current_player());
-        println!("{time:?}")
     }
 
     fn update_status(&mut self) {

@@ -40,7 +40,7 @@ impl Timer {
     pub fn get_duration(&self, player: Player) -> MutexGuard<Duration> {
         match player {
             Player::White => self.white.lock().unwrap(),
-            Player::Black => self.white.lock().unwrap(),
+            Player::Black => self.black.lock().unwrap(),
         }
     }
 
@@ -87,26 +87,26 @@ impl Timer {
             }
 
             // Decrement the active timer
-            {
-                let active_timer = if *active.lock().unwrap() == "white" {
-                    &white
-                } else {
-                    &black
-                };
-                let mut active_timer_guard = active_timer.lock().unwrap();
-                if *active_timer_guard == Duration::from_secs(0) {
-                    println!(
-                        "{} ran out of time",
-                        if Arc::ptr_eq(&active_timer, &white) {
-                            "white"
-                        } else {
-                            "black"
-                        }
-                    );
-                    return;
-                }
-                *active_timer_guard -= Duration::from_secs(1);
+            let active_timer = if *active.lock().unwrap() == "white" {
+                &white
+            } else {
+                &black
+            };
+            let mut active_timer_guard = active_timer.lock().unwrap();
+            if *active_timer_guard == Duration::from_secs(0) {
+                println!(
+                    "{} ran out of time",
+                    if Arc::ptr_eq(&active_timer, &white) {
+                        "white"
+                    } else {
+                        "black"
+                    }
+                );
+                return;
             }
+            *active_timer_guard -= Duration::from_secs(1);
+
+            println!("Time for {:?}: {:?}", *active.lock().unwrap(), *active_timer_guard);
 
             thread::sleep(Duration::from_secs(1));
         }
