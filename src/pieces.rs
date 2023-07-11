@@ -1,15 +1,16 @@
 use crate::displacement::Displacement;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::{Add, AddAssign, Not, Sub};
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Hash)]
 pub enum Piece {
-    Pawn(Player),
-    Knight(Player),
-    Bishop(Player),
-    Rook(Player),
-    Queen(Player),
-    King(Player),
+    Pawn(Color),
+    Knight(Color),
+    Bishop(Color),
+    Rook(Color),
+    Queen(Color),
+    King(Color),
 }
 
 impl Piece {
@@ -20,7 +21,7 @@ impl Piece {
         false
     }
 
-    pub fn get_player(self) -> Player {
+    pub fn get_player(self) -> Color {
         match self {
             Self::Pawn(player)
             | Self::Knight(player)
@@ -53,31 +54,31 @@ impl Piece {
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let piece = match self {
-            Piece::Pawn(Player::White) => "♟ (w)",
-            Piece::Knight(Player::White) => "♞ (w)",
-            Piece::Bishop(Player::White) => "♝ (w)",
-            Piece::Rook(Player::White) => "♜ (w)",
-            Piece::Queen(Player::White) => "♛ (w)",
-            Piece::King(Player::White) => "♚ (w)",
-            Piece::Pawn(Player::Black) => "♙ (b)",
-            Piece::Knight(Player::Black) => "♘ (b)",
-            Piece::Bishop(Player::Black) => "♗ (b)",
-            Piece::Rook(Player::Black) => "♖ (b)",
-            Piece::Queen(Player::Black) => "♕ (b)",
-            Piece::King(Player::Black) => "♔ (b)",
+            Piece::Pawn(Color::White) => "♟ (w)",
+            Piece::Knight(Color::White) => "♞ (w)",
+            Piece::Bishop(Color::White) => "♝ (w)",
+            Piece::Rook(Color::White) => "♜ (w)",
+            Piece::Queen(Color::White) => "♛ (w)",
+            Piece::King(Color::White) => "♚ (w)",
+            Piece::Pawn(Color::Black) => "♙ (b)",
+            Piece::Knight(Color::Black) => "♘ (b)",
+            Piece::Bishop(Color::Black) => "♗ (b)",
+            Piece::Rook(Color::Black) => "♖ (b)",
+            Piece::Queen(Color::Black) => "♕ (b)",
+            Piece::King(Color::Black) => "♔ (b)",
         };
         write!(f, "{}", piece)
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum Player {
+#[derive(Clone, Copy, PartialEq, Debug, Default, Hash)]
+pub enum Color {
     #[default]
     White,
     Black,
 }
 
-impl Not for Player {
+impl Not for Color {
     type Output = Self;
     fn not(self) -> Self::Output {
         match self {
@@ -87,7 +88,7 @@ impl Not for Player {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct Position {
     pub x: usize,
     pub y: usize,

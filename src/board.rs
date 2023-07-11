@@ -2,13 +2,15 @@ use crate::castling_rights::CastlingRights;
 use crate::displacement::Displacement;
 use crate::game::{ChessError, ChessResult};
 use crate::moves::Move;
-use crate::pieces::{Piece, Player, Position};
+use crate::pieces::{Color, Piece, Position};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 const BOARD_SIZE: usize = 8;
 
 type Square = Option<Piece>;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Hash)]
 pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
@@ -17,13 +19,13 @@ impl Default for Board {
 
         // Initialize white pawns
         for i in 0..8 {
-            squares[1][i] = Some(Piece::Pawn(Player::White));
-            squares[6][i] = Some(Piece::Pawn(Player::Black));
+            squares[1][i] = Some(Piece::Pawn(Color::White));
+            squares[6][i] = Some(Piece::Pawn(Color::Black));
         }
 
         // Initialize the other white and black pieces
-        squares[0] = Self::get_back_rank(Player::White);
-        squares[BOARD_SIZE - 1] = Self::get_back_rank(Player::Black);
+        squares[0] = Self::get_back_rank(Color::White);
+        squares[BOARD_SIZE - 1] = Self::get_back_rank(Color::Black);
 
         Self(squares)
     }
@@ -34,7 +36,7 @@ impl Board {
         Self::default()
     }
 
-    fn get_back_rank(player: Player) -> [Square; 8] {
+    fn get_back_rank(player: Color) -> [Square; 8] {
         [
             Some(Piece::Rook(player)),
             Some(Piece::Knight(player)),
@@ -60,10 +62,10 @@ impl Board {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Hash)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
-    pub player: Player,
+    pub player: Color,
     board: Board,
     pub castling_rights: CastlingRights,
     pub en_passant_position: Option<Position>,
@@ -79,7 +81,7 @@ impl BoardState {
     }
 
     fn can_promote_piece(&self, at: &Position) -> bool {
-        (self.player == Player::White && at.y == 7) || (self.player == Player::Black && at.y == 0)
+        (self.player == Color::White && at.y == 7) || (self.player == Color::Black && at.y == 0)
     }
 
     pub fn move_piece(&mut self, mv: &Move) {
@@ -124,8 +126,8 @@ impl BoardState {
     pub fn was_double_move(&self, mv: &Move) -> bool {
         if let Some(Piece::Pawn(player)) = self.board.get_piece(&mv.to) {
             return match player {
-                Player::White => mv.from.y == 1 && mv.to.y == 3,
-                Player::Black => mv.from.y == 6 && mv.to.y == 4,
+                Color::White => mv.from.y == 1 && mv.to.y == 3,
+                Color::Black => mv.from.y == 6 && mv.to.y == 4,
             };
         }
         false
@@ -146,5 +148,11 @@ impl BoardState {
         } else {
             None
         }
+    }
+
+    pub fn get_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
     }
 }

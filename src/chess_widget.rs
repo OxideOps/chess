@@ -1,5 +1,11 @@
-use crate::game::Game;
-use crate::pieces::{Piece, Player, Position};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::desktop::game_socket::create_game_socket;
+use crate::game::{Game, GameStatus};
+use crate::moves::Move;
+use crate::pieces::{Color, Piece, Position};
+use crate::player::{Player, PlayerKind};
+#[cfg(target_arch = "wasm32")]
+use crate::web::game_socket::create_game_socket;
 
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
@@ -8,6 +14,17 @@ use std::sync::RwLock;
 
 const WIDGET_SIZE: u32 = 800;
 static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
+
+fn get_current_player_kind(cx: Scope<ChessWidgetProps>) -> PlayerKind {
+    match GAME.read().unwrap().get_current_player() {
+        Color::White => cx.props.white_player.kind,
+        Color::Black => cx.props.black_player.kind,
+    }
+}
+
+fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
+    [cx.props.white_player.kind, cx.props.black_player.kind].contains(&PlayerKind::Remote)
+}
 
 impl From<&ClientPoint> for Position {
     fn from(point: &ClientPoint) -> Position {
@@ -42,18 +59,18 @@ fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) 
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
     match piece {
-        Piece::Rook(Player::White) => "images/whiteRook.png",
-        Piece::Bishop(Player::White) => "images/whiteBishop.png",
-        Piece::Pawn(Player::White) => "images/whitePawn.png",
-        Piece::Knight(Player::White) => "images/whiteKnight.png",
-        Piece::King(Player::White) => "images/whiteKing.png",
-        Piece::Queen(Player::White) => "images/whiteQueen.png",
-        Piece::Rook(Player::Black) => "images/blackRook.png",
-        Piece::Bishop(Player::Black) => "images/blackBishop.png",
-        Piece::Pawn(Player::Black) => "images/blackPawn.png",
-        Piece::Knight(Player::Black) => "images/blackKnight.png",
-        Piece::King(Player::Black) => "images/blackKing.png",
-        Piece::Queen(Player::Black) => "images/blackQueen.png",
+        Piece::Rook(Color::White) => "images/whiteRook.png",
+        Piece::Bishop(Color::White) => "images/whiteBishop.png",
+        Piece::Pawn(Color::White) => "images/whitePawn.png",
+        Piece::Knight(Color::White) => "images/whiteKnight.png",
+        Piece::King(Color::White) => "images/whiteKing.png",
+        Piece::Queen(Color::White) => "images/whiteQueen.png",
+        Piece::Rook(Color::Black) => "images/blackRook.png",
+        Piece::Bishop(Color::Black) => "images/blackBishop.png",
+        Piece::Pawn(Color::Black) => "images/blackPawn.png",
+        Piece::Knight(Color::Black) => "images/blackKnight.png",
+        Piece::King(Color::Black) => "images/blackKing.png",
+        Piece::Queen(Color::Black) => "images/blackQueen.png",
     }
 }
 
@@ -83,10 +100,16 @@ fn draw_piece<'a>(
     }
 }
 
-#[inline_props]
-pub fn ChessWidget(cx: Scope) -> Element {
+#[derive(PartialEq, Props)]
+pub struct ChessWidgetProps {
+    white_player: Player,
+    black_player: Player,
+}
+
+pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
+    let board_state_hash = use_state(cx, || GAME.read().unwrap().get_real_state_hash());
     let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position { x, y }))
@@ -97,6 +120,11 @@ pub fn ChessWidget(cx: Scope) -> Element {
                 .map(|piece| (pos, piece))
         })
         .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
+    let write_socket = if has_remote_player(cx) {
+        create_game_socket(cx, board_state_hash, &GAME)
+    } else {
+        None
+    };
 
     render! {
         style { include_str!("../styles/chess_widget.css") }
@@ -105,11 +133,19 @@ pub fn ChessWidget(cx: Scope) -> Element {
             tabindex: 0,
 
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: |event| {
+            onmouseup: move |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
                     let from = mouse_down.into();
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-                    GAME.write().unwrap().move_piece(from, to).ok();
+                    if get_current_player_kind(cx) == PlayerKind::Local
+                        && GAME.read().unwrap().status != GameStatus::Replay
+                        && GAME.write().unwrap().move_piece(from, to).is_ok()
+                    {
+                        if let Some(write_socket) = write_socket {
+                            write_socket.send(Move::new(from, to));
+                        }
+                        board_state_hash.set(GAME.read().unwrap().get_real_state_hash());
+                    }
                     mouse_down_state.set(None);
                     dragging_point_state.set(None);
                 }

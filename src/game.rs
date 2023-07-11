@@ -2,7 +2,7 @@ use crate::board::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
 use crate::moves::Move;
-use crate::pieces::{Piece, Player, Position};
+use crate::pieces::{Color, Piece, Position};
 
 use std::collections::HashSet;
 
@@ -13,11 +13,11 @@ pub enum ChessError {
     NoPieceAtPosition,
     InvalidMove,
     OwnPieceInDestination,
-    PlayerInCheck,
+    ColorInCheck,
     Checkmate,
     Stalemate,
     InvalidPromotion,
-    NotPlayersTurn,
+    NotColorsTurn,
     EmptyPieceMove,
 }
 
@@ -67,6 +67,11 @@ impl History {
         self.get_current_state().clone()
     }
 
+    fn get_real_state(&self) -> &BoardState {
+        let last = self.history.last();
+        &last.unwrap().0
+    }
+
     fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move) {
         &self.history[turn]
     }
@@ -99,7 +104,7 @@ impl History {
 #[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
-    status: GameStatus,
+    pub status: GameStatus,
     history: History,
 }
 
@@ -140,7 +145,7 @@ impl Game {
         self.history.clone_current_state()
     }
 
-    fn get_current_player(&self) -> Player {
+    pub fn get_current_player(&self) -> Color {
         self.get_current_state().player
     }
 
@@ -191,18 +196,16 @@ impl Game {
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
-        if self.status != GameStatus::Replay {
-            if let Some(piece) = self.get_piece(&from) {
-                let mv = Move::new(from, to);
-                self.is_move_valid(&mv)?;
+        if let Some(piece) = self.get_piece(&from) {
+            let mv = Move::new(from, to);
+            self.is_move_valid(&mv)?;
 
-                let mut next_state = self.clone_current_state();
-                next_state.move_piece(&mv);
-                self.history.add_info(next_state, mv);
+            let mut next_state = self.clone_current_state();
+            next_state.move_piece(&mv);
+            self.history.add_info(next_state, mv);
 
-                println!("{} : {}", piece, mv);
-                self.update();
-            }
+            println!("{} : {}", piece, mv);
+            self.update();
         }
         Ok(())
     }
@@ -280,8 +283,8 @@ impl Game {
     fn can_double_move(&self, from: &Position) -> bool {
         if let Piece::Pawn(player) = self.get_piece(from).unwrap() {
             return match player {
-                Player::White => from.y == 1,
-                Player::Black => from.y == 6,
+                Color::White => from.y == 1,
+                Color::Black => from.y == 6,
             };
         }
         false
@@ -360,5 +363,9 @@ impl Game {
             self.valid_moves
                 .insert(Move::new(king_square, king_square + Displacement::LEFT * 2));
         }
+    }
+
+    pub fn get_real_state_hash(&self) -> u64 {
+        self.history.get_real_state().get_hash()
     }
 }

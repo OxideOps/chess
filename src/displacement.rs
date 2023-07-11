@@ -1,4 +1,4 @@
-use crate::pieces::Player;
+use crate::pieces::Color;
 use std::ops::Mul;
 
 #[derive(Clone, Copy)]
@@ -33,17 +33,17 @@ impl Displacement {
     pub const RIGHT: Self = Self { dx: 1, dy: 0 };
     pub const LEFT: Self = Self { dx: -1, dy: 0 };
 
-    pub fn get_pawn_advance_vector(player: Player) -> Self {
+    pub fn get_pawn_advance_vector(player: Color) -> Self {
         match player {
-            Player::White => Self { dx: 0, dy: 1 },
-            Player::Black => Self { dx: 0, dy: -1 },
+            Color::White => Self { dx: 0, dy: 1 },
+            Color::Black => Self { dx: 0, dy: -1 },
         }
     }
 
-    pub fn get_pawn_capture_vectors(player: Player) -> &'static [Self] {
+    pub fn get_pawn_capture_vectors(player: Color) -> &'static [Self] {
         match player {
-            Player::White => &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }],
-            Player::Black => &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }],
+            Color::White => &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }],
+            Color::Black => &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }],
         }
     }
 
