@@ -109,16 +109,14 @@ fn draw_piece<'a>(
     }
 }
 
-async fn create_socket(
-    cx: Scope<'_, ChessWidgetProps>,
-) -> (Option<WriteStream>, Option<ReadStream>) {
+fn create_socket(cx: Scope<'_, ChessWidgetProps>) -> (Option<WriteStream>, Option<ReadStream>) {
     if !*SOCKET_CREATED.read().unwrap() && has_remote_player(cx) {
-        let (write, read) =
-            connect_async(Url::parse(&format!("ws://localhost:3000/{GAME_ID}")).unwrap())
-                .await
-                .unwrap()
-                .0
-                .split();
+        let (write, read) = executor::block_on(connect_async(
+            Url::parse(&format!("ws://localhost:3000/{GAME_ID}")).unwrap(),
+        ))
+        .unwrap()
+        .0
+        .split();
         *SOCKET_CREATED.write().unwrap() = true;
         (Some(write), Some(read))
     } else {
@@ -157,7 +155,7 @@ pub fn ChessWidget(cx: Scope, white_player: Player, black_player: Player) -> Ele
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let board_state_hash = use_state(cx, || GAME.read().unwrap().get_real_state_hash());
     let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
-    let (write_stream, read_stream) = executor::block_on(create_socket(cx));
+    let (write_stream, read_stream) = create_socket(cx);
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position { x, y }))
         .filter_map(|pos| {
