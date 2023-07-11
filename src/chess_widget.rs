@@ -22,6 +22,7 @@ type ReadStream = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 const WIDGET_SIZE: u32 = 800;
 const GAME_ID: u32 = 1234;
 static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
+static SOCKET_CREATED: RwLock<bool> = RwLock::new(false);
 
 fn get_current_player_kind(cx: Scope<ChessWidgetProps>) -> PlayerKind {
     match GAME.read().unwrap().get_current_player() {
@@ -111,13 +112,14 @@ fn draw_piece<'a>(
 async fn create_socket(
     cx: Scope<'_, ChessWidgetProps>,
 ) -> (Option<WriteStream>, Option<ReadStream>) {
-    if has_remote_player(cx) {
+    if !*SOCKET_CREATED.read().unwrap() && has_remote_player(cx) {
         let (write, read) =
             connect_async(Url::parse(&format!("ws://localhost:3000/{GAME_ID}")).unwrap())
                 .await
                 .unwrap()
                 .0
                 .split();
+        *SOCKET_CREATED.write().unwrap() = true;
         (Some(write), Some(read))
     } else {
         (None, None)
