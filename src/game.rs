@@ -3,8 +3,10 @@ use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
+use crate::timer::Timer;
 
 use std::collections::HashSet;
+use std::time::Duration;
 
 pub type ChessResult = Result<(), ChessError>;
 #[derive(Debug)]
@@ -106,6 +108,7 @@ pub struct Game {
     valid_moves: HashSet<Move>,
     pub status: GameStatus,
     history: History,
+    timer: Timer,
 }
 
 impl Default for Game {
@@ -123,6 +126,7 @@ impl Game {
         let mut game = Self {
             valid_moves: HashSet::default(),
             status: GameStatus::default(),
+            timer: Timer::with_duration(Duration::from_secs(3600)),
             history,
         };
         game.add_moves();
@@ -213,7 +217,16 @@ impl Game {
     fn update(&mut self) {
         self.add_moves();
         self.remove_self_checks();
-        self.update_status()
+        self.update_status();
+        self.update_timer()
+    }
+
+    fn update_timer(&mut self) {
+        if !self.timer.is_active() {
+            self.timer.start()
+        }
+        self.timer.print();
+        self.timer.next_player();
     }
 
     fn update_status(&mut self) {
