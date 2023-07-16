@@ -6,7 +6,10 @@ use crate::pieces::{Color, Piece, Position};
 use crate::timer::Timer;
 
 use std::collections::HashSet;
+#[cfg(any(feature = "desktop", feature = "server"))]
 use std::time::Duration;
+#[cfg(feature = "web")]
+use web_time::Duration;
 
 pub type ChessResult = Result<(), ChessError>;
 #[derive(Debug)]
