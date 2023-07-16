@@ -11,5 +11,6 @@ pub mod game;
 pub mod moves;
 pub mod pieces;
 pub mod player;
+pub mod timer;
 #[cfg(target_arch = "wasm32")]
 pub mod web;
