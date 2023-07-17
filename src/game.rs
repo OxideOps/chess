@@ -39,9 +39,9 @@ pub enum GameStatus {
 impl GameStatus {
     pub fn update(&mut self, status: GameStatus) {
         if *self != status {
-            println!("GameStatus changing from {:?} to {:?}", *self, status)
+            println!("GameStatus changing from {:?} to {:?}", *self, status);
+            *self = status
         }
-        *self = status;
     }
 }
 
