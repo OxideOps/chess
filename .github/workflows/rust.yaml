@@ -9,7 +9,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/event-horizon-technologies/chess:docker
+      image: ghcr.io/event-horizon-technologies/chess:main
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
