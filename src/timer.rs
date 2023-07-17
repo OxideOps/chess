@@ -1,6 +1,9 @@
 use crate::pieces::Color;
 
+#[cfg(any(feature = "desktop", feature = "server"))]
 use std::time::{Duration, Instant};
+#[cfg(feature = "web")]
+use web_time::{Duration, Instant};
 
 #[derive(Clone)]
 pub struct Timer {
