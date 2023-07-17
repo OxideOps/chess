@@ -4,7 +4,7 @@ pub mod app;
 pub mod board;
 pub mod castling_rights;
 pub mod chess_widget;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "desktop")]
 pub mod desktop;
 pub mod displacement;
 pub mod game;
@@ -12,5 +12,5 @@ pub mod moves;
 pub mod pieces;
 pub mod player;
 pub mod timer;
-#[cfg(target_arch = "wasm32")]
+#[cfg(any(feature = "web", feature = "server"))]
 pub mod web;
