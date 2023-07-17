@@ -81,8 +81,9 @@ impl BoardState {
     }
 
     fn can_promote_piece(&self, piece: Piece, at: &Position) -> bool {
-        piece.is_pawn() && (self.player == Color::White && at.y == 7)
-            || (self.player == Color::Black && at.y == 0)
+        piece.is_pawn()
+            && ((self.player == Color::White && at.y == 7)
+                || (self.player == Color::Black && at.y == 0))
     }
 
     pub fn move_piece(&mut self, mv: &Move) {
