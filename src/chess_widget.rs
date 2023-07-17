@@ -1,10 +1,10 @@
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "desktop")]
 use crate::desktop::game_socket::create_game_socket;
 use crate::game::{Game, GameStatus};
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
 use crate::player::{Player, PlayerKind};
-#[cfg(target_arch = "wasm32")]
+#[cfg(any(feature = "web", feature = "server"))]
 use crate::web::game_socket::create_game_socket;
 
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
@@ -187,7 +187,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
 
             pieces
                 .into_iter()
-                .chain(dragged.into_iter())
+                .chain(dragged)
                 .map(|(pos, piece)| {
                     draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
                 })

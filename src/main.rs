@@ -1,9 +1,27 @@
 use chess::app::App;
 
 pub fn main() {
-    #[cfg(target_arch = "wasm32")]
-    dioxus_web::launch(App);
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "web")]
+    dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+    #[cfg(feature = "server")]
+    {
+        use dioxus_fullstack::prelude::*;
+        tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async move {
+                let addr = "[::]:8080".parse().unwrap();
+                println!("listening on {}", addr);
+                axum::Server::bind(&addr)
+                    .serve(
+                        axum::Router::new()
+                            .serve_dioxus_application("", ServeConfigBuilder::new(App, ()))
+                            .into_make_service(),
+                    )
+                    .await
+                    .unwrap();
+            });
+    }
+    #[cfg(feature = "desktop")]
     {
         use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
         const WINDOW_SIZE: u32 = 800;

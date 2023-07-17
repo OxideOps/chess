@@ -23,7 +23,7 @@ static SOCKET_CREATED: RwLock<bool> = RwLock::new(false);
 fn init_streams() -> (Option<WriteStream>, Option<ReadStream>) {
     if !*SOCKET_CREATED.read().unwrap() {
         let (write, read) = executor::block_on(connect_async(
-            Url::parse(&format!("ws://localhost:3000/{GAME_ID}")).unwrap(),
+            Url::parse(&format!("ws://muddy-fog-684.fly.dev/{GAME_ID}")).unwrap(),
         ))
         .unwrap()
         .0
