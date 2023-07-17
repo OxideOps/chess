@@ -290,7 +290,7 @@ impl Game {
         if BoardState::is_in_bounds(&to).is_ok() && self.get_piece(&to).is_none() {
             self.valid_moves.insert(Move::new(*from, to));
             to += v;
-            if self.can_double_move(&from) && self.get_piece(&to).is_none() {
+            if self.can_double_move(from) && self.get_piece(&to).is_none() {
                 self.valid_moves.insert(Move::new(*from, to));
             }
         }
@@ -323,7 +323,7 @@ impl Game {
     }
 
     fn add_moves_for_piece(&mut self, from: &Position) {
-        if let Some(piece) = self.get_piece(&from) {
+        if let Some(piece) = self.get_piece(from) {
             if piece.get_player() == self.get_current_player() {
                 if piece.is_pawn() {
                     self.add_pawn_advance_moves(from);
@@ -339,7 +339,7 @@ impl Game {
                                 break;
                             }
                             self.valid_moves.insert(Move::new(*from, to));
-                            if !self.piece_can_snipe(&from) {
+                            if !self.piece_can_snipe(from) {
                                 break;
                             }
                             to += v;
