@@ -17,8 +17,6 @@ pub type WriteStream = Arc<Mutex<Option<SplitSink<WebSocket, Message>>>>;
 pub type ReadStream = Arc<Mutex<Option<SplitStream<WebSocket>>>>;
 pub type PlayerConnections = Arc<[(WriteStream, ReadStream); 2]>;
 
-pub const GAME_ID: u32 = 1234;
-
 pub async fn handler(
     ws: WebSocketUpgrade,
     connections: PlayerConnections,

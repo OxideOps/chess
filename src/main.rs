@@ -6,7 +6,7 @@ pub fn main() {
     #[cfg(feature = "server")]
     {
         use axum::{extract::WebSocketUpgrade, routing::get};
-        use chess::server::game_socket::{handler, PlayerConnections, GAME_ID};
+        use chess::server::game_socket::{handler, PlayerConnections};
         use dioxus_fullstack::prelude::*;
         use std::sync::Arc;
         use tokio::sync::RwLock;
@@ -21,7 +21,7 @@ pub fn main() {
                     .serve(
                         axum::Router::new()
                             .route(
-                                &*format!("/{GAME_ID}"),
+                                "/:game_id",
                                 get(move |ws: WebSocketUpgrade| {
                                     handler(ws, connections, connected.clone())
                                 }),
