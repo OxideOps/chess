@@ -11,6 +11,8 @@ pub mod game;
 pub mod moves;
 pub mod pieces;
 pub mod player;
+#[cfg(feature = "server")]
+pub mod server;
 pub mod timer;
 #[cfg(any(feature = "web", feature = "server"))]
 pub mod web;
