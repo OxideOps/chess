@@ -55,7 +55,8 @@ async fn read_from_socket(
     if let Some(mut stream) = read_stream {
         while let Some(message) = stream.next().await {
             let data = message.unwrap().into_text().unwrap();
-            let mv: Move = serde_json::from_str(&data).unwrap();
+            let mv: Move =
+                serde_json::from_str(&data).expect("Failed to read move from remote player.");
             println!("Got move {mv:?}");
             if game.write().unwrap().move_piece(mv.from, mv.to).is_ok() {
                 board_state_hash.set(game.read().unwrap().get_real_state_hash());
