@@ -80,13 +80,15 @@ impl BoardState {
         self.board.get_piece(at)
     }
 
-    fn can_promote_piece(&self, at: &Position) -> bool {
-        (self.player == Color::White && at.y == 7) || (self.player == Color::Black && at.y == 0)
+    fn can_promote_piece(&self, piece: Piece, at: &Position) -> bool {
+        piece.is_pawn()
+            && ((self.player == Color::White && at.y == 7)
+                || (self.player == Color::Black && at.y == 0))
     }
 
     pub fn move_piece(&mut self, mv: &Move) {
         let mut piece = self.board.take_piece(&mv.from).unwrap();
-        if piece.is_pawn() && self.can_promote_piece(&mv.to) {
+        if self.can_promote_piece(piece, &mv.to) {
             piece = Piece::Queen(self.player)
         }
         self.board
