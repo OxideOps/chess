@@ -11,21 +11,23 @@ use futures::{
     {SinkExt, StreamExt},
 };
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 
 pub type WriteStream = Arc<Mutex<Option<SplitSink<WebSocket, Message>>>>;
 pub type ReadStream = Arc<Mutex<Option<SplitStream<WebSocket>>>>;
-pub type PlayerConnections = [(WriteStream, ReadStream); 2];
+pub type PlayerConnections = Arc<[(WriteStream, ReadStream); 2]>;
 
-pub const GAME_ID: u32 = 1234;
-
-pub async fn handler(ws: WebSocketUpgrade, connections: PlayerConnections) -> Response {
+pub async fn handler(
+    ws: WebSocketUpgrade,
+    connections: PlayerConnections,
+    connected: Arc<RwLock<bool>>,
+) -> Response {
     ws.on_upgrade(move |socket| {
         if let Some(index) = block_on(store_socket(socket, connections.clone())) {
             let other_index = (index + 1) % 2;
             let sink = connections[other_index].0.clone();
             let stream = connections[index].1.clone();
-            handle_socket(Some((sink, stream)))
+            handle_socket(Some((sink, stream, connected.clone())))
         } else {
             handle_socket(None)
         }
@@ -48,17 +50,31 @@ async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Opti
     index
 }
 
-async fn handle_socket(streams: Option<(WriteStream, ReadStream)>) {
-    if let Some((sink, stream)) = streams {
+async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>>)>) {
+    if let Some((sink, stream, connected)) = params {
+        *connected.write().await = true;
         while let Some(msg) = stream.lock().await.as_mut().unwrap().next().await {
+            if !*connected.read().await {
+                break;
+            }
             if let Ok(msg) = msg {
                 if let Some(sink) = sink.lock().await.as_mut() {
                     sink.send(msg).await.expect("Failed to send move!");
                 }
             } else {
-                // client disconnected
-                return;
+                *connected.write().await = false;
+                break;
             }
         }
+        // if we have been disconnected, clean up our connections
+        sink.lock()
+            .await
+            .as_mut()
+            .unwrap()
+            .close()
+            .await
+            .expect("Failed to close socket");
+        *sink.lock().await = None;
+        *stream.lock().await = None;
     }
 }
