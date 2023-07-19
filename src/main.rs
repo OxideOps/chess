@@ -5,8 +5,8 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Log level: TRACE, DEBUG, INFO, WARN, ERROR
-    #[arg(short, long)]
+    /// One of TRACE, DEBUG, INFO, WARN, or ERROR
+    #[arg(short, long, default_value = "INFO")]
     log_level: log::LevelFilter,
 }
 
@@ -14,10 +14,13 @@ pub fn main() {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
 
     #[cfg(feature = "web")]
-    dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
-
+    {
+        log::info!("web launching");
+        dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+    }
     #[cfg(feature = "server")]
     {
+        log::info!("server launching");
         use axum::{extract::WebSocketUpgrade, routing::get};
         use chess::server::game_socket::{handler, PlayerConnections};
         use dioxus_fullstack::prelude::*;
@@ -48,6 +51,7 @@ pub fn main() {
     }
     #[cfg(feature = "desktop")]
     {
+        log::info!("desktop launching");
         use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
         const WINDOW_SIZE: u32 = 800;
         dioxus_desktop::launch_cfg(
