@@ -6,7 +6,7 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// One of TRACE, DEBUG, INFO, WARN, or ERROR
-    #[arg(short, long, default_value = "INFO")]
+    #[arg(short, long, default_value = "DEBUG")]
     log_level: log::LevelFilter,
 }
 
