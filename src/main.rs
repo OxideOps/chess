@@ -11,7 +11,6 @@ struct Args {
 }
 
 pub fn main() {
-    let args = Args::parse();
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
 
     #[cfg(feature = "web")]
