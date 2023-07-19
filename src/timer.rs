@@ -67,7 +67,7 @@ impl Timer {
             let minutes = total_seconds / 60;
             let seconds = total_seconds % 60;
 
-            println!("{:?}: {:02}:{:02}", player, minutes, seconds);
+            log::info!("{:?}: {:02}:{:02}", player, minutes, seconds);
         }
     }
 

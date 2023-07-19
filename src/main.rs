@@ -1,6 +1,7 @@
 use chess::app::App;
 
 pub fn main() {
+    dioxus_logger::init(log::LevelFilter::Info).expect("Failed to initialize dioxus logger");
     #[cfg(feature = "web")]
     dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
     #[cfg(feature = "server")]

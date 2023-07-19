@@ -211,7 +211,7 @@ impl Game {
             next_state.move_piece(&mv);
             self.history.add_info(next_state, mv);
 
-            println!("{} : {}", piece, mv);
+            log::info!("{} : {}", piece, mv);
             self.update();
         }
         Ok(())
