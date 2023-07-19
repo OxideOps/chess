@@ -1,10 +1,26 @@
 use chess::app::App;
+use clap::Parser;
+
+/// Chess program
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// One of TRACE, DEBUG, INFO, WARN, or ERROR
+    #[arg(short, long, default_value = "DEBUG")]
+    log_level: log::LevelFilter,
+}
 
 pub fn main() {
+    dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
+
     #[cfg(feature = "web")]
-    dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+    {
+        log::info!("web launching");
+        dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+    }
     #[cfg(feature = "server")]
     {
+        log::info!("server launching");
         use axum::{extract::WebSocketUpgrade, routing::get};
         use chess::server::game_socket::{handler, PlayerConnections};
         use dioxus_fullstack::prelude::*;
@@ -16,7 +32,7 @@ pub fn main() {
                 let connections: PlayerConnections = Default::default();
                 let connected: Arc<RwLock<bool>> = Default::default();
                 let addr = "[::]:8080".parse().unwrap();
-                println!("listening on {}", addr);
+                log::info!("listening on {}", addr);
                 axum::Server::bind(&addr)
                     .serve(
                         axum::Router::new()
@@ -35,6 +51,7 @@ pub fn main() {
     }
     #[cfg(feature = "desktop")]
     {
+        log::info!("desktop launching");
         use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
         const WINDOW_SIZE: u32 = 800;
         dioxus_desktop::launch_cfg(
