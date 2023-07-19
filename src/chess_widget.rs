@@ -172,7 +172,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                         GAME.write().unwrap().go_to_beginning();
                     }
                     _ => {
-                        println!("Functionality not implemented for key: {:?}", event.key())
+                        log::info!("Functionality not implemented for key: {:?}", event.key())
                     }
                 };
                 cx.needs_update()

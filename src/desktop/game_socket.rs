@@ -38,7 +38,7 @@ fn init_streams() -> (Option<WriteStream>, Option<ReadStream>) {
 async fn write_to_socket(mut rx: UnboundedReceiver<Move>, write_stream: Option<WriteStream>) {
     if let Some(mut socket) = write_stream {
         while let Some(mv) = rx.next().await {
-            println!("Sending move {mv:?}");
+            log::info!("Sending move {mv:?}");
             socket
                 .send(Message::Text(serde_json::to_string(&mv).unwrap()))
                 .await
@@ -57,7 +57,7 @@ async fn read_from_socket(
             let data = message.unwrap().into_text().unwrap();
             let mv: Move =
                 serde_json::from_str(&data).expect("Failed to read move from remote player.");
-            println!("Got move {mv:?}");
+            log::info!("Got move {mv:?}");
             if game.write().unwrap().move_piece(mv.from, mv.to).is_ok() {
                 board_state_hash.set(game.read().unwrap().get_real_state_hash());
             }

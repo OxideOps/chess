@@ -32,7 +32,7 @@ pub fn main() {
                 let connections: PlayerConnections = Default::default();
                 let connected: Arc<RwLock<bool>> = Default::default();
                 let addr = "[::]:8080".parse().unwrap();
-                println!("listening on {}", addr);
+                log::info!("listening on {}", addr);
                 axum::Server::bind(&addr)
                     .serve(
                         axum::Router::new()
