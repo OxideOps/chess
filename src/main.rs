@@ -1,9 +1,22 @@
 use chess::app::App;
+use clap::Parser;
+
+/// Chess program
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Log level: TRACE, DEBUG, INFO, WARN, ERROR
+    #[arg(short, long)]
+    log_level: log::LevelFilter,
+}
 
 pub fn main() {
-    dioxus_logger::init(log::LevelFilter::Info).expect("Failed to initialize dioxus logger");
+    let args = Args::parse();
+    dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
+
     #[cfg(feature = "web")]
     dioxus_web::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+
     #[cfg(feature = "server")]
     {
         use axum::{extract::WebSocketUpgrade, routing::get};

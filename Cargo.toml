@@ -7,10 +7,11 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.6.18", features = ["ws"], optional = true }
+clap = { version = "4.3.16", features = ["derive"] }
 dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
 dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git", optional = true }
 dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["axum"], optional = true }
-dioxus-logger = "0.4.1"
+dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 dioxus-web = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["hydrate"], optional = true }
 futures = "0.3.28"
 futures-util = "0.3.28"
