@@ -13,6 +13,17 @@ pub struct Timer {
     current_player: Color,
 }
 
+impl Default for Timer {
+    fn default() -> Self {
+        Self {
+            white_time: Duration::from_secs(60),
+            black_time: Duration::from_secs(60),
+            start_time: None,
+            current_player: Color::White,
+        }
+    }
+}
+
 impl Timer {
     pub fn with_duration(duration: Duration) -> Self {
         Self {

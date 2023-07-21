@@ -106,7 +106,52 @@ impl History {
     }
 }
 
-#[derive(Clone)]
+pub struct GameBuilder {
+    duration: Duration,
+    state: BoardState,
+}
+
+impl Default for GameBuilder {
+    fn default() -> Self {
+        Self {
+            duration: Duration::from_secs(60),
+            state: BoardState::default(),
+        }
+    }
+}
+
+impl GameBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn build(self) -> Game {
+        let mut game = Game {
+            history: History::with_state(self.state),
+            timer: Timer::with_duration(self.duration),
+            ..Default::default()
+        };
+        game.add_moves();
+        game
+    }
+
+    pub fn duration(mut self, duration: Duration) -> Self {
+        self.duration = duration;
+        self
+    }
+
+    pub fn state(mut self, state: BoardState) -> Self {
+        self.state = state;
+        self
+    }
+
+    pub fn player(mut self, player: Color) -> Self {
+        self.state.player = player;
+        self
+    }
+}
+
+#[derive(Default, Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
     pub status: GameStatus,
@@ -114,30 +159,13 @@ pub struct Game {
     timer: Timer,
 }
 
-impl Default for Game {
-    fn default() -> Self {
-        Self::with_state(BoardState::default())
-    }
-}
-
 impl Game {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn with_history(history: History) -> Self {
-        let mut game = Self {
-            valid_moves: HashSet::default(),
-            status: GameStatus::default(),
-            timer: Timer::with_duration(Duration::from_secs(3600)),
-            history,
-        };
-        game.add_moves();
-        game
-    }
-
-    pub fn with_state(state: BoardState) -> Self {
-        Self::with_history(History::with_state(state))
+    pub fn builder() -> GameBuilder {
+        GameBuilder::default()
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
@@ -260,7 +288,11 @@ impl Game {
     fn is_king_under_attack(&self) -> bool {
         let mut enemy_board = self.clone_current_state();
         enemy_board.player = !enemy_board.player;
-        Self::with_state(enemy_board).is_attacking_king()
+
+        Self::builder()
+            .state(enemy_board)
+            .build()
+            .is_attacking_king()
     }
 
     fn remove_self_checks(&mut self) {
@@ -268,7 +300,10 @@ impl Game {
         self.valid_moves.retain(|mv| {
             let mut future_board = current_board.clone();
             future_board.move_piece(mv);
-            !Self::with_state(future_board).is_attacking_king()
+            !Self::builder()
+                .state(future_board)
+                .build()
+                .is_attacking_king()
         })
     }
 
