@@ -1,6 +1,6 @@
 use crate::chess_widget::ChessWidgetProps;
-use crate::game::Game;
-use crate::moves::Move;
+use chess::game::Game;
+use chess::moves::Move;
 
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;

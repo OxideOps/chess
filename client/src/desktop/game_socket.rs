@@ -1,8 +1,7 @@
 use crate::chess_widget::ChessWidgetProps;
-use crate::moves::Move;
-use std::sync::RwLock;
 
-use crate::game::Game;
+use chess::game::Game;
+use chess::moves::Move;
 use dioxus::prelude::*;
 use futures::executor;
 use futures_util::{
@@ -10,6 +9,7 @@ use futures_util::{
     SinkExt, StreamExt,
 };
 use once_cell::sync::Lazy;
+use std::sync::RwLock;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 use url::Url;
@@ -23,7 +23,7 @@ static SOCKET_CREATED: RwLock<bool> = RwLock::new(false);
 fn init_streams() -> (Option<WriteStream>, Option<ReadStream>) {
     if !*SOCKET_CREATED.read().unwrap() {
         let (write, read) = executor::block_on(connect_async(
-            Url::parse(&format!("ws://muddy-fog-684.fly.dev/{GAME_ID}")).unwrap(),
+            Url::parse(&format!("ws://muddy-fog-684.fly.dev/game/{GAME_ID}")).unwrap(),
         ))
         .unwrap()
         .0

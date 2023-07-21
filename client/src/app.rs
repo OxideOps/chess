@@ -1,6 +1,6 @@
 use crate::chess_widget::ChessWidget;
-use crate::pieces::Color;
-use crate::player::Player;
+use chess::pieces::Color;
+use chess::player::Player;
 
 use dioxus::prelude::*;
 
