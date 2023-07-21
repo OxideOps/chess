@@ -168,6 +168,10 @@ impl Game {
         GameBuilder::default()
     }
 
+    pub fn with_state(state: BoardState) -> Self {
+        Game::builder().state(state).build()
+    }
+
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.get_current_state().get_piece(position)
     }
@@ -288,11 +292,7 @@ impl Game {
     fn is_king_under_attack(&self) -> bool {
         let mut enemy_board = self.clone_current_state();
         enemy_board.player = !enemy_board.player;
-
-        Self::builder()
-            .state(enemy_board)
-            .build()
-            .is_attacking_king()
+        Self::with_state(enemy_board).is_attacking_king()
     }
 
     fn remove_self_checks(&mut self) {
@@ -300,10 +300,7 @@ impl Game {
         self.valid_moves.retain(|mv| {
             let mut future_board = current_board.clone();
             future_board.move_piece(mv);
-            !Self::builder()
-                .state(future_board)
-                .build()
-                .is_attacking_king()
+            !Self::with_state(future_board).is_attacking_king()
         })
     }
 
