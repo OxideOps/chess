@@ -1,11 +1,11 @@
-#[cfg(feature = "desktop")]
+#[cfg(not(target_arch = "wasm32"))]
 use crate::desktop::game_socket::create_game_socket;
-use crate::game::{Game, GameStatus};
-use crate::moves::Move;
-use crate::pieces::{Color, Piece, Position};
-use crate::player::{Player, PlayerKind};
-#[cfg(any(feature = "web", feature = "server"))]
+#[cfg(target_arch = "wasm32")]
 use crate::web::game_socket::create_game_socket;
+use chess::game::{Game, GameStatus};
+use chess::moves::Move;
+use chess::pieces::{Color, Piece, Position};
+use chess::player::{Player, PlayerKind};
 
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
@@ -14,6 +14,28 @@ use std::sync::RwLock;
 
 const WIDGET_SIZE: u32 = 800;
 static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
+
+#[derive(PartialEq)]
+pub struct BoardPosition(Position);
+
+impl From<&ClientPoint> for BoardPosition {
+    fn from(point: &ClientPoint) -> Self {
+        Self(Position {
+            x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
+            y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
+        })
+    }
+}
+
+impl From<&BoardPosition> for ClientPoint {
+    fn from(position: &BoardPosition) -> Self {
+        Self {
+            x: WIDGET_SIZE as f64 * position.0.x as f64 / 8.0,
+            y: WIDGET_SIZE as f64 * (7.0 - position.0.y as f64) / 8.0,
+            ..Default::default()
+        }
+    }
+}
 
 fn get_current_player_kind(cx: Scope<ChessWidgetProps>) -> PlayerKind {
     match GAME.read().unwrap().get_current_player() {
@@ -26,35 +48,16 @@ fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
     [cx.props.white_player.kind, cx.props.black_player.kind].contains(&PlayerKind::Remote)
 }
 
-impl From<&ClientPoint> for Position {
-    fn from(point: &ClientPoint) -> Position {
-        Position {
-            x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
-            y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
-        }
-    }
-}
-
-impl From<&Position> for ClientPoint {
-    fn from(position: &Position) -> ClientPoint {
-        ClientPoint {
-            x: WIDGET_SIZE as f64 * position.x as f64 / 8.0,
-            y: WIDGET_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
-            ..Default::default()
-        }
-    }
-}
-
 // We want the square a dragged piece is considered to be on to be based on the center of
 // the piece, not the location of the mouse. This requires offsetting based on the original
 // mouse down location
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
     let top_left = ClientPoint::from(&mouse_down.into());
-    (&ClientPoint::new(
+    BoardPosition::from(&ClientPoint::new(
         top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
         top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
     ))
-        .into()
+    .0
 }
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
@@ -80,10 +83,10 @@ fn draw_piece<'a>(
     mouse_down_state: &Option<ClientPoint>,
     dragging_point_state: &Option<ClientPoint>,
 ) -> LazyNodes<'a, 'static> {
-    let mut top_left = ClientPoint::from(pos);
+    let mut top_left = ClientPoint::from(&BoardPosition(*pos));
     if let Some(mouse_down) = mouse_down_state {
         if let Some(dragging_point) = dragging_point_state {
-            if *pos == mouse_down.into() {
+            if BoardPosition(*pos) == mouse_down.into() {
                 top_left.x += dragging_point.x - mouse_down.x;
                 top_left.y += dragging_point.y - mouse_down.y;
             }
@@ -110,9 +113,12 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let board_state_hash = use_state(cx, || GAME.read().unwrap().get_real_state_hash());
-    let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| p.into());
+    let dragged_piece_position = mouse_down_state
+        .get()
+        .as_ref()
+        .map(|p| BoardPosition::from(p).0);
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
-        .flat_map(|x| (0..8).map(move |y| Position { x, y }))
+        .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
         .filter_map(|pos| {
             GAME.read()
                 .unwrap()
@@ -135,7 +141,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
             onmouseup: move |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    let from = mouse_down.into();
+                    let from = BoardPosition::from(mouse_down).0;
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
                     if get_current_player_kind(cx) == PlayerKind::Local
                         && GAME.read().unwrap().status != GameStatus::Replay
@@ -152,7 +158,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             },
             onmousemove: |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    if GAME.read().unwrap().has_piece(&mouse_down.into()) {
+                    if GAME.read().unwrap().has_piece(&BoardPosition::from(mouse_down).0) {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
                 }

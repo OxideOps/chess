@@ -6,9 +6,9 @@ use crate::pieces::{Color, Piece, Position};
 use crate::timer::Timer;
 
 use std::collections::HashSet;
-#[cfg(any(feature = "desktop", feature = "server"))]
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
-#[cfg(feature = "web")]
+#[cfg(target_arch = "wasm32")]
 use web_time::Duration;
 
 pub type ChessResult = Result<(), ChessError>;

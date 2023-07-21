@@ -1,6 +1,5 @@
-FROM ghcr.io/event-horizon-technologies/chess:docker
+FROM ghcr.io/event-horizon-technologies/chess:main
 COPY . .
-RUN trunk build --features web
-RUN cargo build --features server
-ENTRYPOINT ./target/debug/chess
-
+RUN cd client && trunk build
+RUN cd server && cargo build
+ENTRYPOINT ./server/target/debug/server

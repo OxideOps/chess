@@ -1,8 +1,8 @@
 use crate::pieces::Color;
 
-#[cfg(any(feature = "desktop", feature = "server"))]
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::{Duration, Instant};
-#[cfg(feature = "web")]
+#[cfg(target_arch = "wasm32")]
 use web_time::{Duration, Instant};
 
 #[derive(Clone)]
