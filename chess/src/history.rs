@@ -38,7 +38,7 @@ impl History {
     }
 
     pub fn resume(&mut self) {
-        self.current_move = self.history.len()
+        self.current_move = self.history.len() - 1
     }
 
     pub fn previous_move(&mut self) {
