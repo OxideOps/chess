@@ -2,4 +2,4 @@ FROM ghcr.io/event-horizon-technologies/chess:main
 COPY . .
 RUN cd client && trunk build
 RUN cd server && cargo build
-ENTRYPOINT ./server/target/debug/server
+ENTRYPOINT ./target/debug/server
