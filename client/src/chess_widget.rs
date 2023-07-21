@@ -175,7 +175,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                         GAME.write().unwrap().resume()
                     },
                     Key::ArrowDown => {
-                        GAME.write().unwrap().go_to_beginning();
+                        GAME.write().unwrap().go_to_start();
                     }
                     _ => {
                         log::info!("Functionality not implemented for key: {:?}", event.key())
