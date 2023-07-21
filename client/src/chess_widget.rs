@@ -166,10 +166,10 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             onkeydown: |event| {
                 match event.key() {
                     Key::ArrowLeft => {
-                        GAME.write().unwrap().go_back_a_turn();
+                        GAME.write().unwrap().go_back_a_move();
                     },
                     Key::ArrowRight => {
-                        GAME.write().unwrap().go_forward_a_turn()
+                        GAME.write().unwrap().go_forward_a_move()
                     },
                     Key::ArrowUp => {
                         GAME.write().unwrap().resume()

@@ -118,12 +118,12 @@ impl Game {
             .has_castling_right(right)
     }
 
-    pub fn go_back_a_turn(&mut self) {
+    pub fn go_back_a_move(&mut self) {
         self.history.previous_move();
         self.update_status()
     }
 
-    pub fn go_forward_a_turn(&mut self) {
+    pub fn go_forward_a_move(&mut self) {
         self.history.next_move();
         self.update_status();
     }
