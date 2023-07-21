@@ -11,9 +11,11 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
+use std::time::Duration;
 
 const WIDGET_SIZE: u32 = 800;
-static GAME: Lazy<RwLock<Game>> = Lazy::new(|| RwLock::new(Game::new()));
+static GAME: Lazy<RwLock<Game>> =
+    Lazy::new(|| RwLock::new(Game::builder().duration(Duration::from_secs(60)).build()));
 
 #[derive(PartialEq)]
 pub struct BoardPosition(Position);
