@@ -118,24 +118,25 @@ impl Game {
             .has_castling_right(right)
     }
 
-    pub fn go_back_a_move(&mut self) {
-        self.history.previous_move();
-        self.update_status()
-    }
-
-    pub fn go_forward_a_move(&mut self) {
-        self.history.next_move();
+    fn change_turn(&mut self, change: impl FnOnce(&mut History)) {
+        change(&mut self.history);
         self.update_status();
     }
 
+    pub fn go_back_a_move(&mut self) {
+        self.change_turn(|history| history.previous_move());
+    }
+
+    pub fn go_forward_a_move(&mut self) {
+        self.change_turn(|history| history.next_move());
+    }
+
     pub fn go_to_start(&mut self) {
-        self.history.go_to_start();
-        self.update_status()
+        self.change_turn(|history| history.go_to_start());
     }
 
     pub fn resume(&mut self) {
-        self.history.resume();
-        self.update_status()
+        self.change_turn(|history| history.resume())
     }
 
     fn add_info(&mut self, next_state: BoardState, mv: Move) {
