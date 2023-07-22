@@ -61,7 +61,7 @@ impl History {
         self.current_move != self.history.len() - 1
     }
 
-    pub fn current_turn(&self) -> usize {
+    pub fn current_round(&self) -> usize {
         self.current_move / 2 + 1
     }
 }
