@@ -122,7 +122,7 @@ impl BoardState {
     }
 
     pub fn has_piece(&self, position: &Position) -> bool {
-        self.board.get_piece(position).is_some()
+        Self::is_in_bounds(position).is_ok() && self.board.get_piece(position).is_some()
     }
 
     pub fn was_double_move(&self, mv: &Move) -> bool {
