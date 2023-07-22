@@ -9,13 +9,9 @@ use chess::player::{Player, PlayerKind};
 
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
-use once_cell::sync::Lazy;
-use std::sync::RwLock;
 use std::time::Duration;
 
 const WIDGET_SIZE: u32 = 800;
-static GAME: Lazy<RwLock<Game>> =
-    Lazy::new(|| RwLock::new(Game::builder().duration(Duration::from_secs(60)).build()));
 
 #[derive(PartialEq)]
 pub struct BoardPosition(Position);
@@ -39,8 +35,8 @@ impl From<&BoardPosition> for ClientPoint {
     }
 }
 
-fn get_current_player_kind(cx: Scope<ChessWidgetProps>) -> PlayerKind {
-    match GAME.read().unwrap().get_current_player() {
+fn get_current_player_kind(cx: Scope<ChessWidgetProps>, game: &UseRef<Game>) -> PlayerKind {
+    match game.with(|game| game.get_current_player()) {
         Color::White => cx.props.white_player.kind,
         Color::Black => cx.props.black_player.kind,
     }
@@ -114,7 +110,9 @@ pub struct ChessWidgetProps {
 pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
     let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let board_state_hash = use_state(cx, || GAME.read().unwrap().get_real_state_hash());
+    let game = use_ref(cx, || {
+        Game::builder().duration(Duration::from_secs(3600)).build()
+    });
     let dragged_piece_position = mouse_down_state
         .get()
         .as_ref()
@@ -122,14 +120,12 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
         .filter_map(|pos| {
-            GAME.read()
-                .unwrap()
-                .get_piece(&pos)
+            game.with(|game| game.get_piece(&pos))
                 .map(|piece| (pos, piece))
         })
         .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
     let write_socket = if has_remote_player(cx) {
-        create_game_socket(cx, board_state_hash, &GAME)
+        create_game_socket(cx, game)
     } else {
         None
     };
@@ -144,14 +140,13 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 if let Some(mouse_down) = mouse_down_state.get() {
                     let from = BoardPosition::from(mouse_down).0;
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-                    if get_current_player_kind(cx) == PlayerKind::Local
-                        && GAME.read().unwrap().status != GameStatus::Replay
-                        && GAME.write().unwrap().move_piece(from, to).is_ok()
+                    if get_current_player_kind(cx, game) == PlayerKind::Local
+                        && game.with(|game| game.status) != GameStatus::Replay
+                        && game.with_mut(|game| game.move_piece(from, to).is_ok())
                     {
-                        if let Some(write_socket) = write_socket {
+                        if let Some(write_socket) = &write_socket {
                             write_socket.send(Move::new(from, to));
                         }
-                        board_state_hash.set(GAME.read().unwrap().get_real_state_hash());
                     }
                     mouse_down_state.set(None);
                     dragging_point_state.set(None);
@@ -159,30 +154,19 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             },
             onmousemove: |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    if GAME.read().unwrap().has_piece(&BoardPosition::from(mouse_down).0) {
+                    if game.with(|game| game.has_piece(&BoardPosition::from(mouse_down).0)) {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
                 }
             },
             onkeydown: |event| {
                 match event.key() {
-                    Key::ArrowLeft => {
-                        GAME.write().unwrap().go_back_a_move();
-                    },
-                    Key::ArrowRight => {
-                        GAME.write().unwrap().go_forward_a_move()
-                    },
-                    Key::ArrowUp => {
-                        GAME.write().unwrap().resume()
-                    },
-                    Key::ArrowDown => {
-                        GAME.write().unwrap().go_to_start();
-                    }
-                    _ => {
-                        log::info!("Functionality not implemented for key: {:?}", event.key())
-                    }
+                    Key::ArrowLeft => game.with_mut(|game| game.go_back_a_move()),
+                    Key::ArrowRight => game.with_mut(|game| game.go_forward_a_move()),
+                    Key::ArrowUp => game.with_mut(|game| game.resume()),
+                    Key::ArrowDown => game.with_mut(|game| game.go_to_start()),
+                    _ => log::info!("Functionality not implemented for key: {:?}", event.key()),
                 };
-                cx.needs_update()
             },
             img {
                 src: "images/board.png",

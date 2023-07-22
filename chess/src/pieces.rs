@@ -15,10 +15,7 @@ pub enum Piece {
 
 impl Piece {
     pub fn is_pawn(self) -> bool {
-        if let Piece::Pawn(..) = self {
-            return true;
-        }
-        false
+        matches!(self, Piece::Pawn(..))
     }
 
     pub fn get_player(self) -> Color {
@@ -44,10 +41,7 @@ impl Piece {
     }
 
     pub fn can_snipe(self) -> bool {
-        if let Self::Bishop(..) | Self::Rook(..) | Self::Queen(..) = self {
-            return true;
-        }
-        false
+        matches!(self, Self::Bishop(..) | Self::Rook(..) | Self::Queen(..))
     }
 }
 
