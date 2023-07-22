@@ -135,7 +135,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     };
 
     render! {
-        style { include_str!("../styles/chess_widget.css") }
+        style { include_str!("../../styles/chess_widget.css") }
         div {
             autofocus: true,
             tabindex: 0,

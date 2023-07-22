@@ -20,14 +20,11 @@ jobs:
     - name: Check Formatting
       run: cargo fmt -- --check
 
-    - name: Build Desktop
-      run: cd client && cargo build
-
     - name: Build WASM
-      run: cd client && trunk build
+      run: trunk build
 
-    - name: Build Server
-      run: cd server && cargo build
+    - name: Build Rust
+      run: cargo build
 
     - name: Run Client Tests
-      run: cd client && cargo test --verbose
+      run: cargo test

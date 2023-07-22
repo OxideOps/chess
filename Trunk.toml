@@ -4,9 +4,9 @@ target = "index.html"
 # Build in release mode.
 release = true
 # The output dir for all final assets.
-dist = "../server/dist"
+dist = "dist"
 # The public URL from which assets are to be served.
-public_url = "https://muddy-fog-684.fly.dev:8080/"
+public_url = "https://muddy-fog-684.fly.dev/"
 # Whether to include hash values in the output file names.
 filehash = true
 
