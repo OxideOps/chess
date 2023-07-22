@@ -1,5 +1,5 @@
 FROM ghcr.io/event-horizon-technologies/chess:main
 COPY . .
-RUN cd client && trunk build
-RUN cd server && cargo build
+RUN trunk build
+RUN cargo build -p server
 ENTRYPOINT ./target/debug/server
