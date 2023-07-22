@@ -133,7 +133,6 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     } else {
         None
     };
-
     cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
         div {
@@ -192,13 +191,17 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
             },
-
             pieces
                 .into_iter()
                 .chain(dragged)
                 .map(|(pos, piece)| {
                     draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
-                })
+                }),
+        }
+        div {
+            style: "left: 350px; top: 350px;",
+            class: "images",
+            "hello moto"
         }
     })
 }
