@@ -3,6 +3,7 @@ pub mod board;
 pub mod castling_rights;
 pub mod displacement;
 pub mod game;
+pub mod history;
 pub mod moves;
 pub mod pieces;
 pub mod player;

@@ -1,6 +1,7 @@
 use crate::board::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
+use crate::history::History;
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
 use crate::timer::Timer;
@@ -42,67 +43,6 @@ impl GameStatus {
             log::info!("GameStatus changing from {:?} to {:?}", *self, status);
             *self = status
         }
-    }
-}
-
-#[derive(Clone, Default)]
-pub struct History {
-    history: Vec<(BoardState, Move)>,
-    current_turn: usize,
-}
-
-impl History {
-    pub fn with_state(state: BoardState) -> Self {
-        Self {
-            history: vec![(state, Move::default())],
-            current_turn: 1,
-        }
-    }
-
-    fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        self.history.push((next_state, mv));
-        self.current_turn += 1
-    }
-
-    fn get_current_state(&self) -> &BoardState {
-        &self.history[self.current_turn - 1].0
-    }
-
-    fn clone_current_state(&self) -> BoardState {
-        self.get_current_state().clone()
-    }
-
-    fn get_real_state(&self) -> &BoardState {
-        let last = self.history.last();
-        &last.unwrap().0
-    }
-
-    fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move) {
-        &self.history[turn]
-    }
-
-    fn resume(&mut self) {
-        self.current_turn = self.history.len()
-    }
-
-    fn previous_state(&mut self) {
-        if self.current_turn > 1 {
-            self.current_turn -= 1
-        }
-    }
-
-    fn next_state(&mut self) {
-        if self.current_turn < self.history.len() {
-            self.current_turn += 1
-        }
-    }
-
-    fn initial_state(&mut self) {
-        self.current_turn = 1
-    }
-
-    fn is_replaying(&self) -> bool {
-        self.current_turn != self.history.len()
     }
 }
 
@@ -200,8 +140,8 @@ impl Game {
         self.get_piece(at).unwrap().can_snipe()
     }
 
-    fn get_info_for_turn(&self, turn: usize) -> &(BoardState, Move) {
-        self.history.get_info_for_turn(turn)
+    fn get_info_for_turn(&self, mv: usize) -> &(BoardState, Move) {
+        self.history.get_info_for_move(mv)
     }
 
     fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
@@ -210,24 +150,25 @@ impl Game {
             .has_castling_right(right)
     }
 
-    pub fn go_back_a_turn(&mut self) {
-        self.history.previous_state();
-        self.update_status()
-    }
-
-    pub fn go_forward_a_turn(&mut self) {
-        self.history.next_state();
+    fn navigate_history(&mut self, change: impl FnOnce(&mut History)) {
+        change(&mut self.history);
         self.update_status();
     }
 
-    pub fn go_to_beginning(&mut self) {
-        self.history.initial_state();
-        self.update_status()
+    pub fn go_back_a_move(&mut self) {
+        self.navigate_history(|history| history.previous_move());
+    }
+
+    pub fn go_forward_a_move(&mut self) {
+        self.navigate_history(|history| history.next_move());
+    }
+
+    pub fn go_to_start(&mut self) {
+        self.navigate_history(|history| history.go_to_start());
     }
 
     pub fn resume(&mut self) {
-        self.history.resume();
-        self.update_status()
+        self.navigate_history(|history| history.resume());
     }
 
     fn add_info(&mut self, next_state: BoardState, mv: Move) {
@@ -253,7 +194,7 @@ impl Game {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
-        self.update_timer()
+        self.update_timer();
     }
 
     fn update_timer(&mut self) {
