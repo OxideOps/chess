@@ -134,7 +134,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
         None
     };
 
-    render! {
+    cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
         div {
             autofocus: true,
@@ -200,5 +200,5 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                     draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
                 })
         }
-    }
+    })
 }
