@@ -199,9 +199,8 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 }),
         }
         div {
-            style: "left: 350px; top: 350px;",
-            class: "images",
-            "hello moto"
+            style: "position: absolute",
+            "Info bar text"
         }
     })
 }
