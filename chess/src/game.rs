@@ -46,14 +46,6 @@ impl GameStatus {
     }
 }
 
-#[derive(Clone)]
-pub struct Game {
-    valid_moves: HashSet<Move>,
-    pub status: GameStatus,
-    history: History,
-    timer: Timer,
-}
-
 pub struct GameBuilder {
     duration: Duration,
     state: BoardState,
