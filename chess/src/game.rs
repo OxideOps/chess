@@ -54,10 +54,57 @@ pub struct Game {
     timer: Timer,
 }
 
-impl Default for Game {
+pub struct GameBuilder {
+    duration: Duration,
+    state: BoardState,
+}
+
+impl Default for GameBuilder {
     fn default() -> Self {
-        Self::with_state(BoardState::default())
+        Self {
+            duration: Duration::from_secs(60),
+            state: BoardState::default(),
+        }
     }
+}
+
+impl GameBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn build(self) -> Game {
+        let mut game = Game {
+            history: History::with_state(self.state),
+            timer: Timer::with_duration(self.duration),
+            ..Default::default()
+        };
+        game.add_moves();
+        game
+    }
+
+    pub fn duration(mut self, duration: Duration) -> Self {
+        self.duration = duration;
+        self
+    }
+
+    pub fn state(mut self, state: BoardState) -> Self {
+        self.state = state;
+        self
+    }
+
+    pub fn player(mut self, player: Color) -> Self {
+        self.state.player = player;
+        self
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct Game {
+    valid_moves: HashSet<Move>,
+    pub status: GameStatus,
+    history: History,
+    timer: Timer,
 }
 
 impl Game {
@@ -65,19 +112,12 @@ impl Game {
         Self::default()
     }
 
-    pub fn with_history(history: History) -> Self {
-        let mut game = Self {
-            valid_moves: HashSet::default(),
-            status: GameStatus::default(),
-            timer: Timer::with_duration(Duration::from_secs(3600)),
-            history,
-        };
-        game.add_moves();
-        game
+    pub fn builder() -> GameBuilder {
+        GameBuilder::default()
     }
 
     pub fn with_state(state: BoardState) -> Self {
-        Self::with_history(History::with_state(state))
+        Game::builder().state(state).build()
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
