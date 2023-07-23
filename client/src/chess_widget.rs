@@ -160,15 +160,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                     }
                 }
             },
-            onkeydown: |event| {
-                match event.key() {
-                    Key::ArrowLeft => game.with_mut(|game| game.go_back_a_move()),
-                    Key::ArrowRight => game.with_mut(|game| game.go_forward_a_move()),
-                    Key::ArrowUp => game.with_mut(|game| game.resume()),
-                    Key::ArrowDown => game.with_mut(|game| game.go_to_start()),
-                    _ => log::info!("Functionality not implemented for key: {:?}", event.key()),
-                };
-            },
+            onkeydown: |event| game.with_mut(|game| handle_key_event(game, event.key())),
             img {
                 src: "images/board.png",
                 class: "images",
@@ -185,4 +177,14 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 })
         }
     }
+}
+
+fn handle_key_event(game: &mut Game, key: Key) {
+    match key {
+        Key::ArrowLeft => game.go_back_a_move(),
+        Key::ArrowRight => game.go_forward_a_move(),
+        Key::ArrowUp => game.resume(),
+        Key::ArrowDown => game.go_to_start(),
+        _ => log::info!("Functionality not implemented for key: {:?}", key),
+    };
 }
