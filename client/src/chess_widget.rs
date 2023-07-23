@@ -74,9 +74,11 @@ fn draw_piece<'a>(
     dragging_point_state: &Option<ClientPoint>,
 ) -> LazyNodes<'a, 'static> {
     let mut top_left = to_point(pos);
+    let mut z_index = 0;
     if let Some(mouse_down) = mouse_down_state {
         if let Some(dragging_point) = dragging_point_state {
             if *pos == to_position(mouse_down) {
+                z_index = 1;
                 top_left.x += dragging_point.x - mouse_down.x;
                 top_left.y += dragging_point.y - mouse_down.y;
             }
@@ -86,7 +88,7 @@ fn draw_piece<'a>(
         img {
             src: "{get_piece_image_file(piece)}",
             class: "images",
-            style: "left: {top_left.x}px; top: {top_left.y}px;",
+            style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
             width: "{WIDGET_SIZE / 8}",
             height: "{WIDGET_SIZE / 8}",
         }
@@ -105,14 +107,6 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     let game = use_ref(cx, || {
         Game::builder().duration(Duration::from_secs(3600)).build()
     });
-    let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| to_position(p));
-    let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
-        .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
-        .filter_map(|pos| {
-            game.with(|game| game.get_piece(&pos))
-                .map(|piece| (pos, piece))
-        })
-        .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
     let write_socket = if has_remote_player(cx) {
         create_game_socket(cx, game)
     } else {
@@ -158,11 +152,13 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 height: "{WIDGET_SIZE}",
             },
 
-            pieces
-                .into_iter()
-                .chain(dragged)
-                .map(|(pos, piece)| {
-                    draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
+            (0..8)
+                .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
+                .filter_map(|pos| {
+                    game.with(|game| game.get_piece(&pos))
+                    .map(|piece| {
+                        draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
+                    })
                 })
         }
     }
