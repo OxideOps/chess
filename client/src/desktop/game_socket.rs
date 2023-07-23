@@ -58,10 +58,10 @@ async fn read_from_socket(read_stream: Option<ReadStream>, game: UseRef<Game>) {
     }
 }
 
-pub fn create_game_socket(
-    cx: Scope<ChessWidgetProps>,
+pub fn create_game_socket<'cx>(
+    cx: Scope<'cx, ChessWidgetProps>,
     game: &UseRef<Game>,
-) -> Option<Coroutine<Move>> {
+) -> Option<&'cx Coroutine<Move>> {
     let (write_stream, read_stream) = init_streams();
     use_coroutine(cx, |_rx: UnboundedReceiver<()>| {
         read_from_socket(read_stream, game.to_owned())
@@ -70,6 +70,5 @@ pub fn create_game_socket(
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             write_to_socket(rx, write_stream)
         })
-        .to_owned(),
     )
 }
