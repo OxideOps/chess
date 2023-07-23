@@ -185,6 +185,6 @@ fn handle_key_event(game: &mut Game, key: Key) {
         Key::ArrowRight => game.go_forward_a_move(),
         Key::ArrowUp => game.resume(),
         Key::ArrowDown => game.go_to_start(),
-        _ => log::info!("Functionality not implemented for key: {:?}", key),
+        _ => log::debug!("{:?} key pressed", key),
     };
 }
