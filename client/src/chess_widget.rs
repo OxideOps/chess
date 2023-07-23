@@ -11,7 +11,7 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use std::time::Duration;
 
-const WIDGET_SIZE: u32 = 800;
+const BOARD_SIZE: u32 = 800;
 
 #[derive(PartialEq)]
 pub struct BoardPosition(Position);
@@ -19,8 +19,8 @@ pub struct BoardPosition(Position);
 impl From<&ClientPoint> for BoardPosition {
     fn from(point: &ClientPoint) -> Self {
         Self(Position {
-            x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
-            y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
+            x: (8.0 * point.x / BOARD_SIZE as f64).floor() as usize,
+            y: (8.0 * (1.0 - point.y / BOARD_SIZE as f64)).floor() as usize,
         })
     }
 }
@@ -28,8 +28,8 @@ impl From<&ClientPoint> for BoardPosition {
 impl From<&BoardPosition> for ClientPoint {
     fn from(position: &BoardPosition) -> Self {
         Self {
-            x: WIDGET_SIZE as f64 * position.0.x as f64 / 8.0,
-            y: WIDGET_SIZE as f64 * (7.0 - position.0.y as f64) / 8.0,
+            x: BOARD_SIZE as f64 * position.0.x as f64 / 8.0,
+            y: BOARD_SIZE as f64 * (7.0 - position.0.y as f64) / 8.0,
             ..Default::default()
         }
     }
@@ -52,8 +52,8 @@ fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
     let top_left = ClientPoint::from(&mouse_down.into());
     BoardPosition::from(&ClientPoint::new(
-        top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
-        top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
+        top_left.x + mouse_up.x - mouse_down.x + BOARD_SIZE as f64 / 16.0,
+        top_left.y + mouse_up.y - mouse_down.y + BOARD_SIZE as f64 / 16.0,
     ))
     .0
 }
@@ -95,8 +95,8 @@ fn draw_piece<'a>(
             src: "{get_piece_image_file(piece)}",
             class: "images",
             style: "left: {top_left.x}px; top: {top_left.y}px;",
-            width: "{WIDGET_SIZE / 8}",
-            height: "{WIDGET_SIZE / 8}",
+            width: "{BOARD_SIZE / 8}",
+            height: "{BOARD_SIZE / 8}",
         }
     }
 }
@@ -129,6 +129,9 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     } else {
         None
     };
+    let white_time = game.with(|game| game.get_timer(Color::White));
+    let black_time = game.with(|game| game.get_timer(Color::Black));
+    
     cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
         div {
@@ -172,8 +175,8 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 src: "images/board.png",
                 class: "images",
                 style: "left: 0; top: 0;",
-                width: "{WIDGET_SIZE}",
-                height: "{WIDGET_SIZE}",
+                width: "{BOARD_SIZE}",
+                height: "{BOARD_SIZE}",
             },
             pieces
                 .into_iter()
@@ -183,8 +186,9 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 }),
         }
         div {
-            style: "position: absolute",
-            "Info bar text"
+            style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
+            "White time: {white_time:?}\n",
+            "Black time: {black_time:?}",
         }
     })
 }
