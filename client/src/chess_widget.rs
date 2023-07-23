@@ -67,12 +67,12 @@ fn get_piece_image_file(piece: Piece) -> &'static str {
     }
 }
 
-fn draw_piece<'a>(
+fn draw_piece<'a, 'b>(
     piece: Piece,
     pos: &Position,
     mouse_down_state: &Option<ClientPoint>,
     dragging_point_state: &Option<ClientPoint>,
-) -> LazyNodes<'a, 'static> {
+) -> LazyNodes<'a, 'b> {
     let mut top_left = to_point(pos);
     let mut z_index = 0;
     if let Some(mouse_down) = mouse_down_state {
@@ -152,14 +152,13 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 height: "{WIDGET_SIZE}",
             },
 
-            (0..8)
-                .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
-                .filter_map(|pos| {
-                    game.with(|game| game.get_piece(&pos))
-                    .map(|piece| {
-                        draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
-                    })
-                })
+            for x in 0..8 {
+                for y in 0..8 {
+                    if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
+                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
+                    }
+                }
+            }
         }
     }
 }
