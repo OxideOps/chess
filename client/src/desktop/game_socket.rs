@@ -66,9 +66,7 @@ pub fn create_game_socket<'cx>(
     use_coroutine(cx, |_rx: UnboundedReceiver<()>| {
         read_from_socket(read_stream, game.to_owned())
     });
-    Some(
-        use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
-            write_to_socket(rx, write_stream)
-        })
-    )
+    Some(use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
+        write_to_socket(rx, write_stream)
+    }))
 }
