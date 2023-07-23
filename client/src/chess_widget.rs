@@ -13,25 +13,18 @@ use std::time::Duration;
 
 const WIDGET_SIZE: u32 = 800;
 
-#[derive(PartialEq)]
-pub struct BoardPosition(Position);
-
-impl From<&ClientPoint> for BoardPosition {
-    fn from(point: &ClientPoint) -> Self {
-        Self(Position {
-            x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
-            y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
-        })
+fn to_position(point: &ClientPoint) -> Position {
+    Position {
+        x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
+        y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
     }
 }
 
-impl From<&BoardPosition> for ClientPoint {
-    fn from(position: &BoardPosition) -> Self {
-        Self {
-            x: WIDGET_SIZE as f64 * position.0.x as f64 / 8.0,
-            y: WIDGET_SIZE as f64 * (7.0 - position.0.y as f64) / 8.0,
-            ..Default::default()
-        }
+fn to_point(position: &Position) -> ClientPoint {
+    ClientPoint {
+        x: WIDGET_SIZE as f64 * position.x as f64 / 8.0,
+        y: WIDGET_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
+        ..Default::default()
     }
 }
 
@@ -50,12 +43,11 @@ fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
 // the piece, not the location of the mouse. This requires offsetting based on the original
 // mouse down location
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
-    let top_left = ClientPoint::from(&mouse_down.into());
-    BoardPosition::from(&ClientPoint::new(
+    let top_left = to_point(&to_position(mouse_down));
+    to_position(&ClientPoint::new(
         top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
         top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
     ))
-    .0
 }
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
@@ -81,10 +73,10 @@ fn draw_piece<'a>(
     mouse_down_state: &Option<ClientPoint>,
     dragging_point_state: &Option<ClientPoint>,
 ) -> LazyNodes<'a, 'static> {
-    let mut top_left = ClientPoint::from(&BoardPosition(*pos));
+    let mut top_left = to_point(pos);
     if let Some(mouse_down) = mouse_down_state {
         if let Some(dragging_point) = dragging_point_state {
-            if BoardPosition(*pos) == mouse_down.into() {
+            if *pos == to_position(mouse_down) {
                 top_left.x += dragging_point.x - mouse_down.x;
                 top_left.y += dragging_point.y - mouse_down.y;
             }
@@ -113,10 +105,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     let game = use_ref(cx, || {
         Game::builder().duration(Duration::from_secs(3600)).build()
     });
-    let dragged_piece_position = mouse_down_state
-        .get()
-        .as_ref()
-        .map(|p| BoardPosition::from(p).0);
+    let dragged_piece_position = mouse_down_state.get().as_ref().map(|p| to_position(p));
     let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
         .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
         .filter_map(|pos| {
@@ -139,7 +128,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
             onmouseup: move |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    let from = BoardPosition::from(mouse_down).0;
+                    let from = to_position(mouse_down);
                     let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
                     if get_current_player_kind(cx, game) == PlayerKind::Local
                         && game.with(|game| game.status) != GameStatus::Replay
@@ -155,7 +144,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             },
             onmousemove: |event| {
                 if let Some(mouse_down) = mouse_down_state.get() {
-                    if game.with(|game| game.has_piece(&BoardPosition::from(mouse_down).0)) {
+                    if game.with(|game| game.has_piece(&to_position(mouse_down))) {
                         dragging_point_state.set(Some(event.client_coordinates()));
                     }
                 }
