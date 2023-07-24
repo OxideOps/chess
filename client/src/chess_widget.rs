@@ -88,6 +88,7 @@ fn draw_piece<'a, 'b>(
 
 #[derive(Clone, Copy)]
 pub struct GameContext<'cx> {
+    pub scope: Scope<'cx>,
     pub game: &'cx UseRef<Game>,
     pub mouse_down_state: &'cx UseState<Option<ClientPoint>>,
     pub dragging_point_state: &'cx UseState<Option<ClientPoint>>,
@@ -97,21 +98,22 @@ pub struct GameContext<'cx> {
 }
 
 impl<'cx> GameContext<'cx> {
-    pub fn new(cx: Scope<'cx>) -> Self {
+    pub fn new(scope: Scope<'cx>) -> Self {
         //Choose Remote or Local here (Local default)
         let white_player = Player::with_color(Color::White);
         let black_player = Player::with_color(Color::Black);
 
-        let game = use_ref(cx, || {
+        let game = use_ref(scope, || {
             Game::builder().duration(Duration::from_secs(3600)).build()
         });
 
         Self {
+            scope,
             game,
-            mouse_down_state: use_state(cx, || None),
-            dragging_point_state: use_state(cx, || None),
+            mouse_down_state: use_state(scope, || None),
+            dragging_point_state: use_state(scope, || None),
             write_socket: if [white_player.kind, black_player.kind].contains(&PlayerKind::Remote) {
-                create_game_socket(cx, game)
+                create_game_socket(scope, game)
             } else {
                 None
             },
@@ -119,8 +121,8 @@ impl<'cx> GameContext<'cx> {
             black_player,
         }
     }
-    pub fn render(self, cx: Scope<'cx>) -> Element {
-        cx.render(rsx! {
+    pub fn render(self) -> Element<'cx> {
+        self.scope.render(rsx! {
             style { include_str!("../../styles/chess_widget.css") }
             div {
                 autofocus: true,
