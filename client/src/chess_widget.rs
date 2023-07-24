@@ -100,7 +100,7 @@ impl<'cx> GameContext<'cx> {
                 onmousedown: |event| self.mouse_down_state.set(Some(event.client_coordinates())),
                 onmouseup: move |event| self.handle_on_mouse_up_event(event),
                 onmousemove: move |event| self.handle_on_mouse_move_event(event),
-                onkeydown: move |event| self.game.with_mut(|game| Self::handle_key_event(game, event.key())),
+                onkeydown: move |event| self.with_mut(|game| Self::handle_key_event(game, event.key())),
                 img {
                     src: "images/board.png",
                     class: "images",
