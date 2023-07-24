@@ -4,9 +4,9 @@ use chess::moves::Move;
 
 use dioxus::prelude::*;
 
-pub fn create_game_socket(
-    cx: Scope<ChessWidgetProps>,
+pub fn create_game_socket<'cx>(
+    cx: Scope<'cx, ChessWidgetProps>,
     game: &UseRef<Game>,
-) -> Option<Coroutine<Move>> {
+) -> Option<&'cx Coroutine<Move>>{
     None
 }
