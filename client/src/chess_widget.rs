@@ -125,7 +125,6 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             onmouseup: move |event| handle_on_mouse_up_event(event, cx, game, mouse_down_state, dragging_point_state, write_socket),
             onmousemove: |event| handle_on_mouse_move_event(event, game, mouse_down_state, dragging_point_state),
             onkeydown: |event| game.with_mut(|game| handle_key_event(game, event.key())),
-
             img {
                 src: "images/board.png",
                 class: "images",
@@ -133,14 +132,13 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
             },
-            
             for x in 0..8 {
                 for y in 0..8 {
                     if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
                         draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
                     }
                 }
-            }
+            },
         }
     })
 }
