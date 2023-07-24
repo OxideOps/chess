@@ -13,25 +13,18 @@ use std::time::Duration;
 
 const WIDGET_SIZE: u32 = 800;
 
-#[derive(PartialEq)]
-pub struct BoardPosition(Position);
-
-impl From<&ClientPoint> for BoardPosition {
-    fn from(point: &ClientPoint) -> Self {
-        Self(Position {
-            x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
-            y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
-        })
+fn to_position(point: &ClientPoint) -> Position {
+    Position {
+        x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
+        y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
     }
 }
 
-impl From<&BoardPosition> for ClientPoint {
-    fn from(position: &BoardPosition) -> Self {
-        Self {
-            x: WIDGET_SIZE as f64 * position.0.x as f64 / 8.0,
-            y: WIDGET_SIZE as f64 * (7.0 - position.0.y as f64) / 8.0,
-            ..Default::default()
-        }
+fn to_point(position: &Position) -> ClientPoint {
+    ClientPoint {
+        x: WIDGET_SIZE as f64 * position.x as f64 / 8.0,
+        y: WIDGET_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
+        ..Default::default()
     }
 }
 
@@ -50,12 +43,11 @@ fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
 // the piece, not the location of the mouse. This requires offsetting based on the original
 // mouse down location
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
-    let top_left = ClientPoint::from(&mouse_down.into());
-    BoardPosition::from(&ClientPoint::new(
+    let top_left = to_point(&to_position(mouse_down));
+    to_position(&ClientPoint::new(
         top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
         top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
     ))
-    .0
 }
 
 fn get_piece_image_file(piece: Piece) -> &'static str {
@@ -75,16 +67,18 @@ fn get_piece_image_file(piece: Piece) -> &'static str {
     }
 }
 
-fn draw_piece<'a>(
+fn draw_piece<'a, 'b>(
     piece: Piece,
     pos: &Position,
     mouse_down_state: &Option<ClientPoint>,
     dragging_point_state: &Option<ClientPoint>,
-) -> LazyNodes<'a, 'static> {
-    let mut top_left = ClientPoint::from(&BoardPosition(*pos));
+) -> LazyNodes<'a, 'b> {
+    let mut top_left = to_point(pos);
+    let mut z_index = 0;
     if let Some(mouse_down) = mouse_down_state {
         if let Some(dragging_point) = dragging_point_state {
-            if BoardPosition(*pos) == mouse_down.into() {
+            if *pos == to_position(mouse_down) {
+                z_index = 1;
                 top_left.x += dragging_point.x - mouse_down.x;
                 top_left.y += dragging_point.y - mouse_down.y;
             }
@@ -94,7 +88,7 @@ fn draw_piece<'a>(
         img {
             src: "{get_piece_image_file(piece)}",
             class: "images",
-            style: "left: {top_left.x}px; top: {top_left.y}px;",
+            style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
             width: "{WIDGET_SIZE / 8}",
             height: "{WIDGET_SIZE / 8}",
         }
@@ -108,67 +102,29 @@ pub struct ChessWidgetProps {
 }
 
 pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
-    let mouse_down_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let dragging_point_state: &UseState<Option<ClientPoint>> = use_state(cx, || None);
-    let game = use_ref(cx, || {
+    let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
+    let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+
+    let game = use_ref::<Game>(cx, || {
         Game::builder().duration(Duration::from_secs(3600)).build()
     });
-    let dragged_piece_position = mouse_down_state
-        .get()
-        .as_ref()
-        .map(|p| BoardPosition::from(p).0);
-    let (pieces, dragged): (Vec<_>, Vec<_>) = (0..8)
-        .flat_map(|x| (0..8).map(move |y| Position::new(x, y)))
-        .filter_map(|pos| {
-            game.with(|game| game.get_piece(&pos))
-                .map(|piece| (pos, piece))
-        })
-        .partition(|(pos, _piece)| Some(*pos) != dragged_piece_position);
+
     let write_socket = if has_remote_player(cx) {
         create_game_socket(cx, game)
     } else {
         None
     };
 
-    render! {
+    cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
         div {
             autofocus: true,
             tabindex: 0,
 
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| {
-                if let Some(mouse_down) = mouse_down_state.get() {
-                    let from = BoardPosition::from(mouse_down).0;
-                    let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-                    if get_current_player_kind(cx, game) == PlayerKind::Local
-                        && game.with(|game| game.status) != GameStatus::Replay
-                        && game.with_mut(|game| game.move_piece(from, to).is_ok())
-                    {
-                        if let Some(write_socket) = &write_socket {
-                            write_socket.send(Move::new(from, to));
-                        }
-                    }
-                    mouse_down_state.set(None);
-                    dragging_point_state.set(None);
-                }
-            },
-            onmousemove: |event| {
-                if let Some(mouse_down) = mouse_down_state.get() {
-                    if game.with(|game| game.has_piece(&BoardPosition::from(mouse_down).0)) {
-                        dragging_point_state.set(Some(event.client_coordinates()));
-                    }
-                }
-            },
-            onkeydown: |event| {
-                match event.key() {
-                    Key::ArrowLeft => game.with_mut(|game| game.go_back_a_move()),
-                    Key::ArrowRight => game.with_mut(|game| game.go_forward_a_move()),
-                    Key::ArrowUp => game.with_mut(|game| game.resume()),
-                    Key::ArrowDown => game.with_mut(|game| game.go_to_start()),
-                    _ => log::info!("Functionality not implemented for key: {:?}", event.key()),
-                };
-            },
+            onmouseup: move |event| handle_on_mouse_up_event(event, cx, game, mouse_down_state, dragging_point_state, write_socket),
+            onmousemove: |event| handle_on_mouse_move_event(event, game, mouse_down_state, dragging_point_state),
+            onkeydown: |event| game.with_mut(|game| handle_key_event(game, event.key())),
             img {
                 src: "images/board.png",
                 class: "images",
@@ -176,13 +132,60 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
             },
+            for x in 0..8 {
+                for y in 0..8 {
+                    if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
+                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
+                    }
+                }
+            },
+        }
+    })
+}
 
-            pieces
-                .into_iter()
-                .chain(dragged)
-                .map(|(pos, piece)| {
-                    draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
-                })
+fn handle_on_mouse_up_event(
+    event: Event<MouseData>,
+    cx: Scope<ChessWidgetProps>,
+    game: &UseRef<Game>,
+    mouse_down_state: &UseState<Option<ClientPoint>>,
+    dragging_point_state: &UseState<Option<ClientPoint>>,
+    write_socket: Option<&Coroutine<Move>>,
+) {
+    if let Some(mouse_down) = mouse_down_state.get() {
+        let from = to_position(mouse_down);
+        let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
+        if get_current_player_kind(cx, game) == PlayerKind::Local
+            && game.with(|game| game.status) != GameStatus::Replay
+            && game.with_mut(|game| game.move_piece(from, to).is_ok())
+        {
+            if let Some(write_socket) = &write_socket {
+                write_socket.send(Move::new(from, to));
+            }
+        }
+        mouse_down_state.set(None);
+        dragging_point_state.set(None);
+    }
+}
+
+fn handle_on_mouse_move_event(
+    event: Event<MouseData>,
+    game: &UseRef<Game>,
+    mouse_down_state: &UseState<Option<ClientPoint>>,
+    dragging_point_state: &UseState<Option<ClientPoint>>,
+) {
+    if let Some(mouse_down) = mouse_down_state.get() {
+        if game.with(|game| game.has_piece(&to_position(mouse_down))) {
+            dragging_point_state.set(Some(event.client_coordinates()));
         }
     }
+}
+
+fn handle_key_event(game: &mut Game, key: Key) {
+    match key {
+        Key::ArrowLeft => game.go_back_a_move(),
+        Key::ArrowRight => game.go_forward_a_move(),
+        Key::ArrowUp => game.resume(),
+        Key::ArrowDown => game.go_to_start(),
+        _ => log::debug!("{:?} key pressed", key),
+    };
 }
