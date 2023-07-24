@@ -128,9 +128,6 @@ pub fn ChessWidget(cx: ScopedWidget) -> Element {
         write_socket,
     };
 
-    let white_time = game_cx.game.with(|game| game.get_timer(Color::White));
-    let black_time = game_cx.game.with(|game| game.get_timer(Color::Black));
-
     cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
         div {
@@ -159,10 +156,10 @@ pub fn ChessWidget(cx: ScopedWidget) -> Element {
                 class: "time-container",
                 style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
                 p {
-                    "White time: {white_time:?}\n",
+                    "White time: {game_cx.game.with(|game| game.get_timer(Color::White)):?}\n",
                 },
                 p {
-                    "Black time: {black_time:?}",
+                    "Black time: {game_cx.game.with(|game| game.get_timer(Color::Black)):?}",
                 }
             }
         }
