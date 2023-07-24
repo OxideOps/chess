@@ -357,4 +357,17 @@ impl Game {
     pub fn get_real_state_hash(&self) -> u64 {
         self.history.get_real_state().get_hash()
     }
+
+    pub fn get_pieces(&self) -> Vec<(Piece, Position)> {
+        let mut pieces: Vec<(Piece, Position)> = vec![];
+        for x in 0..8 {
+            for y in 0..8 {
+                let pos = Position::new(x, y);
+                if let Some(piece) = self.get_piece(&pos) {
+                    pieces.push((piece, pos));
+                }
+            }
+        }
+        pieces
+    }
 }
