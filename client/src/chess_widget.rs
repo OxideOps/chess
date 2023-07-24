@@ -11,6 +11,8 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use std::time::Duration;
 
+type ScopedWidget<'cx> = &'cx Scoped<'cx, ChessWidgetProps>;
+
 const BOARD_SIZE: u32 = 800;
 
 fn to_position(point: &ClientPoint) -> Position {
@@ -28,14 +30,14 @@ fn to_point(position: &Position) -> ClientPoint {
     }
 }
 
-fn get_current_player_kind(cx: Scope<ChessWidgetProps>, game: &UseRef<Game>) -> PlayerKind {
+fn get_current_player_kind(cx: ScopedWidget, game: &UseRef<Game>) -> PlayerKind {
     match game.with(|game| game.get_current_player()) {
         Color::White => cx.props.white_player.kind,
         Color::Black => cx.props.black_player.kind,
     }
 }
 
-fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
+fn has_remote_player(cx: ScopedWidget) -> bool {
     [cx.props.white_player.kind, cx.props.black_player.kind].contains(&PlayerKind::Remote)
 }
 
@@ -101,10 +103,16 @@ pub struct ChessWidgetProps {
     black_player: Player,
 }
 
-pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
-    let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let game = use_ref::<Game>(cx, || {
+#[derive(Copy, Clone)]
+pub struct GameContext<'cx> {
+    game: &'cx UseRef<Game>,
+    mouse_down_state: &'cx UseState<Option<ClientPoint>>,
+    dragging_point_state: &'cx UseState<Option<ClientPoint>>,
+    write_socket: Option<&'cx Coroutine<Move>>,
+}
+
+pub fn ChessWidget(cx: ScopedWidget) -> Element {
+    let game = use_ref(cx, || {
         Game::builder().duration(Duration::from_secs(3600)).build()
     });
     let write_socket = if has_remote_player(cx) {
@@ -112,8 +120,16 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     } else {
         None
     };
-    let white_time = game.with(|game| game.get_timer(Color::White));
-    let black_time = game.with(|game| game.get_timer(Color::Black));
+
+    let game_cx = GameContext {
+        game,
+        mouse_down_state: use_state(cx, || None),
+        dragging_point_state: use_state(cx, || None),
+        write_socket,
+    };
+
+    let white_time = game_cx.game.with(|game| game.get_timer(Color::White));
+    let black_time = game_cx.game.with(|game| game.get_timer(Color::Black));
 
     cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
@@ -121,9 +137,9 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             autofocus: true,
             tabindex: 0,
 
-            onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| handle_on_mouse_up_event(event, cx, game, mouse_down_state, dragging_point_state, write_socket),
-            onmousemove: |event| handle_on_mouse_move_event(event, game, mouse_down_state, dragging_point_state),
+            onmousedown: |event| game_cx.mouse_down_state.set(Some(event.client_coordinates())),
+            onmouseup: move |event| handle_on_mouse_up_event(event, cx, &game_cx),
+            onmousemove: move |event| handle_on_mouse_move_event(event, &game_cx),
             onkeydown: |event| game.with_mut(|game| handle_key_event(game, event.key())),
             img {
                 src: "images/board.png",
@@ -135,7 +151,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
             for y in 0..8 {
                 for x in 0..8 {
                     if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
-                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
+                        draw_piece(piece, &Position::new(x, y), game_cx.mouse_down_state.get(), game_cx.dragging_point_state.get())
                     }
                 }
             },
@@ -153,39 +169,34 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     })
 }
 
-fn handle_on_mouse_up_event(
-    event: Event<MouseData>,
-    cx: Scope<ChessWidgetProps>,
-    game: &UseRef<Game>,
-    mouse_down_state: &UseState<Option<ClientPoint>>,
-    dragging_point_state: &UseState<Option<ClientPoint>>,
-    write_socket: Option<&Coroutine<Move>>,
-) {
-    if let Some(mouse_down) = mouse_down_state.get() {
+fn handle_on_mouse_up_event(event: Event<MouseData>, cx: ScopedWidget, game_cx: &GameContext) {
+    if let Some(mouse_down) = game_cx.mouse_down_state.get() {
         let from = to_position(mouse_down);
         let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-        if get_current_player_kind(cx, game) == PlayerKind::Local
-            && game.with(|game| game.status) != GameStatus::Replay
-            && game.with_mut(|game| game.move_piece(from, to).is_ok())
+        if get_current_player_kind(cx, game_cx.game) == PlayerKind::Local
+            && game_cx.game.with(|game| game.status) != GameStatus::Replay
+            && game_cx
+                .game
+                .with_mut(|game| game.move_piece(from, to).is_ok())
         {
-            if let Some(write_socket) = &write_socket {
+            if let Some(write_socket) = &game_cx.write_socket {
                 write_socket.send(Move::new(from, to));
             }
         }
-        mouse_down_state.set(None);
-        dragging_point_state.set(None);
+        game_cx.mouse_down_state.set(None);
+        game_cx.dragging_point_state.set(None);
     }
 }
 
-fn handle_on_mouse_move_event(
-    event: Event<MouseData>,
-    game: &UseRef<Game>,
-    mouse_down_state: &UseState<Option<ClientPoint>>,
-    dragging_point_state: &UseState<Option<ClientPoint>>,
-) {
-    if let Some(mouse_down) = mouse_down_state.get() {
-        if game.with(|game| game.has_piece(&to_position(mouse_down))) {
-            dragging_point_state.set(Some(event.client_coordinates()));
+fn handle_on_mouse_move_event(event: Event<MouseData>, game_cx: &GameContext) {
+    if let Some(mouse_down) = game_cx.mouse_down_state.get() {
+        if game_cx
+            .game
+            .with(|game| game.has_piece(&to_position(mouse_down)))
+        {
+            game_cx
+                .dragging_point_state
+                .set(Some(event.client_coordinates()));
         }
     }
 }
