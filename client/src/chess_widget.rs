@@ -88,7 +88,7 @@ fn draw_piece<'a, 'b>(
 
 #[derive(Clone, Copy)]
 pub struct GameContext<'cx> {
-    pub scope: Scope<'cx>,
+    pub scope: &'cx Scoped<'cx>,
     pub game: &'cx UseRef<Game>,
     pub mouse_down_state: &'cx UseState<Option<ClientPoint>>,
     pub dragging_point_state: &'cx UseState<Option<ClientPoint>>,
@@ -98,7 +98,7 @@ pub struct GameContext<'cx> {
 }
 
 impl<'cx> GameContext<'cx> {
-    pub fn new(scope: Scope<'cx>) -> Self {
+    pub fn new(scope: &'cx Scoped<'cx>) -> Self {
         //Choose Remote or Local here (Local default)
         let white_player = Player::with_color(Color::White);
         let black_player = Player::with_color(Color::Black);
