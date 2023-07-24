@@ -97,7 +97,6 @@ impl<'cx> GameContext<'cx> {
             div {
                 autofocus: true,
                 tabindex: 0,
-    
                 onmousedown: |event| self.mouse_down_state.set(Some(event.client_coordinates())),
                 onmouseup: move |event| self.handle_on_mouse_up_event(event),
                 onmousemove: move |event| self.handle_on_mouse_move_event(event),
@@ -149,17 +148,16 @@ impl<'cx> GameContext<'cx> {
             self.dragging_point_state.set(None);
         }
     }
-    
+
     fn handle_on_mouse_move_event(&self, event: Event<MouseData>) {
         if let Some(mouse_down) = self.mouse_down_state.get() {
             if self.with(|game| game.has_piece(&to_position(mouse_down))) {
-                self
-                    .dragging_point_state
+                self.dragging_point_state
                     .set(Some(event.client_coordinates()));
             }
         }
     }
-    
+
     fn handle_key_event(game: &mut Game, key: Key) {
         match key {
             Key::ArrowLeft => game.go_back_a_move(),
@@ -177,7 +175,3 @@ impl<'cx> Deref for GameContext<'cx> {
         &self.game
     }
 }
-
-
-
-
