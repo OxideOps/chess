@@ -9,6 +9,7 @@ use chess::player::{Player, PlayerKind};
 
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
+use std::ops::Deref;
 use std::time::Duration;
 
 type ScopedWidget<'cx> = &'cx Scoped<'cx, ChessWidgetProps>;
@@ -111,6 +112,13 @@ pub struct GameContext<'cx> {
     write_socket: Option<&'cx Coroutine<Move>>,
 }
 
+impl<'cx> Deref for GameContext<'cx> {
+    type Target = UseRef<Game>;
+    fn deref(&self) -> &'cx Self::Target {
+        self.game
+    }
+}
+
 pub fn ChessWidget(cx: ScopedWidget) -> Element {
     let game = use_ref(cx, || {
         Game::builder().duration(Duration::from_secs(3600)).build()
@@ -156,10 +164,10 @@ pub fn ChessWidget(cx: ScopedWidget) -> Element {
                 class: "time-container",
                 style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
                 p {
-                    "White time: {game_cx.game.with(|game| game.get_timer(Color::White)):?}\n",
+                    "White time: {game_cx.with(|game| game.get_timer(Color::White)):?}\n",
                 },
                 p {
-                    "Black time: {game_cx.game.with(|game| game.get_timer(Color::Black)):?}",
+                    "Black time: {game_cx.with(|game| game.get_timer(Color::Black)):?}",
                 }
             }
         }
@@ -170,11 +178,9 @@ fn handle_on_mouse_up_event(event: Event<MouseData>, cx: ScopedWidget, game_cx: 
     if let Some(mouse_down) = game_cx.mouse_down_state.get() {
         let from = to_position(mouse_down);
         let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-        if get_current_player_kind(cx, game_cx.game) == PlayerKind::Local
-            && game_cx.game.with(|game| game.status) != GameStatus::Replay
-            && game_cx
-                .game
-                .with_mut(|game| game.move_piece(from, to).is_ok())
+        if get_current_player_kind(cx, game_cx) == PlayerKind::Local
+            && game_cx.with(|game| game.status) != GameStatus::Replay
+            && game_cx.with_mut(|game| game.move_piece(from, to).is_ok())
         {
             if let Some(write_socket) = &game_cx.write_socket {
                 write_socket.send(Move::new(from, to));
@@ -187,10 +193,7 @@ fn handle_on_mouse_up_event(event: Event<MouseData>, cx: ScopedWidget, game_cx: 
 
 fn handle_on_mouse_move_event(event: Event<MouseData>, game_cx: &GameContext) {
     if let Some(mouse_down) = game_cx.mouse_down_state.get() {
-        if game_cx
-            .game
-            .with(|game| game.has_piece(&to_position(mouse_down)))
-        {
+        if game_cx.with(|game| game.has_piece(&to_position(mouse_down))) {
             game_cx
                 .dragging_point_state
                 .set(Some(event.client_coordinates()));
