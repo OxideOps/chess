@@ -5,10 +5,10 @@ use chess::player::Player;
 use dioxus::prelude::*;
 
 pub fn App(cx: Scope) -> Element {
-    render! {
+    cx.render(rsx! {
         ChessWidget {
             white_player: Player::with_color(Color::White),
             black_player: Player::with_color(Color::Black),
         },
-    }
+    })
 }
