@@ -16,15 +16,15 @@ const BOARD_SIZE: u32 = 800;
 
 fn to_position(point: &ClientPoint) -> Position {
     Position {
-        x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
-        y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
+        x: (8.0 * point.x / BOARD_SIZE as f64).floor() as usize,
+        y: (8.0 * (1.0 - point.y / BOARD_SIZE as f64)).floor() as usize,
     }
 }
 
 fn to_point(position: &Position) -> ClientPoint {
     ClientPoint {
-        x: WIDGET_SIZE as f64 * position.x as f64 / 8.0,
-        y: WIDGET_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
+        x: BOARD_SIZE as f64 * position.x as f64 / 8.0,
+        y: BOARD_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
         ..Default::default()
     }
 }
@@ -46,8 +46,8 @@ fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
     let top_left = to_point(&to_position(mouse_down));
     to_position(&ClientPoint::new(
-        top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
-        top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
+        top_left.x + mouse_up.x - mouse_down.x + BOARD_SIZE as f64 / 16.0,
+        top_left.y + mouse_up.y - mouse_down.y + BOARD_SIZE as f64 / 16.0,
     ))
 }
 
