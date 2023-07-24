@@ -86,117 +86,123 @@ fn draw_piece<'a, 'b>(
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct GameContext<'cx> {
-    pub scope: &'cx Scoped<'cx>,
+pub struct WidgetHooks<'cx> {
     pub game: &'cx UseRef<Game>,
     pub mouse_down_state: &'cx UseState<Option<ClientPoint>>,
     pub dragging_point_state: &'cx UseState<Option<ClientPoint>>,
     pub write_socket: Option<&'cx Coroutine<Move>>,
-    pub white_player: Player<'cx>,
-    pub black_player: Player<'cx>,
+}
+
+#[derive(Props)]
+pub struct WidgetProps<'cx> {
+    white_player: Player<'cx>,
+    black_player: Player<'cx>,
+}
+
+#[derive(Clone, Copy)]
+pub struct GameContext<'cx> {
+    pub hooks: &'cx WidgetHooks<'cx>,
+    pub props: &'cx WidgetProps<'cx>,
 }
 
 impl<'cx> GameContext<'cx> {
-    pub fn new(scope: &'cx Scoped<'cx>) -> Self {
-        //Choose Remote or Local here (Local default)
-        let white_player = Player::with_color(Color::White);
-        let black_player = Player::with_color(Color::Black);
-
-        let game = use_ref(scope, || {
+    pub fn new(cx: Scope<'cx, WidgetProps>) -> Self {
+        let game = use_ref(cx, || 
             Game::builder().duration(Duration::from_secs(3600)).build()
-        });
-
-        Self {
-            scope,
-            game,
-            mouse_down_state: use_state(scope, || None),
-            dragging_point_state: use_state(scope, || None),
-            write_socket: if [white_player.kind, black_player.kind].contains(&PlayerKind::Remote) {
-                create_game_socket(scope, game)
-            } else {
-                None
-            },
-            white_player,
-            black_player,
-        }
-    }
-    pub fn render(self) -> Element<'cx> {
-        self.scope.render(rsx! {
-            style { include_str!("../../styles/chess_widget.css") }
-            div {
-                autofocus: true,
-                tabindex: 0,
-                onmousedown: |event| self.mouse_down_state.set(Some(event.client_coordinates())),
-                onmouseup: move |event| self.handle_on_mouse_up_event(event),
-                onmousemove: move |event| self.handle_on_mouse_move_event(event),
-                onkeydown: move |event| self.with_mut(|game| Self::handle_key_event(game, event.key())),
-                img {
-                    src: "images/board.png",
-                    class: "images",
-                    style: "left: 0; top: 0;",
-                    width: "{BOARD_SIZE}",
-                    height: "{BOARD_SIZE}",
-                },
-                for y in 0..8 {
-                    for x in 0..8 {
-                        if let Some(piece) = self.with(|game| game.get_piece(&Position::new(x, y))) {
-                            draw_piece(piece, &Position::new(x, y), self.mouse_down_state.get(), self.dragging_point_state.get())
-                        }
-                    }
-                },
-                div {
-                    class: "time-container",
-                    style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
-                    p {
-                        "White time: {self.with(|game| game.get_timer(Color::White)):?}\n",
-                    },
-                    p {
-                        "Black time: {self.with(|game| game.get_timer(Color::Black)):?}",
-                    }
-                }
-            }
-        })
-    }
-    fn handle_on_mouse_up_event(&self, event: Event<MouseData>) {
-        if let Some(mouse_down) = self.mouse_down_state.get() {
-            let from = to_position(mouse_down);
-            let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-            let current_player_kind = match self.with(|game| game.get_current_player()) {
-                Color::White => self.white_player.kind,
-                Color::Black => self.black_player.kind,
-            };
-            if current_player_kind == PlayerKind::Local
-                && self.with(|game| game.status) != GameStatus::Replay
-                && self.with_mut(|game| game.move_piece(from, to).is_ok())
-            {
-                if let Some(write_socket) = &self.write_socket {
-                    write_socket.send(Move::new(from, to));
-                }
-            }
-            self.mouse_down_state.set(None);
-            self.dragging_point_state.set(None);
-        }
-    }
-
-    fn handle_on_mouse_move_event(&self, event: Event<MouseData>) {
-        if let Some(mouse_down) = self.mouse_down_state.get() {
-            if self.with(|game| game.has_piece(&to_position(mouse_down))) {
-                self.dragging_point_state
-                    .set(Some(event.client_coordinates()));
-            }
-        }
-    }
-
-    fn handle_key_event(game: &mut Game, key: Key) {
-        match key {
-            Key::ArrowLeft => game.go_back_a_move(),
-            Key::ArrowRight => game.go_forward_a_move(),
-            Key::ArrowUp => game.resume(),
-            Key::ArrowDown => game.go_to_start(),
-            _ => log::debug!("{:?} key pressed", key),
+        );
+        
+        let write_socket = if [white_player.kind, black_player.kind].contains(&PlayerKind::Remote) {
+            create_game_socket(cx, game)
+        } else {
+            None
         };
+        GameContext {
+            game,
+            mouse_down_state: use_state(cx, || None),
+            dragging_point_state: use_state(cx, || None),
+            write_socket: 
+            props: cx.props,
+        }
     }
+}
+
+
+pub fn Widget(cx: Scope<WidgetProps>) -> Element {
+    let game_cx = GameContext::new(cx);
+    cx.render(rsx! {
+        style { include_str!("../../styles/chess_widget.css") }
+        div {
+            autofocus: true,
+            tabindex: 0,
+            onmousedown: |event| game_cx.hooks.mouse_down_state.set(Some(event.client_coordinates())),
+            onmouseup: move |event| handle_on_mouse_up_event(&game_cx, event),
+            onmousemove: move |event| handle_on_mouse_move_event(&game_cx, event),
+            onkeydown: move |event| game_cx.with_mut(|game| handle_key_event(game, event.key())),
+            img {
+                src: "images/board.png",
+                class: "images",
+                style: "left: 0; top: 0;",
+                width: "{BOARD_SIZE}",
+                height: "{BOARD_SIZE}",
+            },
+            for y in 0..8 {
+                for x in 0..8 {
+                    if let Some(piece) = game_cx.with(|game| game.get_piece(&Position::new(x, y))) {
+                        draw_piece(piece, &Position::new(x, y), game_cx.hooks.mouse_down_state.get(), game_cx.hooks.dragging_point_state.get())
+                    }
+                }
+            },
+            div {
+                class: "time-container",
+                style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
+                p {
+                    "White time: {game_cx.with(|game| game.get_timer(Color::White)):?}\n",
+                },
+                p {
+                    "Black time: {game_cx.with(|game| game.get_timer(Color::Black)):?}",
+                }
+            }
+        }
+    })
+}
+fn handle_on_mouse_up_event(game_cx: &GameContext, event: Event<MouseData>) {
+    if let Some(mouse_down) = game_cx.mouse_down_state.get() {
+        let from = to_position(mouse_down);
+        let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
+        let current_player_kind = match game_cx.with(|game| game.get_current_player()) {
+            Color::White => game_cx.props.white_player.kind,
+            Color::Black => game_cx.props.black_player.kind,
+        };
+        if current_player_kind == PlayerKind::Local
+            && game_cx.with(|game| game.status) != GameStatus::Replay
+            && game_cx.with_mut(|game| game.move_piece(from, to).is_ok())
+        {
+            if let Some(write_socket) = &game_cx.write_socket {
+                write_socket.send(Move::new(from, to));
+            }
+        }
+        game_cx.mouse_down_state.set(None);
+        game_cx.dragging_point_state.set(None);
+    }
+}
+
+fn handle_on_mouse_move_event(game_cx: &GameContext, event: Event<MouseData>) {
+    if let Some(mouse_down) = game_cx.mouse_down_state.get() {
+        if game_cx.with(|game| game.has_piece(&to_position(mouse_down))) {
+            game_cx.dragging_point_state
+                .set(Some(event.client_coordinates()));
+        }
+    }
+}
+
+fn handle_key_event(game: &mut Game, key: Key) {
+    match key {
+        Key::ArrowLeft => game.go_back_a_move(),
+        Key::ArrowRight => game.go_forward_a_move(),
+        Key::ArrowUp => game.resume(),
+        Key::ArrowDown => game.go_to_start(),
+        _ => log::debug!("{:?} key pressed", key),
+    };
 }
 
 impl<'cx> Deref for GameContext<'cx> {

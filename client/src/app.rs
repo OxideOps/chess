@@ -1,7 +1,13 @@
-use crate::chess_widget::GameContext;
+use crate::chess_widget::Widget;
 
+use chess::{player::Player, pieces::Color};
 use dioxus::prelude::*;
 
-pub fn App<'cx>(cx: &'cx Scoped) -> Element<'cx> {
-    GameContext::new(cx).render()
+pub fn App(cx: Scope) -> Element {
+    cx.render(rsx! {
+        Widget {
+            white_player: Player::with_color(Color::White),
+            black_player: Player::with_color(Color::Black),
+        },
+    })
 }
