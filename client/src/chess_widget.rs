@@ -1,3 +1,8 @@
+#[cfg(not(target_arch = "wasm32"))]
+use crate::desktop::game_socket::create_game_socket;
+#[cfg(target_arch = "wasm32")]
+use crate::web::game_socket::create_game_socket;
+
 use chess::game::{Game, GameStatus};
 use chess::moves::Move;
 use chess::pieces::{Color, Piece, Position};
@@ -6,6 +11,7 @@ use chess::player::{Player, PlayerKind};
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use std::ops::Deref;
+use std::time::Duration;
 
 const BOARD_SIZE: u32 = 800;
 
@@ -91,6 +97,28 @@ pub struct GameContext<'cx> {
 }
 
 impl<'cx> GameContext<'cx> {
+    pub fn new(cx: Scope<'cx>) -> Self {
+        //Choose Remote or Local here (Local default)
+        let white_player = Player::with_color(Color::White);
+        let black_player = Player::with_color(Color::Black);
+
+        let game = use_ref(cx, || {
+            Game::builder().duration(Duration::from_secs(3600)).build()
+        });
+
+        Self {
+            game,
+            mouse_down_state: use_state(cx, || None),
+            dragging_point_state: use_state(cx, || None),
+            write_socket: if [white_player.kind, black_player.kind].contains(&PlayerKind::Remote) {
+                create_game_socket(cx, game)
+            } else {
+                None
+            },
+            white_player,
+            black_player,
+        }
+    }
     pub fn render(self, cx: Scope<'cx>) -> Element {
         cx.render(rsx! {
             style { include_str!("../../styles/chess_widget.css") }
