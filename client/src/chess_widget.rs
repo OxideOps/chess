@@ -140,9 +140,14 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 }
             },
             div {
+                class: "time-container",
                 style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
-                "White time: {white_time:?}\n",
-                "Black time: {black_time:?}",
+                p {
+                    "White time: {white_time:?}\n",
+                },
+                p {
+                    "Black time: {black_time:?}",
+                }
             }
         }
     })
