@@ -1,5 +1,5 @@
 use clap::Parser;
-use client::{app::App, chess_widget::GameContext};
+use client::chess_widget::GameContext;
 
 /// Chess program
 #[derive(Parser, Debug)]
@@ -15,7 +15,7 @@ pub fn main() {
     #[cfg(target_arch = "wasm32")]
     {
         log::info!("web launching");
-        dioxus_web::launch(App);
+        dioxus_web::launch(GameContext::new(cx).render(cx));
     }
     #[cfg(not(target_arch = "wasm32"))]
     {

@@ -1,10 +1,4 @@
-
-use std::time::Duration;
-
-use crate::chess_widget::*;
-use chess::game::Game;
-use chess::pieces::Color;
-use chess::player::{Player, PlayerKind};
+use crate::chess_widget::GameContext;
 
 use dioxus::prelude::*;
 
