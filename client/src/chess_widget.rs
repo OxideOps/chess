@@ -88,7 +88,7 @@ fn draw_piece<'a, 'b>(
         img {
             src: "{get_piece_image_file(piece)}",
             class: "images",
-            style: "left: {top_left.x}px; top: {top_left.y}px;",
+            style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}px",
             width: "{BOARD_SIZE / 8}",
             height: "{BOARD_SIZE / 8}",
         }
