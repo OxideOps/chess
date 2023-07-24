@@ -359,7 +359,7 @@ impl Game {
     }
 
     pub fn get_active_timer(&self) -> Duration {
-       self.timer.get_active_timer()
+        self.timer.get_active_timer()
     }
 
     pub fn get_timer(&self, player: Color) -> Duration {

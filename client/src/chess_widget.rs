@@ -13,7 +13,6 @@ use std::time::Duration;
 
 const BOARD_SIZE: u32 = 800;
 
-
 fn to_position(point: &ClientPoint) -> Position {
     Position {
         x: (8.0 * point.x / BOARD_SIZE as f64).floor() as usize,
@@ -115,7 +114,7 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
     };
     let white_time = game.with(|game| game.get_timer(Color::White));
     let black_time = game.with(|game| game.get_timer(Color::Black));
-  
+
     cx.render(rsx! {
         style { include_str!("../../styles/chess_widget.css") }
         div {
