@@ -13,7 +13,6 @@ body {
 
 .time-container {
     position: absolute;
-    left: var(--board-size); /* Change this variable in CSS with actual BOARD_SIZE */
     top: 0;
     width: 300px;
     border: 1px solid #f0f0f0;
