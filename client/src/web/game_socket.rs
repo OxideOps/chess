@@ -7,6 +7,6 @@ use dioxus::prelude::*;
 pub fn create_game_socket<'cx>(
     cx: Scope<'cx, ChessWidgetProps>,
     game: &UseRef<Game>,
-) -> Option<&'cx Coroutine<Move>>{
+) -> Option<&'cx Coroutine<Move>> {
     None
 }
