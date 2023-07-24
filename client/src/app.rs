@@ -24,17 +24,16 @@ pub fn App(cx: Scope) -> Element {
     } else {
         None
     };
-
-    let game_cx = GameContext {
+    
+    GameContext {
         game,
         mouse_down_state: use_state(cx, || None),
         dragging_point_state: use_state(cx, || None),
         write_socket,
         white_player,
         black_player,
-    };
-
-    game_cx.render(cx)
+    }
+    .render(cx)
 }
 
 pub fn has_remote_player(white_player: &Player, black_player: &Player) -> bool {
