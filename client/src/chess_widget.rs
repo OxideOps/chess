@@ -113,9 +113,9 @@ pub struct GameContext<'cx> {
 }
 
 impl<'cx> Deref for GameContext<'cx> {
-    type Target = UseRef<Game>;
-    fn deref(&self) -> &'cx Self::Target {
-        self.game
+    type Target = &'cx UseRef<Game>;
+    fn deref(&self) -> &Self::Target {
+        &self.game
     }
 }
 
