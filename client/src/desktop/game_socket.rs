@@ -1,5 +1,3 @@
-use crate::chess_widget::ChessWidgetProps;
-
 use chess::game::Game;
 use chess::moves::Move;
 use dioxus::prelude::*;
@@ -59,7 +57,7 @@ async fn read_from_socket(read_stream: Option<ReadStream>, game: UseRef<Game>) {
 }
 
 pub fn create_game_socket<'cx>(
-    cx: Scope<'cx, ChessWidgetProps>,
+    cx: &'cx Scoped,
     game: &UseRef<Game>,
 ) -> Option<&'cx Coroutine<Move>> {
     let (write_stream, read_stream) = init_streams();

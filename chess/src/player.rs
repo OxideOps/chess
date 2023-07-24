@@ -8,15 +8,15 @@ pub enum PlayerKind {
     Bot,
 }
 
-#[derive(Default, PartialEq)]
-pub struct Player {
+#[derive(Default, PartialEq, Clone, Copy)]
+pub struct Player<'cx> {
     pub kind: PlayerKind,
     pub time: Option<u32>,
     pub color: Color,
-    pub name: String,
+    pub name: &'cx str,
 }
 
-impl Player {
+impl<'cx> Player<'cx> {
     pub fn with_color(color: Color) -> Self {
         Self {
             color,

@@ -1,5 +1,5 @@
 use clap::Parser;
-use client::app::App;
+use client::{app::App, chess_widget::GameContext};
 
 /// Chess program
 #[derive(Parser, Debug)]
@@ -12,7 +12,6 @@ struct Args {
 
 pub fn main() {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
-
     #[cfg(target_arch = "wasm32")]
     {
         log::info!("web launching");
