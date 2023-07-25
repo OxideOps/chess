@@ -362,6 +362,10 @@ impl Game {
         self.timer.get_active_timer()
     }
 
+    pub fn is_timer_active(&self) -> bool {
+        self.timer.is_active()
+    }
+
     pub fn get_timer(&self, player: Color) -> Duration {
         self.timer.get_time(player)
     }
