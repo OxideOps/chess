@@ -128,6 +128,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
 
     let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+
     let white_time = use_state(cx, || display_time(cx.props.time));
     let black_time = use_state(cx, || display_time(cx.props.time));
     let active_time_state = match game.with(|game| game.get_current_player()) {
@@ -138,13 +139,16 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
 
     cx.render(rsx! {
         style { include_str!("../../styles/widget.css") }
+        // div for widget
         div {
             autofocus: true,
             tabindex: 0,
+            // event handlers
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
             onmouseup: move |event| handle_on_mouse_up_event(&event, game, cx.props, mouse_down_state, dragging_point_state, write_socket),
             onmousemove: move |event| handle_on_mouse_move_event(&event, game, mouse_down_state, dragging_point_state),
-            onkeydown: move |event| game.with_mut(|game| handle_key_event(game, event.key())),
+            onkeydown: move |event| handle_on_key_down(&event.key(), game),
+            //board
             img {
                 src: "images/board.png",
                 class: "images",
@@ -152,13 +156,11 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                 width: "{BOARD_SIZE}",
                 height: "{BOARD_SIZE}",
             },
-            for y in 0..8 {
-                for x in 0..8 {
-                    if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
-                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
-                    }
-                }
-            },
+            // pieces
+            game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {
+                draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
+            }),
+            // info bar
             div {
                 class: "time-container",
                 style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
@@ -169,12 +171,22 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                     "Black time: {black_time}",
                 }
             }
-            game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {
-                draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
-            }),
         }
     })
 }
+
+fn handle_on_key_down(key: &Key, game: &UseRef<Game>) {
+    game.with_mut(|game| {
+        match key {
+            Key::ArrowLeft => game.go_back_a_move(),
+            Key::ArrowRight => game.go_forward_a_move(),
+            Key::ArrowUp => game.resume(),
+            Key::ArrowDown => game.go_to_start(),
+            _ => log::debug!("{:?} key pressed", key),
+        };
+    })
+}
+
 fn handle_on_mouse_up_event(
     event: &Event<MouseData>,
     game: &UseRef<Game>,
@@ -214,14 +226,4 @@ fn handle_on_mouse_move_event(
             dragging_point_state.set(Some(event.client_coordinates()));
         }
     }
-}
-
-fn handle_key_event(game: &mut Game, key: Key) {
-    match key {
-        Key::ArrowLeft => game.go_back_a_move(),
-        Key::ArrowRight => game.go_forward_a_move(),
-        Key::ArrowUp => game.resume(),
-        Key::ArrowDown => game.go_to_start(),
-        _ => log::debug!("{:?} key pressed", key),
-    };
 }
