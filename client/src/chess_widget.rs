@@ -40,21 +40,8 @@ fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) 
     ))
 }
 
-fn get_piece_image_file(piece: Piece) -> &'static str {
-    match piece {
-        Piece::Rook(Color::White) => "images/whiteRook.png",
-        Piece::Bishop(Color::White) => "images/whiteBishop.png",
-        Piece::Pawn(Color::White) => "images/whitePawn.png",
-        Piece::Knight(Color::White) => "images/whiteKnight.png",
-        Piece::King(Color::White) => "images/whiteKing.png",
-        Piece::Queen(Color::White) => "images/whiteQueen.png",
-        Piece::Rook(Color::Black) => "images/blackRook.png",
-        Piece::Bishop(Color::Black) => "images/blackBishop.png",
-        Piece::Pawn(Color::Black) => "images/blackPawn.png",
-        Piece::Knight(Color::Black) => "images/blackKnight.png",
-        Piece::King(Color::Black) => "images/blackKing.png",
-        Piece::Queen(Color::Black) => "images/blackQueen.png",
-    }
+fn get_piece_image_file(piece: Piece) -> String {
+    format!("images/{piece}.png")
 }
 
 fn draw_piece<'a, 'b>(
@@ -141,6 +128,9 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                     "Black time: {game.with(|game| game.get_timer(Color::Black)):?}",
                 }
             }
+            game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {
+                draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
+            }),
         }
     })
 }

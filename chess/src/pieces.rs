@@ -48,18 +48,18 @@ impl Piece {
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let piece = match self {
-            Piece::Pawn(Color::White) => "♟ (w)",
-            Piece::Knight(Color::White) => "♞ (w)",
-            Piece::Bishop(Color::White) => "♝ (w)",
-            Piece::Rook(Color::White) => "♜ (w)",
-            Piece::Queen(Color::White) => "♛ (w)",
-            Piece::King(Color::White) => "♚ (w)",
-            Piece::Pawn(Color::Black) => "♙ (b)",
-            Piece::Knight(Color::Black) => "♘ (b)",
-            Piece::Bishop(Color::Black) => "♗ (b)",
-            Piece::Rook(Color::Black) => "♖ (b)",
-            Piece::Queen(Color::Black) => "♕ (b)",
-            Piece::King(Color::Black) => "♔ (b)",
+            Piece::Pawn(Color::White) => "♟",
+            Piece::Knight(Color::White) => "♞",
+            Piece::Bishop(Color::White) => "♝",
+            Piece::Rook(Color::White) => "♜",
+            Piece::Queen(Color::White) => "♛",
+            Piece::King(Color::White) => "♚",
+            Piece::Pawn(Color::Black) => "♙",
+            Piece::Knight(Color::Black) => "♘",
+            Piece::Bishop(Color::Black) => "♗",
+            Piece::Rook(Color::Black) => "♖",
+            Piece::Queen(Color::Black) => "♕",
+            Piece::King(Color::Black) => "♔",
         };
         write!(f, "{}", piece)
     }
