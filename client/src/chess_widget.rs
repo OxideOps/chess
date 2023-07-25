@@ -119,13 +119,9 @@ pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
                 width: "{WIDGET_SIZE}",
                 height: "{WIDGET_SIZE}",
             },
-            for x in 0..8 {
-                for y in 0..8 {
-                    if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
-                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
-                    }
-                }
-            },
+            game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {
+                draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
+            }),
         }
     })
 }
