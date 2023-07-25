@@ -128,6 +128,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
 
     let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+
     let white_time = use_state(cx, || display_time(cx.props.time));
     let black_time = use_state(cx, || display_time(cx.props.time));
     let active_time_state = match game.with(|game| game.get_current_player()) {
