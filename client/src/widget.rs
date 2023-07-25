@@ -96,7 +96,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
 
     cx.render(rsx! {
-        style { include_str!("../../styles/chess_widget.css") }
+        style { include_str!("../../styles/widget.css") }
         div {
             autofocus: true,
             tabindex: 0,

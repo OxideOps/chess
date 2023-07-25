@@ -1,4 +1,4 @@
-use crate::chess_widget::Widget;
+use crate::widget::Widget;
 
 use chess::{pieces::Color, player::Player};
 use dioxus::prelude::*;
