@@ -95,7 +95,7 @@ fn use_timer_future(
         async move {
             if game.with(|game| game.is_timer_active()) {
                 loop {
-                    let active_time = game.with(|game| game.get_active_timer());
+                    let active_time = game.with(|game| game.get_active_time());
                     let sleep_time = active_time.subsec_micros();
                     sleep(Duration::from_micros(sleep_time as u64)).await;
                     active_time_state.set(display_time(active_time));

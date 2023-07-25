@@ -72,7 +72,7 @@ impl Timer {
         }
     }
 
-    pub fn get_active_timer(&self) -> Duration {
+    pub fn get_active_time(&self) -> Duration {
         self.get_time(self.current_player)
     }
 

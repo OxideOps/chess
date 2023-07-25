@@ -358,15 +358,15 @@ impl Game {
         self.history.get_real_state().get_hash()
     }
 
-    pub fn get_active_timer(&self) -> Duration {
-        self.timer.get_active_timer()
+    pub fn get_active_time(&self) -> Duration {
+        self.timer.get_active_time()
     }
 
     pub fn is_timer_active(&self) -> bool {
         self.timer.is_active()
     }
 
-    pub fn get_timer(&self, player: Color) -> Duration {
+    pub fn get_time(&self, player: Color) -> Duration {
         self.timer.get_time(player)
     }
 
