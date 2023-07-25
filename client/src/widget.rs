@@ -2,6 +2,7 @@
 use crate::desktop::game_socket::create_game_socket;
 #[cfg(target_arch = "wasm32")]
 use crate::web::game_socket::create_game_socket;
+use async_std::task::sleep;
 
 use chess::game::{Game, GameStatus};
 use chess::moves::Move;
@@ -71,10 +72,45 @@ fn draw_piece<'a, 'b>(
         }
     }
 }
+
+fn display_time(time: Duration) -> String {
+    let total_secs = time.as_secs();
+    let hours = total_secs / 3600;
+    let minutes = total_secs % 3600 / 60;
+    let seconds = total_secs % 60;
+    if hours > 0 {
+        format!("{hours:02}:{minutes:02}:{seconds:02}")
+    } else {
+        format!("{minutes:02}:{seconds:02}")
+    }
+}
+
+fn use_timer_future(
+    cx: Scope<WidgetProps>,
+    game: &UseRef<Game>,
+    active_time_state: &UseState<String>,
+) {
+    use_future(cx, (game,), |(game,)| {
+        let active_time_state = active_time_state.to_owned();
+        async move {
+            if game.with(|game| game.is_timer_active()) {
+                loop {
+                    let active_time = game.with(|game| game.get_active_timer());
+                    let sleep_time = active_time.subsec_micros();
+                    sleep(Duration::from_micros(sleep_time as u64)).await;
+                    active_time_state.set(display_time(active_time));
+                }
+            } else {
+                sleep(Duration::from_secs(u64::MAX)).await;
+            }
+        }
+    });
+}
 #[derive(Props, PartialEq)]
 pub struct WidgetProps {
     white_player: Player,
     black_player: Player,
+    time: Duration,
 }
 
 pub fn has_remote_player(props: &WidgetProps) -> bool {
@@ -82,9 +118,7 @@ pub fn has_remote_player(props: &WidgetProps) -> bool {
 }
 
 pub fn Widget(cx: Scope<WidgetProps>) -> Element {
-    let game = use_ref(cx, || {
-        Game::builder().duration(Duration::from_secs(3600)).build()
-    });
+    let game = use_ref(cx, || Game::builder().duration(cx.props.time).build());
 
     let write_socket = if has_remote_player(cx.props) {
         create_game_socket(cx, game)
@@ -94,6 +128,13 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
 
     let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+    let white_time = use_state(cx, || display_time(cx.props.time));
+    let black_time = use_state(cx, || display_time(cx.props.time));
+    let active_time_state = match game.with(|game| game.get_current_player()) {
+        Color::White => white_time,
+        Color::Black => black_time,
+    };
+    use_timer_future(cx, game, active_time_state);
 
     cx.render(rsx! {
         style { include_str!("../../styles/widget.css") }
@@ -122,10 +163,10 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                 class: "time-container",
                 style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
                 p {
-                    "White time: {game.with(|game| game.get_timer(Color::White)):?}\n",
+                    "White time: {white_time}\n",
                 },
                 p {
-                    "Black time: {game.with(|game| game.get_timer(Color::Black)):?}",
+                    "Black time: {black_time}",
                 }
             }
             game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {

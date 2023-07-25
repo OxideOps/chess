@@ -11,7 +11,6 @@ pub enum PlayerKind {
 #[derive(Default, PartialEq, Clone)]
 pub struct Player {
     pub kind: PlayerKind,
-    pub time: Option<u32>,
     pub color: Color,
     pub name: String,
 }
