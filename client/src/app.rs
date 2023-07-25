@@ -1,6 +1,6 @@
 use crate::chess_widget::Widget;
 
-use chess::{player::Player, pieces::Color};
+use chess::{pieces::Color, player::Player};
 use dioxus::prelude::*;
 
 pub fn App(cx: Scope) -> Element {
