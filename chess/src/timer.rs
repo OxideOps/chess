@@ -72,6 +72,10 @@ impl Timer {
         }
     }
 
+    pub fn get_active_timer(&self) -> Duration {
+        self.get_time(self.current_player)
+    }
+
     pub fn print(&self) {
         for &player in &[Color::White, Color::Black] {
             let total_seconds = self.get_time(player).as_secs();

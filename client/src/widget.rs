@@ -2,6 +2,7 @@
 use crate::desktop::game_socket::create_game_socket;
 #[cfg(target_arch = "wasm32")]
 use crate::web::game_socket::create_game_socket;
+
 use chess::game::{Game, GameStatus};
 use chess::moves::Move;
 use chess::pieces::{Color, Piece, Position};
@@ -11,32 +12,21 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use std::time::Duration;
 
-const WIDGET_SIZE: u32 = 800;
+const BOARD_SIZE: u32 = 800;
 
 fn to_position(point: &ClientPoint) -> Position {
     Position {
-        x: (8.0 * point.x / WIDGET_SIZE as f64).floor() as usize,
-        y: (8.0 * (1.0 - point.y / WIDGET_SIZE as f64)).floor() as usize,
+        x: (8.0 * point.x / BOARD_SIZE as f64).floor() as usize,
+        y: (8.0 * (1.0 - point.y / BOARD_SIZE as f64)).floor() as usize,
     }
 }
 
 fn to_point(position: &Position) -> ClientPoint {
     ClientPoint {
-        x: WIDGET_SIZE as f64 * position.x as f64 / 8.0,
-        y: WIDGET_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
+        x: BOARD_SIZE as f64 * position.x as f64 / 8.0,
+        y: BOARD_SIZE as f64 * (7.0 - position.y as f64) / 8.0,
         ..Default::default()
     }
-}
-
-fn get_current_player_kind(cx: Scope<ChessWidgetProps>, game: &UseRef<Game>) -> PlayerKind {
-    match game.with(|game| game.get_current_player()) {
-        Color::White => cx.props.white_player.kind,
-        Color::Black => cx.props.black_player.kind,
-    }
-}
-
-fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
-    [cx.props.white_player.kind, cx.props.black_player.kind].contains(&PlayerKind::Remote)
 }
 
 // We want the square a dragged piece is considered to be on to be based on the center of
@@ -45,8 +35,8 @@ fn has_remote_player(cx: Scope<ChessWidgetProps>) -> bool {
 fn get_dragged_piece_position(mouse_down: &ClientPoint, mouse_up: &ClientPoint) -> Position {
     let top_left = to_point(&to_position(mouse_down));
     to_position(&ClientPoint::new(
-        top_left.x + mouse_up.x - mouse_down.x + WIDGET_SIZE as f64 / 16.0,
-        top_left.y + mouse_up.y - mouse_down.y + WIDGET_SIZE as f64 / 16.0,
+        top_left.x + mouse_up.x - mouse_down.x + BOARD_SIZE as f64 / 16.0,
+        top_left.y + mouse_up.y - mouse_down.y + BOARD_SIZE as f64 / 16.0,
     ))
 }
 
@@ -76,60 +66,78 @@ fn draw_piece<'a, 'b>(
             src: "{get_piece_image_file(piece)}",
             class: "images",
             style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
-            width: "{WIDGET_SIZE / 8}",
-            height: "{WIDGET_SIZE / 8}",
+            width: "{BOARD_SIZE / 8}",
+            height: "{BOARD_SIZE / 8}",
         }
     }
 }
-
-#[derive(PartialEq, Props)]
-pub struct ChessWidgetProps {
+#[derive(Props, PartialEq)]
+pub struct WidgetProps {
     white_player: Player,
     black_player: Player,
 }
 
-pub fn ChessWidget(cx: Scope<ChessWidgetProps>) -> Element {
-    let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+pub fn has_remote_player(props: &WidgetProps) -> bool {
+    [props.white_player.kind, props.black_player.kind].contains(&PlayerKind::Remote)
+}
 
-    let game = use_ref::<Game>(cx, || {
+pub fn Widget(cx: Scope<WidgetProps>) -> Element {
+    let game = use_ref(cx, || {
         Game::builder().duration(Duration::from_secs(3600)).build()
     });
 
-    let write_socket = if has_remote_player(cx) {
+    let write_socket = if has_remote_player(cx.props) {
         create_game_socket(cx, game)
     } else {
         None
     };
 
+    let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
+    let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+
     cx.render(rsx! {
-        style { include_str!("../../styles/chess_widget.css") }
+        style { include_str!("../../styles/widget.css") }
         div {
             autofocus: true,
             tabindex: 0,
-
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| handle_on_mouse_up_event(event, cx, game, mouse_down_state, dragging_point_state, write_socket),
-            onmousemove: |event| handle_on_mouse_move_event(event, game, mouse_down_state, dragging_point_state),
-            onkeydown: |event| game.with_mut(|game| handle_key_event(game, event.key())),
+            onmouseup: move |event| handle_on_mouse_up_event(&event, game, cx.props, mouse_down_state, dragging_point_state, write_socket),
+            onmousemove: move |event| handle_on_mouse_move_event(&event, game, mouse_down_state, dragging_point_state),
+            onkeydown: move |event| game.with_mut(|game| handle_key_event(game, event.key())),
             img {
                 src: "images/board.png",
                 class: "images",
                 style: "left: 0; top: 0;",
-                width: "{WIDGET_SIZE}",
-                height: "{WIDGET_SIZE}",
+                width: "{BOARD_SIZE}",
+                height: "{BOARD_SIZE}",
             },
+            for y in 0..8 {
+                for x in 0..8 {
+                    if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
+                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
+                    }
+                }
+            },
+            div {
+                class: "time-container",
+                style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
+                p {
+                    "White time: {game.with(|game| game.get_timer(Color::White)):?}\n",
+                },
+                p {
+                    "Black time: {game.with(|game| game.get_timer(Color::Black)):?}",
+                }
+            }
             game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {
                 draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
             }),
         }
     })
 }
-
 fn handle_on_mouse_up_event(
-    event: Event<MouseData>,
-    cx: Scope<ChessWidgetProps>,
+    event: &Event<MouseData>,
     game: &UseRef<Game>,
+    props: &WidgetProps,
     mouse_down_state: &UseState<Option<ClientPoint>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
     write_socket: Option<&Coroutine<Move>>,
@@ -137,7 +145,11 @@ fn handle_on_mouse_up_event(
     if let Some(mouse_down) = mouse_down_state.get() {
         let from = to_position(mouse_down);
         let to = get_dragged_piece_position(mouse_down, &event.client_coordinates());
-        if get_current_player_kind(cx, game) == PlayerKind::Local
+        let current_player_kind = match game.with(|game| game.get_current_player()) {
+            Color::White => props.white_player.kind,
+            Color::Black => props.black_player.kind,
+        };
+        if current_player_kind == PlayerKind::Local
             && game.with(|game| game.status) != GameStatus::Replay
             && game.with_mut(|game| game.move_piece(from, to).is_ok())
         {
@@ -151,7 +163,7 @@ fn handle_on_mouse_up_event(
 }
 
 fn handle_on_mouse_move_event(
-    event: Event<MouseData>,
+    event: &Event<MouseData>,
     game: &UseRef<Game>,
     mouse_down_state: &UseState<Option<ClientPoint>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,

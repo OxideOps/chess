@@ -358,6 +358,14 @@ impl Game {
         self.history.get_real_state().get_hash()
     }
 
+    pub fn get_active_timer(&self) -> Duration {
+        self.timer.get_active_timer()
+    }
+
+    pub fn get_timer(&self, player: Color) -> Duration {
+        self.timer.get_time(player)
+    }
+
     pub fn get_pieces(&self) -> Vec<(Piece, Position)> {
         let mut pieces: Vec<(Piece, Position)> = vec![];
         for x in 0..8 {

@@ -8,7 +8,7 @@ pub enum PlayerKind {
     Bot,
 }
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Clone)]
 pub struct Player {
     pub kind: PlayerKind,
     pub time: Option<u32>,

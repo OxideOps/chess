@@ -1,5 +1,3 @@
-use crate::chess_widget::ChessWidgetProps;
-
 use chess::game::Game;
 use chess::moves::Move;
 use dioxus::prelude::*;
@@ -12,6 +10,8 @@ use std::sync::RwLock;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 use url::Url;
+
+use crate::widget::WidgetProps;
 
 type WriteStream = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 type ReadStream = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
@@ -58,10 +58,10 @@ async fn read_from_socket(read_stream: Option<ReadStream>, game: UseRef<Game>) {
     }
 }
 
-pub fn create_game_socket<'cx>(
-    cx: Scope<'cx, ChessWidgetProps>,
+pub fn create_game_socket<'a>(
+    cx: Scope<'a, WidgetProps>,
     game: &UseRef<Game>,
-) -> Option<&'cx Coroutine<Move>> {
+) -> Option<&'a Coroutine<Move>> {
     let (write_stream, read_stream) = init_streams();
     use_coroutine(cx, |_rx: UnboundedReceiver<()>| {
         read_from_socket(read_stream, game.to_owned())
