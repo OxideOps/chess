@@ -152,13 +152,6 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                 width: "{BOARD_SIZE}",
                 height: "{BOARD_SIZE}",
             },
-            for y in 0..8 {
-                for x in 0..8 {
-                    if let Some(piece) = game.with(|game| game.get_piece(&Position::new(x, y))) {
-                        draw_piece(piece, &Position::new(x, y), mouse_down_state.get(), dragging_point_state.get())
-                    }
-                }
-            },
             div {
                 class: "time-container",
                 style: "position: absolute; left: {BOARD_SIZE}px; top: 0px",
@@ -175,6 +168,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
         }
     })
 }
+
 fn handle_on_mouse_up_event(
     event: &Event<MouseData>,
     game: &UseRef<Game>,
