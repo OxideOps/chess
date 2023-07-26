@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::{Add, AddAssign, Not, Sub};
 
+const FILES: [char; 8] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+const RANKS: [char; 8] = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
 #[derive(Clone, Copy, PartialEq, Debug, Hash)]
 pub enum Piece {
     Pawn(Color),
@@ -91,6 +94,12 @@ pub struct Position {
 impl Position {
     pub fn new(x: usize, y: usize) -> Self {
         Self { x, y }
+    }
+}
+
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", FILES[self.x], RANKS[self.y])
     }
 }
 

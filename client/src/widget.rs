@@ -176,13 +176,17 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                     style: "position: relative; overflow-y: auto;",
 
                     "Moves"
-                    game.with(|game| game.get_moves().into_iter().enumerate().map(|(i, mv)| {
+                    game.with(|game| {
+                        let mvs = game.get_moves();
+                        let pieces = mvs.iter().map(|mv| game.get_piece(&mv.to).unwrap()).collect::<Vec<Piece>>();
                         rsx! {
-                            p {
-                                "{i + 1}: {mv}"
+                            for (mv, piece) in (mvs, pieces) {
+                                p {
+                                    
+                                }
                             }
                         }
-                    }))
+                    })    
                 }
             },
         }
