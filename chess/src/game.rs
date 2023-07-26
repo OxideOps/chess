@@ -382,4 +382,8 @@ impl Game {
         }
         pieces
     }
+
+    pub fn get_moves(&self) -> Vec<Move> {
+        self.history.get_moves()
+    }
 }

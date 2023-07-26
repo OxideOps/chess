@@ -25,3 +25,10 @@ body {
     justify-content: space-around;
     align-items: center;
 }
+
+.moves-container {
+    width: 200px;
+    height: 100%;
+    overflow: auto;
+    position: absolute;
+}

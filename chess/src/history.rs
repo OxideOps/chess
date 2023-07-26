@@ -8,6 +8,9 @@ pub struct History {
 }
 
 impl History {
+    pub fn get_moves(&self) -> Vec<Move> {
+        self.history.iter().map(|(_, mv)| *mv).collect()
+    }
     pub fn with_state(state: BoardState) -> Self {
         Self {
             history: vec![(state, Move::default())],
