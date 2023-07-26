@@ -385,6 +385,10 @@ impl Game {
     }
 
     pub fn get_move_history(&self) -> Vec<String> {
-        self.history.turns.iter().map(|turn| format!("{turn}")).collect()
+        self.history
+            .turns
+            .iter()
+            .map(|turn| format!("{turn}"))
+            .collect()
     }
 }
