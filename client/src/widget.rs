@@ -145,8 +145,8 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
             tabindex: 0,
             // event handlers
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| handle_on_mouse_up_event(&event, game, cx.props, mouse_down_state, dragging_point_state, write_socket),
-            onmousemove: move |event| handle_on_mouse_move_event(&event, game, mouse_down_state, dragging_point_state),
+            onmouseup: move |event| handle_on_mouse_up_event(event, game, cx.props, mouse_down_state, dragging_point_state, write_socket),
+            onmousemove: move |event| handle_on_mouse_move_event(event, game, mouse_down_state, dragging_point_state),
             onkeydown: move |event| handle_on_key_down(&event.key(), game),
             //board
             img {
@@ -188,7 +188,7 @@ fn handle_on_key_down(key: &Key, game: &UseRef<Game>) {
 }
 
 fn handle_on_mouse_up_event(
-    event: &Event<MouseData>,
+    event: Event<MouseData>,
     game: &UseRef<Game>,
     props: &WidgetProps,
     mouse_down_state: &UseState<Option<ClientPoint>>,
@@ -216,7 +216,7 @@ fn handle_on_mouse_up_event(
 }
 
 fn handle_on_mouse_move_event(
-    event: &Event<MouseData>,
+    event: Event<MouseData>,
     game: &UseRef<Game>,
     mouse_down_state: &UseState<Option<ClientPoint>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
