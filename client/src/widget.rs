@@ -174,10 +174,12 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                 div {
                     class: "moves-container",
                     style: "position: relative; overflow-y: auto;",
-                    game.with(|game| game.get_moves().into_iter().map(|mv| {
+
+                    "Moves"
+                    game.with(|game| game.get_moves().into_iter().enumerate().map(|(i, mv)| {
                         rsx! {
                             p {
-                                "{mv}"
+                                "{i + 1}: {mv}"
                             }
                         }
                     }))
