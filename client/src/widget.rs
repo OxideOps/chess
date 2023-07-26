@@ -118,6 +118,7 @@ pub fn has_remote_player(props: &WidgetProps) -> bool {
 }
 
 pub fn Widget(cx: Scope<WidgetProps>) -> Element {
+    // hooks
     let game = use_ref(cx, || Game::builder().duration(cx.props.time).build());
 
     let write_socket = if has_remote_player(cx.props) {
@@ -169,8 +170,23 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                 },
                 p {
                     "Black time: {black_time}",
+                },
+                div {
+                    class: "moves-container",
+                    style: "position: relative; overflow-y: auto;",
+
+                    "Moves"
+                    game.with(|game| {
+                        game.get_move_history().into_iter().enumerate().map(|(i, turn_str)| {
+                            rsx! {
+                                p {
+                                    "{i + 1} {turn_str}"
+                                }
+                            }
+                        })
+                    })
                 }
-            }
+            },
         }
     })
 }

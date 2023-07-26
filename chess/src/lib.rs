@@ -8,3 +8,4 @@ pub mod moves;
 pub mod pieces;
 pub mod player;
 pub mod timer;
+pub mod turn;

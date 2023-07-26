@@ -1,4 +1,4 @@
-use crate::pieces::Position;
+use crate::pieces::{Piece, Position};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -19,19 +19,14 @@ impl Move {
             to: self.from,
         }
     }
+
+    pub fn to_str(&self, piece: Piece) -> String {
+        format!("{}{}", piece, self.to)
+    }
 }
 
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        let ranks = ['1', '2', '3', '4', '5', '6', '7', '8'];
-
-        let from_file = files[self.from.x];
-        let to_file = files[self.to.x];
-
-        let from_rank = ranks[self.from.y];
-        let to_rank = ranks[self.to.y];
-
-        write!(f, "{}{} -> {}{}", from_file, from_rank, to_file, to_rank)
+        write!(f, "{} -> {}", self.from, self.to)
     }
 }
