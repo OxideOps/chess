@@ -1,30 +1,28 @@
 use crate::board::BoardState;
 use crate::moves::Move;
+use crate::turn::Turn;
 
 #[derive(Clone, Default)]
 pub struct History {
-    history: Vec<(BoardState, Move)>,
-    current_move: usize,
+    pub turns: Vec<Turn>,
+    current_turn: usize,
 }
 
 impl History {
-    pub fn get_moves(&self) -> Vec<Move> {
-        self.history.iter().map(|(_, mv)| *mv).collect()
-    }
     pub fn with_state(state: BoardState) -> Self {
         Self {
-            history: vec![(state, Move::default())],
+            turns: vec![Turn::with_state(state)],
             ..Default::default()
         }
     }
 
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        self.history.push((next_state, mv));
-        self.current_move += 1
+        self.turns.push(Turn::new(next_state, mv));
+        self.current_turn += 1
     }
 
     pub fn get_current_state(&self) -> &BoardState {
-        &self.history[self.current_move].0
+        &self.turns[self.current_turn].board_state
     }
 
     pub fn clone_current_state(&self) -> BoardState {
@@ -32,39 +30,38 @@ impl History {
     }
 
     pub fn get_real_state(&self) -> &BoardState {
-        let last = self.history.last();
-        &last.unwrap().0
+        &self.turns.last().unwrap().board_state
     }
 
-    pub fn get_info_for_move(&self, turn: usize) -> &(BoardState, Move) {
-        &self.history[turn]
+    pub fn get_info_for_move(&self, turn: usize) -> &Turn {
+        &self.turns[turn]
     }
 
     pub fn resume(&mut self) {
-        self.current_move = self.history.len() - 1
+        self.current_turn = self.turns.len() - 1
     }
 
     pub fn previous_move(&mut self) {
-        if self.current_move > 0 {
-            self.current_move -= 1
+        if self.current_turn > 0 {
+            self.current_turn -= 1
         }
     }
 
     pub fn next_move(&mut self) {
-        if self.current_move < self.history.len() - 1 {
-            self.current_move += 1
+        if self.current_turn < self.turns.len() - 1 {
+            self.current_turn += 1
         }
     }
 
     pub fn go_to_start(&mut self) {
-        self.current_move = 0
+        self.current_turn = 0
     }
 
     pub fn is_replaying(&self) -> bool {
-        self.current_move != self.history.len() - 1
+        self.current_turn != self.turns.len() - 1
     }
 
     pub fn current_round(&self) -> usize {
-        self.current_move / 2 + 1
+        self.current_turn / 2 + 1
     }
 }

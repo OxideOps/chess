@@ -5,6 +5,7 @@ use crate::history::History;
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
 use crate::timer::Timer;
+use crate::turn::Turn;
 
 use std::collections::HashSet;
 #[cfg(not(target_arch = "wasm32"))]
@@ -140,7 +141,7 @@ impl Game {
         self.get_piece(at).unwrap().can_snipe()
     }
 
-    fn get_info_for_turn(&self, mv: usize) -> &(BoardState, Move) {
+    fn get_info_for_turn(&self, mv: usize) -> &Turn {
         self.history.get_info_for_move(mv)
     }
 
@@ -383,7 +384,7 @@ impl Game {
         pieces
     }
 
-    pub fn get_moves(&self) -> Vec<Move> {
-        self.history.get_moves()
+    pub fn get_move_history(&self) -> Vec<String> {
+        self.history.turns.iter().map(|turn| format!("{turn}")).collect()
     }
 }
