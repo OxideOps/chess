@@ -26,6 +26,12 @@ pub enum ChessError {
     InvalidPromotion,
     NotColorsTurn,
     EmptyPieceMove,
+    FiftyMoveRule,
+}
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum DrawKind {
+    Stalemate,
+    FiftyMoveRule,
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
@@ -36,7 +42,7 @@ pub enum GameStatus {
     Check,
     Checkmate,
     Replay,
-    FiftyMoveDraw,
+    Draw(DrawKind),
 }
 
 impl GameStatus {
@@ -208,8 +214,8 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.history.get_fifty_move_count() == 50 {
-            self.status.update(GameStatus::FiftyMoveDraw);
+        if self.history.get_fifty_move_count() == 3 {
+            self.status.update(GameStatus::Draw(DrawKind::FiftyMoveRule));
             return;
         }
         if self.history.is_replaying() {
@@ -252,10 +258,12 @@ impl Game {
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
+        if self.status == GameStatus::Draw(DrawKind::FiftyMoveRule) {
+            return Err(ChessError::FiftyMoveRule);
+        }
         BoardState::is_in_bounds(&mv.from)?;
         BoardState::is_in_bounds(&mv.to)?;
         self.is_piece_some(&mv.from)?;
-
         if self.valid_moves.contains(mv) {
             Ok(())
         } else {
