@@ -214,8 +214,9 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.history.get_fifty_move_count() == 3 {
-            self.status.update(GameStatus::Draw(DrawKind::FiftyMoveRule));
+        if self.history.get_fifty_move_count() == 50 {
+            self.status
+                .update(GameStatus::Draw(DrawKind::FiftyMoveRule));
             return;
         }
         if self.history.is_replaying() {
