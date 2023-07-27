@@ -1,7 +1,4 @@
-#[cfg(not(target_arch = "wasm32"))]
-use crate::desktop::game_socket::create_game_socket;
-#[cfg(target_arch = "wasm32")]
-use crate::web::game_socket::create_game_socket;
+use crate::game_socket::create_game_socket;
 use async_std::task::sleep;
 
 use chess::game::{Game, GameStatus};
@@ -122,7 +119,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
     let game = use_ref(cx, || Game::builder().duration(cx.props.time).build());
 
     let write_socket = if has_remote_player(cx.props) {
-        create_game_socket(cx, game)
+        Some(create_game_socket(cx, game))
     } else {
         None
     };

@@ -7,25 +7,23 @@ use futures_util::{
     SinkExt, StreamExt,
 };
 use std::sync::RwLock;
-use tokio::net::TcpStream;
-use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite_wasm::{connect, Message, WebSocketStream};
 use url::Url;
 
 use crate::widget::WidgetProps;
 
-type WriteStream = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
-type ReadStream = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
+type WriteStream = SplitSink<WebSocketStream, Message>;
+type ReadStream = SplitStream<WebSocketStream>;
 
 const GAME_ID: u32 = 1234;
 static SOCKET_CREATED: RwLock<bool> = RwLock::new(false);
 
 fn init_streams() -> (Option<WriteStream>, Option<ReadStream>) {
     if !*SOCKET_CREATED.read().unwrap() {
-        let (write, read) = executor::block_on(connect_async(
+        let (write, read) = executor::block_on(connect(
             Url::parse(&format!("ws://muddy-fog-684.fly.dev/game/{GAME_ID}")).unwrap(),
         ))
         .unwrap()
-        .0
         .split();
         *SOCKET_CREATED.write().unwrap() = true;
         (Some(write), Some(read))
@@ -61,12 +59,12 @@ async fn read_from_socket(read_stream: Option<ReadStream>, game: UseRef<Game>) {
 pub fn create_game_socket<'a>(
     cx: Scope<'a, WidgetProps>,
     game: &UseRef<Game>,
-) -> Option<&'a Coroutine<Move>> {
+) -> &'a Coroutine<Move> {
     let (write_stream, read_stream) = init_streams();
     use_coroutine(cx, |_rx: UnboundedReceiver<()>| {
         read_from_socket(read_stream, game.to_owned())
     });
-    Some(use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
+    use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
         write_to_socket(rx, write_stream)
-    }))
+    })
 }
