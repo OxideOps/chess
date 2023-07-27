@@ -192,8 +192,8 @@ impl Game {
         Ok(())
     }
 
-    pub fn check_fifty_move_rule(&mut self) {
-        if self.history.fifty_move_counter == 100 {
+    pub fn check_rules(&mut self) {
+        if self.history.get_fifty_move_count() == 5 {
             self.status.update(GameStatus::Draw);
         }
     }
@@ -203,6 +203,7 @@ impl Game {
         self.remove_self_checks();
         self.update_status();
         self.update_timer();
+        self.check_rules();
     }
 
     fn update_timer(&mut self) {
