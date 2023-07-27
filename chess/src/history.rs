@@ -6,6 +6,7 @@ use crate::turn::Turn;
 pub struct History {
     pub turns: Vec<Turn>,
     current_turn: usize,
+    pub fifty_move_counter: u8,
 }
 
 impl History {
@@ -18,7 +19,8 @@ impl History {
 
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
         self.turns.push(Turn::new(next_state, mv));
-        self.current_turn += 1
+        self.current_turn += 1;
+            self.fifty_move_counter += 1;
     }
 
     pub fn get_current_state(&self) -> &BoardState {
