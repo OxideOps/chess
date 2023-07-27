@@ -6,7 +6,7 @@ use crate::turn::Turn;
 pub struct History {
     pub turns: Vec<Turn>,
     current_turn: usize,
-    pub fifty_move_count: u8,
+    fifty_move_count: u8,
 }
 
 impl History {
