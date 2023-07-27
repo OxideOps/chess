@@ -193,7 +193,7 @@ impl Game {
     }
 
     pub fn check_rules(&mut self) {
-        if self.history.get_fifty_move_count() == 5 {
+        if self.history.get_fifty_move_count() == 100 {
             self.status.update(GameStatus::Draw);
         }
     }
