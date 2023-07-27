@@ -218,7 +218,7 @@ fn handle_on_mouse_up_event(
         if current_player_kind == PlayerKind::Local
             && game.with(|game| game.status) != GameStatus::Replay
             && game.with_mut(|game| {
-                game.status != GameStatus::Draw && game.move_piece(from, to).is_ok()
+                game.status != GameStatus::FiftyMoveDraw && game.move_piece(from, to).is_ok()
             })
         {
             if let Some(write_socket) = &write_socket {

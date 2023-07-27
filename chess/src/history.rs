@@ -20,7 +20,11 @@ impl History {
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
         self.turns.push(Turn::new(next_state, mv));
         self.current_turn += 1;
-        let is_pawn = next_state.get_piece(&mv.to).unwrap().is_pawn();
+        let is_pawn = self.turns[self.turns.len() - 2]
+            .board_state
+            .get_piece(&mv.from)
+            .unwrap()
+            .is_pawn();
         let is_capture_move = self.turns[self.turns.len() - 2]
             .board_state
             .get_piece(&mv.to)

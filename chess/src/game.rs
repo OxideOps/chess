@@ -36,7 +36,7 @@ pub enum GameStatus {
     Check,
     Checkmate,
     Replay,
-    Draw,
+    FiftyMoveDraw,
 }
 
 impl GameStatus {
@@ -209,7 +209,7 @@ impl Game {
 
     fn update_status(&mut self) {
         if self.history.get_fifty_move_count() == 50 {
-            self.status.update(GameStatus::Draw);
+            self.status.update(GameStatus::FiftyMoveDraw);
             return;
         }
         if self.history.is_replaying() {
