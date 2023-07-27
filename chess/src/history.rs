@@ -22,16 +22,21 @@ impl History {
         self.turns.push(Turn::new(next_state.clone(), mv));
         self.current_turn += 1;
         let is_pawn = next_state.get_piece(&mv.to).unwrap().is_pawn();
-        let is_capture_move = self.turns[self.turns.len()-2].board_state.get_piece(&mv.to).is_some();
-        if !is_pawn || !is_capture_move {
+        let is_capture_move = self.turns[self.turns.len() - 2]
+            .board_state
+            .get_piece(&mv.to)
+            .is_some();
+        if !is_pawn && !is_capture_move {
             self.fifty_move_count += 1;
+        } else {
+            self.fifty_move_count = 0;
         }
     }
 
     pub fn get_fifty_move_count(&self) -> u8 {
         self.fifty_move_count
     }
- 
+
     pub fn get_current_state(&self) -> &BoardState {
         &self.turns[self.current_turn].board_state
     }
