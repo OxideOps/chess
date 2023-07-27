@@ -192,18 +192,11 @@ impl Game {
         Ok(())
     }
 
-    pub fn check_rules(&mut self) {
-        if self.history.get_fifty_move_count() == 100 {
-            self.status.update(GameStatus::Draw);
-        }
-    }
-
     fn update(&mut self) {
         self.add_moves();
         self.remove_self_checks();
         self.update_status();
         self.update_timer();
-        self.check_rules();
     }
 
     fn update_timer(&mut self) {
@@ -215,13 +208,17 @@ impl Game {
     }
 
     fn update_status(&mut self) {
+        if self.history.get_fifty_move_count() == 50 {
+            self.status.update(GameStatus::Draw);
+            return;
+        } 
         if self.history.is_replaying() {
             self.status.update(GameStatus::Replay);
             return;
         }
         let king_is_under_attack = self.is_king_under_attack();
         let valid_moves_is_empty = self.valid_moves.is_empty();
-
+        
         if !king_is_under_attack && valid_moves_is_empty {
             self.status.update(GameStatus::Stalemate)
         } else if king_is_under_attack && valid_moves_is_empty {

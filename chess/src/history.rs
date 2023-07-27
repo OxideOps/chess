@@ -34,7 +34,7 @@ impl History {
     }
 
     pub fn get_fifty_move_count(&self) -> u8 {
-        self.fifty_move_count
+        self.fifty_move_count / 2
     }
 
     pub fn get_current_state(&self) -> &BoardState {
