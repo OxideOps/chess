@@ -10,7 +10,7 @@ const BOARD_SIZE: usize = 8;
 
 type Square = Option<Piece>;
 
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Clone, Copy, PartialEq, Hash)]
 pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
@@ -62,7 +62,7 @@ impl Board {
     }
 }
 
-#[derive(Clone, Default, Hash)]
+#[derive(Clone, Copy, Default, Hash)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Color,
