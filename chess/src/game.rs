@@ -211,14 +211,14 @@ impl Game {
         if self.history.get_fifty_move_count() == 50 {
             self.status.update(GameStatus::Draw);
             return;
-        } 
+        }
         if self.history.is_replaying() {
             self.status.update(GameStatus::Replay);
             return;
         }
         let king_is_under_attack = self.is_king_under_attack();
         let valid_moves_is_empty = self.valid_moves.is_empty();
-        
+
         if !king_is_under_attack && valid_moves_is_empty {
             self.status.update(GameStatus::Stalemate)
         } else if king_is_under_attack && valid_moves_is_empty {
