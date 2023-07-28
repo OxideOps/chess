@@ -19,7 +19,7 @@ pub enum ChessError {
     OutOfBounds,
     NoPieceAtPosition,
     InvalidMove,
-    GameIsInDrawStatus,
+    GameIsInDraw,
 }
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum DrawKind {
@@ -252,7 +252,7 @@ impl Game {
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
         if matches!(self.status, GameStatus::Draw(..)) {
-            return Err(ChessError::GameIsInDrawStatus);
+            return Err(ChessError::GameIsInDraw);
         }
         BoardState::is_in_bounds(&mv.from)?;
         BoardState::is_in_bounds(&mv.to)?;
