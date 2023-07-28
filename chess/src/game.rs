@@ -1,4 +1,4 @@
-use crate::board::BoardState;
+use crate::board_state::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
 use crate::history::History;

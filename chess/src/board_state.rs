@@ -38,7 +38,6 @@ impl BoardState {
         }
         self.board
             .set_piece(&Position::new(mv.to.x, mv.to.y), Some(piece));
-
         self.update(mv)
     }
 
