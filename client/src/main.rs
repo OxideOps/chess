@@ -1,14 +1,5 @@
-use clap::Parser;
 use client::app::App;
-
-/// Chess program
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// One of TRACE, DEBUG, INFO, WARN, or ERROR
-    #[arg(short, long, default_value = "DEBUG")]
-    log_level: log::LevelFilter,
-}
+use common::args::*;
 
 pub fn main() {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");

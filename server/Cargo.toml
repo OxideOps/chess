@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.6.19", features = ["ws"] }
-clap = { version = "4.3.17", features = ["derive"] }
+common = { path = "../common" }
 dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
 dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["axum"] }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }

@@ -1,19 +1,10 @@
 use axum::{extract::WebSocketUpgrade, routing::get};
-use clap::Parser;
+use common::args;
 use dioxus_fullstack::prelude::*;
 use server::game_socket::{handler, PlayerConnections};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::services::ServeFile;
-
-/// Chess program
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// One of TRACE, DEBUG, INFO, WARN, or ERROR
-    #[arg(short, long, default_value = "DEBUG")]
-    log_level: log::LevelFilter,
-}
 
 #[tokio::main]
 pub async fn main() {
