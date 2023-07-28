@@ -1,5 +1,5 @@
 use axum::{extract::WebSocketUpgrade, routing::get};
-use common::args;
+use common::args::*;
 use dioxus_fullstack::prelude::*;
 use server::game_socket::{handler, PlayerConnections};
 use std::sync::Arc;
