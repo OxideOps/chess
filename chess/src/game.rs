@@ -19,12 +19,6 @@ pub enum ChessError {
     OutOfBounds,
     NoPieceAtPosition,
     InvalidMove,
-    OwnPieceInDestination,
-    ColorInCheck,
-    Checkmate,
-    InvalidPromotion,
-    NotColorsTurn,
-    EmptyPieceMove,
     GameIsInDrawStatus,
 }
 #[derive(Clone, Copy, PartialEq, Debug)]
