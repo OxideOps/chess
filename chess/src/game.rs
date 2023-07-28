@@ -8,9 +8,6 @@ use crate::timer::Timer;
 use crate::turn::Turn;
 
 use std::collections::HashSet;
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Duration;
-#[cfg(target_arch = "wasm32")]
 use web_time::Duration;
 
 pub type ChessResult = Result<(), ChessError>;
