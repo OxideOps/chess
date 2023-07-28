@@ -14,10 +14,10 @@ use web_time::Duration;
 
 #[derive(Default, Clone)]
 pub struct Game {
-    valid_moves: HashSet<Move>,
-    pub status: GameStatus,
-    history: History,
-    timer: Timer,
+    pub(crate) valid_moves: HashSet<Move>,
+    pub(crate) status: GameStatus,
+    pub(crate) history: History,
+    pub(crate) timer: Timer,
 }
 
 impl Game {
