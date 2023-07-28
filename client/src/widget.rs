@@ -1,7 +1,8 @@
 use crate::game_socket::create_game_socket;
 use async_std::task::sleep;
 
-use chess::game::{Game, GameStatus};
+use chess::game::Game;
+use chess::game_status::GameStatus;
 use chess::moves::Move;
 use chess::pieces::{Color, Piece, Position};
 use chess::player::{Player, PlayerKind};

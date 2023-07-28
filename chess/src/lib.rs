@@ -5,7 +5,6 @@ pub mod castling_rights;
 pub mod chess_result;
 pub mod displacement;
 pub mod game;
-pub mod game_builder;
 pub mod game_status;
 pub mod history;
 pub mod moves;
