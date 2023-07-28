@@ -6,9 +6,7 @@ const BOARD_SIZE: usize = 8;
 pub type Square = Option<Piece>;
 
 #[derive(Clone, Copy, PartialEq, Hash)]
-pub struct Board {
-    squares: [[Square; BOARD_SIZE]; BOARD_SIZE],
-}
+pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
     fn default() -> Self {
@@ -24,7 +22,7 @@ impl Default for Board {
         squares[0] = Self::get_back_rank(Color::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Color::Black);
 
-        Self { squares }
+        Self(squares)
     }
 }
 
@@ -47,14 +45,14 @@ impl Board {
     }
 
     pub fn get_piece(&self, at: &Position) -> Square {
-        self.squares[at.y][at.x]
+        self.0[at.y][at.x]
     }
 
     pub fn set_piece(&mut self, at: &Position, square: Square) {
-        self.squares[at.y][at.x] = square;
+        self.0[at.y][at.x] = square;
     }
 
     pub fn take_piece(&mut self, from: &Position) -> Square {
-        self.squares[from.y][from.x].take()
+        self.0[from.y][from.x].take()
     }
 }

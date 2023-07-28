@@ -1,9 +1,7 @@
-use crate::{
-    board::Board,
-    displacement::Displacement,
-    moves::Move,
-    pieces::{Color, Piece, Position},
-};
+use crate::board::Board;
+use crate::displacement::Displacement;
+use crate::moves::Move;
+use crate::pieces::{Color, Piece, Position};
 
 #[derive(Clone, Copy)]
 pub enum CastlingRightsKind {
