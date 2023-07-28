@@ -12,13 +12,13 @@ impl Default for Board {
     fn default() -> Self {
         let mut squares = [[None; BOARD_SIZE]; BOARD_SIZE];
 
-        // Initialize white pawns
+        // Initialize pawns
         for i in 0..8 {
             squares[1][i] = Some(Piece::Pawn(Color::White));
             squares[6][i] = Some(Piece::Pawn(Color::Black));
         }
 
-        // Initialize the other white and black pieces
+        // Initialize the other pieces
         squares[0] = Self::get_back_rank(Color::White);
         squares[BOARD_SIZE - 1] = Self::get_back_rank(Color::Black);
 
