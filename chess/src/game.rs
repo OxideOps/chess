@@ -1,48 +1,15 @@
 use crate::board_state::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::displacement::Displacement;
+use crate::game_status::{DrawKind, GameStatus};
 use crate::history::History;
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
 use crate::timer::Timer;
 use crate::turn::Turn;
-
+use crate::chess_result::{ChessResult, ChessError};
 use std::collections::HashSet;
 use web_time::Duration;
-
-pub type ChessResult = Result<(), ChessError>;
-#[derive(Debug)]
-pub enum ChessError {
-    OutOfBounds,
-    NoPieceAtPosition,
-    InvalidMove,
-    GameIsInDraw,
-}
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DrawKind {
-    Stalemate,
-    FiftyMoveRule,
-}
-
-#[derive(Clone, Copy, Default, PartialEq, Debug)]
-pub enum GameStatus {
-    #[default]
-    Ongoing,
-    Stalemate,
-    Check,
-    Checkmate,
-    Replay,
-    Draw(DrawKind),
-}
-
-impl GameStatus {
-    pub fn update(&mut self, status: GameStatus) {
-        if *self != status {
-            log::info!("GameStatus changing from {:?} to {:?}", *self, status);
-            *self = status
-        }
-    }
-}
 
 pub struct GameBuilder {
     duration: Duration,
