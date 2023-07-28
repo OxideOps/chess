@@ -1,7 +1,7 @@
 use crate::board::{Board, Square};
 use crate::castling_rights::CastlingRights;
-use crate::displacement::Displacement;
 use crate::chess_result::{ChessError, ChessResult};
+use crate::displacement::Displacement;
 use crate::moves::Move;
 use crate::pieces::{Color, Piece, Position};
 use std::collections::hash_map::DefaultHasher;
