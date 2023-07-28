@@ -22,11 +22,10 @@ pub enum ChessError {
     OwnPieceInDestination,
     ColorInCheck,
     Checkmate,
-    Stalemate,
     InvalidPromotion,
     NotColorsTurn,
     EmptyPieceMove,
-    FiftyMoveRule,
+    GameIsInDrawStatus,
 }
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum DrawKind {
@@ -187,7 +186,6 @@ impl Game {
         if let Some(piece) = self.get_piece(&from) {
             let mv = Move::new(from, to);
             self.is_move_valid(&mv)?;
-
             let mut next_state = self.clone_current_state();
             next_state.move_piece(&mv);
             self.history.add_info(next_state, mv);
@@ -259,8 +257,8 @@ impl Game {
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
-        if self.status == GameStatus::Draw(DrawKind::FiftyMoveRule) {
-            return Err(ChessError::FiftyMoveRule);
+        if matches!(self.status, GameStatus::Draw(..)) {
+            return Err(ChessError::GameIsInDrawStatus);
         }
         BoardState::is_in_bounds(&mv.from)?;
         BoardState::is_in_bounds(&mv.to)?;
