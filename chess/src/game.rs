@@ -19,13 +19,12 @@ pub enum ChessError {
     OutOfBounds,
     NoPieceAtPosition,
     InvalidMove,
-    OwnPieceInDestination,
-    ColorInCheck,
-    Checkmate,
+    GameIsInDraw,
+}
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum DrawKind {
     Stalemate,
-    InvalidPromotion,
-    NotColorsTurn,
-    EmptyPieceMove,
+    FiftyMoveRule,
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
@@ -36,6 +35,7 @@ pub enum GameStatus {
     Check,
     Checkmate,
     Replay,
+    Draw(DrawKind),
 }
 
 impl GameStatus {
@@ -180,7 +180,6 @@ impl Game {
         if let Some(piece) = self.get_piece(&from) {
             let mv = Move::new(from, to);
             self.is_move_valid(&mv)?;
-
             let mut next_state = self.clone_current_state();
             next_state.move_piece(&mv);
             self.history.add_info(next_state, mv);
@@ -207,6 +206,11 @@ impl Game {
     }
 
     fn update_status(&mut self) {
+        if self.history.get_fifty_move_count() == 50 {
+            self.status
+                .update(GameStatus::Draw(DrawKind::FiftyMoveRule));
+            return;
+        }
         if self.history.is_replaying() {
             self.status.update(GameStatus::Replay);
             return;
@@ -247,10 +251,12 @@ impl Game {
     }
 
     fn is_move_valid(&self, mv: &Move) -> ChessResult {
+        if matches!(self.status, GameStatus::Draw(..)) {
+            return Err(ChessError::GameIsInDraw);
+        }
         BoardState::is_in_bounds(&mv.from)?;
         BoardState::is_in_bounds(&mv.to)?;
         self.is_piece_some(&mv.from)?;
-
         if self.valid_moves.contains(mv) {
             Ok(())
         } else {
