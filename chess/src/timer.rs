@@ -1,8 +1,5 @@
 use crate::pieces::Color;
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::{Duration, Instant};
-#[cfg(target_arch = "wasm32")]
 use web_time::{Duration, Instant};
 
 #[derive(Clone)]
