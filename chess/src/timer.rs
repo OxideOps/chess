@@ -1,4 +1,4 @@
-use crate::pieces::Color;
+use crate::color::Color;
 
 use web_time::{Duration, Instant};
 

@@ -1,4 +1,5 @@
-use crate::pieces::{Piece, Position};
+use crate::piece::Piece;
+use crate::position::Position;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 

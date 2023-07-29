@@ -1,93 +1,17 @@
-use crate::board::BoardState;
+use crate::board_state::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
+use crate::chess_result::{ChessError, ChessResult};
+use crate::color::Color;
 use crate::displacement::Displacement;
+use crate::game_status::{DrawKind, GameStatus};
 use crate::history::History;
 use crate::moves::Move;
-use crate::pieces::{Color, Piece, Position};
+use crate::piece::Piece;
+use crate::position::Position;
 use crate::timer::Timer;
 use crate::turn::Turn;
-
 use std::collections::HashSet;
 use web_time::Duration;
-
-pub type ChessResult = Result<(), ChessError>;
-#[derive(Debug)]
-pub enum ChessError {
-    OutOfBounds,
-    NoPieceAtPosition,
-    InvalidMove,
-    GameIsInDraw,
-}
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DrawKind {
-    Stalemate,
-    FiftyMoveRule,
-}
-
-#[derive(Clone, Copy, Default, PartialEq, Debug)]
-pub enum GameStatus {
-    #[default]
-    Ongoing,
-    Stalemate,
-    Check,
-    Checkmate,
-    Replay,
-    Draw(DrawKind),
-}
-
-impl GameStatus {
-    pub fn update(&mut self, status: GameStatus) {
-        if *self != status {
-            log::info!("GameStatus changing from {:?} to {:?}", *self, status);
-            *self = status
-        }
-    }
-}
-
-pub struct GameBuilder {
-    duration: Duration,
-    state: BoardState,
-}
-
-impl Default for GameBuilder {
-    fn default() -> Self {
-        Self {
-            duration: Duration::from_secs(60),
-            state: BoardState::default(),
-        }
-    }
-}
-
-impl GameBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn build(self) -> Game {
-        let mut game = Game {
-            history: History::with_state(self.state),
-            timer: Timer::with_duration(self.duration),
-            ..Default::default()
-        };
-        game.add_moves();
-        game
-    }
-
-    pub fn duration(mut self, duration: Duration) -> Self {
-        self.duration = duration;
-        self
-    }
-
-    pub fn state(mut self, state: BoardState) -> Self {
-        self.state = state;
-        self
-    }
-
-    pub fn player(mut self, player: Color) -> Self {
-        self.state.player = player;
-        self
-    }
-}
 
 #[derive(Default, Clone)]
 pub struct Game {
@@ -327,7 +251,7 @@ impl Game {
         }
     }
 
-    fn add_moves(&mut self) {
+    pub fn add_moves(&mut self) {
         self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
@@ -393,5 +317,49 @@ impl Game {
             .iter()
             .map(|turn| format!("{turn}"))
             .collect()
+    }
+}
+pub struct GameBuilder {
+    duration: Duration,
+    state: BoardState,
+}
+
+impl Default for GameBuilder {
+    fn default() -> Self {
+        Self {
+            duration: Duration::from_secs(60),
+            state: BoardState::default(),
+        }
+    }
+}
+
+impl GameBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn build(self) -> Game {
+        let mut game = Game {
+            history: History::with_state(self.state),
+            timer: Timer::with_duration(self.duration),
+            ..Default::default()
+        };
+        game.add_moves();
+        game
+    }
+
+    pub fn duration(mut self, duration: Duration) -> Self {
+        self.duration = duration;
+        self
+    }
+
+    pub fn state(mut self, state: BoardState) -> Self {
+        self.state = state;
+        self
+    }
+
+    pub fn player(mut self, player: Color) -> Self {
+        self.state.player = player;
+        self
     }
 }
