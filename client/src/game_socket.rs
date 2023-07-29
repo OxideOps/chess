@@ -3,7 +3,7 @@ use chess::game::Game;
 use chess::moves::Move;
 use dioxus::prelude::*;
 use futures_util::{
-    future::join,
+    join,
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
@@ -16,16 +16,17 @@ type ReadStream = SplitStream<WebSocketStream>;
 const GAME_ID: u32 = 1234;
 
 pub async fn create_game_socket(game: UseRef<Game>, rx: UnboundedReceiver<Move>) {
-    if let Err(err) = handle_socket(&game, rx).await {
-        log::error!("create_game_socket: {err:?}");
-    }
+    match connect_to_socket().await {
+        Ok((write, read)) => {
+            join!(read_from_socket(read, &game), write_to_socket(rx, write));
+        }
+        Err(err) => log::error!("Error connecting game socket: {err:?}"),
+    };
 }
 
-async fn handle_socket(game: &UseRef<Game>, rx: UnboundedReceiver<Move>) -> anyhow::Result<()> {
+async fn connect_to_socket() -> anyhow::Result<(WriteStream, ReadStream)> {
     let url = format!("ws://muddy-fog-684.fly.dev/game/{GAME_ID}");
-    let (write, read) = connect(Url::parse(&url)?).await?.split();
-    join(read_from_socket(read, game), write_to_socket(rx, write)).await;
-    Ok(())
+    Ok(connect(Url::parse(&url)?).await?.split())
 }
 
 async fn send_move(mv: &Move, socket: &mut WriteStream) -> anyhow::Result<()> {
@@ -37,7 +38,7 @@ async fn send_move(mv: &Move, socket: &mut WriteStream) -> anyhow::Result<()> {
 async fn write_to_socket(mut rx: UnboundedReceiver<Move>, mut socket: WriteStream) {
     while let Some(mv) = rx.next().await {
         if let Err(err) = send_move(&mv, &mut socket).await {
-            log::error!("write_to_socket: {err:?}");
+            log::error!("Error sending move: {err:?}");
         }
     }
 }
@@ -52,7 +53,7 @@ fn handle_message(message: Result<Message>, game: &UseRef<Game>) -> anyhow::Resu
 async fn read_from_socket(mut stream: ReadStream, game: &UseRef<Game>) {
     while let Some(message) = stream.next().await {
         if let Err(err) = handle_message(message, &game) {
-            log::error!("read_from_socket: {err:?}");
+            log::error!("Error receiving move: {err:?}");
         }
     }
 }
