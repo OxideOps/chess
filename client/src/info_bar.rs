@@ -17,8 +17,8 @@ fn display_time(time: Duration) -> String {
 }
 
 #[derive(Props, PartialEq)]
-pub struct InfoBarProps {
-    game: UseRef<Game>,
+pub struct InfoBarProps<'a> {
+    game: &'a UseRef<Game>,
     time: Duration,
     left: u32,
 }
@@ -45,7 +45,7 @@ fn use_timer_future(
     });
 }
 
-pub fn InfoBar(cx: Scope<InfoBarProps>) -> Element {
+pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     let white_time = use_state(cx, || display_time(cx.props.time));
     let black_time = use_state(cx, || display_time(cx.props.time));
     let active_time_state = match cx.props.game.with(|game| game.get_current_player()) {

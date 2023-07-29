@@ -20,12 +20,12 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
     cx.render(rsx! {
         Board {
             size: BOARD_SIZE,
-            game: game.to_owned(),
+            game: game,
             white_player_kind: cx.props.white_player.kind,
             black_player_kind: cx.props.black_player.kind,
         },
         InfoBar {
-            game: game.to_owned(),
+            game: game,
             time: cx.props.time,
             left: BOARD_SIZE,
         }

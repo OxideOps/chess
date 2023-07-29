@@ -14,14 +14,14 @@ fn get_piece_image_file(piece: Piece) -> String {
 }
 
 #[derive(Props, PartialEq)]
-pub struct BoardProps {
+pub struct BoardProps<'a> {
     size: u32,
-    game: UseRef<Game>,
+    game: &'a UseRef<Game>,
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
 }
 
-impl BoardProps {
+impl BoardProps<'_> {
     // We want the square a dragged piece is considered to be on to be based on the center of
     // the piece, not the location of the mouse. This requires offsetting based on the original
     // mouse down location
@@ -132,7 +132,7 @@ impl BoardProps {
     }
 }
 
-pub fn Board(cx: Scope<BoardProps>) -> Element {
+pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let game_socket = if cx.props.has_remote_player() {
