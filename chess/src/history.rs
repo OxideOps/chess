@@ -1,4 +1,4 @@
-use crate::board::BoardState;
+use crate::board_state::BoardState;
 use crate::moves::Move;
 use crate::turn::Turn;
 

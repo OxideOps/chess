@@ -1,7 +1,7 @@
 use crate::widget::Widget;
 use std::time::Duration;
 
-use chess::{pieces::Color, player::Player};
+use chess::{color::Color, player::Player};
 use dioxus::prelude::*;
 
 pub fn App(cx: Scope) -> Element {

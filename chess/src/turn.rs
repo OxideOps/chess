@@ -1,4 +1,4 @@
-use crate::{board::BoardState, moves::Move};
+use crate::{board_state::BoardState, moves::Move};
 
 use std::fmt;
 
