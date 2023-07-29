@@ -309,6 +309,21 @@ impl Game {
             .map(|turn| format!("{turn}"))
             .collect()
     }
+
+    pub fn get_rounds_str(&self) -> Vec<(String, String)> {
+        let mut rounds = Vec::new();
+        let mut iter = self.history.turns.iter();
+
+        while let Some(white) = iter.next() {
+            let white_move = format!("{}", white);
+            let black_move = iter
+                .next()
+                .map_or(String::from("..."), |black| format!("{}", black));
+            rounds.push((white_move, black_move));
+        }
+
+        rounds
+    }
 }
 pub struct GameBuilder {
     duration: Duration,

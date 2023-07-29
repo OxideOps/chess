@@ -52,14 +52,14 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
         Color::White => white_time,
         Color::Black => black_time,
     };
-    use_timer_future(cx, &cx.props.game, active_time_state);
+    use_timer_future(cx, cx.props.game, active_time_state);
 
     cx.render(rsx! {
         div {
             class: "time-container",
             style: "position: absolute; left: {cx.props.left}px; top: 0px",
             p {
-                "White time: {white_time}\n",
+                "White time: {white_time}",
             },
             p {
                 "Black time: {black_time}",
@@ -68,12 +68,19 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
                 class: "moves-container",
                 style: "position: relative; overflow-y: auto;",
 
-                "Moves:"
+                p { "Rounds:" }
                 cx.props.game.with(|game| {
-                    game.get_move_history().into_iter().enumerate().map(|(i, turn_str)| {
+                    game.get_rounds_str().into_iter().enumerate().map(|(i, (mv1, mv2))| {
                         rsx! {
-                            p {
-                                "{i + 1} {turn_str}"
+                            tr {
+                                td {
+                                    style: "padding-right: 15px;" ,
+                                    "{i + 1}." }
+                                td {
+                                    style: "padding-right: 15px;",
+                                    "{mv1}"
+                                }
+                                td { "{mv2}" }
                             }
                         }
                     })
