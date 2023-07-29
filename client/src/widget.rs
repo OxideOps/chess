@@ -176,7 +176,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                     class: "moves-container",
                     style: "position: relative; overflow-y: auto;",
 
-                    "Moves"
+                    "Moves:"
                     game.with(|game| {
                         game.get_move_history().into_iter().enumerate().map(|(i, turn_str)| {
                             rsx! {

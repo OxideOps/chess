@@ -316,6 +316,7 @@ impl Game {
         self.history
             .turns
             .iter()
+            .skip(1)
             .map(|turn| format!("{turn}"))
             .collect()
     }
