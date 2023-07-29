@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 log = "0.4.19"
 serde = "1.0.173"
+thiserror = "1.0.44"
 web-time = { version = "0.2.0" }
