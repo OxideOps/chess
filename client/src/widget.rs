@@ -44,7 +44,11 @@ fn get_piece_image_file(piece: Piece) -> String {
     format!("images/{piece}.png")
 }
 
-fn get_positions(pos: &Position, mouse_down_state: &Option<ClientPoint>, dragging_point_state: &Option<ClientPoint>) -> (ClientPoint, usize) {
+fn get_positions(
+    pos: &Position,
+    mouse_down_state: &Option<ClientPoint>,
+    dragging_point_state: &Option<ClientPoint>,
+) -> (ClientPoint, usize) {
     let mut top_left = to_point(pos);
     let mut z_index = 0;
     if let Some(mouse_down) = mouse_down_state {
@@ -56,7 +60,7 @@ fn get_positions(pos: &Position, mouse_down_state: &Option<ClientPoint>, draggin
             }
         }
     }
-    return (top_left, z_index)
+    return (top_left, z_index);
 }
 
 fn display_time(time: Duration) -> String {
