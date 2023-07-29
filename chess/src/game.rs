@@ -9,9 +9,7 @@ use crate::moves::Move;
 use crate::piece::Piece;
 use crate::position::Position;
 use crate::timer::Timer;
-use crate::turn::Turn;
 use std::collections::HashSet;
-use thiserror::Error;
 use web_time::Duration;
 
 #[derive(Default, Clone)]
@@ -63,10 +61,6 @@ impl Game {
         self.get_piece(at).unwrap().can_snipe()
     }
 
-    fn get_info_for_turn(&self, mv: usize) -> &Turn {
-        self.history.get_info_for_move(mv)
-    }
-
     fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
         self.get_current_state()
             .castling_rights
@@ -92,10 +86,6 @@ impl Game {
 
     pub fn resume(&mut self) {
         self.navigate_history(|history| history.resume());
-    }
-
-    fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        self.history.add_info(next_state, mv);
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
