@@ -44,12 +44,11 @@ fn get_piece_image_file(piece: Piece) -> String {
     format!("images/{piece}.png")
 }
 
-fn draw_piece<'a, 'b>(
-    piece: Piece,
+fn get_positions(
     pos: &Position,
     mouse_down_state: &Option<ClientPoint>,
     dragging_point_state: &Option<ClientPoint>,
-) -> LazyNodes<'a, 'b> {
+) -> (ClientPoint, usize) {
     let mut top_left = to_point(pos);
     let mut z_index = 0;
     if let Some(mouse_down) = mouse_down_state {
@@ -61,15 +60,7 @@ fn draw_piece<'a, 'b>(
             }
         }
     }
-    rsx! {
-        img {
-            src: "{get_piece_image_file(piece)}",
-            class: "images",
-            style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
-            width: "{BOARD_SIZE / 8}",
-            height: "{BOARD_SIZE / 8}",
-        }
-    }
+    (top_left, z_index)
 }
 
 fn display_time(time: Duration) -> String {
@@ -160,7 +151,16 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
             },
             // pieces
             game.with(|game| game.get_pieces()).into_iter().map(|(piece, pos)| {
-                draw_piece(piece, &pos, mouse_down_state.get(), dragging_point_state.get())
+                let (top_left, z_index) = get_positions(&pos, mouse_down_state, dragging_point_state);
+                rsx! {
+                    img {
+                        src: "{get_piece_image_file(piece)}",
+                        class: "images",
+                        style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
+                        width: "{BOARD_SIZE / 8}",
+                        height: "{BOARD_SIZE / 8}",
+                    }
+                }
             }),
             // info bar
             div {
