@@ -11,6 +11,7 @@ use crate::position::Position;
 use crate::timer::Timer;
 use crate::turn::Turn;
 use std::collections::HashSet;
+use thiserror::Error;
 use web_time::Duration;
 
 #[derive(Default, Clone)]

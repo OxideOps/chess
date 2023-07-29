@@ -29,6 +29,7 @@ pub async fn handler(
             let stream = connections[index].1.clone();
             handle_socket(Some((sink, stream, connected.clone())))
         } else {
+            log::warn!("Cannot connect client to socket. Already 2 clients.");
             handle_socket(None)
         }
     })
@@ -50,31 +51,44 @@ async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Opti
     index
 }
 
+async fn close_socket(write: WriteStream, read: ReadStream, connected: Arc<RwLock<bool>>) {
+    if let Some(write) = write.lock().await.as_mut() {
+        if let Err(err) = write.close().await {
+            log::error!("Error closing socket: {err:?}");
+        }
+    }
+    *connected.write().await = false;
+    *write.lock().await = None;
+    *read.lock().await = None;
+}
+
 async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>>)>) {
-    if let Some((sink, stream, connected)) = params {
+    if let Some((write, read, connected)) = params {
         *connected.write().await = true;
-        while let Some(msg) = stream.lock().await.as_mut().unwrap().next().await {
-            if !*connected.read().await {
-                break;
-            }
-            if let Ok(msg) = msg {
-                if let Some(sink) = sink.lock().await.as_mut() {
-                    sink.send(msg).await.expect("Failed to send move!");
+        if let Some(read) = read.lock().await.as_mut() {
+            // forward messages
+            while let Some(msg) = read.next().await {
+                if !*connected.read().await {
+                    log::info!("A player has disconnected from the socket, closing socket.");
+                    break;
                 }
-            } else {
-                *connected.write().await = false;
-                break;
+                if let Ok(msg) = msg {
+                    if let Some(write) = write.lock().await.as_mut() {
+                        if let Err(err) = write.send(msg).await {
+                            log::error!("Error forwarding message to other client: {err:?}");
+                        }
+                    } else {
+                        log::warn!("No other client socket to forward messages to!");
+                    }
+                } else {
+                    log::error!("Closing socket due to error from one of the clients: {msg:?}");
+                    break;
+                }
             }
+        } else {
+            log::error!("Socket that we should have just created does not exist. If we get here there is a bug.");
         }
         // if we have been disconnected, clean up our connections
-        sink.lock()
-            .await
-            .as_mut()
-            .unwrap()
-            .close()
-            .await
-            .expect("Failed to close socket");
-        *sink.lock().await = None;
-        *stream.lock().await = None;
+        close_socket(write, read, connected).await;
     }
 }
