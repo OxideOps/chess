@@ -67,25 +67,25 @@ impl Game {
             .has_castling_right(right)
     }
 
-    fn navigate_history(&mut self, change: impl FnOnce(&mut History)) {
+    fn change_history(&mut self, change: impl FnOnce(&mut History)) {
         change(&mut self.history);
         self.update_status();
     }
 
     pub fn go_back_a_move(&mut self) {
-        self.navigate_history(|history| history.previous_move());
+        self.change_history(|history| history.previous_move());
     }
 
     pub fn go_forward_a_move(&mut self) {
-        self.navigate_history(|history| history.next_move());
+        self.change_history(|history| history.next_move());
     }
 
     pub fn go_to_start(&mut self) {
-        self.navigate_history(|history| history.go_to_start());
+        self.change_history(|history| history.go_to_start());
     }
 
     pub fn resume(&mut self) {
-        self.navigate_history(|history| history.resume());
+        self.change_history(|history| history.resume());
     }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
