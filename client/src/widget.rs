@@ -1,12 +1,13 @@
 use crate::game_socket::create_game_socket;
 use async_std::task::sleep;
 
+use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
 use chess::moves::Move;
-use chess::pieces::{Color, Piece, Position};
+use chess::piece::Piece;
 use chess::player::{Player, PlayerKind};
-
+use chess::position::Position;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use std::time::Duration;

@@ -1,4 +1,4 @@
-use crate::pieces::Color;
+use crate::color::Color;
 
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum PlayerKind {

@@ -1,9 +1,11 @@
 use crate::board::{Board, Square};
 use crate::castling_rights::CastlingRights;
 use crate::chess_result::{ChessError, ChessResult};
+use crate::color::Color;
 use crate::displacement::Displacement;
 use crate::moves::Move;
-use crate::pieces::{Color, Piece, Position};
+use crate::piece::Piece;
+use crate::position::Position;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 

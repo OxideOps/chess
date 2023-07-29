@@ -1,11 +1,13 @@
 use crate::board_state::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::chess_result::{ChessError, ChessResult};
+use crate::color::Color;
 use crate::displacement::Displacement;
 use crate::game_status::{DrawKind, GameStatus};
 use crate::history::History;
 use crate::moves::Move;
-use crate::pieces::{Color, Piece, Position};
+use crate::piece::Piece;
+use crate::position::Position;
 use crate::timer::Timer;
 use crate::turn::Turn;
 use std::collections::HashSet;
