@@ -21,6 +21,7 @@ pub async fn main() {
             axum::Router::new()
                 .nest_service("/", ServeFile::new("dist/index.html"))
                 .serve_static_assets("dist")
+                .register_server_fns("")
                 .route(
                     "/game/:game_id",
                     get(move |ws: WebSocketUpgrade| handler(ws, connections, connected.clone())),

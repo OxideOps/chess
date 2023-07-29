@@ -620,6 +620,7 @@ dependencies = [
  "common",
  "dioxus",
  "dioxus-desktop",
+ "dioxus-fullstack",
  "dioxus-logger",
  "dioxus-web",
  "futures",
@@ -695,7 +696,10 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "dioxus",
+ "dioxus-fullstack",
  "log",
+ "serde",
 ]
 
 [[package]]
@@ -3577,6 +3581,7 @@ dependencies = [
  "dioxus-logger",
  "futures",
  "log",
+ "serde",
  "tokio",
  "tower-http",
 ]
