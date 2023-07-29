@@ -57,7 +57,7 @@ async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>
         if let Some(read_stream) = read_stream.lock().await.as_mut() {
             while let Some(msg) = read_stream.next().await {
                 if !*connected.read().await {
-                    log::info!("At least one player has disconnected from the socket, closing socket.");
+                    log::info!("A player has disconnected from the socket, closing socket.");
                     break;
                 }
                 if let Ok(msg) = msg {

@@ -120,8 +120,10 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
     // hooks
     let game = use_ref(cx, || Game::builder().duration(cx.props.time).build());
 
-    let write_socket = if has_remote_player(cx.props) {
-        Some(create_game_socket(cx, game))
+    let game_socket = if has_remote_player(cx.props) {
+        Some(use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
+            create_game_socket(game.to_owned(), rx)
+        }))
     } else {
         None
     };
@@ -145,7 +147,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
             tabindex: 0,
             // event handlers
             onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| handle_on_mouse_up_event(event, game, cx.props, mouse_down_state, dragging_point_state, write_socket),
+            onmouseup: move |event| handle_on_mouse_up_event(event, game, cx.props, mouse_down_state, dragging_point_state, game_socket),
             onmousemove: move |event| handle_on_mouse_move_event(event, game, mouse_down_state, dragging_point_state),
             onkeydown: move |event| handle_on_key_down(&event.key(), game),
             //board
@@ -208,7 +210,7 @@ fn handle_on_mouse_up_event(
     props: &WidgetProps,
     mouse_down_state: &UseState<Option<ClientPoint>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
-    write_socket: Option<&Coroutine<Move>>,
+    game_socket: Option<&Coroutine<Move>>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         let from = to_position(mouse_down);
@@ -221,8 +223,8 @@ fn handle_on_mouse_up_event(
             && game.with(|game| game.status) != GameStatus::Replay
             && game.with_mut(|game| game.move_piece(from, to).is_ok())
         {
-            if let Some(write_socket) = &write_socket {
-                write_socket.send(Move::new(from, to));
+            if let Some(game_socket) = game_socket {
+                game_socket.send(Move::new(from, to));
             }
         }
         mouse_down_state.set(None);
