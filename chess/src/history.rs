@@ -83,7 +83,7 @@ impl History {
         self.current_turn != self.turns.len()
     }
 
-    pub fn current_round(&self) -> usize {
-        self.current_turn / 2 + 1
+    pub fn get_num_rounds(&self) -> usize {
+        self.turns.len() / 2 + 1
     }
 }

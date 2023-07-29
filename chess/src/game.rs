@@ -311,7 +311,7 @@ impl Game {
     }
 
     pub fn get_rounds_str(&self) -> Vec<(String, String)> {
-        let mut rounds = Vec::new();
+        let mut rounds = Vec::with_capacity(self.history.get_num_rounds());
         let mut iter = self.history.turns.iter();
 
         while let Some(white) = iter.next() {
