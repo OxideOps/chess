@@ -51,18 +51,30 @@ async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Opti
     index
 }
 
+async fn close_socket(write: WriteStream, read: ReadStream, connected: Arc<RwLock<bool>>) {
+    if let Some(write) = write.lock().await.as_mut() {
+        if let Err(err) = write.close().await {
+            log::error!("Error closing socket: {err:?}");
+        }
+    }
+    *connected.write().await = false;
+    *write.lock().await = None;
+    *read.lock().await = None;
+}
+
 async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>>)>) {
-    if let Some((write_stream, read_stream, connected)) = params {
+    if let Some((write, read, connected)) = params {
         *connected.write().await = true;
-        if let Some(read_stream) = read_stream.lock().await.as_mut() {
-            while let Some(msg) = read_stream.next().await {
+        if let Some(read) = read.lock().await.as_mut() {
+            // forward messages
+            while let Some(msg) = read.next().await {
                 if !*connected.read().await {
                     log::info!("A player has disconnected from the socket, closing socket.");
                     break;
                 }
                 if let Ok(msg) = msg {
-                    if let Some(write_stream) = write_stream.lock().await.as_mut() {
-                        if let Err(err) = write_stream.send(msg).await {
+                    if let Some(write) = write.lock().await.as_mut() {
+                        if let Err(err) = write.send(msg).await {
                             log::error!("Error forwarding message to other client: {err:?}");
                         }
                     } else {
@@ -77,13 +89,6 @@ async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>
             log::error!("Socket that we should have just created does not exist. If we get here there is a bug.");
         }
         // if we have been disconnected, clean up our connections
-        if let Some(write_stream) = write_stream.lock().await.as_mut() {
-            if let Err(err) = write_stream.close().await {
-                log::error!("Error closing socket: {err:?}");
-            }
-        }
-        *connected.write().await = false;
-        *write_stream.lock().await = None;
-        *read_stream.lock().await = None;
+        close_socket(write, read, connected).await;
     }
 }
