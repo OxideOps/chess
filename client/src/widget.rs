@@ -65,27 +65,17 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
 
                     p{ "Rounds:" }
                     game.with(|game| {
-                        let mut move_history = game.get_move_history().into_iter();
-                        let mut round_num = 1;
-                        std::iter::from_fn(move || {
-                            if let Some(mv_str_1) = move_history.next() {
-                                let mv_str_2 = move_history.next().unwrap_or("".to_string());
-                                let row = rsx! {
-                                    tr {
-                                        td {
-                                            style: "padding-right: 15px;" ,
-                                            "{round_num}." }
-                                        td {
-                                            style: "padding-right: 15px;",
-                                            "{mv_str_1}" 
-                                        }
-                                        td { "{mv_str_2}" }
+                        game.get_move_history().enumerate().map(|(i, mv_str)| {
+                            rsx! {
+                                tr {
+                                    td {
+                                        style: "padding-right: 15px;" ,
+                                        "{i}." }
+                                    td {
+                                        style: "padding-right: 15px;",
+                                        "{mv_str}" 
                                     }
-                                };
-                                round_num += 1;
-                                Some(row)
-                            } else {
-                                None
+                                }
                             }
                         })
                     })
