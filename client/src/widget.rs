@@ -188,7 +188,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                                         td {
                                             style: "padding-right: 15px;" ,
                                             "{round_num}." }
-                                        td { 
+                                        td {
                                             style: "padding-right: 15px;",
                                             "{mv_str_1}" 
                                         }
