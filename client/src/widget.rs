@@ -60,7 +60,7 @@ fn get_positions(
             }
         }
     }
-    return (top_left, z_index);
+    (top_left, z_index)
 }
 
 fn display_time(time: Duration) -> String {
