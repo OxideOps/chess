@@ -177,20 +177,12 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
                     "Moves"
                     game.with(|game| {
                         game.get_move_history().into_iter().enumerate().map(|(i, turn_str)| {
-                            if i != 0 {
                                 rsx! {
                                     p {
                                         "{i} {turn_str}"
                                     }
                                 }
-                            } else {
-                                rsx! {
-                                    p {
-                                        ""
-                                    }
-                                }
-                            }
-                        })
+                        }).skip(1)
                     })
                 }
             },
