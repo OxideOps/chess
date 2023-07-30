@@ -15,18 +15,14 @@ pub struct InfoBarProps<'a> {
 pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         div {
-            class: "time-container",
+            class: "info-bar-container",
             style: "position: absolute; left: {cx.props.left}px; top: 0px",
             Timer {
                 game: cx.props.game,
                 time: cx.props.time,
             },
-            div {
-                class: "moves-container",
-                style: "position: relative; overflow-y: auto;",
-                RoundList {
-                    game: cx.props.game
-                }
+            RoundList {
+                game: cx.props.game
             }
         },
     })

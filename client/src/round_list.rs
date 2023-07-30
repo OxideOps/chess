@@ -8,29 +8,33 @@ pub struct RoundListProps<'a> {
 
 pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
-        p { "Rounds:" },
-        cx.props.game.with(|game| {
-            game.get_rounds_str().into_iter().enumerate().map(|(i, moves)| {
-                rsx! {
-                    div {
-                        style: "margin-bottom: 15px;",
-                        tr {
-                            td {
-                                style: "padding-right: 15px;" ,
-                                "{i + 1}."
-                            }
-                            td {
-                                style: "padding-right: 15px;",
-                                "{moves.0}"
-                            }
-                            td {
-                                style: "padding-right: 15px;",
-                                "{moves.1}"
+        div {
+            class: "moves-container",
+            style: "position: relative; overflow-y: auto;",
+            p { "Rounds:" },
+            cx.props.game.with(|game| {
+                game.get_rounds_str().into_iter().enumerate().map(|(i, moves)| {
+                    rsx! {
+                        div {
+                            style: "margin-bottom: 15px;",
+                            tr {
+                                td {
+                                    style: "padding-right: 15px;" ,
+                                    "{i + 1}."
+                                }
+                                td {
+                                    style: "padding-right: 15px;",
+                                    "{moves.0}"
+                                }
+                                td {
+                                    style: "padding-right: 15px;",
+                                    "{moves.1}"
+                                }
                             }
                         }
                     }
-                }
+                })
             })
-        })
+        }
     })
 }
