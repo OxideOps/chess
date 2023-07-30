@@ -8,6 +8,8 @@ use std::time::Duration;
 
 #[derive(Props, PartialEq)]
 pub struct WidgetProps {
+    #[props(!optional)]
+    game_id: Option<u32>,
     white_player: UseRef<Player>,
     black_player: UseRef<Player>,
     time: Duration,
@@ -20,6 +22,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
         Board {
             size: cx.props.height,
             game: game,
+            game_id: cx.props.game_id,
             white_player_kind: cx.props.white_player.with(|player| player.kind),
             black_player_kind: cx.props.black_player.with(|player| player.kind),
         },

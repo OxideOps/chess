@@ -17,6 +17,8 @@ fn get_piece_image_file(piece: Piece) -> String {
 pub struct BoardProps<'a> {
     size: u32,
     game: &'a UseRef<Game>,
+    #[props(!optional)]
+    game_id: Option<u32>,
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
 }
@@ -135,9 +137,9 @@ impl BoardProps<'_> {
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let game_socket = if cx.props.has_remote_player() {
+    let game_socket = if let Some(game_id) = cx.props.game_id {
         Some(use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
-            create_game_socket(cx.props.game.to_owned(), rx)
+            create_game_socket(cx.props.game.to_owned(), game_id, rx)
         }))
     } else {
         None
