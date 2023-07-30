@@ -13,10 +13,8 @@ use url::Url;
 type WriteStream = SplitSink<WebSocketStream, Message>;
 type ReadStream = SplitStream<WebSocketStream>;
 
-const GAME_ID: u32 = 1234;
-
-pub async fn create_game_socket(game: UseRef<Game>, rx: UnboundedReceiver<Move>) {
-    match connect_to_socket().await {
+pub async fn create_game_socket(game: UseRef<Game>, game_id: u32, rx: UnboundedReceiver<Move>) {
+    match connect_to_socket(game_id).await {
         Ok((write, read)) => {
             join!(read_from_socket(read, &game), write_to_socket(rx, write));
         }
@@ -24,8 +22,8 @@ pub async fn create_game_socket(game: UseRef<Game>, rx: UnboundedReceiver<Move>)
     };
 }
 
-async fn connect_to_socket() -> anyhow::Result<(WriteStream, ReadStream)> {
-    let url = format!("ws://muddy-fog-684.fly.dev/game/{GAME_ID}");
+async fn connect_to_socket(game_id: u32) -> anyhow::Result<(WriteStream, ReadStream)> {
+    let url = format!("wss://muddy-fog-684.fly.dev/game/{game_id}");
     Ok(connect(Url::parse(&url)?).await?.split())
 }
 

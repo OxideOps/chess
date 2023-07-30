@@ -17,6 +17,7 @@ pub fn App(cx: Scope) -> Element {
 
     cx.render(rsx! {
         Widget {
+            game_id: *game_id.get(),
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
             time: Duration::from_secs(3600),
