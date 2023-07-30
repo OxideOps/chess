@@ -1,3 +1,4 @@
+use chess::color::Color;
 use dioxus_fullstack::prelude::*;
 
 #[cfg(feature = "ssr")]
@@ -14,13 +15,13 @@ pub mod games {
 }
 
 #[server(SetupRemoteGame)]
-async fn setup_remote_game() -> Result<u32, ServerFnError> {
+pub async fn setup_remote_game() -> Result<(u32, Color), ServerFnError> {
     use games::{GAMES, PENDING_GAME};
     use rand::distributions::{Distribution, Uniform};
 
     if let Some(pending_game) = *PENDING_GAME.read().await {
         *PENDING_GAME.write().await = None;
-        return Ok(pending_game);
+        return Ok((pending_game, Color::Black));
     }
 
     let mut rng = rand::thread_rng();
@@ -32,5 +33,5 @@ async fn setup_remote_game() -> Result<u32, ServerFnError> {
 
     GAMES.write().await.insert(game_id);
     *PENDING_GAME.write().await = Some(game_id);
-    Ok(game_id)
+    Ok((game_id, Color::White))
 }

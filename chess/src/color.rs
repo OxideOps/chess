@@ -1,4 +1,6 @@
-#[derive(Clone, Copy, PartialEq, Debug, Default, Hash)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Copy, PartialEq, Debug, Default, Hash, Serialize, Deserialize)]
 pub enum Color {
     #[default]
     White,
