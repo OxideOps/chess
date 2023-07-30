@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0.72"
 async-std = "1.12.0"
 chess = { path = "../chess" }
-clap = { version = "4.3.17", features = ["derive"] }
+clap = { version = "4.3.19", features = ["derive"] }
 common = { path = "../common" }
 dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
 dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git" }
@@ -18,7 +18,7 @@ futures = "0.3.28"
 futures-util = "0.3.28"
 log = "0.4.19"
 once_cell = "1.18.0"
-serde_json = "1.0.103"
+serde_json = "1.0.104"
 tokio-tungstenite-wasm = "0.1.0"
 url = "2.4.0"
 
