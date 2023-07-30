@@ -19,19 +19,22 @@ pub async fn setup_remote_game() -> Result<(u32, Color), ServerFnError> {
     use games::{GAMES, PENDING_GAME};
     use rand::distributions::{Distribution, Uniform};
 
-    if let Some(pending_game) = *PENDING_GAME.read().await {
-        *PENDING_GAME.write().await = None;
-        return Ok((pending_game, Color::Black));
+    let mut games = GAMES.write().await;
+    let mut pending_game = PENDING_GAME.write().await;
+    if let Some(game_id) = *pending_game {
+        *pending_game = None;
+        return Ok((game_id, Color::Black));
     }
 
     let mut rng = rand::thread_rng();
     let range = Uniform::from(1..10000000);
     let mut game_id = 0;
-    while GAMES.read().await.contains(&game_id) {
+    while games.contains(&game_id) {
         game_id = range.sample(&mut rng);
     }
 
-    GAMES.write().await.insert(game_id);
-    *PENDING_GAME.write().await = Some(game_id);
+    games.insert(game_id);
+    *pending_game = Some(game_id);
+
     Ok((game_id, Color::White))
 }

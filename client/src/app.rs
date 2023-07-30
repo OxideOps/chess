@@ -30,6 +30,7 @@ pub fn App(cx: Scope) -> Element {
                 cx.spawn(async move {
                     match setup_remote_game().await {
                         Ok((new_game_id, color)) => {
+                            log::info!("Got game_id: {new_game_id:?} and color: {color:?}");
                             game_id.set(Some(new_game_id));
                             let player = match color {
                                 Color::White => black_player.to_owned(),
