@@ -9,7 +9,7 @@ pub struct RoundListProps<'a> {
 pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         div {
-            class: "moves-container",
+            class: "rounds-container",
             style: "position: relative; overflow-y: auto;",
             p { "Rounds:" },
             cx.props.game.with(|game| {
