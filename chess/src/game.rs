@@ -311,18 +311,18 @@ impl Game {
     }
 
     pub fn get_rounds_str(&self) -> Vec<(String, String)> {
-        let mut rounds = Vec::with_capacity(self.history.get_num_rounds());
-        let mut iter = self.history.turns.iter();
-
-        while let Some(white) = iter.next() {
-            let white_move = format!("{}", white);
-            let black_move = iter
-                .next()
-                .map_or(String::from("..."), |black| format!("{}", black));
-            rounds.push((white_move, black_move));
-        }
-
-        rounds
+        self.history
+            .turns
+            .chunks(2)
+            .map(|chunk| {
+                (
+                    format!("{}", chunk[0]),
+                    chunk
+                        .get(1)
+                        .map_or(String::from("..."), |black| format!("{}", black)),
+                )
+            })
+            .collect()
     }
 }
 pub struct GameBuilder {
