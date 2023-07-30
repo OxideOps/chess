@@ -309,6 +309,21 @@ impl Game {
             .map(|turn| format!("{turn}"))
             .collect()
     }
+
+    pub fn get_rounds_str(&self) -> Vec<(String, String)> {
+        self.history
+            .turns
+            .chunks(2)
+            .map(|chunk| {
+                (
+                    format!("{}", chunk[0]),
+                    chunk
+                        .get(1)
+                        .map_or(String::from("..."), |black| format!("{}", black)),
+                )
+            })
+            .collect()
+    }
 }
 pub struct GameBuilder {
     duration: Duration,
