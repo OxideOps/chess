@@ -77,14 +77,15 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
                                 tr {
                                     td {
                                         style: "padding-right: 15px;" ,
-                                        "{i + 1}." }
+                                        "{i + 1}."
+                                    }
                                     td {
                                         style: "padding-right: 15px;",
                                         "{moves.0}"
                                     }
                                     td {
                                         style: "padding-right: 15px;",
-                                        "{moves.1}" 
+                                        "{moves.1}"
                                     }
                                 }
                             }
