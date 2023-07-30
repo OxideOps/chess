@@ -310,19 +310,25 @@ impl Game {
             .collect()
     }
 
-    pub fn get_rounds_str(&self) -> Vec<(String, String)> {
+    pub fn get_rounds_info(&self) -> Vec<(String, String, bool)> {
         self.history
             .turns
             .chunks(2)
-            .map(|chunk| {
+            .enumerate()
+            .map(|(i, chunk)| {
                 (
                     format!("{}", chunk[0]),
                     chunk
                         .get(1)
                         .map_or(String::from("..."), |black| format!("{}", black)),
+                    i == self.get_current_round(),
                 )
             })
             .collect()
+    }
+
+    pub fn get_current_round(&self) -> usize {
+        self.history.get_current_round()
     }
 }
 pub struct GameBuilder {

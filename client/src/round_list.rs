@@ -13,22 +13,30 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
             style: "position: relative; overflow-y: auto;",
             p { "Rounds:" },
             cx.props.game.with(|game| {
-                game.get_rounds_str().into_iter().enumerate().map(|(i, moves)| {
+                game.get_rounds_info().into_iter().enumerate().map(|(i, info)| {
+                    let fill = info.2;
+                    let style = if fill {
+                        "margin-bottom: 15px; background-color: rgba(173, 216, 230, 0.5);"
+                    }
+                    else {
+                        "margin-bottom: 15px;"
+                    };
+
                     rsx! {
                         div {
-                            style: "margin-bottom: 15px;",
+                            style: "{style}",
                             tr {
                                 td {
-                                    style: "padding-right: 15px;" ,
+                                    style: "padding-right: 15px;",
                                     "{i + 1}."
                                 }
                                 td {
                                     style: "padding-right: 15px;",
-                                    "{moves.0}"
+                                    "{info.0}"
                                 }
                                 td {
                                     style: "padding-right: 15px;",
-                                    "{moves.1}"
+                                    "{info.1}"
                                 }
                             }
                         }
