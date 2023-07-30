@@ -82,8 +82,4 @@ impl History {
     pub fn is_replaying(&self) -> bool {
         self.current_turn != self.turns.len()
     }
-
-    pub fn get_num_rounds(&self) -> usize {
-        (self.turns.len() + 1) / 2
-    }
 }
