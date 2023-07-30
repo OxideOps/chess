@@ -10,6 +10,7 @@ use futures::{
     stream::{SplitSink, SplitStream},
     {SinkExt, StreamExt},
 };
+use server_functions::setup_remote_game::games::GAMES;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
@@ -18,6 +19,7 @@ pub type ReadStream = Arc<Mutex<Option<SplitStream<WebSocket>>>>;
 pub type PlayerConnections = Arc<[(WriteStream, ReadStream); 2]>;
 
 pub async fn handler(
+    game_id: u32,
     ws: WebSocketUpgrade,
     connections: PlayerConnections,
     connected: Arc<RwLock<bool>>,
@@ -27,7 +29,7 @@ pub async fn handler(
             let other_index = (index + 1) % 2;
             let sink = connections[other_index].0.clone();
             let stream = connections[index].1.clone();
-            handle_socket(Some((sink, stream, connected.clone())))
+            handle_socket(Some((game_id, sink, stream, connected.clone())))
         } else {
             log::warn!("Cannot connect client to socket. Already 2 clients.");
             handle_socket(None)
@@ -51,19 +53,25 @@ async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Opti
     index
 }
 
-async fn close_socket(write: WriteStream, read: ReadStream, connected: Arc<RwLock<bool>>) {
+async fn close_socket(
+    game_id: u32,
+    write: WriteStream,
+    read: ReadStream,
+    connected: Arc<RwLock<bool>>,
+) {
     if let Some(write) = write.lock().await.as_mut() {
         if let Err(err) = write.close().await {
             log::error!("Error closing socket: {err:?}");
         }
     }
+    GAMES.write().await.remove(&game_id);
     *connected.write().await = false;
     *write.lock().await = None;
     *read.lock().await = None;
 }
 
-async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>>)>) {
-    if let Some((write, read, connected)) = params {
+async fn handle_socket(params: Option<(u32, WriteStream, ReadStream, Arc<RwLock<bool>>)>) {
+    if let Some((game_id, write, read, connected)) = params {
         *connected.write().await = true;
         if let Some(read) = read.lock().await.as_mut() {
             // forward messages
@@ -89,6 +97,6 @@ async fn handle_socket(params: Option<(WriteStream, ReadStream, Arc<RwLock<bool>
             log::error!("Socket that we should have just created does not exist. If we get here there is a bug.");
         }
         // if we have been disconnected, clean up our connections
-        close_socket(write, read, connected).await;
+        close_socket(game_id, write, read, connected).await;
     }
 }

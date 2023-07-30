@@ -10,6 +10,7 @@ anyhow = "1.0.72"
 async-std = "1.12.0"
 chess = { path = "../chess" }
 clap = { version = "4.3.17", features = ["derive"] }
+common = { path = "../common" }
 dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
 dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git" }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
@@ -23,8 +24,8 @@ url = "2.4.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 dioxus-web = { git = "https://github.com/DioxusLabs/dioxus.git" }
-common = { path = "../common", features = ["web"] }
+server-functions = { path = "../server-functions", features = ["web"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git" }
-common = { path = "../common", features = ["desktop"] }
+server-functions = { path = "../server-functions", features = ["desktop"] }

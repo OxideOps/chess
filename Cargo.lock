@@ -628,6 +628,7 @@ dependencies = [
  "log",
  "once_cell",
  "serde_json",
+ "server-functions",
  "tokio-tungstenite-wasm",
  "url",
 ]
@@ -696,10 +697,7 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "clap",
- "dioxus",
- "dioxus-fullstack",
  "log",
- "serde",
 ]
 
 [[package]]
@@ -3581,9 +3579,21 @@ dependencies = [
  "dioxus-logger",
  "futures",
  "log",
- "serde",
+ "server-functions",
  "tokio",
  "tower-http",
+]
+
+[[package]]
+name = "server-functions"
+version = "0.1.0"
+dependencies = [
+ "dioxus",
+ "dioxus-fullstack",
+ "once_cell",
+ "rand 0.8.5",
+ "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -4854,9 +4864,9 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "winnow"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25b5872fa2e10bd067ae946f927e726d7d603eaeb6e02fa6a350e0722d2b8c11"
+checksum = "8bd122eb777186e60c3fdf765a58ac76e41c582f1f535fbf3314434c6b58f3f7"
 dependencies = [
  "memchr",
 ]

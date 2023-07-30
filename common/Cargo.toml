@@ -7,12 +7,4 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.3.17", features = ["derive"] }
-dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
-dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git" }
 log = "0.4.19"
-serde = "1.0.178"
-
-[features]
-desktop = []
-ssr = ["dioxus-fullstack/axum"]
-web = []

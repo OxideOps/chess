@@ -1,3 +1,4 @@
+use axum::extract::Path;
 use axum::{extract::WebSocketUpgrade, routing::get};
 use common::args::*;
 use dioxus_fullstack::prelude::*;
@@ -24,7 +25,9 @@ pub async fn main() {
                 .register_server_fns("")
                 .route(
                     "/game/:game_id",
-                    get(move |ws: WebSocketUpgrade| handler(ws, connections, connected.clone())),
+                    get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| {
+                        handler(game_id, ws, connections, connected.clone())
+                    }),
                 )
                 .into_make_service(),
         )
