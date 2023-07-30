@@ -84,6 +84,6 @@ impl History {
     }
 
     pub fn get_num_rounds(&self) -> usize {
-        self.turns.len() / 2 + 1
+        (self.turns.len() + 1) / 2
     }
 }

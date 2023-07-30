@@ -72,15 +72,18 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
                 cx.props.game.with(|game| {
                     game.get_rounds_str().into_iter().enumerate().map(|(i, (mv1, mv2))| {
                         rsx! {
-                            tr {
-                                td {
-                                    style: "padding-right: 15px;" ,
-                                    "{i + 1}." }
-                                td {
-                                    style: "padding-right: 15px;",
-                                    "{mv1}"
+                            div {
+                                style: "margin-bottom:15px;",
+                                tr {
+                                    td {
+                                        style: "padding-right: 15px;" ,
+                                        "{i + 1}." }
+                                    td {
+                                        style: "padding-right: 15px;",
+                                        "{mv1}"
+                                    }
+                                    td { "{mv2}" }
                                 }
-                                td { "{mv2}" }
                             }
                         }
                     })
