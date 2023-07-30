@@ -23,8 +23,14 @@ jobs:
     - name: Build WASM
       run: trunk build
 
-    - name: Build Rust
-      run: cargo build
+    - name: Build Client
+      run: cargo build -p client
 
     - name: Run Client Tests
-      run: cargo test
+      run: cargo test -p client
+
+    - name: Build Server
+      run: cargo build -p server
+
+    - name: Run Server Tests
+      run: cargo test -p server
