@@ -1,7 +1,7 @@
-use std::time::Duration;
 use async_std::task::sleep;
-use chess::{game::Game, color::Color};
+use chess::{color::Color, game::Game};
 use dioxus::prelude::*;
+use std::time::Duration;
 
 #[derive(Props, PartialEq)]
 pub struct TimerProps<'a> {

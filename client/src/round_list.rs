@@ -6,7 +6,7 @@ pub struct RoundListProps<'a> {
     game: &'a UseRef<Game>,
 }
 
-pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a>{
+pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         p { "Rounds:" },
         cx.props.game.with(|game| {
@@ -33,5 +33,4 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a>{
             })
         })
     })
-
 }

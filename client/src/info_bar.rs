@@ -1,12 +1,9 @@
-use crate::timer::Timer;
 use crate::round_list::RoundList;
-
+use crate::timer::Timer;
 
 use chess::game::Game;
 use dioxus::prelude::*;
 use std::time::Duration;
-
-
 
 #[derive(Props, PartialEq)]
 pub struct InfoBarProps<'a> {
@@ -15,7 +12,7 @@ pub struct InfoBarProps<'a> {
     left: u32,
 }
 
-pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {    
+pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         div {
             class: "time-container",
