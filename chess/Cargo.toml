@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 log = "0.4.19"
-serde = "1.0.178"
+serde = "1.0.180"
 thiserror = "1.0.44"
 web-time = "0.2.0"

@@ -21,7 +21,7 @@ pub mod games {
         Lazy::new(|| Arc::new(RwLock::new(None)));
 }
 
-#[server(SetupRemoteGame)]
+#[server(SetupRemoteGame, "/api")]
 pub async fn setup_remote_game() -> Result<RemoteGameInfo, ServerFnError> {
     use games::{GAMES, PENDING_GAME};
     use rand::distributions::{Distribution, Uniform};
