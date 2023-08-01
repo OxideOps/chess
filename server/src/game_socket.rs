@@ -10,7 +10,7 @@ use futures::{
     stream::{SplitSink, SplitStream},
     {SinkExt, StreamExt},
 };
-use server_functions::setup_remote_game::games::GAMES;
+use server_functions::setup_remote_game::games::{GAMES, PENDING_GAME};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
@@ -63,6 +63,10 @@ async fn close_socket(
         if let Err(err) = write.close().await {
             log::error!("Error closing socket: {err:?}");
         }
+    }
+    let mut pending_game = PENDING_GAME.write().await;
+    if *pending_game == Some(game_id) {
+        *pending_game = None;
     }
     GAMES.write().await.remove(&game_id);
     *connected.write().await = false;
