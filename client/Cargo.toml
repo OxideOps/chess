@@ -29,3 +29,4 @@ server-functions = { path = "../server-functions", features = ["web"] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git" }
 server-functions = { path = "../server-functions", features = ["desktop"] }
+tokio-tungstenite = { version = "*", features = ["native-tls"] }
