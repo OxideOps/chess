@@ -9,7 +9,7 @@ use crate::position::Position;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
-#[derive(Clone, Default, Hash)]
+#[derive(Clone, Copy, Default, Hash)]
 /// A struct encapsulating the state for the `Board`.
 pub struct BoardState {
     pub player: Color,
