@@ -28,7 +28,7 @@ pub mod games {
 
 #[server(SetupRemoteGame, "/api")]
 pub async fn setup_remote_game() -> Result<RemoteGameInfo, ServerFnError> {
-    use games::{GAMES, PENDING_GAME, PlayerConnections};
+    use games::{PlayerConnections, GAMES, PENDING_GAME};
     use rand::distributions::{Distribution, Uniform};
 
     let mut games = GAMES.lock().await;
