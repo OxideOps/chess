@@ -3599,9 +3599,11 @@ dependencies = [
 name = "server-functions"
 version = "0.1.0"
 dependencies = [
+ "axum",
  "chess",
  "dioxus",
  "dioxus-fullstack",
+ "futures",
  "once_cell",
  "rand 0.8.5",
  "serde",

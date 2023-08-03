@@ -1,37 +1,29 @@
 use axum::{
-    extract::{
-        ws::{Message, WebSocket},
-        WebSocketUpgrade,
-    },
+    extract::{ws::WebSocket, WebSocketUpgrade},
     response::Response,
 };
 use futures::{
     executor::block_on,
-    stream::{SplitSink, SplitStream},
     {SinkExt, StreamExt},
 };
-use server_functions::setup_remote_game::games::{GAMES, PENDING_GAME};
-use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use server_functions::setup_remote_game::games::{
+    PlayerConnections, ReadStream, WriteStream, GAMES, PENDING_GAME,
+};
 
-pub type WriteStream = Arc<Mutex<Option<SplitSink<WebSocket, Message>>>>;
-pub type ReadStream = Arc<Mutex<Option<SplitStream<WebSocket>>>>;
-pub type PlayerConnections = Arc<[(WriteStream, ReadStream); 2]>;
-
-pub async fn handler(
-    game_id: u32,
-    ws: WebSocketUpgrade,
-    connections: PlayerConnections,
-    connected: Arc<RwLock<bool>>,
-) -> Response {
+pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
     ws.on_upgrade(move |socket| {
-        if let Some(index) = block_on(store_socket(socket, connections.clone())) {
-            let other_index = (index + 1) % 2;
-            let sink = connections[other_index].0.clone();
-            let stream = connections[index].1.clone();
-            handle_socket(Some((game_id, sink, stream, connected.clone())))
+        if let Some(connections) = block_on(GAMES.lock()).get(&game_id) {
+            if let Some(index) = block_on(store_socket(socket, connections.clone())) {
+                let other_index = (index + 1) % 2;
+                let sink = connections[other_index].0.clone();
+                let stream = connections[index].1.clone();
+                handle_socket(Some((game_id, sink, stream)))
+            } else {
+                log::warn!("Cannot connect client to socket. Already 2 clients.");
+                handle_socket(None)
+            }
         } else {
-            log::warn!("Cannot connect client to socket. Already 2 clients.");
+            log::warn!("Cannot connect client to socket. Game id does not exist.");
             handle_socket(None)
         }
     })
@@ -53,12 +45,7 @@ async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Opti
     index
 }
 
-async fn close_socket(
-    game_id: u32,
-    write: WriteStream,
-    read: ReadStream,
-    connected: Arc<RwLock<bool>>,
-) {
+async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
     if let Some(write) = write.lock().await.as_mut() {
         if let Err(err) = write.close().await {
             log::error!("Error closing socket: {err:?}");
@@ -68,20 +55,22 @@ async fn close_socket(
     if *pending_game == Some(game_id) {
         *pending_game = None;
     }
-    GAMES.write().await.remove(&game_id);
-    *connected.write().await = false;
+    GAMES.lock().await.remove(&game_id);
     *write.lock().await = None;
     *read.lock().await = None;
 }
 
-async fn handle_socket(params: Option<(u32, WriteStream, ReadStream, Arc<RwLock<bool>>)>) {
-    if let Some((game_id, write, read, connected)) = params {
-        *connected.write().await = true;
+async fn game_exists(game_id: u32) -> bool {
+    GAMES.lock().await.contains_key(&game_id)
+}
+
+async fn handle_socket(params: Option<(u32, WriteStream, ReadStream)>) {
+    if let Some((game_id, write, read)) = params {
         if let Some(read) = read.lock().await.as_mut() {
             // forward messages
             while let Some(msg) = read.next().await {
-                if !*connected.read().await {
-                    log::info!("A player has disconnected from the socket, closing socket.");
+                if !game_exists(game_id).await {
+                    log::info!("Game has ended. Closing socket.");
                     break;
                 }
                 if let Ok(msg) = msg {
@@ -101,6 +90,6 @@ async fn handle_socket(params: Option<(u32, WriteStream, ReadStream, Arc<RwLock<
             log::error!("Socket that we should have just created does not exist. If we get here there is a bug.");
         }
         // if we have been disconnected, clean up our connections
-        close_socket(game_id, write, read, connected).await;
+        close_socket(game_id, write, read).await;
     }
 }

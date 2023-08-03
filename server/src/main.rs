@@ -2,9 +2,7 @@ use axum::extract::Path;
 use axum::{extract::WebSocketUpgrade, routing::get};
 use common::args::*;
 use dioxus_fullstack::prelude::*;
-use server::game_socket::{handler, PlayerConnections};
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use server::game_socket::handler;
 use tower_http::services::ServeFile;
 
 #[tokio::main]
@@ -13,8 +11,6 @@ pub async fn main() {
 
     log::info!("server launching");
 
-    let connections: PlayerConnections = Default::default();
-    let connected: Arc<RwLock<bool>> = Default::default();
     let addr = "[::]:8080".parse().unwrap();
     log::info!("listening on {}", addr);
     axum::Server::bind(&addr)
@@ -25,9 +21,7 @@ pub async fn main() {
                 .register_server_fns("/api")
                 .route(
                     "/game/:game_id",
-                    get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| {
-                        handler(game_id, ws, connections, connected.clone())
-                    }),
+                    get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| handler(game_id, ws)),
                 )
                 .into_make_service(),
         )
