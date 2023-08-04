@@ -162,7 +162,7 @@ impl Game {
         })
     }
 
-    fn is_move_valid(&self, mv: &Move) -> ChessResult {
+    pub fn is_move_valid(&self, mv: &Move) -> ChessResult {
         if matches!(self.status, GameStatus::Draw(..)) {
             return Err(ChessError::GameIsInDraw);
         }
