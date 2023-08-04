@@ -22,4 +22,5 @@ impl GameStatus {
 pub enum DrawKind {
     Stalemate,
     FiftyMoveRule,
+    Repetition,
 }
