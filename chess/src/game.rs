@@ -294,7 +294,7 @@ impl Game {
         }
     }
 
-    pub fn get_hash(&self) -> u64 {
+    pub fn get_real_state_hash(&self) -> u64 {
         self.history.get_real_state().get_hash()
     }
 
