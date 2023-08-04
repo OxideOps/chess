@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::board_state::BoardState;
 use crate::moves::Move;
 use crate::turn::Turn;
@@ -5,6 +7,7 @@ use crate::turn::Turn;
 #[derive(Clone, Default)]
 pub struct History {
     pub turns: Vec<Turn>,
+    pub repetition_counter: HashMap<BoardState, usize>,
     current_turn: usize,
     fifty_move_count: u8,
     initial_state: BoardState,
@@ -26,7 +29,15 @@ impl History {
         }
     }
 
+    pub fn get_current_state_repetition_count(&self) -> usize {
+        *self
+            .repetition_counter
+            .get(self.get_current_state())
+            .unwrap()
+    }
+
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
+        *self.repetition_counter.entry(next_state).or_insert(0) += 1;
         self.turns.push(Turn::new(next_state, mv));
         self.current_turn += 1;
         let previous_board_state = self.get_board_state(self.turns.len() - 1);

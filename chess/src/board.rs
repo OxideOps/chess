@@ -5,7 +5,7 @@ const BOARD_SIZE: usize = 8;
 
 pub type Square = Option<Piece>;
 
-#[derive(Clone, Copy, PartialEq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {

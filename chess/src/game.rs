@@ -117,10 +117,21 @@ impl Game {
         self.timer.next_player();
     }
 
-    fn update_status(&mut self) {
+    fn check_for_draw(&mut self) -> bool {
         if self.history.get_fifty_move_count() == 50 {
             self.status
                 .update(GameStatus::Draw(DrawKind::FiftyMoveRule));
+            return true;
+        }
+        if self.history.get_current_state_repetition_count() == 3 {
+            self.status.update(GameStatus::Draw(DrawKind::Repetition));
+            return true;
+        }
+        false
+    }
+
+    fn update_status(&mut self) {
+        if self.check_for_draw() {
             return;
         }
         if self.history.is_replaying() {
@@ -273,7 +284,7 @@ impl Game {
         }
     }
 
-    pub fn get_real_state_hash(&self) -> u64 {
+    pub fn get_hash(&self) -> u64 {
         self.history.get_real_state().get_hash()
     }
 
