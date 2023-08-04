@@ -164,16 +164,18 @@ impl Game {
         Self::with_state(enemy_board).is_attacking_king()
     }
 
-    fn remove_self_checks(&mut self) {
-        let current_board = self.clone_current_state();
-        self.valid_moves.retain(|mv| {
-            let mut future_board = current_board.clone();
-            future_board.move_piece(mv);
-            !Self::with_state(future_board).is_attacking_king()
-        })
+    fn moves_into_check(mut board_state: BoardState, mv: &Move) -> bool {
+        board_state.move_piece(mv);
+        Self::with_state(board_state).is_attacking_king()
     }
 
-    fn is_move_valid(&self, mv: &Move) -> ChessResult {
+    fn remove_self_checks(&mut self) {
+        let current_state = *self.get_current_state();
+        self.valid_moves
+            .retain(|mv| !Self::moves_into_check(current_state, mv))
+    }
+
+    pub fn is_move_valid(&self, mv: &Move) -> ChessResult {
         if matches!(self.status, GameStatus::Draw(..)) {
             return Err(ChessError::GameIsInDraw);
         }
@@ -268,6 +270,10 @@ impl Game {
             CastlingRights::get_castling_info(self.get_current_player());
 
         if self.has_castling_right(kingside)
+            && !Self::moves_into_check(
+                *self.get_current_state(),
+                &Move::new(king_square, king_square + Displacement::RIGHT),
+            )
             && !(1..=2).any(|i| self.has_piece(&(king_square + Displacement::RIGHT * i)))
         {
             self.valid_moves.insert(Move::new(
@@ -277,6 +283,10 @@ impl Game {
         }
 
         if self.has_castling_right(queenside)
+            && !Self::moves_into_check(
+                *self.get_current_state(),
+                &Move::new(king_square, king_square + Displacement::LEFT),
+            )
             && !(1..=3).any(|i| self.has_piece(&(king_square + Displacement::LEFT * i)))
         {
             self.valid_moves
