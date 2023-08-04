@@ -101,9 +101,12 @@ impl BoardProps<'_> {
                 Color::Black => self.black_player_kind,
             };
             if current_player_kind == PlayerKind::Local
-                && self.game.with(|game| game.status) != GameStatus::Replay
-                && self.game.with_mut(|game| game.move_piece(from, to).is_ok())
+                && self.game.with(|game| {
+                    game.status != GameStatus::Replay
+                        && game.is_move_valid(&Move::new(from, to)).is_ok()
+                })
             {
+                self.game.with_mut(|game| game.move_piece(from, to).ok());
                 if let Some(game_socket) = game_socket {
                     game_socket.send(Move::new(from, to));
                 }
@@ -137,13 +140,11 @@ impl BoardProps<'_> {
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let game_socket = if let Some(game_id) = cx.props.game_id {
-        Some(use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
+    let game_socket = cx.props.game_id.map(|game_id| {
+        use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)
-        }))
-    } else {
-        None
-    };
+        })
+    });
 
     cx.render(rsx! {
         style { include_str!("../../styles/widget.css") }
