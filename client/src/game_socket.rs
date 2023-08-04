@@ -28,7 +28,7 @@ async fn connect_to_socket(game_id: u32) -> anyhow::Result<(WriteStream, ReadStr
 }
 
 async fn send_move(mv: &Move, socket: &mut WriteStream) -> anyhow::Result<()> {
-    log::info!("Sending move {mv:?}");
+    log::info!("Sending move {mv}");
     socket.send(Text(serde_json::to_string(mv)?)).await?;
     Ok(())
 }
@@ -43,14 +43,14 @@ async fn write_to_socket(mut rx: UnboundedReceiver<Move>, mut socket: WriteStrea
 
 fn handle_message(message: Result<Message>, game: &UseRef<Game>) -> anyhow::Result<()> {
     let mv = serde_json::from_str::<Move>(&message?.into_text()?)?;
-    log::info!("Got move {mv:?}");
+    log::info!("Got move {mv}");
     game.with_mut(|game| game.move_piece(mv.from, mv.to))?;
     Ok(())
 }
 
 async fn read_from_socket(mut stream: ReadStream, game: &UseRef<Game>) {
     while let Some(message) = stream.next().await {
-        if let Err(err) = handle_message(message, &game) {
+        if let Err(err) = handle_message(message, game) {
             log::error!("Error receiving move: {err:?}");
         }
     }

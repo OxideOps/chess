@@ -17,7 +17,6 @@ pub struct WidgetProps {
 }
 
 pub fn Widget(cx: Scope<WidgetProps>) -> Element {
-    println!("Rendering");
     let game = use_ref(cx, || Game::builder().duration(cx.props.time).build());
     cx.render(rsx! {
         Board {
