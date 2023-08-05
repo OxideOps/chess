@@ -33,11 +33,8 @@ impl History {
         }
     }
 
-    pub fn get_current_state_repetition_count(&self) -> usize {
-        *self
-            .repetition_counter
-            .get(self.get_current_state())
-            .unwrap()
+    pub fn get_real_state_repetition_count(&self) -> usize {
+        *self.repetition_counter.get(self.get_real_state()).unwrap()
     }
 
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
