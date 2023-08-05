@@ -8,6 +8,7 @@ use crate::history::History;
 use crate::moves::Move;
 use crate::piece::Piece;
 use crate::position::Position;
+use crate::round_info::RoundInfo;
 use crate::timer::Timer;
 use std::collections::HashSet;
 use web_time::Duration;
@@ -327,25 +328,25 @@ impl Game {
             .collect()
     }
 
-    pub fn get_rounds_info(&self) -> Vec<(String, String, bool)> {
+    pub fn get_rounds_info(&self) -> Vec<RoundInfo> {
         self.history
             .turns
             .chunks(2)
-            .enumerate()
-            .map(|(i, turns)| {
-                (
-                    format!("{}", turns[0]),
-                    turns
-                        .get(1)
-                        .map_or("...".to_string(), |black_turn| format!("{black_turn}")),
-                    i == self.get_current_round(),
-                )
+            .map(|turns| RoundInfo {
+                white_string: format!("{}", turns[0]),
+                black_string: turns
+                    .get(1)
+                    .map_or("...".to_string(), |black_turn| format!("{black_turn}")),
             })
             .collect()
     }
 
     pub fn get_current_round(&self) -> usize {
         self.history.get_current_round()
+    }
+
+    pub fn get_current_turn(&self) -> usize {
+        self.history.get_current_turn()
     }
 }
 pub struct GameBuilder {

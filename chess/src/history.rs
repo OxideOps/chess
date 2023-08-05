@@ -21,6 +21,10 @@ impl History {
         }
     }
 
+    pub fn get_current_turn(&self) -> usize {
+        self.current_turn
+    }
+
     pub fn get_board_state(&self, turn: usize) -> &BoardState {
         if turn == 0 {
             &self.initial_state
