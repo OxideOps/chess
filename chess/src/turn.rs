@@ -29,7 +29,7 @@ impl fmt::Display for Turn {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}{}{}", 
+            "{}{}{}",
             self.board_state.get_piece(&self.mv.to).unwrap(),
             if self.piece_captured { "x" } else { "" },
             self.mv.to
