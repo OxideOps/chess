@@ -6,8 +6,8 @@ use crate::turn::Turn;
 
 #[derive(Clone, Default)]
 pub struct History {
-    pub turns: Vec<Turn>,
-    pub repetition_counter: HashMap<BoardState, usize>,
+    pub(super) turns: Vec<Turn>,
+    pub(super) repetition_counter: HashMap<BoardState, usize>,
     current_turn: usize,
     fifty_move_count: u8,
     initial_state: BoardState,
@@ -37,17 +37,18 @@ impl History {
     }
 
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        *self.repetition_counter.entry(next_state).or_insert(0) += 1;
-        self.turns.push(Turn::new(next_state, mv));
-        self.current_turn += 1;
-        let previous_board_state = self.get_board_state(self.turns.len() - 1);
-        let is_pawn = previous_board_state.get_piece(&mv.from).unwrap().is_pawn();
-        let is_capture_move = previous_board_state.get_piece(&mv.to).is_some();
+        let current_state = self.get_current_state();
+        let is_pawn = current_state.get_piece(&mv.from).unwrap().is_pawn();
+        let is_capture_move = current_state.get_piece(&mv.to).is_some();
+
         if !is_pawn && !is_capture_move {
             self.fifty_move_count += 1;
         } else {
             self.fifty_move_count = 0;
         }
+        *self.repetition_counter.entry(next_state).or_insert(0) += 1;
+        self.turns.push(Turn::new(next_state, mv, is_capture_move));
+        self.current_turn += 1;
     }
 
     pub fn get_fifty_move_count(&self) -> u8 {
@@ -59,7 +60,7 @@ impl History {
     }
 
     pub fn clone_current_state(&self) -> BoardState {
-        self.get_current_state().clone()
+        *self.get_current_state()
     }
 
     pub fn get_real_state(&self) -> &BoardState {
