@@ -337,7 +337,7 @@ impl Game {
                     format!("{}", turns[0]),
                     turns
                         .get(1)
-                        .map_or("...".to_string(), |black_turn| format!("{}", black_turn)),
+                        .map_or("...".to_string(), |black_turn| format!("{black_turn}")),
                     i == self.get_current_round(),
                 )
             })
