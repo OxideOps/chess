@@ -333,24 +333,13 @@ impl Game {
             .chunks(2)
             .enumerate()
             .map(|(i, turns)| {
-                let mut white_string = String::default();
-                let mut black_string = String::default();
-
-                if turns[0].piece_captured {
-                    white_string.push('x')
-                }
-                white_string.push_str(&format!("{}", turns[0]));
-
-                if let Some(turn) = turns.get(1) {
-                    if turn.piece_captured {
-                        black_string.push('x');
-                    }
-                    black_string.push_str(&format!("{}", turn))
-                } else {
-                    black_string.push_str("...")
-                }
-
-                (white_string, black_string, i == self.get_current_round())
+                (
+                    format!("{}", turns[0]),
+                    turns
+                        .get(1)
+                        .map_or("...".to_string(), |black_turn| format!("{}", black_turn)),
+                    i == self.get_current_round(),
+                )
             })
             .collect()
     }
