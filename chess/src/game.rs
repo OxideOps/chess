@@ -120,7 +120,7 @@ impl Game {
                 .update(GameStatus::Draw(DrawKind::FiftyMoveRule));
             return true;
         }
-        if self.history.get_current_state_repetition_count() == 3 {
+        if self.history.get_real_state_repetition_count() == 3 {
             self.status.update(GameStatus::Draw(DrawKind::Repetition));
             return true;
         }

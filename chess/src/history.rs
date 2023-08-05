@@ -29,10 +29,10 @@ impl History {
         }
     }
 
-    pub fn get_current_state_repetition_count(&self) -> usize {
+    pub fn get_real_state_repetition_count(&self) -> usize {
         *self
             .repetition_counter
-            .get(self.get_current_state())
+            .get(self.get_real_state())
             .unwrap()
     }
 
