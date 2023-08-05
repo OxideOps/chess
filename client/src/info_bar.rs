@@ -16,7 +16,7 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         div {
             class: "info-bar-container",
-            style: "position: absolute; left: {cx.props.left}px; top: 0px",
+            style: "left: {cx.props.left}px;",
             Timer {
                 game: cx.props.game,
                 time: cx.props.time,
