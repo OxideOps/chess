@@ -17,6 +17,7 @@ impl History {
     pub fn with_state(initial_state: BoardState) -> Self {
         Self {
             initial_state,
+            repetition_counter: vec![(initial_state, 1)].into_iter().collect(),
             ..Default::default()
         }
     }
@@ -62,7 +63,7 @@ impl History {
     }
 
     pub fn get_real_state(&self) -> &BoardState {
-        &self.turns.last().unwrap().board_state
+        self.get_board_state(self.turns.len())
     }
 
     pub fn get_info_for_move(&self, turn: usize) -> &Turn {
