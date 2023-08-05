@@ -348,6 +348,10 @@ impl Game {
     pub fn get_current_turn(&self) -> usize {
         self.history.get_current_turn()
     }
+
+    pub fn get_real_player(&self) -> Color {
+        self.history.get_real_state().player
+    }
 }
 pub struct GameBuilder {
     duration: Duration,

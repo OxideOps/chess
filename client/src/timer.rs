@@ -12,7 +12,7 @@ pub struct TimerProps<'a> {
 pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
     let white_time = use_state(cx, || display_time(cx.props.time));
     let black_time = use_state(cx, || display_time(cx.props.time));
-    let active_time_state = match cx.props.game.with(|game| game.get_current_player()) {
+    let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
         Color::White => white_time,
         Color::Black => black_time,
     };

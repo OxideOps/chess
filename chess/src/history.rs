@@ -4,7 +4,7 @@ use crate::board_state::BoardState;
 use crate::moves::Move;
 use crate::turn::Turn;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct History {
     pub(super) turns: Vec<Turn>,
     pub(super) repetition_counter: HashMap<BoardState, usize>,
@@ -95,5 +95,18 @@ impl History {
     }
     pub fn get_current_round(&self) -> usize {
         (self.current_turn + 1) / 2
+    }
+}
+
+impl Default for History {
+    fn default() -> Self {
+        let (turns, current_turn, fifty_move_count, initial_state) = Default::default();
+        Self {
+            turns,
+            current_turn,
+            fifty_move_count,
+            initial_state,
+            repetition_counter: vec![(BoardState::default(), 1)].into_iter().collect(),
+        }
     }
 }
