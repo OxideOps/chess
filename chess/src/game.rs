@@ -354,11 +354,7 @@ impl Game {
                     black_string.push_str("...")
                 }
 
-                (
-                    white_string,
-                    black_string,
-                    i == self.get_current_round(),
-                )
+                (white_string, black_string, i == self.get_current_round())
             })
             .collect()
     }
