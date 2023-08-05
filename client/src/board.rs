@@ -147,7 +147,6 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     });
 
     cx.render(rsx! {
-        style { include_str!("../../styles/widget.css") }
         // div for widget
         div {
             autofocus: true,

@@ -16,6 +16,8 @@ pub fn App(cx: Scope) -> Element {
     let game_id = use_state::<Option<u32>>(cx, || None);
 
     cx.render(rsx! {
+        style { include_str!("../../styles/app.css") },
+        style { include_str!("../../styles/output.css") },
         Widget {
             game_id: *game_id.get(),
             white_player: white_player.to_owned(),
