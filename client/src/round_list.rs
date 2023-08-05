@@ -12,9 +12,9 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
             class: "rounds-container",
             p { "Rounds:" },
             cx.props.game.with(|game| {
-                let current_turn = game.get_current_round();
+                let current_round = game.get_current_round();
                 game.get_rounds_info().into_iter().enumerate().map(move |(i, info)| {
-                    let classes = if i == current_turn {
+                    let classes = if i == current_round {
                         "mb-4 bg-gray-300/50"
                     } else {
                         "mb-4"
