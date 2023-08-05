@@ -338,7 +338,7 @@ impl Game {
                 black_string: turns
                     .get(1)
                     .map_or("...".to_string(), |black_turn| format!("{black_turn}")),
-                fill: i == self.get_current_round(),
+                fill: i + 1 == self.get_current_round(),
             })
             .collect()
     }
