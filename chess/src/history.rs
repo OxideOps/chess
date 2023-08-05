@@ -21,6 +21,10 @@ impl History {
         }
     }
 
+    pub fn get_current_turn(&self) -> usize {
+        self.current_turn
+    }
+
     pub fn get_board_state(&self, turn: usize) -> &BoardState {
         if turn == 0 {
             &self.initial_state
@@ -36,7 +40,8 @@ impl History {
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
         let current_state = self.get_current_state();
         let is_pawn = current_state.get_piece(&mv.from).unwrap().is_pawn();
-        let is_capture_move = current_state.get_piece(&mv.to).is_some();
+        let is_capture_move =
+            current_state.get_piece(&mv.to).is_some() || (is_pawn && mv.to.x != mv.from.x);
 
         if !is_pawn && !is_capture_move {
             self.fifty_move_count += 1;

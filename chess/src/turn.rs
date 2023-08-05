@@ -30,8 +30,8 @@ impl fmt::Display for Turn {
         write!(
             f,
             "{}{}{}",
-            if self.piece_captured { "x" } else { "" },
             self.board_state.get_piece(&self.mv.to).unwrap(),
+            if self.piece_captured { "x" } else { "" },
             self.mv.to
         )
     }

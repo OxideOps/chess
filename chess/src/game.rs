@@ -332,19 +332,21 @@ impl Game {
         self.history
             .turns
             .chunks(2)
-            .enumerate()
-            .map(|(i, turns)| RoundInfo {
+            .map(|turns| RoundInfo {
                 white_string: format!("{}", turns[0]),
                 black_string: turns
                     .get(1)
                     .map_or("...".to_string(), |black_turn| format!("{black_turn}")),
-                fill: i + 1 == self.get_current_round(),
             })
             .collect()
     }
 
     pub fn get_current_round(&self) -> usize {
         self.history.get_current_round()
+    }
+
+    pub fn get_current_turn(&self) -> usize {
+        self.history.get_current_turn()
     }
 }
 pub struct GameBuilder {
