@@ -11,4 +11,6 @@ pub enum ChessError {
     InvalidMove,
     #[error("Moved after game drawn")]
     GameIsInDraw,
+    #[error("Moved after time ran out")]
+    Timeout,
 }

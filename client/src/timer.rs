@@ -54,6 +54,10 @@ fn use_timer_future(
                     let sleep_time = active_time.subsec_micros();
                     sleep(Duration::from_micros(sleep_time as u64)).await;
                     active_time_state.set(display_time(active_time));
+                    if active_time.is_zero() {
+                        game.with_mut(|game| game.trigger_timeout());
+                        return;
+                    }
                 }
             } else {
                 sleep(Duration::from_secs(u64::MAX)).await;
