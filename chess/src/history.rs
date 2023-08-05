@@ -59,10 +59,6 @@ impl History {
         self.get_board_state(self.current_turn)
     }
 
-    pub fn clone_current_state(&self) -> BoardState {
-        *self.get_current_state()
-    }
-
     pub fn get_real_state(&self) -> &BoardState {
         &self.turns.last().unwrap().board_state
     }

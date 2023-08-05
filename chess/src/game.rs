@@ -42,7 +42,7 @@ impl Game {
     }
 
     fn clone_current_state(&self) -> BoardState {
-        self.history.clone_current_state()
+        *self.history.get_current_state()
     }
 
     pub fn get_current_player(&self) -> Color {
