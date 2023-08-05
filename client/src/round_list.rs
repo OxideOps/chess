@@ -13,8 +13,7 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
             p { "Rounds:" },
             cx.props.game.with(|game| {
                 game.get_rounds_info().into_iter().enumerate().map(|(i, info)| {
-                    let fill = info.2;
-                    let classes = if fill {
+                    let classes = if info.fill {
                         "mb-4 bg-gray-300/50"
                     } else {
                         "mb-4"
@@ -30,11 +29,11 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
                                 }
                                 td {
                                     class: "pr-4",
-                                    "{info.0}"
+                                    "{info.white_string}"
                                 }
                                 td {
                                     class: "pr-4",
-                                    "{info.1}"
+                                    "{info.black_string}"
                                 }
                             }
                         }

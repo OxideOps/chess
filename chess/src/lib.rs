@@ -12,5 +12,6 @@ pub mod moves;
 pub mod piece;
 pub mod player;
 pub mod position;
+pub mod round_info;
 pub mod timer;
 pub mod turn;
