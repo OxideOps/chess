@@ -4,13 +4,18 @@ use std::fmt;
 
 #[derive(Clone, Default)]
 pub struct Turn {
-    pub board_state: BoardState,
-    pub mv: Move,
+    pub(super) board_state: BoardState,
+    pub(super) mv: Move,
+    pub(super) piece_captured: bool,
 }
 
 impl Turn {
-    pub fn new(board_state: BoardState, mv: Move) -> Self {
-        Self { board_state, mv }
+    pub fn new(board_state: BoardState, mv: Move, piece_captured: bool) -> Self {
+        Self {
+            board_state,
+            mv,
+            piece_captured,
+        }
     }
     pub fn with_state(board_state: BoardState) -> Self {
         Self {
@@ -24,8 +29,9 @@ impl fmt::Display for Turn {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}{}",
+            "{}{}{}",
             self.board_state.get_piece(&self.mv.to).unwrap(),
+            if self.piece_captured { "x" } else { "" },
             self.mv.to
         )
     }

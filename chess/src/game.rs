@@ -41,10 +41,6 @@ impl Game {
         self.history.get_current_state()
     }
 
-    fn clone_current_state(&self) -> BoardState {
-        self.history.clone_current_state()
-    }
-
     pub fn get_current_player(&self) -> Color {
         self.get_current_state().player
     }
@@ -92,7 +88,7 @@ impl Game {
         if let Some(piece) = self.get_piece(&from) {
             let mv = Move::new(from, to);
             self.is_move_valid(&mv)?;
-            let mut next_state = self.clone_current_state();
+            let mut next_state = *self.get_current_state();
             next_state.move_piece(&mv);
             self.history.add_info(next_state, mv);
 
@@ -159,7 +155,7 @@ impl Game {
     }
 
     fn is_king_under_attack(&self) -> bool {
-        let mut enemy_board = self.clone_current_state();
+        let mut enemy_board = *self.get_current_state();
         enemy_board.player = !enemy_board.player;
         Self::with_state(enemy_board).is_attacking_king()
     }
@@ -336,12 +332,12 @@ impl Game {
             .turns
             .chunks(2)
             .enumerate()
-            .map(|(i, chunk)| {
+            .map(|(i, turns)| {
                 (
-                    format!("{}", chunk[0]),
-                    chunk
+                    format!("{}", turns[0]),
+                    turns
                         .get(1)
-                        .map_or(String::from("..."), |black| format!("{}", black)),
+                        .map_or("...".to_string(), |black_turn| format!("{black_turn}")),
                     i == self.get_current_round(),
                 )
             })
