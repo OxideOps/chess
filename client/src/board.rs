@@ -21,6 +21,7 @@ pub struct BoardProps<'a> {
     game_id: Option<u32>,
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
+    perspective: Color,
 }
 
 impl BoardProps<'_> {
@@ -60,17 +61,30 @@ impl BoardProps<'_> {
     }
 
     fn to_position(&self, point: &ClientPoint) -> Position {
-        Position {
-            x: (8.0 * point.x / self.size as f64).floor() as usize,
-            y: (8.0 * (1.0 - point.y / self.size as f64)).floor() as usize,
+        match self.perspective {
+            Color::White => Position {
+                x: (8.0 * point.x / self.size as f64).floor() as usize,
+                y: (8.0 * (1.0 - point.y / self.size as f64)).floor() as usize,
+            },
+            Color::Black => Position {
+                x: (8.0 * (1.0 - point.x / self.size as f64)).floor() as usize,
+                y: (8.0 * point.y / self.size as f64).floor() as usize,
+            },
         }
     }
 
     fn to_point(&self, position: &Position) -> ClientPoint {
-        ClientPoint {
-            x: self.size as f64 * position.x as f64 / 8.0,
-            y: self.size as f64 * (7.0 - position.y as f64) / 8.0,
-            ..Default::default()
+        match self.perspective {
+            Color::White => ClientPoint {
+                x: self.size as f64 * position.x as f64 / 8.0,
+                y: self.size as f64 * (7.0 - position.y as f64) / 8.0,
+                ..Default::default()
+            },
+            Color::Black => ClientPoint {
+                x: self.size as f64 * (7.0 - position.x as f64) / 8.0,
+                y: self.size as f64 * position.y as f64 / 8.0,
+                ..Default::default()
+            },
         }
     }
 
