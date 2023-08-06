@@ -1,12 +1,14 @@
+use crate::color::Color;
+
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
 pub enum GameStatus {
     #[default]
     NotStarted,
     Ongoing,
     Stalemate,
-    Check,
-    Checkmate,
-    Timeout,
+    Check(Color),
+    Checkmate(Color),
+    Timeout(Color),
     Replay,
     Draw(DrawKind),
 }
