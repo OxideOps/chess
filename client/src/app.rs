@@ -27,16 +27,16 @@ pub fn App(cx: Scope) -> Element {
     let game_id = use_state::<Option<u32>>(cx, || None);
 
     cx.render(rsx! {
-        style { include_str!("../../styles/app.css") },
-        style { include_str!("../../styles/output.css") },
+        style { include_str!("../../styles/app.css") }
+        style { include_str!("../../styles/output.css") }
         Widget {
             game_id: *game_id.get(),
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
             perspective: *perspective.get(),
             time: Duration::from_secs(3600),
-            height: WIDGET_HEIGHT,
-        },
+            height: WIDGET_HEIGHT
+        }
         button {
             onclick: |_| {
                 let white_player = white_player.to_owned();
@@ -54,15 +54,15 @@ pub fn App(cx: Scope) -> Element {
                             };
                             player.with_mut(|player| player.kind = PlayerKind::Remote);
                             perspective.set(get_default_perspective(&white_player, &black_player));
-                        },
+                        }
                         Err(err) => log::error!("Error starting remote game: {err:?}"),
                     }
                 })
             },
             class: "absolute",
             style: "top: {WIDGET_HEIGHT}px; width: {BUTTON_WIDTH}px",
-            "Play Remote",
-        },
+            "Play Remote"
+        }
         button {
             onclick: |_| {
                 let perspective = perspective.to_owned();
@@ -73,7 +73,7 @@ pub fn App(cx: Scope) -> Element {
             },
             class: "absolute",
             style: "top: {WIDGET_HEIGHT}px; width: {BUTTON_WIDTH}px; left: {BUTTON_WIDTH}px",
-            "Flip Board",
+            "Flip Board"
         }
     })
 }

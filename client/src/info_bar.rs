@@ -21,20 +21,10 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
         "mb-4"
     };
     cx.render(rsx! {
-        div {
-            class: "info-bar-container",
-            style: "left: {cx.props.left}px;",
-            Timer {
-                game: cx.props.game,
-                time: cx.props.time,
-            },
-            p {
-                class: "{classes}",
-                "GameStatus: {game_status:?}"
-            },
-            RoundList {
-                game: cx.props.game
-            }
-        },
+        div { class: "info-bar-container", style: "left: {cx.props.left}px;",
+            Timer { game: cx.props.game, time: cx.props.time }
+            p { class: "{classes}", "GameStatus: {game_status:?}" }
+            RoundList { game: cx.props.game }
+        }
     })
 }

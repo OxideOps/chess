@@ -19,12 +19,8 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
     use_timer_future(cx, cx.props.game, active_time_state);
 
     cx.render(rsx! {
-        p {
-            "White time: {white_time}",
-        },
-        p {
-            "Black time: {black_time}",
-        },
+        p { "White time: {white_time}" }
+        p { "Black time: {black_time}" }
     })
 }
 

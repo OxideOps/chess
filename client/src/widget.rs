@@ -27,12 +27,8 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
             game_id: cx.props.game_id,
             white_player_kind: cx.props.white_player.with(|player| player.kind),
             black_player_kind: cx.props.black_player.with(|player| player.kind),
-            perspective: cx.props.perspective,
-        },
-        InfoBar {
-            game: game,
-            time: cx.props.time,
-            left: cx.props.height,
+            perspective: cx.props.perspective
         }
+        InfoBar { game: game, time: cx.props.time, left: cx.props.height }
     })
 }
