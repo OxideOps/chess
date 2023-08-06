@@ -133,7 +133,8 @@ impl Game {
             return;
         }
         if self.get_active_time().is_zero() {
-            self.status.update(GameStatus::Timeout);
+            self.status
+                .update(GameStatus::Timeout(self.get_real_player()));
             return;
         }
         if self.check_for_draw() {
@@ -145,9 +146,11 @@ impl Game {
         if !king_is_under_attack && valid_moves_is_empty {
             self.status.update(GameStatus::Stalemate)
         } else if king_is_under_attack && valid_moves_is_empty {
-            self.status.update(GameStatus::Checkmate)
+            self.status
+                .update(GameStatus::Checkmate(self.get_real_player()))
         } else if king_is_under_attack {
-            self.status.update(GameStatus::Check)
+            self.status
+                .update(GameStatus::Check(self.get_real_player()))
         } else {
             self.status.update(GameStatus::Ongoing)
         }

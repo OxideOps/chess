@@ -15,7 +15,7 @@ pub struct InfoBarProps<'a> {
 
 pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     let game_status = cx.props.game.with(|game| game.status);
-    let classes = if game_status == GameStatus::Check {
+    let classes = if matches!(game_status, GameStatus::Check(..)) {
         "mb-4 bg-red-600/75"
     } else {
         "mb-4"
