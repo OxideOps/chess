@@ -38,20 +38,32 @@ impl History {
         *self.repetition_counter.get(self.get_real_state()).unwrap()
     }
 
-    pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        let current_state = self.get_current_state();
-        let is_pawn = current_state.get_piece(&mv.from).unwrap().is_pawn();
-        let is_capture_move =
-            current_state.get_piece(&mv.to).is_some() || (is_pawn && mv.to.x != mv.from.x);
-
-        if !is_pawn && !is_capture_move {
+    pub fn update_fifty_move_info(&mut self, piece_captured: bool) {
+        if piece_captured {
             self.fifty_move_count += 1;
         } else {
             self.fifty_move_count = 0;
         }
+    }
+
+    pub fn update_repetition_info(&mut self, next_state: BoardState) {
         *self.repetition_counter.entry(next_state).or_insert(0) += 1;
-        self.turns.push(Turn::new(next_state, mv, is_capture_move));
-        self.current_turn += 1;
+    }
+
+    pub fn add_turn(&mut self, turn: Turn) {
+        self.turns.push(turn);
+        self.current_turn += 1
+    }
+
+    pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
+        let real_state = *self.get_real_state();
+        let is_pawn = real_state.get_piece(&mv.from).unwrap().is_pawn();
+        let is_capture_move =
+            real_state.get_piece(&mv.to).is_some() || (is_pawn && mv.from.x != mv.to.x);
+
+        self.update_fifty_move_info(is_capture_move);
+        self.update_repetition_info(next_state);
+        self.add_turn(Turn::new(next_state, mv, is_capture_move));
     }
 
     pub fn get_fifty_move_count(&self) -> u8 {
