@@ -30,7 +30,7 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
             },
             p {
                 class: "{classes}",
-                "GameStatus: {game_status:?}" 
+                "GameStatus: {game_status:?}"
             },
             RoundList {
                 game: cx.props.game
