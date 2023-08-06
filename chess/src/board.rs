@@ -15,7 +15,8 @@ impl Default for Board {
         // Initialize pawns
         for i in 0..8 {
             squares[1][i] = Some(Piece::Pawn(Color::White));
-            squares[6][i] = Some(Piece::Pawn(Color::Black));
+            squares[6][i] = Some(Piece::Pawn(Color::Black))
+            ;
         }
 
         // Initialize the other pieces
