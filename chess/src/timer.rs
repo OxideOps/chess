@@ -35,7 +35,12 @@ impl Timer {
         self.start_time = Some(Instant::now());
     }
 
-    pub fn next_player(&mut self) {
+    pub fn stop(&mut self) {
+        self.pause_active_time();
+        self.start_time = None;
+    }
+
+    fn pause_active_time(&mut self) {
         let elapsed = self
             .start_time
             .take()
@@ -44,13 +49,22 @@ impl Timer {
 
         match self.current_player {
             Color::White => {
-                self.white_time = self.white_time.checked_sub(elapsed).expect("time ran out")
+                self.white_time = self
+                    .white_time
+                    .checked_sub(elapsed)
+                    .unwrap_or(Duration::from_secs(0));
             }
             Color::Black => {
-                self.black_time = self.black_time.checked_sub(elapsed).expect("time ran out")
+                self.black_time = self
+                    .black_time
+                    .checked_sub(elapsed)
+                    .unwrap_or(Duration::from_secs(0));
             }
         };
+    }
 
+    pub fn next_player(&mut self) {
+        self.pause_active_time();
         self.current_player = !self.current_player;
         self.start();
     }
@@ -63,7 +77,7 @@ impl Timer {
 
         if self.start_time.is_some() && player == self.current_player {
             time.checked_sub(self.start_time.unwrap().elapsed())
-                .expect("time ran out")
+                .unwrap_or(Duration::from_secs(0))
         } else {
             time
         }

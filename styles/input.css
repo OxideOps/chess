@@ -14,3 +14,7 @@
     @apply absolute p-0 border-0 m-0;
     -webkit-user-drag: none;
 }
+
+td {
+    @apply pr-4;
+}

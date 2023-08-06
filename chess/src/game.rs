@@ -18,7 +18,7 @@ pub struct Game {
     valid_moves: HashSet<Move>,
     pub status: GameStatus,
     history: History,
-    timer: Timer,
+    pub timer: Timer,
 }
 
 impl Game {
@@ -128,11 +128,15 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.check_for_draw() {
-            return;
-        }
         if self.history.is_replaying() {
             self.status.update(GameStatus::Replay);
+            return;
+        }
+        if self.get_active_time().is_zero() {
+            self.status.update(GameStatus::Timeout);
+            return;
+        }
+        if self.check_for_draw() {
             return;
         }
         let king_is_under_attack = self.is_king_under_attack();
@@ -173,6 +177,9 @@ impl Game {
     }
 
     pub fn is_move_valid(&self, mv: &Move) -> ChessResult {
+        if self.get_active_time().is_zero() {
+            return Err(ChessError::Timeout);
+        }
         if matches!(self.status, GameStatus::Draw(..)) {
             return Err(ChessError::GameIsInDraw);
         }
@@ -347,6 +354,15 @@ impl Game {
 
     pub fn get_current_turn(&self) -> usize {
         self.history.get_current_turn()
+    }
+
+    pub fn get_real_player(&self) -> Color {
+        self.history.get_real_state().player
+    }
+
+    pub fn trigger_timeout(&mut self) {
+        self.timer.stop();
+        self.update_status();
     }
 }
 pub struct GameBuilder {

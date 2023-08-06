@@ -11,36 +11,34 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
         div {
             class: "rounds-container",
             p { "Rounds:" },
-            cx.props.game.with(|game| {
-                let current_round = game.get_current_round();
-                game.get_rounds_info().into_iter().enumerate().map(move |(i, info)| {
-                    let classes = if i + 1 == current_round {
-                        "mb-4 bg-gray-300/50"
-                    } else {
-                        "mb-4"
-                    };
+            table {
+                class: "place-content-center",
+                cx.props.game.with(|game| {
+                    let current_round = game.get_current_round();
+                    game.get_rounds_info().into_iter().enumerate().map(move |(i, info)| {
+                        let classes = if i + 1 == current_round {
+                            "mb-4 bg-gray-600/75"
+                        } else {
+                            "mb-4"
+                        };
 
-                    rsx! {
-                        div {
-                            class: "{classes}",
+                        rsx! {
                             tr {
+                                class: "{classes}",
                                 td {
-                                    class: "pr-4",
                                     "{i + 1}."
                                 }
                                 td {
-                                    class: "pr-4",
                                     "{info.white_string}"
                                 }
                                 td {
-                                    class: "pr-4",
                                     "{info.black_string}"
                                 }
                             }
                         }
-                    }
+                    })
                 })
-            })
+            }
         }
     })
 }

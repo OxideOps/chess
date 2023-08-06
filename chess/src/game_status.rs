@@ -5,6 +5,7 @@ pub enum GameStatus {
     Stalemate,
     Check,
     Checkmate,
+    Timeout,
     Replay,
     Draw(DrawKind),
 }
