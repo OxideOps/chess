@@ -56,16 +56,14 @@ impl History {
     }
 
     pub fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        let real_state = self.get_current_state();
+        let real_state = *self.get_real_state();
         let is_pawn = real_state.get_piece(&mv.from).unwrap().is_pawn();
         let is_capture_move =
         real_state.get_piece(&mv.to).is_some() || (is_pawn && mv.from.x != mv.to.x);
 
-        let turn = Turn::new(next_state, mv, is_capture_move);
-
-        self.update_fifty_move_info(turn.piece_captured);
-        self.update_repetition_info(turn.board_state);
-        self.add_turn(turn);
+        self.update_fifty_move_info(is_capture_move);
+        self.update_repetition_info(real_state);
+        self.add_turn(Turn::new(next_state, mv, is_capture_move));
     }
 
     pub fn get_fifty_move_count(&self) -> u8 {
