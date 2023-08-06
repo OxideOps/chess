@@ -8,11 +8,9 @@ pub struct RoundListProps<'a> {
 
 pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
-        div {
-            class: "rounds-container",
-            p { "Rounds:" },
-            table {
-                class: "place-content-center",
+        div { class: "rounds-container",
+            p { "Rounds:" }
+            table { class: "place-content-center",
                 cx.props.game.with(|game| {
                     let current_round = game.get_current_round();
                     game.get_rounds_info().into_iter().enumerate().map(move |(i, info)| {
