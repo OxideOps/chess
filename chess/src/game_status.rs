@@ -1,6 +1,7 @@
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
 pub enum GameStatus {
     #[default]
+    NotStarted,
     Ongoing,
     Stalemate,
     Check,
