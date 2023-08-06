@@ -62,7 +62,7 @@ impl History {
             real_state.get_piece(&mv.to).is_some() || (is_pawn && mv.from.x != mv.to.x);
 
         self.update_fifty_move_info(is_capture_move);
-        self.update_repetition_info(real_state);
+        self.update_repetition_info(next_state);
         self.add_turn(Turn::new(next_state, mv, is_capture_move));
     }
 
