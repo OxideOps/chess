@@ -7,15 +7,9 @@ repos:
         language: system
         files: \.rs$
         types: [file]
-    -   id: cargo-clippy
-        name: cargo clippy
-        entry: cargo clippy -- -D warnings
-        language: system
-        files: \.rs$
-        types: [file]
     -   id: cargo-check
         name: cargo check
-        entry: cargo check
-        language: system
+        entry: ./cargo_check_all.sh
+        language: script
         files: \.rs$
         types: [file]
