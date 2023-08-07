@@ -6,7 +6,7 @@ pub fn main() {
     #[cfg(target_arch = "wasm32")]
     {
         log::info!("web launching");
-        dioxus_web::launch(App);
+        dioxus_web::launch_cfg(App).with_disable_context_menu(true);
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -17,12 +17,14 @@ pub fn main() {
         log::info!("desktop launching");
         dioxus_desktop::launch_cfg(
             App,
-            Config::new().with_window(WindowBuilder::new().with_title("Chess").with_inner_size(
-                LogicalSize {
-                    width: WINDOW_SIZE,
-                    height: WINDOW_SIZE,
-                },
-            )),
+            Config::new()
+                .with_window(WindowBuilder::new().with_title("Chess").with_inner_size(
+                    LogicalSize {
+                        width: WINDOW_SIZE,
+                        height: WINDOW_SIZE,
+                    },
+                ))
+                .with_disable_context_menu(true),
         );
     }
 }
