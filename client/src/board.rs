@@ -158,13 +158,8 @@ impl BoardProps<'_> {
         mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
     ) {
-        if let Some(mouse_down) = mouse_down_state.get() {
-            if self
-                .game
-                .with(|game| game.has_piece(&self.to_position(&mouse_down.point)))
-            {
-                dragging_point_state.set(Some(event.client_coordinates()));
-            }
+        if mouse_down_state.get().is_some() {
+            dragging_point_state.set(Some(event.client_coordinates()));
         }
     }
 
