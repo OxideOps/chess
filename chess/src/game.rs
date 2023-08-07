@@ -129,7 +129,9 @@ impl Game {
 
     fn update_status(&mut self) {
         if self.history.is_replaying() {
-            self.status.update(GameStatus::Replay);
+            self.status.update(GameStatus::Replay
+            )
+            ;
             return;
         }
         if self.get_active_time().is_zero() {
