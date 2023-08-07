@@ -47,15 +47,19 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
     let y6 = (to.y - h * sin + h * cos) as u32;
 
     cx.render(rsx! {
-        svg {
-            class: "absolute pointer-events-none",
-            style: "z-index: 3",
-            height: "{cx.props.board_size}",
-            width: "{cx.props.board_size}",
-            polygon {
-                class: "absolute pointer-events-none",
-                points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
-                fill: "{COLOR}"
+        if cx.props.ray.len() >= o + h {
+            rsx! {
+                svg {
+                    class: "absolute pointer-events-none",
+                    style: "z-index: 3",
+                    height: "{cx.props.board_size}",
+                    width: "{cx.props.board_size}",
+                    polygon {
+                        class: "absolute pointer-events-none",
+                        points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
+                        fill: "{COLOR}"
+                    }
+                }
             }
         }
     })
