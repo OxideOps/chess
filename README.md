@@ -9,3 +9,7 @@ This project uses `pre-commit` to ensure code quality and consistency. Before yo
 1. Install `pre-commit`:
    ```bash
    sudo apt install pre-commit
+
+2. Install the pre-commit from our project into your local hooks. From the root of the project, do:
+   ```bash
+   pre-commit install
