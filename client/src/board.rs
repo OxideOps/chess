@@ -1,6 +1,6 @@
 use crate::arrow::Arrow;
 use crate::game_socket::create_game_socket;
-use crate::mouse_down::MouseDown;
+use crate::mouse_click::MouseClick;
 use crate::ray::Ray;
 use chess::color::Color;
 use chess::game::Game;
@@ -47,7 +47,7 @@ impl BoardProps<'_> {
     fn get_positions(
         &self,
         pos: &Position,
-        mouse_down_state: &Option<MouseDown>,
+        mouse_down_state: &Option<MouseClick>,
         dragging_point_state: &Option<ClientPoint>,
     ) -> (ClientPoint, usize) {
         let mut top_left = self.to_point(pos);
@@ -136,7 +136,7 @@ impl BoardProps<'_> {
     fn handle_on_mouse_up_event(
         &self,
         event: Event<MouseData>,
-        mouse_down_state: &UseState<Option<MouseDown>>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
         game_socket: Option<&Coroutine<Move>>,
     ) {
@@ -155,7 +155,7 @@ impl BoardProps<'_> {
     fn handle_on_mouse_move_event(
         &self,
         event: Event<MouseData>,
-        mouse_down_state: &UseState<Option<MouseDown>>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
     ) {
         if let Some(mouse_down) = mouse_down_state.get() {
@@ -174,7 +174,7 @@ impl BoardProps<'_> {
 
     pub fn get_current_ray(
         &self,
-        mouse_down_state: &UseState<Option<MouseDown>>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
     ) -> Option<Ray> {
         if let Some(mouse_down) = mouse_down_state.get() {
@@ -192,7 +192,7 @@ impl BoardProps<'_> {
 }
 
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
-    let mouse_down_state = use_state::<Option<MouseDown>>(cx, || None);
+    let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref::<Vec<(ClientPoint, ClientPoint)>>(cx, || vec![]);
     let game_socket = cx.props.game_id.map(|game_id| {
