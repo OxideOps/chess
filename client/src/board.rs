@@ -139,10 +139,23 @@ impl BoardProps<'_> {
     ) {
         arrows.with_mut(|arrows| {
             arrows.push(Ray {
-                from: self.snap_center(&mouse_down),
+                from: self.snap_center(mouse_down),
                 to: self.snap_center(&event.client_coordinates()),
             })
         });
+    }
+
+    fn handle_on_mouse_down_event(
+        &self,
+        event: Event<MouseData>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
+        arrows: &UseRef<Vec<Ray>>,
+    ) {
+        let mouse_down = MouseClick::from(event);
+        if mouse_down.kind.contains(MouseButton::Primary) {
+            arrows.with_mut(|arrows| arrows.clear());
+        }
+        mouse_down_state.set(Some(mouse_down));
     }
 
     fn handle_on_mouse_up_event(
@@ -221,7 +234,7 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             autofocus: true,
             tabindex: 0,
             // event handlers
-            onmousedown: |event| mouse_down_state.set(Some(event.into())),
+            onmousedown: |event| cx.props.handle_on_mouse_down_event(event, mouse_down_state, arrows),
             onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket, arrows),
             onmousemove: move |event| cx.props.handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
             onkeydown: move |event| cx.props.handle_on_key_down(&event.key()),
