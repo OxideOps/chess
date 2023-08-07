@@ -49,6 +49,7 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
     cx.render(rsx! {
         svg {
             class: "absolute pointer-events-none",
+            style: "z-index: 3",
             height: "{cx.props.board_size}",
             width: "{cx.props.board_size}",
             polygon {
