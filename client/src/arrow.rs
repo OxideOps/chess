@@ -1,7 +1,7 @@
 use crate::ray::Ray;
 use dioxus::prelude::*;
 
-const COLOR: &str = "rgba(12, 60, 82, 0.9)";
+const COLOR: &str = "rgba(18, 90, 123, 0.9)";
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
