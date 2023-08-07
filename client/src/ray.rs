@@ -1,7 +1,7 @@
 use dioxus::html::geometry::ClientPoint;
 use std::f64::consts::PI;
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Ray {
     pub from: ClientPoint,
     pub to: ClientPoint,

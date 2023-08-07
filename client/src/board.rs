@@ -9,7 +9,7 @@ use chess::moves::Move;
 use chess::piece::Piece;
 use chess::player::PlayerKind;
 use chess::position::Position;
-use dioxus::html::input_data::{MouseButton, MouseButtonSet};
+use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 
@@ -37,10 +37,10 @@ impl BoardProps<'_> {
         mouse_down: &ClientPoint,
         mouse_up: &ClientPoint,
     ) -> Position {
-        let top_left = self.to_point(&self.to_position(mouse_down));
+        let center = self.snap_center(mouse_down);
         self.to_position(&ClientPoint::new(
-            top_left.x + mouse_up.x - mouse_down.x + self.size as f64 / 16.0,
-            top_left.y + mouse_up.y - mouse_down.y + self.size as f64 / 16.0,
+            center.x + mouse_up.x - mouse_down.x,
+            center.y + mouse_up.y - mouse_down.y,
         ))
     }
 
@@ -131,7 +131,19 @@ impl BoardProps<'_> {
         }
     }
 
-    fn complete_arrow(&self, event: &Event<MouseData>, point: &ClientPoint) {}
+    fn complete_arrow(
+        &self,
+        event: &Event<MouseData>,
+        mouse_down: &ClientPoint,
+        arrows: &UseRef<Vec<Ray>>,
+    ) {
+        arrows.with_mut(|arrows| {
+            arrows.push(Ray {
+                from: self.snap_center(&mouse_down),
+                to: self.snap_center(&event.client_coordinates()),
+            })
+        });
+    }
 
     fn handle_on_mouse_up_event(
         &self,
@@ -139,13 +151,14 @@ impl BoardProps<'_> {
         mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
         game_socket: Option<&Coroutine<Move>>,
+        arrows: &UseRef<Vec<Ray>>,
     ) {
         if let Some(mouse_down) = mouse_down_state.get() {
             if mouse_down.kind.contains(MouseButton::Primary) {
                 self.drop_piece(&event, &mouse_down.point, game_socket);
             }
             if mouse_down.kind.contains(MouseButton::Secondary) {
-                self.complete_arrow(&event, &mouse_down.point);
+                self.complete_arrow(&event, &mouse_down.point, arrows);
             }
             mouse_down_state.set(None);
         }
@@ -167,6 +180,13 @@ impl BoardProps<'_> {
         [self.white_player_kind, self.black_player_kind].contains(&PlayerKind::Remote)
     }
 
+    fn snap_center(&self, point: &ClientPoint) -> ClientPoint {
+        let mut point = self.to_point(&self.to_position(point));
+        point.x += self.size as f64 / 16.0;
+        point.y += self.size as f64 / 16.0;
+        point
+    }
+
     pub fn get_current_ray(
         &self,
         mouse_down_state: &UseState<Option<MouseClick>>,
@@ -175,9 +195,7 @@ impl BoardProps<'_> {
         if let Some(mouse_down) = mouse_down_state.get() {
             if mouse_down.kind.contains(MouseButton::Secondary) {
                 if let Some(to) = *dragging_point_state.get() {
-                    let mut from = self.to_point(&self.to_position(&mouse_down.point));
-                    from.x += self.size as f64 / 16.0;
-                    from.y += self.size as f64 / 16.0;
+                    let from = self.snap_center(&mouse_down.point);
                     return Some(Ray { to, from });
                 }
             }
@@ -189,7 +207,7 @@ impl BoardProps<'_> {
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let arrows = use_ref::<Vec<(ClientPoint, ClientPoint)>>(cx, || vec![]);
+    let arrows = use_ref::<Vec<Ray>>(cx, || vec![]);
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)
@@ -204,7 +222,7 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             tabindex: 0,
             // event handlers
             onmousedown: |event| mouse_down_state.set(Some(event.into())),
-            onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket),
+            onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket, arrows),
             onmousemove: move |event| cx.props.handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
             onkeydown: move |event| cx.props.handle_on_key_down(&event.key()),
             // board
@@ -228,6 +246,12 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                 }
             }),
         },
+        // arrows
+        arrows.with(|arrows| arrows.to_owned()).iter().map(|ray| {
+            rsx! {
+                Arrow { ray: *ray, board_size: cx.props.size }
+            }
+        }),
         if let Some(current_ray) = cx.props.get_current_ray(mouse_down_state, dragging_point_state) {
             rsx! {
                 Arrow { ray: current_ray, board_size: cx.props.size }
