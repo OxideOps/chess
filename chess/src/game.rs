@@ -91,7 +91,8 @@ impl Game {
             self.is_move_valid(&mv)?;
             let mut next_state = *self.get_current_state();
             next_state.move_piece(&mv);
-            self.history.add_info(next_state, mv);
+            self.history
+                .add_info(next_state, mv, Self::is_king_under_attack(&next_state));
 
             log::info!("{} : {}", piece, mv);
             self.update();
@@ -140,7 +141,7 @@ impl Game {
         if self.check_for_draw() {
             return;
         }
-        let king_is_under_attack = self.is_king_under_attack();
+        let king_is_under_attack = self.history.get_real_turn().king_is_checked;
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
         if !king_is_under_attack && valid_moves_is_empty {
@@ -162,8 +163,8 @@ impl Game {
             .any(|mv| self.get_piece(&mv.to) == Some(Piece::King(!self.get_current_player())))
     }
 
-    fn is_king_under_attack(&self) -> bool {
-        let mut enemy_board = *self.get_current_state();
+    fn is_king_under_attack(board_state: &BoardState) -> bool {
+        let mut enemy_board = *board_state;
         enemy_board.player = !enemy_board.player;
         Self::with_state(enemy_board).is_attacking_king()
     }
