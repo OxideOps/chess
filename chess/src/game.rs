@@ -91,7 +91,8 @@ impl Game {
             self.is_move_valid(&mv)?;
             let mut next_state = *self.get_current_state();
             next_state.move_piece(&mv);
-            self.history.add_info(next_state, mv, Self::is_king_under_attack(&next_state));
+            self.history
+                .add_info(next_state, mv, Self::is_king_under_attack(&next_state));
 
             log::info!("{} : {}", piece, mv);
             self.update();

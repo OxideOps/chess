@@ -11,7 +11,12 @@ pub struct Turn {
 }
 
 impl Turn {
-    pub fn new(board_state: BoardState, mv: Move, piece_captured: bool, king_is_checked: bool) -> Self {
+    pub fn new(
+        board_state: BoardState,
+        mv: Move,
+        piece_captured: bool,
+        king_is_checked: bool,
+    ) -> Self {
         Self {
             board_state,
             mv,
