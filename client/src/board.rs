@@ -1,7 +1,7 @@
-use crate::arrow::{Arrow, Arrows};
+use crate::arrow::Arrow;
+use crate::arrows::Arrows;
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
-use crate::ray::Ray;
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -20,7 +20,7 @@ fn get_piece_image_file(piece: Piece) -> String {
 
 #[derive(Props, PartialEq)]
 pub struct BoardProps<'a> {
-    size: u32,
+    pub(crate) size: u32,
     game: &'a UseRef<Game>,
     #[props(!optional)]
     game_id: Option<u32>,
@@ -38,7 +38,7 @@ impl BoardProps<'_> {
         mouse_down: &ClientPoint,
         mouse_up: &ClientPoint,
     ) -> Position {
-        let center = self.snap_center(mouse_down);
+        let center = self.get_center(&self.to_position(mouse_down));
         self.to_position(&ClientPoint::new(
             center.x + mouse_up.x - mouse_down.x,
             center.y + mouse_up.y - mouse_down.y,
@@ -80,7 +80,7 @@ impl BoardProps<'_> {
         }
     }
 
-    fn to_point(&self, position: &Position) -> ClientPoint {
+    pub(crate) fn to_point(&self, position: &Position) -> ClientPoint {
         match self.perspective {
             Color::White => ClientPoint {
                 x: self.size as f64 * position.x as f64 / 8.0,
@@ -149,12 +149,11 @@ impl BoardProps<'_> {
         mouse_down: &ClientPoint,
         arrows: &UseRef<Arrows>,
     ) {
-        arrows.with_mut(|arrows| {
-            arrows.push(Ray {
-                from: self.snap_center(mouse_down),
-                to: self.snap_center(&event.client_coordinates()),
-            })
-        });
+        let from = self.to_position(mouse_down);
+        let to = self.to_position(&event.client_coordinates());
+        if to != from {
+            arrows.with_mut(|arrows| arrows.push(Move { from, to }));
+        }
     }
 
     fn handle_on_mouse_down_event(
@@ -205,23 +204,24 @@ impl BoardProps<'_> {
         [self.white_player_kind, self.black_player_kind].contains(&PlayerKind::Remote)
     }
 
-    fn snap_center(&self, point: &ClientPoint) -> ClientPoint {
-        let mut point = self.to_point(&self.to_position(point));
+    pub fn get_center(&self, pos: &Position) -> ClientPoint {
+        let mut point = self.to_point(&pos);
         point.x += self.size as f64 / 16.0;
         point.y += self.size as f64 / 16.0;
         point
     }
 
-    pub fn get_current_ray(
+    pub fn get_move_for_arrow(
         &self,
         mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
-    ) -> Option<Ray> {
+    ) -> Option<Move> {
         if let Some(mouse_down) = mouse_down_state.get() {
             if mouse_down.kind.contains(MouseButton::Secondary) {
-                if let Some(to) = *dragging_point_state.get() {
-                    let from = self.snap_center(&mouse_down.point);
-                    return Some(Ray { to, from });
+                if let Some(dragging_point) = *dragging_point_state.get() {
+                    let from = self.to_position(&mouse_down.point);
+                    let to = self.to_position(&dragging_point);
+                    return Some(Move { to, from });
                 }
             }
         }
@@ -271,14 +271,14 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                 }
             }),
              // arrows
-            arrows.with(|arrows| arrows.get()).iter().map(|ray| {
+            arrows.with(|arrows| arrows.get()).iter().map(|mv| {
                 rsx! {
-                    Arrow { ray: *ray, board_size: cx.props.size }
+                    Arrow { mv: *mv, board_props: cx.props }
                 }
             }),
-            if let Some(current_ray) = cx.props.get_current_ray(mouse_down_state, dragging_point_state) {
+            if let Some(current_mv) = cx.props.get_move_for_arrow(mouse_down_state, dragging_point_state) {
                 rsx! {
-                    Arrow { ray: current_ray, board_size: cx.props.size }
+                    Arrow { mv: current_mv, board_props: cx.props }
                 }
             }
         },

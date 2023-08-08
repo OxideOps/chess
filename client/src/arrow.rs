@@ -1,62 +1,34 @@
-use crate::ray::Ray;
+use crate::board::BoardProps;
+use chess::moves::Move;
+use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
+use std::f64::consts::PI;
 
-const COLOR: &str = "rgba(18, 90, 123, 0.95)";
+const COLOR: &str = "rgba(27, 135, 185, 0.95)";
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
 
-#[derive(Default)]
-pub struct Arrows {
-    rays: Vec<Ray>,
-    showing: usize,
-}
-
-impl Arrows {
-    pub fn push(&mut self, ray: Ray) {
-        self.rays.drain(self.showing..self.rays.len());
-        self.rays.push(ray);
-        self.showing += 1;
-    }
-
-    pub fn undo(&mut self) {
-        if self.showing > 0 {
-            self.showing -= 1;
-        }
-    }
-
-    pub fn redo(&mut self) {
-        if self.showing < self.rays.len() {
-            self.showing += 1;
-        }
-    }
-
-    pub fn get(&self) -> Vec<Ray> {
-        self.rays.iter().copied().take(self.showing).collect()
-    }
-
-    pub fn clear(&mut self) {
-        self.rays.clear();
-        self.showing = 0;
-    }
-}
-
 #[derive(Props, PartialEq)]
-pub struct ArrowProps {
-    ray: Ray,
-    board_size: u32,
+pub struct ArrowProps<'a> {
+    mv: Move,
+    board_props: &'a BoardProps<'a>,
 }
 
-pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
-    let h = HEAD * cx.props.board_size as f64;
-    let w = WIDTH * cx.props.board_size as f64;
-    let o = OFFSET * cx.props.board_size as f64;
+fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
+    (to.y - from.y).atan2(to.x - from.x) + PI / 2.0
+}
 
-    let to = cx.props.ray.to;
-    let from = cx.props.ray.from;
+pub fn Arrow<'a>(cx: Scope<'a, ArrowProps<'a>>) -> Element<'a> {
+    let h = HEAD * cx.props.board_props.size as f64;
+    let w = WIDTH * cx.props.board_props.size as f64;
+    let o = OFFSET * cx.props.board_props.size as f64;
 
-    let angle = cx.props.ray.get_angle_from_vertical();
+    let from = cx.props.board_props.get_center(&cx.props.mv.from);
+    let to = cx.props.board_props.get_center(&cx.props.mv.to);
+
+    let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
     let cos = angle.cos();
 
@@ -82,13 +54,13 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
     let y6 = (to.y - h * sin + h * cos) as u32;
 
     cx.render(rsx! {
-        if cx.props.ray.len() >= o + h {
+        if cx.props.mv.to != cx.props.mv.from {
             rsx! {
                 svg {
                     class: "absolute pointer-events-none",
                     style: "z-index: 3",
-                    height: "{cx.props.board_size}",
-                    width: "{cx.props.board_size}",
+                    height: "{cx.props.board_props.size}",
+                    width: "{cx.props.board_props.size}",
                     polygon {
                         class: "absolute pointer-events-none",
                         points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",

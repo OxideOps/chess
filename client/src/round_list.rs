@@ -15,7 +15,7 @@ pub fn RoundList<'a>(cx: Scope<'a, RoundListProps<'a>>) -> Element<'a> {
                     let current_round = game.get_current_round();
                     game.get_rounds_info().into_iter().enumerate().map(move |(i, info)| {
                         let classes = if i + 1 == current_round {
-                            "mb-4 bg-gray-600/75"
+                            "mb-4 bg-gmv-600/75"
                         } else {
                             "mb-4"
                         };
