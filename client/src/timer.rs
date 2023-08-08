@@ -25,7 +25,7 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
             onclick: |_| {
                 cx.props.game.with_mut(|game| *game = Game::builder().duration(cx.props.start_time).build());
                 white_time.set(display_time(cx.props.start_time));
-                black_time.set(display_time(cx.props.start_time));   
+                black_time.set(display_time(cx.props.start_time));
             },
             class: "absolute",
             "New Game"
