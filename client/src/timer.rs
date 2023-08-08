@@ -6,12 +6,12 @@ use std::time::Duration;
 #[derive(Props, PartialEq)]
 pub struct TimerProps<'a> {
     game: &'a UseRef<Game>,
-    time: Duration,
+    start_time: Duration,
 }
 
 pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
-    let white_time = use_state(cx, || display_time(cx.props.time));
-    let black_time = use_state(cx, || display_time(cx.props.time));
+    let white_time = use_state(cx, || display_time(cx.props.start_time));
+    let black_time = use_state(cx, || display_time(cx.props.start_time));
     let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
         Color::White => white_time,
         Color::Black => black_time,
@@ -23,9 +23,9 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
         p { "Black time: {black_time}" }
         button {
             onclick: |_| {
-                cx.props.game.with_mut(|game| *game = Game::builder().duration(cx.props.time).build());
-                white_time.set(display_time(cx.props.time));
-                black_time.set(display_time(cx.props.time));   
+                cx.props.game.with_mut(|game| *game = Game::builder().duration(cx.props.start_time).build());
+                white_time.set(display_time(cx.props.start_time));
+                black_time.set(display_time(cx.props.start_time));   
             },
             class: "absolute",
             "New Game"
