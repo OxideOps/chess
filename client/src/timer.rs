@@ -21,6 +21,15 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         p { "White time: {white_time}" }
         p { "Black time: {black_time}" }
+        button {
+            onclick: |_| {
+                cx.props.game.with_mut(|game| *game = Game::builder().duration(cx.props.time).build());
+                white_time.set(display_time(cx.props.time));
+                black_time.set(display_time(cx.props.time));   
+            },
+            class: "absolute",
+            "New Game"
+        }
     })
 }
 
