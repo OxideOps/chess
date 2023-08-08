@@ -6,7 +6,7 @@ use web_time::{Duration, Instant};
 pub struct Timer {
     white_time: Duration,
     black_time: Duration,
-    start_time: Option<Instant>,
+    time: Option<Instant>,
     current_player: Color,
 }
 
@@ -15,34 +15,34 @@ impl Default for Timer {
         Self {
             white_time: Duration::from_secs(60),
             black_time: Duration::from_secs(60),
-            start_time: None,
+            time: None,
             current_player: Color::White,
         }
     }
 }
 
 impl Timer {
-    pub fn with_duration(duration: Duration) -> Self {
+    pub fn with_duration(start_time: Duration) -> Self {
         Self {
-            white_time: duration,
-            black_time: duration,
-            start_time: None,
+            white_time: start_time,
+            black_time: start_time,
+            time: None,
             current_player: Color::White,
         }
     }
 
     pub fn start(&mut self) {
-        self.start_time = Some(Instant::now());
+        self.time = Some(Instant::now());
     }
 
     pub fn stop(&mut self) {
         self.pause_active_time();
-        self.start_time = None;
+        self.time = None;
     }
 
     fn pause_active_time(&mut self) {
         let elapsed = self
-            .start_time
+            .time
             .take()
             .expect("call `timer.start()` first")
             .elapsed();
@@ -75,8 +75,8 @@ impl Timer {
             Color::Black => self.black_time,
         };
 
-        if self.start_time.is_some() && player == self.current_player {
-            time.checked_sub(self.start_time.unwrap().elapsed())
+        if self.time.is_some() && player == self.current_player {
+            time.checked_sub(self.time.unwrap().elapsed())
                 .unwrap_or(Duration::from_secs(0))
         } else {
             time
@@ -98,6 +98,6 @@ impl Timer {
     }
 
     pub fn is_active(&self) -> bool {
-        self.start_time.is_some()
+        self.time.is_some()
     }
 }
