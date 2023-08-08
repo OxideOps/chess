@@ -205,7 +205,7 @@ impl BoardProps<'_> {
     }
 
     pub fn get_center(&self, pos: &Position) -> ClientPoint {
-        let mut point = self.to_point(&pos);
+        let mut point = self.to_point(pos);
         point.x += self.size as f64 / 16.0;
         point.y += self.size as f64 / 16.0;
         point
@@ -232,7 +232,7 @@ impl BoardProps<'_> {
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let arrows = use_ref(cx, || Arrows::default());
+    let arrows = use_ref(cx, Arrows::default);
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)

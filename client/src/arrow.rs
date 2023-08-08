@@ -4,7 +4,7 @@ use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
 use std::f64::consts::PI;
 
-const COLOR: &str = "rgba(27, 135, 185, 0.95)";
+const COLOR: &str = "rgba(27, 135, 185, 0.9)";
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
