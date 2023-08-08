@@ -152,7 +152,7 @@ impl Game {
         } else if king_is_under_attack {
             self.status
                 .update(GameStatus::Check(self.get_real_player()))
-        } else {
+        } else if !self.history.turns.is_empty() {
             self.status.update(GameStatus::Ongoing)
         }
     }
