@@ -5,9 +5,8 @@ pub fn main() {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
     #[cfg(target_arch = "wasm32")]
     {
-        use dioxus_web::Config;
         log::info!("web launching");
-        dioxus_web::launch_cfg(App, Config::new().with_disable_context_menu(true));
+        dioxus_web::launch(App);
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
