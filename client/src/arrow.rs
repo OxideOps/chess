@@ -1,11 +1,46 @@
 use crate::ray::Ray;
 use dioxus::prelude::*;
 
-const COLOR: &str = "rgba(18, 90, 123, 0.9)";
+const COLOR: &str = "rgba(18, 90, 123, 0.95)";
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
+
+#[derive(Default)]
+pub struct Arrows {
+    rays: Vec<Ray>,
+    showing: usize,
+}
+
+impl Arrows {
+    pub fn push(&mut self, ray: Ray) {
+        self.rays.drain(self.showing..self.rays.len());
+        self.rays.push(ray);
+        self.showing += 1;
+    }
+
+    pub fn undo(&mut self) {
+        if self.showing > 0 {
+            self.showing -= 1;
+        }
+    }
+
+    pub fn redo(&mut self) {
+        if self.showing < self.rays.len() {
+            self.showing += 1;
+        }
+    }
+
+    pub fn get(&self) -> Vec<Ray> {
+        self.rays.iter().copied().take(self.showing).collect()
+    }
+
+    pub fn clear(&mut self) {
+        self.rays.clear();
+        self.showing = 0;
+    }
+}
 
 #[derive(Props, PartialEq)]
 pub struct ArrowProps {

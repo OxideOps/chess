@@ -1,4 +1,4 @@
-use crate::arrow::Arrow;
+use crate::arrow::{Arrow, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::ray::Ray;
@@ -9,6 +9,7 @@ use chess::moves::Move;
 use chess::piece::Piece;
 use chess::player::PlayerKind;
 use chess::position::Position;
+use dioxus::html::input_data::keyboard_types::Modifiers;
 use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
@@ -94,16 +95,27 @@ impl BoardProps<'_> {
         }
     }
 
-    fn handle_on_key_down(&self, key: &Key) {
-        self.game.with_mut(|game| {
-            match key {
-                Key::ArrowLeft => game.go_back_a_move(),
-                Key::ArrowRight => game.go_forward_a_move(),
-                Key::ArrowUp => game.resume(),
-                Key::ArrowDown => game.go_to_start(),
-                _ => log::debug!("{:?} key pressed", key),
-            };
-        })
+    fn handle_on_key_down(&self, event: Event<KeyboardData>, arrows: &UseRef<Arrows>) {
+        match event.key() {
+            Key::ArrowLeft => self.game.with_mut(|game| game.go_back_a_move()),
+            Key::ArrowRight => self.game.with_mut(|game| game.go_forward_a_move()),
+            Key::ArrowUp => self.game.with_mut(|game| game.resume()),
+            Key::ArrowDown => self.game.with_mut(|game| game.go_to_start()),
+            Key::Character(c) => match c.as_str() {
+                "z" => {
+                    if event.modifiers() == Modifiers::CONTROL {
+                        arrows.with_mut(|arrows| arrows.undo());
+                    }
+                }
+                "y" => {
+                    if event.modifiers() == Modifiers::CONTROL {
+                        arrows.with_mut(|arrows| arrows.redo());
+                    }
+                }
+                _ => log::debug!("{:?} key pressed", c),
+            },
+            _ => log::debug!("{:?} key pressed", event.key()),
+        };
     }
 
     fn drop_piece(
@@ -135,7 +147,7 @@ impl BoardProps<'_> {
         &self,
         event: &Event<MouseData>,
         mouse_down: &ClientPoint,
-        arrows: &UseRef<Vec<Ray>>,
+        arrows: &UseRef<Arrows>,
     ) {
         arrows.with_mut(|arrows| {
             arrows.push(Ray {
@@ -149,7 +161,7 @@ impl BoardProps<'_> {
         &self,
         event: Event<MouseData>,
         mouse_down_state: &UseState<Option<MouseClick>>,
-        arrows: &UseRef<Vec<Ray>>,
+        arrows: &UseRef<Arrows>,
     ) {
         let mouse_down = MouseClick::from(event);
         if mouse_down.kind.contains(MouseButton::Primary) {
@@ -164,7 +176,7 @@ impl BoardProps<'_> {
         mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
         game_socket: Option<&Coroutine<Move>>,
-        arrows: &UseRef<Vec<Ray>>,
+        arrows: &UseRef<Arrows>,
     ) {
         if let Some(mouse_down) = mouse_down_state.get() {
             if mouse_down.kind.contains(MouseButton::Primary) {
@@ -220,7 +232,7 @@ impl BoardProps<'_> {
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let arrows = use_ref::<Vec<Ray>>(cx, || vec![]);
+    let arrows = use_ref(cx, || Arrows::default());
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)
@@ -237,7 +249,7 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             onmousedown: |event| cx.props.handle_on_mouse_down_event(event, mouse_down_state, arrows),
             onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket, arrows),
             onmousemove: move |event| cx.props.handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
-            onkeydown: move |event| cx.props.handle_on_key_down(&event.key()),
+            onkeydown: move |event| cx.props.handle_on_key_down(event, arrows),
             // board
             img {
                 src: "images/board.png",
@@ -258,17 +270,17 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                     }
                 }
             }),
+             // arrows
+            arrows.with(|arrows| arrows.get()).iter().map(|ray| {
+                rsx! {
+                    Arrow { ray: *ray, board_size: cx.props.size }
+                }
+            }),
+            if let Some(current_ray) = cx.props.get_current_ray(mouse_down_state, dragging_point_state) {
+                rsx! {
+                    Arrow { ray: current_ray, board_size: cx.props.size }
+                }
+            }
         },
-        // arrows
-        arrows.with(|arrows| arrows.to_owned()).iter().map(|ray| {
-            rsx! {
-                Arrow { ray: *ray, board_size: cx.props.size }
-            }
-        }),
-        if let Some(current_ray) = cx.props.get_current_ray(mouse_down_state, dragging_point_state) {
-            rsx! {
-                Arrow { ray: current_ray, board_size: cx.props.size }
-            }
-        }
     })
 }
