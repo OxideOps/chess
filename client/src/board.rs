@@ -1,4 +1,7 @@
+use crate::arrow::Arrow;
+use crate::arrows::Arrows;
 use crate::game_socket::create_game_socket;
+use crate::mouse_click::MouseClick;
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -6,6 +9,8 @@ use chess::moves::Move;
 use chess::piece::Piece;
 use chess::player::PlayerKind;
 use chess::position::Position;
+use dioxus::html::input_data::keyboard_types::Modifiers;
+use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 
@@ -15,7 +20,7 @@ fn get_piece_image_file(piece: Piece) -> String {
 
 #[derive(Props, PartialEq)]
 pub struct BoardProps<'a> {
-    size: u32,
+    pub(crate) size: u32,
     game: &'a UseRef<Game>,
     #[props(!optional)]
     game_id: Option<u32>,
@@ -33,27 +38,29 @@ impl BoardProps<'_> {
         mouse_down: &ClientPoint,
         mouse_up: &ClientPoint,
     ) -> Position {
-        let top_left = self.to_point(&self.to_position(mouse_down));
+        let center = self.get_center(&self.to_position(mouse_down));
         self.to_position(&ClientPoint::new(
-            top_left.x + mouse_up.x - mouse_down.x + self.size as f64 / 16.0,
-            top_left.y + mouse_up.y - mouse_down.y + self.size as f64 / 16.0,
+            center.x + mouse_up.x - mouse_down.x,
+            center.y + mouse_up.y - mouse_down.y,
         ))
     }
 
     fn get_positions(
         &self,
         pos: &Position,
-        mouse_down_state: &Option<ClientPoint>,
+        mouse_down_state: &Option<MouseClick>,
         dragging_point_state: &Option<ClientPoint>,
     ) -> (ClientPoint, usize) {
         let mut top_left = self.to_point(pos);
-        let mut z_index = 0;
+        let mut z_index = 1;
         if let Some(mouse_down) = mouse_down_state {
-            if let Some(dragging_point) = dragging_point_state {
-                if *pos == self.to_position(mouse_down) {
-                    z_index = 1;
-                    top_left.x += dragging_point.x - mouse_down.x;
-                    top_left.y += dragging_point.y - mouse_down.y;
+            if mouse_down.kind == MouseButton::Primary {
+                if let Some(dragging_point) = dragging_point_state {
+                    if *pos == self.to_position(&mouse_down.point) {
+                        z_index = 2;
+                        top_left.x += dragging_point.x - mouse_down.point.x;
+                        top_left.y += dragging_point.y - mouse_down.point.y;
+                    }
                 }
             }
         }
@@ -73,7 +80,7 @@ impl BoardProps<'_> {
         }
     }
 
-    fn to_point(&self, position: &Position) -> ClientPoint {
+    pub(crate) fn to_point(&self, position: &Position) -> ClientPoint {
         match self.perspective {
             Color::White => ClientPoint {
                 x: self.size as f64 * position.x as f64 / 8.0,
@@ -88,72 +95,144 @@ impl BoardProps<'_> {
         }
     }
 
-    fn handle_on_key_down(&self, key: &Key) {
-        self.game.with_mut(|game| {
-            match key {
-                Key::ArrowLeft => game.go_back_a_move(),
-                Key::ArrowRight => game.go_forward_a_move(),
-                Key::ArrowUp => game.resume(),
-                Key::ArrowDown => game.go_to_start(),
-                _ => log::debug!("{:?} key pressed", key),
-            };
-        })
+    fn handle_on_key_down(&self, event: Event<KeyboardData>, arrows: &UseRef<Arrows>) {
+        match event.key() {
+            Key::ArrowLeft => self.game.with_mut(|game| game.go_back_a_move()),
+            Key::ArrowRight => self.game.with_mut(|game| game.go_forward_a_move()),
+            Key::ArrowUp => self.game.with_mut(|game| game.resume()),
+            Key::ArrowDown => self.game.with_mut(|game| game.go_to_start()),
+            Key::Character(c) => match c.as_str() {
+                "z" => {
+                    if event.modifiers() == Modifiers::CONTROL {
+                        arrows.with_mut(|arrows| arrows.undo());
+                    }
+                }
+                "y" => {
+                    if event.modifiers() == Modifiers::CONTROL {
+                        arrows.with_mut(|arrows| arrows.redo());
+                    }
+                }
+                _ => log::debug!("{:?} key pressed", c),
+            },
+            _ => log::debug!("{:?} key pressed", event.key()),
+        };
+    }
+
+    fn drop_piece(
+        &self,
+        event: &Event<MouseData>,
+        point: &ClientPoint,
+        game_socket: Option<&Coroutine<Move>>,
+    ) {
+        let from = self.to_position(point);
+        let to = self.get_dragged_piece_position(point, &event.client_coordinates());
+        let current_player_kind = match self.game.with(|game| game.get_current_player()) {
+            Color::White => self.white_player_kind,
+            Color::Black => self.black_player_kind,
+        };
+        if current_player_kind == PlayerKind::Local
+            && self.game.with(|game| {
+                game.status != GameStatus::Replay
+                    && game.is_move_valid(&Move::new(from, to)).is_ok()
+            })
+        {
+            self.game.with_mut(|game| game.move_piece(from, to).ok());
+            if let Some(game_socket) = game_socket {
+                game_socket.send(Move::new(from, to));
+            }
+        }
+    }
+
+    fn complete_arrow(
+        &self,
+        event: &Event<MouseData>,
+        mouse_down: &ClientPoint,
+        arrows: &UseRef<Arrows>,
+    ) {
+        let from = self.to_position(mouse_down);
+        let to = self.to_position(&event.client_coordinates());
+        if to != from {
+            arrows.with_mut(|arrows| arrows.push(Move { from, to }));
+        }
+    }
+
+    fn handle_on_mouse_down_event(
+        &self,
+        event: Event<MouseData>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
+        arrows: &UseRef<Arrows>,
+    ) {
+        let mouse_down = MouseClick::from(event);
+        if mouse_down.kind.contains(MouseButton::Primary) {
+            arrows.with_mut(|arrows| arrows.clear());
+        }
+        mouse_down_state.set(Some(mouse_down));
     }
 
     fn handle_on_mouse_up_event(
         &self,
         event: Event<MouseData>,
-        mouse_down_state: &UseState<Option<ClientPoint>>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
         game_socket: Option<&Coroutine<Move>>,
+        arrows: &UseRef<Arrows>,
     ) {
         if let Some(mouse_down) = mouse_down_state.get() {
-            let from = self.to_position(mouse_down);
-            let to = self.get_dragged_piece_position(mouse_down, &event.client_coordinates());
-            let current_player_kind = match self.game.with(|game| game.get_current_player()) {
-                Color::White => self.white_player_kind,
-                Color::Black => self.black_player_kind,
-            };
-            if current_player_kind == PlayerKind::Local
-                && self.game.with(|game| {
-                    game.status != GameStatus::Replay
-                        && game.is_move_valid(&Move::new(from, to)).is_ok()
-                })
-            {
-                self.game.with_mut(|game| game.move_piece(from, to).ok());
-                if let Some(game_socket) = game_socket {
-                    game_socket.send(Move::new(from, to));
-                }
+            if mouse_down.kind.contains(MouseButton::Primary) {
+                self.drop_piece(&event, &mouse_down.point, game_socket);
+            }
+            if mouse_down.kind.contains(MouseButton::Secondary) {
+                self.complete_arrow(&event, &mouse_down.point, arrows);
             }
             mouse_down_state.set(None);
-            dragging_point_state.set(None);
         }
+        dragging_point_state.set(None);
     }
 
     fn handle_on_mouse_move_event(
         &self,
         event: Event<MouseData>,
-        mouse_down_state: &UseState<Option<ClientPoint>>,
+        mouse_down_state: &UseState<Option<MouseClick>>,
         dragging_point_state: &UseState<Option<ClientPoint>>,
     ) {
-        if let Some(mouse_down) = mouse_down_state.get() {
-            if self
-                .game
-                .with(|game| game.has_piece(&self.to_position(mouse_down)))
-            {
-                dragging_point_state.set(Some(event.client_coordinates()));
-            }
+        if mouse_down_state.get().is_some() {
+            dragging_point_state.set(Some(event.client_coordinates()));
         }
     }
 
     pub fn has_remote_player(&self) -> bool {
         [self.white_player_kind, self.black_player_kind].contains(&PlayerKind::Remote)
     }
+
+    pub fn get_center(&self, pos: &Position) -> ClientPoint {
+        let mut point = self.to_point(pos);
+        point.x += self.size as f64 / 16.0;
+        point.y += self.size as f64 / 16.0;
+        point
+    }
+
+    pub fn get_move_for_arrow(
+        &self,
+        mouse_down_state: &UseState<Option<MouseClick>>,
+        dragging_point_state: &UseState<Option<ClientPoint>>,
+    ) -> Option<Move> {
+        if let Some(mouse_down) = mouse_down_state.get() {
+            if mouse_down.kind.contains(MouseButton::Secondary) {
+                if let Some(dragging_point) = *dragging_point_state.get() {
+                    let from = self.to_position(&mouse_down.point);
+                    let to = self.to_position(&dragging_point);
+                    return Some(Move { to, from });
+                }
+            }
+        }
+        None
+    }
 }
 
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
-    let mouse_down_state = use_state::<Option<ClientPoint>>(cx, || None);
+    let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
+    let arrows = use_ref(cx, Arrows::default);
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)
@@ -163,18 +242,18 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     cx.render(rsx! {
         // div for widget
         div {
+            class: "relative z-0",
             autofocus: true,
             tabindex: 0,
             // event handlers
-            onmousedown: |event| mouse_down_state.set(Some(event.client_coordinates())),
-            onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket),
+            onmousedown: |event| cx.props.handle_on_mouse_down_event(event, mouse_down_state, arrows),
+            onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket, arrows),
             onmousemove: move |event| cx.props.handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
-            onkeydown: move |event| cx.props.handle_on_key_down(&event.key()),
-            //board
+            onkeydown: move |event| cx.props.handle_on_key_down(event, arrows),
+            // board
             img {
                 src: "images/board.png",
-                class: "images",
-                style: "left: 0; top: 0;",
+                class: "images inset-0 z-0",
                 width: "{cx.props.size}",
                 height: "{cx.props.size}",
             },
@@ -191,6 +270,17 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                     }
                 }
             }),
-        }
+             // arrows
+            arrows.with(|arrows| arrows.get()).iter().map(|mv| {
+                rsx! {
+                    Arrow { mv: *mv, board_props: cx.props }
+                }
+            }),
+            if let Some(current_mv) = cx.props.get_move_for_arrow(mouse_down_state, dragging_point_state) {
+                rsx! {
+                    Arrow { mv: current_mv, board_props: cx.props }
+                }
+            }
+        },
     })
 }
