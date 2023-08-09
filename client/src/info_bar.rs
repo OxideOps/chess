@@ -9,7 +9,7 @@ use std::time::Duration;
 #[derive(Props, PartialEq)]
 pub struct InfoBarProps<'a> {
     game: &'a UseRef<Game>,
-    time: Duration,
+    start_time: Duration,
     left: u32,
 }
 
@@ -22,7 +22,7 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     };
     cx.render(rsx! {
         div { class: "info-bar-container", style: "left: {cx.props.left}px;",
-            Timer { game: cx.props.game, time: cx.props.time }
+            Timer { game: cx.props.game, start_time: cx.props.start_time }
             p { class: "{classes}", "GameStatus: {game_status:?}" }
             RoundList { game: cx.props.game }
         }

@@ -6,7 +6,7 @@ use web_time::{Duration, Instant};
 pub struct Timer {
     white_time: Duration,
     black_time: Duration,
-    start_time: Option<Instant>,
+    time_started: Option<Instant>,
     current_player: Color,
 }
 
@@ -15,34 +15,34 @@ impl Default for Timer {
         Self {
             white_time: Duration::from_secs(60),
             black_time: Duration::from_secs(60),
-            start_time: None,
+            time_started: None,
             current_player: Color::White,
         }
     }
 }
 
 impl Timer {
-    pub fn with_duration(duration: Duration) -> Self {
+    pub fn with_duration(start_time: Duration) -> Self {
         Self {
-            white_time: duration,
-            black_time: duration,
-            start_time: None,
+            white_time: start_time,
+            black_time: start_time,
+            time_started: None,
             current_player: Color::White,
         }
     }
 
     pub fn start(&mut self) {
-        self.start_time = Some(Instant::now());
+        self.time_started = Some(Instant::now());
     }
 
     pub fn stop(&mut self) {
         self.pause_active_time();
-        self.start_time = None;
+        self.time_started = None;
     }
 
     fn pause_active_time(&mut self) {
         let elapsed = self
-            .start_time
+            .time_started
             .take()
             .expect("call `timer.start()` first")
             .elapsed();
@@ -70,16 +70,17 @@ impl Timer {
     }
 
     pub fn get_time(&self, player: Color) -> Duration {
-        let time = match player {
+        let current_time = match player {
             Color::White => self.white_time,
             Color::Black => self.black_time,
         };
 
-        if self.start_time.is_some() && player == self.current_player {
-            time.checked_sub(self.start_time.unwrap().elapsed())
+        if self.time_started.is_some() && player == self.current_player {
+            current_time
+                .checked_sub(self.time_started.unwrap().elapsed())
                 .unwrap_or(Duration::from_secs(0))
         } else {
-            time
+            current_time
         }
     }
 
@@ -98,6 +99,6 @@ impl Timer {
     }
 
     pub fn is_active(&self) -> bool {
-        self.start_time.is_some()
+        self.time_started.is_some()
     }
 }

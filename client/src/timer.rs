@@ -6,17 +6,14 @@ use std::time::Duration;
 #[derive(Props, PartialEq)]
 pub struct TimerProps<'a> {
     game: &'a UseRef<Game>,
-    time: Duration,
+    start_time: Duration,
 }
 
 pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
-    let white_time = use_state(cx, || display_time(cx.props.time));
-    let black_time = use_state(cx, || display_time(cx.props.time));
-    let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
-        Color::White => white_time,
-        Color::Black => black_time,
-    };
-    use_timer_future(cx, cx.props.game, active_time_state);
+    let white_time = use_state(cx, || display_time(cx.props.start_time));
+    let black_time = use_state(cx, || display_time(cx.props.start_time));
+
+    use_timer_future(cx, white_time, black_time);
 
     cx.render(rsx! {
         p { "White time: {white_time}" }
@@ -38,13 +35,19 @@ fn display_time(time: Duration) -> String {
 
 fn use_timer_future(
     cx: Scope<TimerProps>,
-    game: &UseRef<Game>,
-    active_time_state: &UseState<String>,
+    white_time: &UseState<String>,
+    black_time: &UseState<String>,
 ) {
-    use_future(cx, (game,), |(game,)| {
-        let active_time_state = active_time_state.to_owned();
+    use_future(cx, cx.props.game, |game| {
+        let white_time = white_time.to_owned();
+        let black_time = black_time.to_owned();
+
         async move {
             if game.with(|game| game.is_timer_active()) {
+                let active_time_state = match game.with(|game| game.get_real_player()) {
+                    Color::White => white_time,
+                    Color::Black => black_time,
+                };
                 loop {
                     let active_time = game.with(|game| game.get_active_time());
                     let sleep_time = active_time.subsec_micros();
@@ -56,6 +59,8 @@ fn use_timer_future(
                     }
                 }
             } else {
+                white_time.set(display_time(game.with(|game| game.get_time(Color::White))));
+                black_time.set(display_time(game.with(|game| game.get_time(Color::Black))));
                 sleep(Duration::from_secs(u64::MAX)).await;
             }
         }

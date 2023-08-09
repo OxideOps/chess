@@ -34,7 +34,7 @@ pub fn App(cx: Scope) -> Element {
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
             perspective: *perspective.get(),
-            time: Duration::from_secs(3600),
+            start_time: Duration::from_secs(3600),
             height: WIDGET_HEIGHT
         }
         button {

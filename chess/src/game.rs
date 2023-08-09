@@ -13,12 +13,18 @@ use crate::timer::Timer;
 use std::collections::HashSet;
 use web_time::Duration;
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
     pub status: GameStatus,
     history: History,
     pub timer: Timer,
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Self::builder().build()
+    }
 }
 
 impl Game {
@@ -27,11 +33,19 @@ impl Game {
     }
 
     pub fn builder() -> GameBuilder {
-        GameBuilder::default()
+        GameBuilder::new()
+    }
+
+    pub fn with_start_time(start_time: Duration) -> Self {
+        GameBuilder::new().start_time(start_time).build()
     }
 
     pub fn with_state(state: BoardState) -> Self {
-        Game::builder().state(state).build()
+        Self::builder().state(state).build()
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::new()
     }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
@@ -370,14 +384,14 @@ impl Game {
     }
 }
 pub struct GameBuilder {
-    duration: Duration,
+    start_time: Duration,
     state: BoardState,
 }
 
 impl Default for GameBuilder {
     fn default() -> Self {
         Self {
-            duration: Duration::from_secs(60),
+            start_time: Duration::from_secs(60),
             state: BoardState::default(),
         }
     }
@@ -390,16 +404,17 @@ impl GameBuilder {
 
     pub fn build(self) -> Game {
         let mut game = Game {
+            valid_moves: HashSet::default(),
             history: History::with_state(self.state),
-            timer: Timer::with_duration(self.duration),
-            ..Default::default()
+            timer: Timer::with_duration(self.start_time),
+            status: GameStatus::default(),
         };
         game.add_moves();
         game
     }
 
-    pub fn duration(mut self, duration: Duration) -> Self {
-        self.duration = duration;
+    pub fn start_time(mut self, start_time: Duration) -> Self {
+        self.start_time = start_time;
         self
     }
 

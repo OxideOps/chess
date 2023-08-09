@@ -14,12 +14,12 @@ pub struct WidgetProps {
     white_player: UseRef<Player>,
     black_player: UseRef<Player>,
     perspective: Color,
-    time: Duration,
+    start_time: Duration,
     height: u32,
 }
 
 pub fn Widget(cx: Scope<WidgetProps>) -> Element {
-    let game = use_ref(cx, || Game::builder().duration(cx.props.time).build());
+    let game = use_ref(cx, || Game::with_start_time(cx.props.start_time));
     cx.render(rsx! {
         Board {
             size: cx.props.height,
@@ -29,6 +29,6 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
             black_player_kind: cx.props.black_player.with(|player| player.kind),
             perspective: cx.props.perspective
         }
-        InfoBar { game: game, time: cx.props.time, left: cx.props.height }
+        InfoBar { game: game, start_time: cx.props.start_time, left: cx.props.height }
     })
 }
