@@ -13,11 +13,7 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
     let white_time = use_state(cx, || display_time(cx.props.start_time));
     let black_time = use_state(cx, || display_time(cx.props.start_time));
 
-    let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
-        Color::White => white_time,
-        Color::Black => black_time,
-    };
-    use_timer_future(cx, active_time_state);
+    use_timer_future(cx, white_time, black_time);
 
     cx.render(rsx! {
         p { "White time: {white_time}" }
@@ -37,10 +33,13 @@ fn display_time(time: Duration) -> String {
     }
 }
 
-fn use_timer_future(
-    cx: Scope<TimerProps>,
-    active_time_state: &UseState<String>,
-) {
+fn use_timer_future(cx: Scope<TimerProps>, white_time: &UseState<String>, black_time: &UseState<String>) {
+    let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
+        Color::White => white_time.to_owned(),
+        Color::Black => black_time.to_owned(),
+    };
+    let active_time_state = active_time_state.to_owned();
+    
     use_future(cx, cx.props.game, |game| {
         let active_time_state = active_time_state.to_owned();
         async move {
@@ -54,11 +53,12 @@ fn use_timer_future(
                         game.with_mut(|game| game.trigger_timeout());
                         return;
                     }
-                    if game.with(|game| game.status == GameStatus::NotStarted) {
-                        active_time_state.set(display_time(active_time));
-                    }
                 }
             } else {
+                if cx.props.game.with(|game| game.status == GameStatus::NotStarted) {
+                    white_time.set(display_time(cx.props.start_time));
+                    black_time.set(display_time(cx.props.start_time));
+                }
                 sleep(Duration::from_secs(u64::MAX)).await;
             }
         }

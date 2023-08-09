@@ -76,7 +76,8 @@ impl Timer {
         };
 
         if self.time_started.is_some() && player == self.current_player {
-            current_time.checked_sub(self.time_started.unwrap().elapsed())
+            current_time
+                .checked_sub(self.time_started.unwrap().elapsed())
                 .unwrap_or(Duration::from_secs(0))
         } else {
             current_time
