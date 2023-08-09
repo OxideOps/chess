@@ -13,16 +13,11 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
     let white_time = use_state(cx, || display_time(cx.props.start_time));
     let black_time = use_state(cx, || display_time(cx.props.start_time));
 
-    if cx.props.game.with(|game| game.status == GameStatus::NotStarted) {
-        white_time.set(display_time(cx.props.start_time));
-        black_time.set(display_time(cx.props.start_time))
-    }
-
     let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
         Color::White => white_time,
         Color::Black => black_time,
     };
-    use_timer_future(cx, cx.props.game, active_time_state);
+    use_timer_future(cx, active_time_state);
 
     cx.render(rsx! {
         p { "White time: {white_time}" }
@@ -44,10 +39,9 @@ fn display_time(time: Duration) -> String {
 
 fn use_timer_future(
     cx: Scope<TimerProps>,
-    game: &UseRef<Game>,
     active_time_state: &UseState<String>,
 ) {
-    use_future(cx, (game,), |(game,)| {
+    use_future(cx, cx.props.game, |game| {
         let active_time_state = active_time_state.to_owned();
         async move {
             if game.with(|game| game.is_timer_active()) {
