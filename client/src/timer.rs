@@ -54,6 +54,9 @@ fn use_timer_future(
                         game.with_mut(|game| game.trigger_timeout());
                         return;
                     }
+                    if game.with(|game| game.status == GameStatus::NotStarted) {
+                        active_time_state.set(display_time(active_time));
+                    }
                 }
             } else {
                 sleep(Duration::from_secs(u64::MAX)).await;
