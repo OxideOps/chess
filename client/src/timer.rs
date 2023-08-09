@@ -35,13 +35,15 @@ fn display_time(time: Duration) -> String {
 
 fn use_timer_future(cx: Scope<TimerProps>, white_time: &UseState<String>, black_time: &UseState<String>) {
     let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
-        Color::White => white_time.to_owned(),
-        Color::Black => black_time.to_owned(),
+        Color::White => white_time,
+        Color::Black => black_time,
     };
-    let active_time_state = active_time_state.to_owned();
-    
+
     use_future(cx, cx.props.game, |game| {
         let active_time_state = active_time_state.to_owned();
+        let white_time = white_time.to_owned();
+        let black_time = black_time.to_owned();
+
         async move {
             if game.with(|game| game.is_timer_active()) {
                 loop {
