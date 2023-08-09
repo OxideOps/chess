@@ -23,7 +23,7 @@ pub struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        GameBuilder::new().build()
+        Self::builder().build()
     }
 }
 
