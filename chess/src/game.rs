@@ -404,9 +404,10 @@ impl GameBuilder {
 
     pub fn build(self) -> Game {
         let mut game = Game {
+            valid_moves: HashSet::default(),
             history: History::with_state(self.state),
             timer: Timer::with_duration(self.start_time),
-            ..Default::default()
+            status: GameStatus::default(),
         };
         game.add_moves();
         game
