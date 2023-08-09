@@ -1,5 +1,5 @@
 use async_std::task::sleep;
-use chess::{color::Color, game::Game, game_status::GameStatus};
+use chess::{color::Color, game::Game};
 use dioxus::prelude::*;
 use std::time::Duration;
 
@@ -33,19 +33,21 @@ fn display_time(time: Duration) -> String {
     }
 }
 
-fn use_timer_future(cx: Scope<TimerProps>, white_time: &UseState<String>, black_time: &UseState<String>) {
-    let active_time_state = match cx.props.game.with(|game| game.get_real_player()) {
-        Color::White => white_time,
-        Color::Black => black_time,
-    };
-
+fn use_timer_future(
+    cx: Scope<TimerProps>,
+    white_time: &UseState<String>,
+    black_time: &UseState<String>,
+) {
     use_future(cx, cx.props.game, |game| {
-        let active_time_state = active_time_state.to_owned();
         let white_time = white_time.to_owned();
         let black_time = black_time.to_owned();
 
         async move {
             if game.with(|game| game.is_timer_active()) {
+                let active_time_state = match game.with(|game| game.get_real_player()) {
+                    Color::White => white_time,
+                    Color::Black => black_time,
+                };
                 loop {
                     let active_time = game.with(|game| game.get_active_time());
                     let sleep_time = active_time.subsec_micros();
@@ -57,10 +59,8 @@ fn use_timer_future(cx: Scope<TimerProps>, white_time: &UseState<String>, black_
                     }
                 }
             } else {
-                if cx.props.game.with(|game| game.status == GameStatus::NotStarted) {
-                    white_time.set(display_time(cx.props.start_time));
-                    black_time.set(display_time(cx.props.start_time));
-                }
+                white_time.set(display_time(game.with(|game| game.get_time(Color::White))));
+                black_time.set(display_time(game.with(|game| game.get_time(Color::Black))));
                 sleep(Duration::from_secs(u64::MAX)).await;
             }
         }
