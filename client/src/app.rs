@@ -8,7 +8,6 @@ use chess::{
 use dioxus::prelude::*;
 use server_functions::setup_remote_game::setup_remote_game;
 const WIDGET_HEIGHT: u32 = 800;
-const BUTTON_WIDTH: u32 = 100;
 
 fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<Player>) -> Color {
     if black_player.with(|player| player.kind == PlayerKind::Local)
@@ -27,7 +26,6 @@ pub fn App(cx: Scope) -> Element {
     let game_id = use_state::<Option<u32>>(cx, || None);
 
     cx.render(rsx! {
-        style { include_str!("../../styles/app.css") }
         style { include_str!("../../styles/output.css") }
         Widget {
             game_id: *game_id.get(),
@@ -59,8 +57,8 @@ pub fn App(cx: Scope) -> Element {
                     }
                 })
             },
-            class: "absolute",
-            style: "top: {WIDGET_HEIGHT}px; width: {BUTTON_WIDTH}px",
+            class: "buttons",
+            style: "top: {WIDGET_HEIGHT}px",
             "Play Remote"
         }
         button {
@@ -71,8 +69,8 @@ pub fn App(cx: Scope) -> Element {
                     Color::Black => perspective.set(Color::White),
                 }
             },
-            class: "absolute",
-            style: "top: {WIDGET_HEIGHT}px; width: {BUTTON_WIDTH}px; left: {BUTTON_WIDTH}px",
+            class: "buttons",
+            style: "top: {WIDGET_HEIGHT}px",
             "Flip Board"
         }
     })
