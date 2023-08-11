@@ -24,6 +24,7 @@ pub fn App(cx: Scope) -> Element {
     let black_player = use_ref(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
     let game_id = use_state::<Option<u32>>(cx, || None);
+    let analyze = use_state(cx, || false);
 
     cx.render(rsx! {
         style { include_str!("../../styles/output.css") }
@@ -36,6 +37,8 @@ pub fn App(cx: Scope) -> Element {
             height: WIDGET_HEIGHT
         }
         button {
+            class: "button",
+            style: "top: {WIDGET_HEIGHT}px",
             onclick: |_| {
                 to_owned![white_player, black_player, perspective, game_id];
                 cx.spawn(async move {
@@ -54,21 +57,19 @@ pub fn App(cx: Scope) -> Element {
                     }
                 })
             },
-            class: "buttons",
-            style: "top: {WIDGET_HEIGHT}px",
             "Play Remote"
         }
         button {
-            onclick: |_| {
-                let perspective = perspective.to_owned();
-                match perspective.get() {
-                    Color::White => perspective.set(Color::Black),
-                    Color::Black => perspective.set(Color::White),
-                }
-            },
-            class: "buttons",
+            class: "button",
             style: "top: {WIDGET_HEIGHT}px",
+            onclick: |_| perspective.modify(|perspective| !*perspective),
             "Flip Board"
+        }
+        button {
+            class: "button",
+            style: "top: {WIDGET_HEIGHT}px",
+            onclick: |_| analyze.modify(|analyze| !analyze),
+            if *analyze.get() { "Stop analyzing" } else { "Analyze" }
         }
     })
 }

@@ -8,7 +8,7 @@ body {
     font-family: Arial, sans-serif;
 }
 
-.buttons {
+.button {
     @apply relative w-48 border border-gray-200 p-2.5 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 m-1;
 }
 
@@ -27,4 +27,41 @@ body {
 
 td {
     @apply pr-4;
+}
+
+.switch input {
+    @apply hidden;
+}
+
+.toggle {
+    @apply relative w-48 border border-gray-200 p-2.5 rounded-md bg-gray-800 text-gray-200 m-1;
+}
+
+.switch {
+    @apply inline-block absolute w-16 h-8 top-1/2 left-0 mx-1;
+    transform: translateY(-50%);
+}
+
+.slider {
+    @apply absolute inset-0 overflow-hidden rounded-3xl cursor-pointer;
+    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+    border: 4px solid transparent;
+    transition: 0.2s;
+}
+
+.slider:before {
+    @apply absolute w-full h-full rounded-3xl bg-gray-600;
+    content: "";
+    background-color: #777;
+    transform: translateX(-30px);
+    transition: 0.2s;
+}
+
+input:checked + .slider:before {
+    transform: translateX(30px);
+    background-color: rgba(27, 135, 185);
+}
+
+input:checked + .slider {
+    box-shadow: 0 0 0 2px rgba(27, 135, 185), 0 0 8px rgba(27, 135, 185);
 }
