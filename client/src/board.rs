@@ -2,7 +2,7 @@ use crate::arrow::Arrow;
 use crate::arrows::Arrows;
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
-use crate::stockfish_client::{run_stockfish, update_position};
+use crate::stockfish_client::{run_stockfish, update_analysis_arrows, update_position};
 use async_process::Child;
 use chess::color::Color;
 use chess::game::Game;
@@ -166,7 +166,7 @@ impl BoardProps<'_> {
         arrows: &UseRef<Arrows>,
     ) {
         let mouse_down = MouseClick::from(event);
-        if mouse_down.kind.contains(MouseButton::Primary) {
+        if mouse_down.kind.contains(MouseButton::Primary) && !*self.analyze.get() {
             arrows.with_mut(|arrows| arrows.clear());
         }
         mouse_down_state.set(Some(mouse_down));
@@ -232,10 +232,22 @@ impl BoardProps<'_> {
     }
 }
 
-async fn toggle_stockfish(analyze: UseState<bool>, stockfish_process: UseRef<Option<Child>>) {
+async fn toggle_stockfish(
+    analyze: UseState<bool>,
+    stockfish_process: UseRef<Option<Child>>,
+    arrows: UseRef<Arrows>,
+) {
     if *analyze.get() {
         match run_stockfish().await {
-            Ok(child) => stockfish_process.set(Some(child)),
+            Ok(child) => {
+                stockfish_process.set(Some(child));
+                update_analysis_arrows(
+                    &arrows,
+                    stockfish_process
+                        .with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap()),
+                )
+                .await;
+            }
             Err(err) => log::error!("Failed to start stockfish: {err:?}"),
         }
     } else {
@@ -260,9 +272,13 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
         })
     });
     use_effect(cx, cx.props.analyze, |analyze| {
-        toggle_stockfish(analyze.to_owned(), stockfish_process.to_owned())
+        toggle_stockfish(
+            analyze.to_owned(),
+            stockfish_process.to_owned(),
+            arrows.to_owned(),
+        )
     });
-    use_effect(cx, cx.props.game, |game| {
+    use_effect(cx, (cx.props.game, cx.props.analyze), |(game, _)| {
         update_position(
             game.with(|game| game.get_fen_str()),
             stockfish_process.to_owned(),

@@ -1,6 +1,6 @@
 use chess::moves::Move;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Arrows {
     moves: Vec<Move>,
     showing: usize,
