@@ -382,6 +382,44 @@ impl Game {
         self.timer.stop();
         self.update_status();
     }
+
+    pub fn get_fen_str(&self) -> String {
+        let mut fen = String::with_capacity(80);
+        let mut empty_count = 0;
+        for y in (0..8).rev() {
+            for x in 0..8 {
+                if let Some(piece) = self.get_piece(&Position { x, y }) {
+                    if empty_count > 0 {
+                        fen.push_str(&empty_count.to_string());
+                        empty_count = 0;
+                    }
+                    fen.push(piece.get_fen_char());
+                } else {
+                    empty_count += 1;
+                }
+            }
+            if empty_count > 0 {
+                fen.push_str(&empty_count.to_string());
+                empty_count = 0;
+            }
+            fen.push('/');
+        }
+        fen.push(' ');
+        fen.push(self.get_current_player().get_fen_char());
+        fen.push(' ');
+        fen.push_str(&self.get_current_state().castling_rights.get_fen_str());
+        fen.push(' ');
+        if let Some(pos) = self.get_current_state().en_passant_position {
+            fen.push_str(&pos.to_string());
+        } else {
+            fen.push('-');
+        }
+        fen.push(' ');
+        fen.push_str(&self.history.fifty_move_count.to_string());
+        fen.push(' ');
+        fen.push_str(&(self.get_current_turn() / 2 + 1).to_string());
+        fen
+    }
 }
 pub struct GameBuilder {
     start_time: Duration,

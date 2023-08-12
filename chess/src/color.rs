@@ -7,6 +7,15 @@ pub enum Color {
     Black,
 }
 
+impl Color {
+    pub fn get_fen_char(self) -> char {
+        match self {
+            Self::White => 'w',
+            Self::Black => 'b',
+        }
+    }
+}
+
 impl std::ops::Not for Color {
     type Output = Self;
     fn not(self) -> Self::Output {

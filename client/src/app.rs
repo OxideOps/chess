@@ -33,43 +33,48 @@ pub fn App(cx: Scope) -> Element {
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
             perspective: *perspective.get(),
+            analyze: analyze.to_owned(),
             start_time: Duration::from_secs(3600),
             height: WIDGET_HEIGHT
         }
-        button {
-            class: "button",
-            style: "top: {WIDGET_HEIGHT}px",
-            onclick: |_| {
-                to_owned![white_player, black_player, perspective, game_id];
-                cx.spawn(async move {
-                    match setup_remote_game().await {
-                        Ok(info) => {
-                            log::info!("Setting up remote game: {info:?}");
-                            game_id.set(Some(info.game_id));
-                            let player = match info.local_color {
-                                Color::White => black_player.to_owned(),
-                                Color::Black => white_player.to_owned(),
-                            };
-                            player.with_mut(|player| player.kind = PlayerKind::Remote);
-                            perspective.set(get_default_perspective(&white_player, &black_player));
+        div {
+            class: "flex justify-center items-center",
+            style: "width: {WIDGET_HEIGHT}px",
+            button {
+                class: "button",
+                style: "top: {WIDGET_HEIGHT}px",
+                onclick: |_| {
+                    to_owned![white_player, black_player, perspective, game_id];
+                    cx.spawn(async move {
+                        match setup_remote_game().await {
+                            Ok(info) => {
+                                log::info!("Setting up remote game: {info:?}");
+                                game_id.set(Some(info.game_id));
+                                let player = match info.local_color {
+                                    Color::White => black_player.to_owned(),
+                                    Color::Black => white_player.to_owned(),
+                                };
+                                player.with_mut(|player| player.kind = PlayerKind::Remote);
+                                perspective.set(get_default_perspective(&white_player, &black_player));
+                            }
+                            Err(err) => log::error!("Error starting remote game: {err:?}"),
                         }
-                        Err(err) => log::error!("Error starting remote game: {err:?}"),
-                    }
-                })
-            },
-            "Play Remote"
-        }
-        button {
-            class: "button",
-            style: "top: {WIDGET_HEIGHT}px",
-            onclick: |_| perspective.modify(|perspective| !*perspective),
-            "Flip Board"
-        }
-        button {
-            class: "button",
-            style: "top: {WIDGET_HEIGHT}px",
-            onclick: |_| analyze.modify(|analyze| !analyze),
-            if *analyze.get() { "Stop analyzing" } else { "Analyze" }
+                    })
+                },
+                "Play Remote"
+            }
+            button {
+                class: "button",
+                style: "top: {WIDGET_HEIGHT}px",
+                onclick: |_| perspective.modify(|perspective| !*perspective),
+                "Flip Board"
+            }
+            button {
+                class: "button",
+                style: "top: {WIDGET_HEIGHT}px",
+                onclick: |_| analyze.modify(|analyze| !analyze),
+                if *analyze.get() { "Stop analyzing" } else { "Analyze" }
+            }
         }
     })
 }

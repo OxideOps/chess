@@ -2,6 +2,8 @@ use crate::arrow::Arrow;
 use crate::arrows::Arrows;
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
+use crate::stockfish_client::{run_stockfish, update_position};
+use async_process::Child;
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -27,6 +29,7 @@ pub struct BoardProps<'a> {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
     perspective: Color,
+    analyze: &'a UseState<bool>,
 }
 
 impl BoardProps<'_> {
@@ -229,14 +232,41 @@ impl BoardProps<'_> {
     }
 }
 
+async fn toggle_stockfish(analyze: UseState<bool>, stockfish_process: UseRef<Option<Child>>) {
+    if *analyze.get() {
+        match run_stockfish().await {
+            Ok(child) => stockfish_process.set(Some(child)),
+            Err(err) => log::error!("Failed to start stockfish: {err:?}"),
+        }
+    } else {
+        stockfish_process.with_mut(|option| {
+            if let Some(process) = option {
+                log::info!("Stopping Stockfish");
+                process.kill().expect("Failed to kill stockfish process");
+                *option = None;
+            }
+        })
+    }
+}
+
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
+    let stockfish_process = use_ref::<Option<Child>>(cx, || None);
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)
         })
+    });
+    use_effect(cx, cx.props.analyze, |analyze| {
+        toggle_stockfish(analyze.to_owned(), stockfish_process.to_owned())
+    });
+    use_effect(cx, cx.props.game, |game| {
+        update_position(
+            game.with(|game| game.get_fen_str()),
+            stockfish_process.to_owned(),
+        )
     });
 
     cx.render(rsx! {

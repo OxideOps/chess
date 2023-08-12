@@ -7,6 +7,13 @@ pub struct Arrows {
 }
 
 impl Arrows {
+    pub fn new(moves: Vec<Move>) -> Self {
+        Self {
+            showing: moves.len(),
+            moves,
+        }
+    }
+
     pub fn push(&mut self, mv: Move) {
         self.moves.drain(self.showing..self.moves.len());
         self.moves.push(mv);
@@ -32,5 +39,9 @@ impl Arrows {
     pub fn clear(&mut self) {
         self.moves.clear();
         self.showing = 0;
+    }
+
+    pub fn set(&mut self, i: usize, mv: Move) {
+        self.moves[i] = mv;
     }
 }
