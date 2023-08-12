@@ -13,7 +13,7 @@ pub fn main() {
         use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
         use dioxus_fullstack::prelude::server_fn::set_server_url;
         const WINDOW_SIZE: u32 = 800;
-        set_server_url("http://localhost:8080");
+        set_server_url("https://muddy-fog-684.fly.dev");
         log::info!("desktop launching");
         dioxus_desktop::launch_cfg(
             App,
