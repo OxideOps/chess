@@ -221,7 +221,7 @@ impl BoardProps<'_> {
                 if let Some(dragging_point) = *dragging_point_state.get() {
                     let from = self.to_position(&mouse_down.point);
                     let to = self.to_position(&dragging_point);
-                    return Some(Move { to, from });
+                    return Some(Move::new(to, from));
                 }
             }
         }
