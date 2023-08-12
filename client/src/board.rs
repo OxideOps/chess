@@ -248,8 +248,8 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             // event handlers
             onmousedown: |event| cx.props.handle_on_mouse_down_event(event, mouse_down_state, arrows),
             onmouseup: move |event| cx.props.handle_on_mouse_up_event(event, mouse_down_state, dragging_point_state, game_socket, arrows),
-            onmousemove: move |event| cx.props.handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
-            onkeydown: move |event| cx.props.handle_on_key_down(event, arrows),
+            onmousemove: |event| cx.props.handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
+            onkeydown: |event| cx.props.handle_on_key_down(event, arrows),
             // board
             img {
                 src: "images/board.png",
