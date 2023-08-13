@@ -68,15 +68,15 @@ pub async fn update_position(
     arrows: UseRef<Arrows>,
 ) -> Result<()> {
     arrows.set(Arrows::new(vec![Move::default(); MOVES]));
-    process.with_mut(|option| -> Result<()> {
-        if let Some(process) = option {
-            let stdin = process.stdin.as_mut().unwrap();
-            block_on(send_command(stdin, "stop"))?;
-            block_on(send_command(stdin, &format!("position fen {fen_str}")))?;
-            block_on(send_command(stdin, &format!("go depth {DEPTH}")))?;
-        }
-        Ok(())
-    })?;
+    if let Some(stdin) = process
+        .write()
+        .as_mut()
+        .map(|process| process.stdin.as_mut().unwrap())
+    {
+        block_on(send_command(stdin, "stop"))?;
+        block_on(send_command(stdin, &format!("position fen {fen_str}")))?;
+        block_on(send_command(stdin, &format!("go depth {DEPTH}")))?;
+    }
     Ok(())
 }
 
@@ -89,15 +89,13 @@ pub async fn update_analysis_arrows(arrows: &UseRef<Arrows>, stdout: ChildStdout
             let move_str = get_info(output, " pv").unwrap();
             let eval = get_eval(output);
             evals[i] = eval;
-            arrows.with_mut(|arrows| {
-                arrows.set(
-                    i,
-                    ArrowData::new(
-                        Move::from_lan(move_str).unwrap(),
-                        eval_to_alpha(eval, &evals),
-                    ),
-                )
-            });
+            arrows.write().set(
+                i,
+                ArrowData::new(
+                    Move::from_lan(move_str).unwrap(),
+                    eval_to_alpha(eval, &evals),
+                ),
+            );
         }
     }
 }

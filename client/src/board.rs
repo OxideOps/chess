@@ -155,7 +155,7 @@ impl BoardProps<'_> {
         let from = self.to_position(mouse_down);
         let to = self.to_position(&event.client_coordinates());
         if to != from {
-            arrows.with_mut(|arrows| arrows.push(ArrowData::with_move(Move { from, to })));
+            arrows.write().push(ArrowData::with_move(Move { from, to }));
         }
     }
 
@@ -167,7 +167,7 @@ impl BoardProps<'_> {
     ) {
         let mouse_down = MouseClick::from(event);
         if mouse_down.kind.contains(MouseButton::Primary) {
-            arrows.with_mut(|arrows| arrows.clear());
+            arrows.write().clear();
         }
         mouse_down_state.set(Some(mouse_down));
     }
@@ -256,7 +256,7 @@ async fn toggle_stockfish(
                 log::info!("Stopping Stockfish");
                 process.kill().expect("Failed to kill stockfish process");
                 *option = None;
-                arrows.with_mut(|arrows| arrows.clear());
+                arrows.write().clear();
             }
         })
     }
@@ -321,7 +321,7 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             }),
              // arrows
             for arrows in [arrows, analysis_arrows] {
-                arrows.with(|arrows| arrows.get()).into_iter().map(|data| {
+                arrows.read().get().into_iter().map(|data| {
                     rsx! {
                         Arrow { data: data, board_props: cx.props }
                     }
