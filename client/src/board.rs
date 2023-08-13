@@ -237,7 +237,6 @@ async fn toggle_stockfish(
     analyze: UseState<bool>,
     stockfish_process: UseRef<Option<Child>>,
     arrows: UseRef<Arrows>,
-    player: Color,
 ) {
     if *analyze.get() {
         match run_stockfish().await {
@@ -247,7 +246,6 @@ async fn toggle_stockfish(
                     &arrows,
                     stockfish_process
                         .with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap()),
-                    player,
                 )
                 .await;
             }
@@ -275,7 +273,6 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             analyze.to_owned(),
             stockfish_process.to_owned(),
             arrows.to_owned(),
-            cx.props.game.with(|game| game.get_current_player()),
         )
     });
     use_effect(cx, (cx.props.game, cx.props.analyze), |(game, _)| {
