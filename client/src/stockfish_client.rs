@@ -62,7 +62,12 @@ pub async fn run_stockfish() -> Result<Child> {
     Ok(child)
 }
 
-pub async fn update_position(fen_str: String, process: UseRef<Option<Child>>) -> Result<()> {
+pub async fn update_position(
+    fen_str: String,
+    process: UseRef<Option<Child>>,
+    arrows: UseRef<Arrows>,
+) -> Result<()> {
+    arrows.set(Arrows::new(vec![Move::default(); MOVES]));
     process.with_mut(|option| -> Result<()> {
         if let Some(process) = option {
             let stdin = process.stdin.as_mut().unwrap();
@@ -77,12 +82,8 @@ pub async fn update_position(fen_str: String, process: UseRef<Option<Child>>) ->
 
 pub async fn update_analysis_arrows(arrows: &UseRef<Arrows>, stdout: ChildStdout) {
     let mut lines = BufReader::new(stdout).lines();
-    let mut evals = vec![0.0; MOVES];
-
-    arrows.set(Arrows::new(vec![Move::default(); MOVES]));
-
+    let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {
-        println!("{output:?}");
         if let Some(i) = get_info(output, "multipv") {
             let i = i.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();

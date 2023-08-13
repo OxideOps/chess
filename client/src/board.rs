@@ -15,7 +15,6 @@ use dioxus::html::input_data::keyboard_types::Modifiers;
 use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
-use thread_priority::{set_current_thread_priority, ThreadPriority};
 
 fn get_piece_image_file(piece: Piece) -> String {
     format!("images/{piece}.png")
@@ -167,7 +166,7 @@ impl BoardProps<'_> {
         arrows: &UseRef<Arrows>,
     ) {
         let mouse_down = MouseClick::from(event);
-        if mouse_down.kind.contains(MouseButton::Primary) && !*self.analyze.get() {
+        if mouse_down.kind.contains(MouseButton::Primary) {
             arrows.with_mut(|arrows| arrows.clear());
         }
         mouse_down_state.set(Some(mouse_down));
@@ -257,28 +256,30 @@ async fn toggle_stockfish(
                 log::info!("Stopping Stockfish");
                 process.kill().expect("Failed to kill stockfish process");
                 *option = None;
+                arrows.with_mut(|arrows| arrows.clear());
             }
         })
     }
 }
 
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
-    set_current_thread_priority(ThreadPriority::Max).ok();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
+    let analysis_arrows = use_ref(cx, Arrows::default);
     let stockfish_process = use_ref::<Option<Child>>(cx, || None);
     use_effect(cx, cx.props.analyze, |analyze| {
         toggle_stockfish(
             analyze.to_owned(),
             stockfish_process.to_owned(),
-            arrows.to_owned(),
+            analysis_arrows.to_owned(),
         )
     });
     use_effect(cx, (cx.props.game, cx.props.analyze), |(game, _)| {
         update_position(
             game.with(|game| game.get_fen_str()),
             stockfish_process.to_owned(),
+            analysis_arrows.to_owned(),
         )
     });
     let game_socket = cx.props.game_id.map(|game_id| {
@@ -319,11 +320,13 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                 }
             }),
              // arrows
-            arrows.with(|arrows| arrows.get()).into_iter().map(|data| {
-                rsx! {
-                    Arrow { data: data, board_props: cx.props }
-                }
-            }),
+            for arrows in [arrows, analysis_arrows] {
+                arrows.with(|arrows| arrows.get()).into_iter().map(|data| {
+                    rsx! {
+                        Arrow { data: data, board_props: cx.props }
+                    }
+                })
+            },
             if let Some(current_mv) = cx.props.get_move_for_arrow(mouse_down_state, dragging_point_state) {
                 rsx! {
                     Arrow { data: ArrowData::with_move(current_mv), board_props: cx.props }
