@@ -9,8 +9,9 @@ use regex::Regex;
 use std::io::Result;
 
 const MOVES: usize = 8;
-const THREADS: usize = 8;
-const DEPTH: usize = 16;
+const THREADS: usize = 1;
+const DEPTH: usize = 24;
+const HASH: usize = 256;
 
 fn get_info<'a>(output: &'a str, key: &'a str) -> Option<&'a str> {
     let re = Regex::new(&format!(r"{key} (\S+)")).unwrap();
@@ -49,8 +50,11 @@ fn eval_to_alpha(eval: f64, evals: &[f64]) -> f64 {
 }
 
 pub async fn run_stockfish() -> Result<Child> {
-    let mut cmd = Command::new("client/Stockfish/src/stockfish");
-    cmd.stdout(Stdio::piped()).stdin(Stdio::piped());
+    let mut cmd = Command::new("nice");
+    cmd.args(["-n", "19", "client/Stockfish/src/stockfish"])
+        .stdout(Stdio::piped())
+        .stdin(Stdio::piped())
+        .kill_on_drop(true);
 
     log::info!("Starting Stockfish");
     let mut child = cmd.spawn()?;
@@ -59,6 +63,7 @@ pub async fn run_stockfish() -> Result<Child> {
     send_command(stdin, "uci").await?;
     send_command(stdin, &format!("setoption name MultiPV value {MOVES}")).await?;
     send_command(stdin, &format!("setoption name Threads value {THREADS}")).await?;
+    send_command(stdin, &format!("setoption name Hash value {HASH}")).await?;
 
     Ok(child)
 }

@@ -15,6 +15,7 @@ use dioxus::html::input_data::keyboard_types::Modifiers;
 use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
+use thread_priority::{set_current_thread_priority, ThreadPriority};
 
 fn get_piece_image_file(piece: Piece) -> String {
     format!("images/{piece}.png")
@@ -264,6 +265,7 @@ async fn toggle_stockfish(
 }
 
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
+    set_current_thread_priority(ThreadPriority::Max).ok();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
