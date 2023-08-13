@@ -270,11 +270,6 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
     let stockfish_process = use_ref::<Option<Child>>(cx, || None);
-    let game_socket = cx.props.game_id.map(|game_id| {
-        use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
-            create_game_socket(cx.props.game.to_owned(), game_id, rx)
-        })
-    });
     use_effect(cx, cx.props.analyze, |analyze| {
         toggle_stockfish(
             analyze.to_owned(),
@@ -288,6 +283,11 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
             game.with(|game| game.get_fen_str()),
             stockfish_process.to_owned(),
         )
+    });
+    let game_socket = cx.props.game_id.map(|game_id| {
+        use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
+            create_game_socket(cx.props.game.to_owned(), game_id, rx)
+        })
     });
 
     cx.render(rsx! {
