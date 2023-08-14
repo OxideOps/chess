@@ -4,12 +4,11 @@ use dioxus::prelude::*;
 use std::time::Duration;
 
 #[derive(Props, PartialEq)]
-pub struct TimerProps<'a> {
-    game: &'a UseRef<Game>,
+pub struct TimerProps {
     start_time: Duration,
 }
 
-pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
+pub fn Timer(cx: Scope<TimerProps>) -> Element {
     let white_time = use_state(cx, || display_time(cx.props.start_time));
     let black_time = use_state(cx, || display_time(cx.props.start_time));
 
@@ -38,31 +37,36 @@ fn use_timer_future(
     white_time: &UseState<String>,
     black_time: &UseState<String>,
 ) {
-    use_future(cx, cx.props.game, |game| {
-        let white_time = white_time.to_owned();
-        let black_time = black_time.to_owned();
+    use_future(
+        cx,
+        use_shared_state::<Game>(cx).unwrap(),
+        |game_shared_state| {
+            let white_time = white_time.to_owned();
+            let black_time = black_time.to_owned();
+            let game = game_shared_state.read();
 
-        async move {
-            if game.with(|game| game.is_timer_active()) {
-                let active_time_state = match game.with(|game| game.get_real_player()) {
-                    Color::White => white_time,
-                    Color::Black => black_time,
-                };
-                loop {
-                    let active_time = game.with(|game| game.get_active_time());
-                    let sleep_time = active_time.subsec_micros();
-                    sleep(Duration::from_micros(sleep_time as u64)).await;
-                    active_time_state.set(display_time(active_time));
-                    if active_time.is_zero() {
-                        game.with_mut(|game| game.trigger_timeout());
-                        return;
+            async move {
+                if game.is_timer_active() {
+                    let active_time_state = match game.get_real_player() {
+                        Color::White => white_time,
+                        Color::Black => black_time,
+                    };
+                    loop {
+                        let active_time = game.get_active_time();
+                        let sleep_time = active_time.subsec_micros();
+                        sleep(Duration::from_micros(sleep_time as u64)).await;
+                        active_time_state.set(display_time(active_time));
+                        if active_time.is_zero() {
+                            game.trigger_timeout();
+                            return;
+                        }
                     }
+                } else {
+                    white_time.set(display_time(game.get_time(Color::White)));
+                    black_time.set(display_time(game.get_time(Color::Black)));
+                    sleep(Duration::from_secs(u64::MAX)).await;
                 }
-            } else {
-                white_time.set(display_time(game.with(|game| game.get_time(Color::White))));
-                black_time.set(display_time(game.with(|game| game.get_time(Color::Black))));
-                sleep(Duration::from_secs(u64::MAX)).await;
             }
-        }
-    });
+        },
+    );
 }

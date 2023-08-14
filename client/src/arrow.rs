@@ -13,7 +13,7 @@ const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting 
 #[derive(Props, PartialEq)]
 pub struct ArrowProps<'a> {
     mv: Move,
-    board_props: &'a BoardProps<'a>,
+    board_props: &'a BoardProps,
 }
 
 fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {

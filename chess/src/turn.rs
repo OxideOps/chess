@@ -2,7 +2,7 @@ use crate::{board_state::BoardState, moves::Move};
 
 use std::fmt;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, PartialEq)]
 pub struct Turn {
     pub(super) board_state: BoardState,
     pub(super) mv: Move,

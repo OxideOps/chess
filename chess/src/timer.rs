@@ -2,7 +2,7 @@ use crate::color::Color;
 
 use web_time::{Duration, Instant};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Timer {
     white_time: Duration,
     black_time: Duration,

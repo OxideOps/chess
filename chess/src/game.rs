@@ -13,7 +13,7 @@ use crate::timer::Timer;
 use std::collections::HashSet;
 use web_time::Duration;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Game {
     valid_moves: HashSet<Move>,
     pub status: GameStatus,
