@@ -2,8 +2,8 @@ use crate::arrow::Arrow;
 use crate::arrows::{ArrowData, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
-use crate::stockfish_client::{run_stockfish, update_analysis_arrows, update_position};
-use async_process::Child;
+use crate::stockfish_client::{toggle_stockfish, update_position};
+use crate::stockfish_interface::Process;
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -232,55 +232,22 @@ impl BoardProps<'_> {
     }
 }
 
-async fn toggle_stockfish(
-    analyze: UseState<bool>,
-    stockfish_process: UseRef<Option<Child>>,
-    arrows: UseRef<Arrows>,
-) {
-    if *analyze.get() {
-        match run_stockfish().await {
-            Ok(child) => {
-                stockfish_process.set(Some(child));
-                update_analysis_arrows(
-                    &arrows,
-                    stockfish_process
-                        .with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap()),
-                )
-                .await;
-            }
-            Err(err) => log::error!("Failed to start stockfish: {err:?}"),
-        }
-    } else {
-        stockfish_process.with_mut(|option| {
-            if let Some(process) = option {
-                log::info!("Stopping Stockfish");
-                process.kill().expect("Failed to kill stockfish process");
-                *option = None;
-                arrows.write().clear();
-            }
-        })
-    }
-}
-
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_ref(cx, Arrows::default);
-    let stockfish_process = use_ref::<Option<Child>>(cx, || None);
+    let stockfish_process = use_ref::<Option<Process>>(cx, || None);
     use_effect(cx, cx.props.analyze, |analyze| {
         toggle_stockfish(
             analyze.to_owned(),
             stockfish_process.to_owned(),
+            cx.props.game.to_owned(),
             analysis_arrows.to_owned(),
         )
     });
-    use_effect(cx, (cx.props.game, cx.props.analyze), |(game, _)| {
-        update_position(
-            game.with(|game| game.get_fen_str()),
-            stockfish_process.to_owned(),
-            analysis_arrows.to_owned(),
-        )
+    use_effect(cx, cx.props.game, |game| {
+        update_position(game.read().get_fen_str(), stockfish_process.to_owned())
     });
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {

@@ -25,7 +25,10 @@ url = "2.4.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 dioxus-web = { git = "https://github.com/DioxusLabs/dioxus.git" }
+js-sys = "0.3.64"
 server-functions = { path = "../server-functions", features = ["web"] }
+wasm-bindgen = "0.2.87"
+wasm-bindgen-futures = "0.4.37"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 async-process = "1.7.0"
