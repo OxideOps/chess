@@ -187,7 +187,7 @@ pub fn has_remote_player(white_player_kind: PlayerKind, black_player_kind: Playe
     [white_player_kind, black_player_kind].contains(&PlayerKind::Remote)
 }
 
-pub fn get_center(pos: &Position) -> ClientPoint {
+pub fn get_center(pos: &Position, size: usize) -> ClientPoint {
     let mut point = to_point(pos);
     point.x += size as f64 / 16.0;
     point.y += size as f64 / 16.0;
@@ -197,12 +197,13 @@ pub fn get_center(pos: &Position) -> ClientPoint {
 pub fn get_move_for_arrow(
     mouse_down_state: &UseState<Option<MouseClick>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
+    perspective: Color,
 ) -> Option<Move> {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Secondary) {
             if let Some(dragging_point) = *dragging_point_state.get() {
-                let from = to_position(&mouse_down.point);
-                let to = to_position(&dragging_point);
+                let from = to_position(&mouse_down.point, perspective);
+                let to = to_position(&dragging_point, perspective);
                 return Some(Move::new(to, from));
             }
         }
@@ -259,7 +260,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                     Arrow { mv: *mv, board_props: cx.props }
                 }
             }),
-            if let Some(current_mv) = get_move_for_arrow(mouse_down_state, dragging_point_state) {
+            if let Some(current_mv) = get_move_for_arrow(mouse_down_state, dragging_point_state, cx.props.perspective) {
                 rsx! {
                     Arrow { mv: current_mv, board_props: cx.props }
                 }
