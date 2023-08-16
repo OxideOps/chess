@@ -14,13 +14,13 @@ type WriteStream = SplitSink<WebSocketStream, Message>;
 type ReadStream = SplitStream<WebSocketStream>;
 
 pub async fn create_game_socket(
-    game: &UseSharedState<Game>,
+    game: UseSharedState<Game>,
     game_id: u32,
     rx: UnboundedReceiver<Move>,
 ) {
     match connect_to_socket(game_id).await {
         Ok((write, read)) => {
-            join!(read_from_socket(read, game), write_to_socket(rx, write));
+            join!(read_from_socket(read, &game), write_to_socket(rx, write));
         }
         Err(err) => log::error!("Error connecting game socket: {err:?}"),
     };
@@ -48,7 +48,7 @@ async fn write_to_socket(mut rx: UnboundedReceiver<Move>, mut socket: WriteStrea
 fn handle_message(message: Result<Message>, game: &UseSharedState<Game>) -> anyhow::Result<()> {
     let mv = serde_json::from_str::<Move>(&message?.into_text()?)?;
     log::info!("Got move {mv}");
-    game.read().move_piece(mv.from, mv.to)?;
+    game.write().move_piece(mv.from, mv.to)?;
     Ok(())
 }
 

@@ -37,36 +37,31 @@ fn use_timer_future(
     white_time: &UseState<String>,
     black_time: &UseState<String>,
 ) {
-    use_future(
-        cx,
-        use_shared_state::<Game>(cx).unwrap(),
-        |game_shared_state| {
-            let white_time = white_time.to_owned();
-            let black_time = black_time.to_owned();
-            let game = game_shared_state.read();
+    use_future(cx, use_shared_state::<Game>(cx).unwrap(), |game| {
+        let white_time = white_time.to_owned();
+        let black_time = black_time.to_owned();
 
-            async move {
-                if game.is_timer_active() {
-                    let active_time_state = match game.get_real_player() {
-                        Color::White => white_time,
-                        Color::Black => black_time,
-                    };
-                    loop {
-                        let active_time = game.get_active_time();
-                        let sleep_time = active_time.subsec_micros();
-                        sleep(Duration::from_micros(sleep_time as u64)).await;
-                        active_time_state.set(display_time(active_time));
-                        if active_time.is_zero() {
-                            game.trigger_timeout();
-                            return;
-                        }
+        async move {
+            if game.read().is_timer_active() {
+                let active_time_state = match game.read().get_real_player() {
+                    Color::White => white_time,
+                    Color::Black => black_time,
+                };
+                loop {
+                    let active_time = game.read().get_active_time();
+                    let sleep_time = active_time.subsec_micros();
+                    sleep(Duration::from_micros(sleep_time as u64)).await;
+                    active_time_state.set(display_time(active_time));
+                    if active_time.is_zero() {
+                        game.write().trigger_timeout();
+                        return;
                     }
-                } else {
-                    white_time.set(display_time(game.get_time(Color::White)));
-                    black_time.set(display_time(game.get_time(Color::Black)));
-                    sleep(Duration::from_secs(u64::MAX)).await;
                 }
+            } else {
+                white_time.set(display_time(game.read().get_time(Color::White)));
+                black_time.set(display_time(game.read().get_time(Color::Black)));
+                sleep(Duration::from_secs(u64::MAX)).await;
             }
-        },
-    );
+        }
+    });
 }
