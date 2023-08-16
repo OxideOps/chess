@@ -10,8 +10,8 @@ use server_functions::setup_remote_game::setup_remote_game;
 const WIDGET_HEIGHT: u32 = 800;
 
 fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<Player>) -> Color {
-    if black_player.with(|player| player.kind == PlayerKind::Local)
-        && white_player.with(|player| player.kind != PlayerKind::Local)
+    if black_player.read().kind == PlayerKind::Local
+        && white_player.read().kind != PlayerKind::Local
     {
         Color::Black
     } else {
@@ -50,7 +50,7 @@ pub fn App(cx: Scope) -> Element {
                                 Color::White => black_player.to_owned(),
                                 Color::Black => white_player.to_owned(),
                             };
-                            player.with_mut(|player| player.kind = PlayerKind::Remote);
+                            player.write().kind = PlayerKind::Remote;
                             perspective.set(get_default_perspective(&white_player, &black_player));
                         }
                         Err(err) => log::error!("Error starting remote game: {err:?}"),

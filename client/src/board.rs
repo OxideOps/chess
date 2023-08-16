@@ -107,12 +107,12 @@ fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows:
         Key::Character(c) => match c.as_str() {
             "z" => {
                 if event.modifiers() == Modifiers::CONTROL {
-                    arrows.with_mut(|arrows| arrows.undo());
+                    arrows.write().undo();
                 }
             }
             "y" => {
                 if event.modifiers() == Modifiers::CONTROL {
-                    arrows.with_mut(|arrows| arrows.redo());
+                    arrows.write().redo();
                 }
             }
             _ => log::debug!("{:?} key pressed", c),
@@ -154,7 +154,7 @@ fn complete_arrow(
     let from = to_position(cx, mouse_down);
     let to = to_position(cx, &event.client_coordinates());
     if to != from {
-        arrows.with_mut(|arrows| arrows.push(Move::new(from, to)));
+        arrows.write().push(Move::new(from, to));
     }
 }
 
@@ -165,7 +165,7 @@ fn handle_on_mouse_down_event(
 ) {
     let mouse_down = MouseClick::from(event);
     if mouse_down.kind.contains(MouseButton::Primary) {
-        arrows.with_mut(|arrows| arrows.clear());
+        arrows.write().clear();
     }
     mouse_down_state.set(Some(mouse_down));
 }
@@ -268,7 +268,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 }
             }),
             // arrows
-            arrows.with(|arrows| arrows.get()).iter().map(|mv| {
+            arrows.read().get().iter().map(|mv| {
                 rsx! {
                     Arrow {
                         show: mv.from != mv.to,
