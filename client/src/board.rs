@@ -25,7 +25,7 @@ pub struct BoardProps {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
     perspective: Color,
-    size: usize,
+    size: u32,
 }
 
 // We want the square a dragged piece is considered to be on to be based on the center of
@@ -217,7 +217,7 @@ pub fn get_move_for_arrow(
             if let Some(dragging_point) = *dragging_point_state.get() {
                 let from = to_position(cx, &mouse_down.point);
                 let to = to_position(cx, &dragging_point);
-                return Some(Move::new(to, from));
+                return Some(Move::new(from, to));
             }
         }
     }
@@ -274,7 +274,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                         show: mv.from != mv.to,
                         from: get_center(cx, &mv.from),
                         to: get_center(cx, &mv.to),
-                        size: cx.props.size,
+                        board_size: cx.props.size,
                     }
                 }
             }),
@@ -284,7 +284,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                         show: mv.from != mv.to,
                         from: get_center(cx, &mv.from),
                         to: get_center(cx, &mv.to),
-                        size: cx.props.size,
+                        board_size: cx.props.size,
                     }
                 }
             }

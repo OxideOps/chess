@@ -22,7 +22,7 @@ pub fn Widget(cx: Scope<WidgetProps>) -> Element {
     use_shared_state_provider(cx, || Game::with_start_time(cx.props.start_time));
     cx.render(rsx! {
         Board {
-            size: cx.props.height as usize,
+            size: cx.props.height,
             game_id: cx.props.game_id,
             white_player_kind: cx.props.white_player.with(|player| player.kind),
             black_player_kind: cx.props.black_player.with(|player| player.kind),
