@@ -37,10 +37,7 @@ pub fn App(cx: Scope) -> Element {
         }
         button {
             onclick: |_| {
-                let white_player = white_player.to_owned();
-                let black_player = black_player.to_owned();
-                let perspective = perspective.to_owned();
-                let game_id = game_id.to_owned();
+                to_owned![white_player, black_player, perspective, game_id];
                 cx.spawn(async move {
                     match setup_remote_game().await {
                         Ok(info) => {
