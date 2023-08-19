@@ -61,6 +61,7 @@ pub async fn toggle_stockfish(
             if let Some(process) = option {
                 stop_stockfish(process);
                 *option = None;
+                arrows.set(Arrows::new(vec![Move::default(); MOVES]));
             }
         })
     }
