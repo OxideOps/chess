@@ -1,4 +1,4 @@
-FROM ghcr.io/event-horizon-technologies/chess:main
+FROM ghcr.io/oxideops/chess:main
 COPY . .
 RUN npx tailwindcss -i ./styles/input.css -o ./styles/output.css
 RUN trunk build
