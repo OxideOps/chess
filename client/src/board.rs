@@ -2,7 +2,7 @@ use crate::arrow::Arrow;
 use crate::arrows::{ArrowData, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
-use crate::stockfish_client::{toggle_stockfish, update_position};
+use crate::stockfish_client::{on_game_changed, toggle_stockfish};
 use crate::stockfish_interface::Process;
 use chess::color::Color;
 use chess::game::Game;
@@ -247,7 +247,11 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
         )
     });
     use_effect(cx, cx.props.game, |game| {
-        update_position(game.read().get_fen_str(), stockfish_process.to_owned())
+        on_game_changed(
+            game.read().get_fen_str(),
+            stockfish_process.to_owned(),
+            analysis_arrows.to_owned(),
+        )
     });
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {

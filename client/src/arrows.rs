@@ -73,4 +73,8 @@ impl Arrows {
     pub fn set(&mut self, i: usize, arrow_data: ArrowData) {
         self.arrows[i] = arrow_data;
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.arrows.is_empty()
+    }
 }
