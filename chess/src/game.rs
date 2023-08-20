@@ -404,20 +404,16 @@ impl Game {
             }
             fen.push('/');
         }
-        fen.push(' ');
-        fen.push(self.get_current_player().get_fen_char());
-        fen.push(' ');
-        fen.push_str(&self.get_current_state().castling_rights.get_fen_str());
-        fen.push(' ');
-        if let Some(pos) = self.get_current_state().en_passant_position {
-            fen.push_str(&pos.to_string());
-        } else {
-            fen.push('-');
-        }
-        fen.push(' ');
-        fen.push_str(&self.history.fifty_move_count.to_string());
-        fen.push(' ');
-        fen.push_str(&(self.get_current_turn() / 2 + 1).to_string());
+        fen.push_str(&format!(
+            " {} {} {} {} {}",
+            self.get_current_player().get_fen_char(),
+            self.get_current_state().castling_rights.get_fen_str(),
+            self.get_current_state()
+                .en_passant_position
+                .map_or("-".to_string(), |pos| pos.to_string()),
+            self.history.fifty_move_count,
+            (self.get_current_turn() / 2 + 1)
+        ));
         fen
     }
 }
