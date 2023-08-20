@@ -13,6 +13,8 @@ use crate::timer::Timer;
 use std::collections::HashSet;
 use web_time::Duration;
 
+const MAX_FEN_STR: usize = 87;
+
 #[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
@@ -384,7 +386,7 @@ impl Game {
     }
 
     pub fn get_fen_str(&self) -> String {
-        let mut fen = String::with_capacity(80);
+        let mut fen = String::with_capacity(MAX_FEN_STR);
         let mut empty_count = 0;
         for y in (0..8).rev() {
             for x in 0..8 {
@@ -412,7 +414,7 @@ impl Game {
                 .en_passant_position
                 .map_or("-".to_string(), |pos| pos.to_string()),
             self.history.fifty_move_count,
-            (self.get_current_turn() / 2 + 1)
+            self.get_current_turn() / 2 + 1
         ));
         fen
     }

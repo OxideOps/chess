@@ -13,6 +13,8 @@ pub const MOVES: usize = 10;
 pub const THREADS: usize = 4;
 pub const DEPTH: usize = 40;
 pub const HASH: usize = 256;
+// How much differences in stockfish evaluation affect the alpha of the arrows
+const ALPHA_SENSITIVITY: f64 = 1.0 / 20.0;
 
 static READY_CHANNEL: Lazy<Channel> = Lazy::new(unbounded::<()>);
 
@@ -31,11 +33,11 @@ fn sigmoid(x: f64) -> f64 {
 }
 
 fn get_eval(output: &str) -> f64 {
-    get_info(output, "score cp")
-        .unwrap()
-        .parse::<f64>()
-        .unwrap()
-        / 20.0
+    ALPHA_SENSITIVITY
+        * get_info(output, "score cp")
+            .unwrap()
+            .parse::<f64>()
+            .unwrap()
 }
 
 // Makes it so the arrow for the best move has the default ALPHA value
