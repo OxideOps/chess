@@ -67,7 +67,7 @@ pub async fn toggle_stockfish(
             }
             Err(err) => log::error!("Failed to start stockfish: {err:?}"),
         }
-    } else {
+    } else if stockfish_process.read().is_some() {
         stop_stockfish(&stockfish_process).await;
         arrows.set(Arrows::default());
         stockfish_process.set(None);
@@ -79,9 +79,11 @@ pub async fn on_game_changed(
     process: UseRef<Option<Process>>,
     arrows: UseRef<Arrows>,
 ) {
-    update_position(fen, &process).await;
-    wait_until_ready(&process).await;
-    arrows.set(Arrows::with_size(MOVES));
+    if process.read().is_some() {
+        update_position(fen, &process).await;
+        wait_until_ready(&process).await;
+        arrows.set(Arrows::with_size(MOVES));
+    }
 }
 
 pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseRef<Arrows>) {
