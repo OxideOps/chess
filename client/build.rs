@@ -1,11 +1,13 @@
 use std::process::Command;
 
+const STOCKFISH_SCRIPT: &str = "./build-stockfish.sh";
+
 fn main() {
-    let status = Command::new("./build-stockfish.sh")
+    let status = Command::new(STOCKFISH_SCRIPT)
         .status()
         .expect("Failed to execute script.");
 
     if !status.success() {
-        panic!("The script did not run successfully.");
+        panic!("{STOCKFISH_SCRIPT} did not run successfully.");
     }
 }

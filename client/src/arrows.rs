@@ -43,6 +43,10 @@ impl Arrows {
         }
     }
 
+    pub fn with_size(n: usize) -> Self {
+        Self::new(vec![Move::default(); n])
+    }
+
     pub fn push(&mut self, arrow_data: ArrowData) {
         self.arrows.drain(self.showing..self.arrows.len());
         self.arrows.push(arrow_data);

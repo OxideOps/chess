@@ -60,7 +60,7 @@ pub async fn toggle_stockfish(
         match run_stockfish().await {
             Ok(process) => {
                 stockfish_process.set(Some(process));
-                arrows.set(Arrows::new(vec![Move::default(); MOVES]));
+                arrows.set(Arrows::with_size(MOVES));
                 init_stockfish(&stockfish_process).await;
                 update_position(game.with(|game| game.get_fen_str()), &stockfish_process).await;
                 update_analysis_arrows(arrows, stockfish_process).await;
@@ -81,13 +81,13 @@ pub async fn on_game_changed(
 ) {
     update_position(fen, &process).await;
     wait_until_ready(&process).await;
-    arrows.set(Arrows::new(vec![Move::default(); MOVES]));
+    arrows.set(Arrows::with_size(MOVES));
 }
 
 pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseRef<Arrows>) {
-    if let Some(i) = get_info(output, "multipv") {
+    if let Some(move_number) = get_info(output, "multipv") {
         if !arrows.read().is_empty() {
-            let i = i.parse::<usize>().unwrap() - 1;
+            let i = move_number.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();
             let eval = get_eval(output);
             evals[i] = eval;
