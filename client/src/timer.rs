@@ -15,7 +15,7 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
 
     use_timer_future(cx, white_time, black_time);
 
-    let player = cx.props.game.with(|game| game.get_real_player());
+    let player = cx.props.game.read().get_real_player();
 
     cx.render(rsx! {
         p {
