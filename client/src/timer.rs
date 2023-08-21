@@ -1,5 +1,5 @@
 use async_std::task::sleep;
-use chess::{color::Color, game::Game, game_status::GameStatus};
+use chess::{color::Color, game::Game};
 use dioxus::prelude::*;
 use std::time::Duration;
 
