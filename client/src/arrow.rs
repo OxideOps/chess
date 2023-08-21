@@ -1,10 +1,9 @@
+use crate::arrows::ArrowData;
 use crate::board::BoardProps;
-use chess::moves::Move;
 use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
 use std::f64::consts::PI;
 
-const COLOR: &str = "rgba(27, 135, 185, 0.75)";
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
@@ -12,8 +11,12 @@ const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting 
 
 #[derive(Props, PartialEq)]
 pub struct ArrowProps<'a> {
-    mv: Move,
+    data: ArrowData,
     board_props: &'a BoardProps<'a>,
+}
+
+fn get_color(alpha: f64) -> String {
+    format!("rgba(27, 135, 185, {})", alpha)
 }
 
 fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
@@ -25,8 +28,8 @@ pub fn Arrow<'a>(cx: Scope<'a, ArrowProps<'a>>) -> Element<'a> {
     let w = WIDTH * cx.props.board_props.size as f64;
     let o = OFFSET * cx.props.board_props.size as f64;
 
-    let from = cx.props.board_props.get_center(&cx.props.mv.from);
-    let to = cx.props.board_props.get_center(&cx.props.mv.to);
+    let from = cx.props.board_props.get_center(&cx.props.data.mv.from);
+    let to = cx.props.board_props.get_center(&cx.props.data.mv.to);
 
     let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
@@ -54,7 +57,7 @@ pub fn Arrow<'a>(cx: Scope<'a, ArrowProps<'a>>) -> Element<'a> {
     let y6 = (to.y - h * sin + h * cos) as u32;
 
     cx.render(rsx! {
-        if cx.props.mv.to != cx.props.mv.from {
+        if cx.props.data.mv.to != cx.props.data.mv.from {
             rsx! {
                 svg {
                     class: "absolute pointer-events-none",
@@ -64,7 +67,7 @@ pub fn Arrow<'a>(cx: Scope<'a, ArrowProps<'a>>) -> Element<'a> {
                     polygon {
                         class: "absolute pointer-events-none",
                         points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
-                        fill: "{COLOR}"
+                        fill: "{get_color(cx.props.data.alpha)}"
                     }
                 }
             }
