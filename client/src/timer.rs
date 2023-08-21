@@ -21,8 +21,7 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
         p {
             background_color: if player == Color::White {
                 "rgba(127, 127, 127, 0.35)"
-            }
-            else {
+            } else {
                ""
             },
             "White time: {white_time}"
@@ -30,8 +29,7 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
         p {
             background_color: if player == Color::Black {
                 "rgba(127, 127, 127, 0.35)"
-            }
-            else {
+            } else {
                ""
             },
             "Black time: {black_time}"
