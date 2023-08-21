@@ -1,5 +1,5 @@
 use async_std::task::sleep;
-use chess::{color::Color, game::Game};
+use chess::{color::Color, game::Game, game_status::GameStatus};
 use dioxus::prelude::*;
 use std::time::Duration;
 
@@ -15,9 +15,27 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
 
     use_timer_future(cx, white_time, black_time);
 
+    let player = cx.props.game.with(|game| game.get_real_player());
+
     cx.render(rsx! {
-        p { "White time: {white_time}" }
-        p { "Black time: {black_time}" }
+        p {
+            background_color: if player == Color::White {
+                "rgba(127, 127, 127, 0.35)"
+            }
+            else {
+               ""
+            },
+            "White time: {white_time}"
+        }
+        p {
+            background_color: if player == Color::Black {
+                "rgba(127, 127, 127, 0.35)"
+            }
+            else {
+               ""
+            },
+            "Black time: {black_time}"
+        }
     })
 }
 
