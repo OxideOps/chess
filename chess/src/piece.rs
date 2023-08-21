@@ -42,6 +42,21 @@ impl Piece {
     pub fn can_snipe(self) -> bool {
         matches!(self, Self::Bishop(..) | Self::Rook(..) | Self::Queen(..))
     }
+
+    pub fn get_fen_char(&self) -> char {
+        let c = match self {
+            Piece::Pawn(..) => 'p',
+            Piece::Bishop(..) => 'b',
+            Piece::Knight(..) => 'n',
+            Piece::Rook(..) => 'r',
+            Piece::King(..) => 'k',
+            Piece::Queen(..) => 'q',
+        };
+        match self.get_player() {
+            Color::White => c.to_uppercase().next().unwrap(),
+            Color::Black => c,
+        }
+    }
 }
 
 impl fmt::Display for Piece {

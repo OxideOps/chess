@@ -1,7 +1,9 @@
 use crate::arrow::Arrow;
-use crate::arrows::Arrows;
+use crate::arrows::{ArrowData, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
+use crate::stockfish_client::{on_game_changed, toggle_stockfish};
+use crate::stockfish_interface::Process;
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -27,6 +29,7 @@ pub struct BoardProps<'a> {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
     perspective: Color,
+    analyze: &'a UseState<bool>,
 }
 
 impl BoardProps<'_> {
@@ -152,7 +155,7 @@ impl BoardProps<'_> {
         let from = self.to_position(mouse_down);
         let to = self.to_position(&event.client_coordinates());
         if to != from {
-            arrows.with_mut(|arrows| arrows.push(Move { from, to }));
+            arrows.write().push(ArrowData::with_move(Move { from, to }));
         }
     }
 
@@ -164,7 +167,7 @@ impl BoardProps<'_> {
     ) {
         let mouse_down = MouseClick::from(event);
         if mouse_down.kind.contains(MouseButton::Primary) {
-            arrows.with_mut(|arrows| arrows.clear());
+            arrows.write().clear();
         }
         mouse_down_state.set(Some(mouse_down));
     }
@@ -233,6 +236,23 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
+    let analysis_arrows = use_ref(cx, Arrows::default);
+    let stockfish_process = use_ref::<Option<Process>>(cx, || None);
+    use_effect(cx, cx.props.analyze, |analyze| {
+        toggle_stockfish(
+            analyze.to_owned(),
+            stockfish_process.to_owned(),
+            cx.props.game.to_owned(),
+            analysis_arrows.to_owned(),
+        )
+    });
+    use_effect(cx, cx.props.game, |game| {
+        on_game_changed(
+            game.read().get_fen_str(),
+            stockfish_process.to_owned(),
+            analysis_arrows.to_owned(),
+        )
+    });
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(cx.props.game.to_owned(), game_id, rx)
@@ -271,14 +291,16 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                 }
             }),
              // arrows
-            arrows.with(|arrows| arrows.get()).iter().map(|mv| {
-                rsx! {
-                    Arrow { mv: *mv, board_props: cx.props }
-                }
-            }),
+            for arrows in [arrows, analysis_arrows] {
+                arrows.read().get().into_iter().map(|data| {
+                    rsx! {
+                        Arrow { data: data, board_props: cx.props }
+                    }
+                })
+            },
             if let Some(current_mv) = cx.props.get_move_for_arrow(mouse_down_state, dragging_point_state) {
                 rsx! {
-                    Arrow { mv: current_mv, board_props: cx.props }
+                    Arrow { data: ArrowData::with_move(current_mv), board_props: cx.props }
                 }
             }
         },

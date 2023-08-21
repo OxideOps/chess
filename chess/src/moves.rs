@@ -21,6 +21,20 @@ impl Move {
         }
     }
 
+    // creates move from the "long algebraic notation" that stockfish uses
+    pub fn from_lan(lan: &str) -> Option<Self> {
+        Some(Self::new(
+            Position::new(
+                lan.chars().nth(0)? as usize - 'a' as usize,
+                lan.chars().nth(1)? as usize - '1' as usize,
+            ),
+            Position::new(
+                lan.chars().nth(2)? as usize - 'a' as usize,
+                lan.chars().nth(3)? as usize - '1' as usize,
+            ),
+        ))
+    }
+
     pub fn to_str(&self, piece: Piece) -> String {
         format!("{}{}", piece, self.to)
     }

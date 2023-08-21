@@ -139,4 +139,25 @@ impl CastlingRights {
     pub fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
         self.0[right as usize]
     }
+
+    pub fn get_fen_str(&self) -> String {
+        let mut fen = String::default();
+        if self.0[CastlingRightsKind::WhiteKingside as usize] {
+            fen.push(Piece::King(Color::White).get_fen_char())
+        }
+        if self.0[CastlingRightsKind::WhiteQueenside as usize] {
+            fen.push(Piece::Queen(Color::White).get_fen_char())
+        }
+        if self.0[CastlingRightsKind::BlackKingside as usize] {
+            fen.push(Piece::King(Color::Black).get_fen_char())
+        }
+        if self.0[CastlingRightsKind::BlackQueenside as usize] {
+            fen.push(Piece::Queen(Color::Black).get_fen_char())
+        }
+        if fen.is_empty() {
+            String::from('-')
+        } else {
+            fen
+        }
+    }
 }
