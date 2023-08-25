@@ -1,6 +1,10 @@
 use std::process::Command;
 
-const SCRIPTS: [&str; 3] = ["./build-stockfish.sh", "./build-npx.sh", "./build-trunk.sh"];
+const SCRIPTS: [&str; 2] = [
+    "./build-stockfish.sh",
+    "./build-npx.sh",
+    //"./build-trunk.sh"
+];
 
 fn run_script(command: &str) -> bool {
     Command::new(command)

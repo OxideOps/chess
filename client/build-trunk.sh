@@ -1,2 +1,2 @@
 #!/bin/bash
-cd .. && trunk build
+(cd .. && trunk build)
