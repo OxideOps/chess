@@ -22,7 +22,7 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
 
 pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
     if !cx.props.show {
-        return cx.render(rsx!({}));
+        return None;
     }
 
     let (from, to) = (cx.props.from, cx.props.to);
