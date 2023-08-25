@@ -34,13 +34,13 @@ fn main() {
         panic!("Failed to build stockfish");
     }
 
-    // Execute the TRUNK_BUILD command
-    if !run_command(TRUNK_COMMAND, &TRUNK_COMMAND_ARGS, root_dir) {
-        panic!("Failed to run trunk build");
-    }
-
     // Execute the TAILWIND_CSS command
     if !run_command(TAILWIND_CSS_COMMAND, &TAILWIND_CSS_ARGS, root_dir) {
         panic!("Failed to run tailwind css command");
     }
+
+    // // Execute the TRUNK_BUILD command
+    // if !run_command(TRUNK_COMMAND, &TRUNK_COMMAND_ARGS, root_dir) {
+    //     panic!("Failed to run trunk build");
+    // }
 }
