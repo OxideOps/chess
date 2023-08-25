@@ -75,6 +75,15 @@ pub fn App(cx: Scope) -> Element {
                 onclick: |_| analyze.modify(|analyze| !analyze),
                 if *analyze.get() { "Stop analyzing" } else { "Analyze" }
             }
+            button {
+                class: "button",
+                style: "top: {WIDGET_HEIGHT}px",
+                onclick: |_| {
+                    log::info!("Quitting game..");
+                    std::process::exit(0)
+                },
+                "Quit"
+            }
         }
     })
 }
