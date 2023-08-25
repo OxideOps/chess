@@ -3,7 +3,7 @@ use std::path::Path;
 use std::process::Command;
 
 const STOCKFISH_SCRIPT: &str = "./build-stockfish.sh";
-const TRUNK_BUILD: &str = "trunk";
+const TRUNK_COMMAND: &str = "trunk";
 const TAILWIND_CSS_COMMAND: &str = "npx";
 
 // Separate the command arguments from the command itself for better clarity
@@ -14,7 +14,7 @@ const TAILWIND_CSS_ARGS: [&str; 5] = [
     "-o",
     "./styles/output.css",
 ];
-const TRUNK_BUILD_ARGS: [&str; 1] = ["build"];
+const TRUNK_COMMAND_ARGS: [&str; 1] = ["build"];
 
 fn run_command(command: &str, args: &[&str], working_dir: &Path) -> bool {
     Command::new(command)
@@ -42,7 +42,7 @@ fn main() {
     }
 
     // Execute the TRUNK_BUILD command
-    if !run_command(TRUNK_BUILD, &TRUNK_BUILD_ARGS, workspace_root) {
+    if !run_command(TRUNK_COMMAND, &TRUNK_COMMAND_ARGS, workspace_root) {
         panic!("Failed to run trunk build");
     }
 
