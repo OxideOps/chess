@@ -26,28 +26,21 @@ fn run_command(command: &str, args: &[&str], working_dir: &Path) -> bool {
 }
 
 fn main() {
-    // Get the directory of the Cargo.toml for the `client` crate
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("Failed to get manifest directory");
-
-    let current_dir = Path::new(&manifest_dir);
-
-    // Convert it to a Path and get the parent directory to navigate to the workspace root
-    let workspace_root = Path::new(&manifest_dir)
-        .parent()
-        .expect("Failed to get workspace root");
+    let client_dir = env::current_dir().unwrap();
+    let root_dir = client_dir.parent().unwrap();
 
     // Execute the STOCKFISH_SCRIPT
-    if !run_command(STOCKFISH_SCRIPT, &[], current_dir) {
+    if !run_command(STOCKFISH_SCRIPT, &[], &client_dir) {
         panic!("Failed to build stockfish");
     }
 
     // Execute the TRUNK_BUILD command
-    if !run_command(TRUNK_COMMAND, &TRUNK_COMMAND_ARGS, workspace_root) {
+    if !run_command(TRUNK_COMMAND, &TRUNK_COMMAND_ARGS, root_dir) {
         panic!("Failed to run trunk build");
     }
 
     // Execute the TAILWIND_CSS command
-    if !run_command(TAILWIND_CSS_COMMAND, &TAILWIND_CSS_ARGS, workspace_root) {
+    if !run_command(TAILWIND_CSS_COMMAND, &TAILWIND_CSS_ARGS, root_dir) {
         panic!("Failed to run tailwind css command");
     }
 }
