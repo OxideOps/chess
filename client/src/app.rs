@@ -20,12 +20,14 @@ fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<
 }
 
 pub fn App(cx: Scope) -> Element {
+    #[cfg(not(target_arch = "wasm32"))]
+    let window = dioxus_desktop::use_window(cx);
+
     let white_player = use_ref(cx, || Player::with_color(Color::White));
     let black_player = use_ref(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
     let game_id = use_state::<Option<u32>>(cx, || None);
     let analyze = use_state(cx, || false);
-
     cx.render(rsx! {
         style { include_str!("../../styles/output.css") }
         Widget {
@@ -74,6 +76,22 @@ pub fn App(cx: Scope) -> Element {
                 style: "top: {WIDGET_HEIGHT}px",
                 onclick: |_| analyze.modify(|analyze| !analyze),
                 if *analyze.get() { "Stop analyzing" } else { "Analyze" }
+            }
+            {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    rsx! {
+                        button {
+                            class: "button",
+                            style: "top: {WIDGET_HEIGHT}px",
+                            onclick: |_| {
+                                log::info!("Quitting game..");
+                                window.close()
+                            },
+                            "Quit"
+                        }
+                    }
+                }
             }
         }
     })
