@@ -233,11 +233,13 @@ impl BoardProps<'_> {
 }
 
 pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
+    let show_moves_state = use_state::<bool>(cx, || false);
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_ref(cx, Arrows::default);
     let stockfish_process = use_ref::<Option<Process>>(cx, || None);
+
     use_effect(cx, cx.props.analyze, |analyze| {
         toggle_stockfish(
             analyze.to_owned(),
@@ -290,7 +292,12 @@ pub fn Board<'a>(cx: Scope<'a, BoardProps<'a>>) -> Element<'a> {
                     }
                 }
             }),
-             // arrows
+            if **show_moves_state {
+                cx.props.game.with(|game| game.get_moves_for_selected_piece().into_iter().map(|mv| {
+                    ;
+                }))
+            }
+            // arrows
             for arrows in [arrows, analysis_arrows] {
                 arrows.read().get().into_iter().map(|data| {
                     rsx! {
