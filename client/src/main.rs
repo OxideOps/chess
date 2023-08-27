@@ -18,12 +18,15 @@ pub fn main() {
         dioxus_desktop::launch_cfg(
             App,
             Config::new()
-                .with_window(WindowBuilder::new().with_title("Chess").with_inner_size(
-                    LogicalSize {
-                        width: WINDOW_SIZE,
-                        height: WINDOW_SIZE,
-                    },
-                ))
+                .with_window(
+                    WindowBuilder::new()
+                        .with_title("Chess")
+                        .with_maximized(true)
+                        .with_inner_size(LogicalSize {
+                            width: WINDOW_SIZE,
+                            height: WINDOW_SIZE,
+                        }),
+                )
                 .with_disable_context_menu(true),
         );
     }
