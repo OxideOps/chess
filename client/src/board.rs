@@ -1,7 +1,9 @@
 use crate::arrow::Arrow;
-use crate::arrows::Arrows;
+use crate::arrows::{ArrowData, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
+use crate::stockfish_client::{on_game_changed, toggle_stockfish};
+use crate::stockfish_interface::Process;
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -26,6 +28,7 @@ pub struct BoardProps {
     black_player_kind: PlayerKind,
     perspective: Color,
     size: u32,
+    analyze: UseState<bool>,
 }
 
 // We want the square a dragged piece is considered to be on to be based on the center of
@@ -230,6 +233,23 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
+    let analysis_arrows = use_ref(cx, Arrows::default);
+    let stockfish_process = use_ref::<Option<Process>>(cx, || None);
+    use_effect(cx, cx.props.analyze, |analyze| {
+        toggle_stockfish(
+            analyze.to_owned(),
+            stockfish_process.to_owned(),
+            cx.props.game.to_owned(),
+            analysis_arrows.to_owned(),
+        )
+    });
+    use_effect(cx, cx.props.game, |game| {
+        on_game_changed(
+            game.read().get_fen_str(),
+            stockfish_process.to_owned(),
+            analysis_arrows.to_owned(),
+        )
+    });
     let game_socket = cx.props.game_id.map(|game_id| {
         use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
             create_game_socket(game.to_owned(), game_id, rx)
@@ -268,23 +288,23 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 }
             }),
             // arrows
-            arrows.read().get().iter().map(|mv| {
-                rsx! {
-                    Arrow {
-                        show: mv.from != mv.to,
-                        from: get_center(cx, &mv.from),
-                        to: get_center(cx, &mv.to),
-                        board_size: cx.props.size,
+            for arrows in [arrows, analysis_arrows] {
+                arrows.read().get().into_iter().map(|data| {
+                    rsx! {
+                        Arrow {
+                          show: mv.from != mv.to,
+                          data: data, 
+                          board_size: cx.props.size
+                        }
                     }
-                }
-            }),
-            if let Some(mv) = get_move_for_arrow(cx, mouse_down_state, dragging_point_state) {
+                })
+            },
+            if let Some(mv) = cx.props.get_move_for_arrow(mouse_down_state, dragging_point_state) {
                 rsx! {
-                    Arrow {
-                        show: mv.from != mv.to,
-                        from: get_center(cx, &mv.from),
-                        to: get_center(cx, &mv.to),
-                        board_size: cx.props.size,
+                    Arrow { 
+                      show: mv.from != mv.to,
+                      data: ArrowData::with_move(mv),
+                      board_size: cx.props.size
                     }
                 }
             }

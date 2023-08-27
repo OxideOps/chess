@@ -9,7 +9,7 @@ pub struct History {
     pub(super) turns: Vec<Turn>,
     pub(super) repetition_counter: HashMap<BoardState, usize>,
     current_turn: usize,
-    fifty_move_count: u8,
+    pub(super) fifty_move_count: u8,
     initial_state: BoardState,
 }
 
@@ -46,11 +46,11 @@ impl History {
         *self.repetition_counter.get(self.get_real_state()).unwrap()
     }
 
-    pub fn update_fifty_move_info(&mut self, piece_captured: bool) {
-        if piece_captured {
-            self.fifty_move_count += 1;
+    pub fn update_fifty_move_info(&mut self, piece_captured: bool, pawn_moved: bool) {
+        if piece_captured || pawn_moved {
+            self.fifty_move_count = 0
         } else {
-            self.fifty_move_count = 0;
+            self.fifty_move_count += 1;
         }
     }
 
@@ -69,7 +69,7 @@ impl History {
         let is_capture_move =
             real_state.get_piece(&mv.to).is_some() || (is_pawn && mv.from.x != mv.to.x);
 
-        self.update_fifty_move_info(is_capture_move);
+        self.update_fifty_move_info(is_capture_move, is_pawn);
         self.update_repetition_info(next_state);
         self.add_turn(Turn::new(next_state, mv, is_capture_move, king_is_checked));
     }

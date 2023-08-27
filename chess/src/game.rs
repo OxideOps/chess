@@ -13,7 +13,9 @@ use crate::timer::Timer;
 use std::collections::HashSet;
 use web_time::Duration;
 
-#[derive(Clone, PartialEq)]
+const MAX_FEN_STR: usize = 87;
+
+#[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
     pub status: GameStatus,
@@ -381,6 +383,40 @@ impl Game {
     pub fn trigger_timeout(&mut self) {
         self.timer.stop();
         self.update_status();
+    }
+
+    pub fn get_fen_str(&self) -> String {
+        let mut fen = String::with_capacity(MAX_FEN_STR);
+        let mut empty_count = 0;
+        for y in (0..8).rev() {
+            for x in 0..8 {
+                if let Some(piece) = self.get_piece(&Position { x, y }) {
+                    if empty_count > 0 {
+                        fen.push_str(&empty_count.to_string());
+                        empty_count = 0;
+                    }
+                    fen.push(piece.get_fen_char());
+                } else {
+                    empty_count += 1;
+                }
+            }
+            if empty_count > 0 {
+                fen.push_str(&empty_count.to_string());
+                empty_count = 0;
+            }
+            fen.push('/');
+        }
+        fen.push_str(&format!(
+            " {} {} {} {} {}",
+            self.get_current_player().get_fen_char(),
+            self.get_current_state().castling_rights.get_fen_str(),
+            self.get_current_state()
+                .en_passant_position
+                .map_or("-".to_string(), |pos| pos.to_string()),
+            self.history.fifty_move_count,
+            self.get_current_turn() / 2 + 1
+        ));
+        fen
     }
 }
 pub struct GameBuilder {
