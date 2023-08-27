@@ -4,7 +4,7 @@ use crate::board_state::BoardState;
 use crate::moves::Move;
 use crate::turn::Turn;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct History {
     pub(super) turns: Vec<Turn>,
     pub(super) repetition_counter: HashMap<BoardState, usize>,

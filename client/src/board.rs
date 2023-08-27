@@ -41,7 +41,7 @@ fn get_dragged_piece_position(
 ) -> Position {
     let center = get_center(
         &to_position(cx, mouse_down),
-        cx.props.size.into(),
+        cx.props.size,
         cx.props.perspective,
     );
     to_position(
