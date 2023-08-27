@@ -18,22 +18,8 @@ pub fn Timer<'a>(cx: Scope<'a, TimerProps<'a>>) -> Element<'a> {
     let player = cx.props.game.read().get_real_player();
 
     cx.render(rsx! {
-        p {
-            background_color: if player == Color::White {
-                "rgba(127, 127, 127, 0.35)"
-            } else {
-               ""
-            },
-            "White time: {white_time}"
-        }
-        p {
-            background_color: if player == Color::Black {
-                "rgba(127, 127, 127, 0.35)"
-            } else {
-               ""
-            },
-            "Black time: {black_time}"
-        }
+        p { background_color: if player == Color::White { "rgba(127, 127, 127, 0.35)" } else { "" }, "White time: {white_time}" }
+        p { background_color: if player == Color::Black { "rgba(127, 127, 127, 0.35)" } else { "" }, "Black time: {black_time}" }
     })
 }
 
