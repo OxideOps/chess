@@ -26,10 +26,11 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
     }
 
     let (from, to) = (&cx.props.from, &cx.props.to);
+    let board_size = cx.props.board_size as f64;
 
-    let h = HEAD * cx.props.board_size as f64;
-    let w = WIDTH * cx.props.board_size as f64;
-    let o = OFFSET * cx.props.board_size as f64;
+    let h = HEAD * board_size;
+    let w = WIDTH * board_size;
+    let o = OFFSET * board_size;
 
     let angle = get_angle_from_vertical(from, to);
     let sin = angle.sin();
@@ -60,8 +61,8 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
         svg {
             class: "absolute pointer-events-none",
             style: "z-index: 3",
-            height: "{cx.props.board_size}",
-            width: "{cx.props.board_size}",
+            height: "{board_size}",
+            width: "{board_size}",
             polygon {
                 class: "absolute pointer-events-none",
                 points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
