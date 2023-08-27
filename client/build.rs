@@ -1,22 +1,28 @@
 use std::process::Command;
 
-const SCRIPTS: [&str; 2] = [
-    "./build-stockfish.sh",
-    "./build-npx.sh",
-    //"./build-trunk.sh"
+const COMMANDS: &[(&str, &[&str])] = &[
+    ("./build-stockfish.sh", &[]),
+    (
+        "npx",
+        &[
+            "tailwindcss",
+            "-i",
+            "../styles/input.css",
+            "-o",
+            "../styles/output.css",
+        ],
+    ),
 ];
 
-fn run_script(command: &str) -> bool {
-    Command::new(command)
-        .status()
-        .unwrap_or_else(|err| panic!("Failed to execute '{command}'. {err}"))
-        .success()
+fn run_command(cmd: &str, args: &[&str]) -> bool {
+    Command::new(cmd).args(args).status().unwrap().success()
 }
 
 fn main() {
-    for script in SCRIPTS.iter() {
-        if !run_script(script) {
-            panic!("Failed to run script: '{}'", script);
+    for &(cmd, args) in COMMANDS {
+        if !run_command(cmd, args) {
+            eprintln!("Command '{}' failed!", cmd);
+            return;
         }
     }
 }
