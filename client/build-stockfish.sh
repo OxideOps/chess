@@ -1,10 +1,31 @@
 #!/bin/bash
 
+DIR="$(dirname "$(realpath "$0")")"
+if [ "$1" = "--wasm" ]; then
+  OUT_FILE="$DIR/Stockfish/src/stockfish.wasm"
+else
+  OUT_FILE="$DIR/Stockfish/src/Stockfish"
+fi
+
 main() {
-  if [ ! -d Stockfish ]; then
-    git clone https://github.com/official-stockfish/Stockfish.git
-    (cd Stockfish/src && make -j profile-build ARCH="$(get_arch)")
+  if [ ! -f "$OUT_FILE" ]; then
+    if [ "$1" = "--wasm" ]; then
+      install_emscripten
+      ( cd "$DIR"/Stockfish/src && make clean && make emscripten_build ARCH=wasm )
+      ( cd "$DIR" && patch -p0 < .allow-stopping.patch ) || true
+    else
+      ( cd "$DIR"/Stockfish/src && make clean && make profile-build "ARCH=$(get_arch)" )
+    fi
   fi
+}
+
+install_emscripten() {
+  (
+    cd "$DIR"
+    ./emsdk install 2.0.34
+    ./emsdk activate 2.0.34
+    source ./emsdk_env.sh
+  )
 }
 
 get_x86_64_arch() {
@@ -65,4 +86,4 @@ get_arch() {
   esac
 }
 
-main
+main "$@"

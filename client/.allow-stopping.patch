@@ -1,0 +1,11 @@
+--- Stockfish/src/emscripten/public/stockfish.js	2023-08-30 21:09:39.567829995 -0600
++++ Stockfish/src/emscripten/public/stockfish.js	2023-08-30 21:09:02.227091962 -0600
+@@ -139,7 +139,7 @@
+ var thisProgram = "./this.program";
+ 
+ var quit_ = function(status, toThrow) {
+- throw toThrow;
++ // throw toThrow;
+ };
+ 
+ var ENVIRONMENT_IS_WEB = typeof window === "object";
