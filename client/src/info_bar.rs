@@ -23,7 +23,7 @@ pub fn InfoBar(cx: Scope<InfoBarProps>) -> Element {
         div { class: "info-bar-container", style: "left: {cx.props.left}px;",
             Timer { start_time: cx.props.start_time }
             p { class: "{classes}", "GameStatus: {game_status:?}" }
-            RoundList { }
+            RoundList {}
         }
     })
 }

@@ -39,7 +39,11 @@ fn get_dragged_piece_position(
     mouse_down: &ClientPoint,
     mouse_up: &ClientPoint,
 ) -> Position {
-    let center = get_center(cx, &to_position(cx, mouse_down));
+    let center = get_center(
+        &to_position(cx, mouse_down),
+        cx.props.size.into(),
+        cx.props.perspective,
+    );
     to_position(
         cx,
         &ClientPoint::new(
@@ -55,7 +59,7 @@ fn get_positions(
     mouse_down_state: &Option<MouseClick>,
     dragging_point_state: &Option<ClientPoint>,
 ) -> (ClientPoint, usize) {
-    let mut top_left = to_point(cx, pos);
+    let mut top_left = to_point(pos, cx.props.size, cx.props.perspective);
     let mut z_index = 1;
     if let Some(mouse_down) = mouse_down_state {
         if mouse_down.kind == MouseButton::Primary {
@@ -84,16 +88,16 @@ fn to_position(cx: Scope<BoardProps>, point: &ClientPoint) -> Position {
     }
 }
 
-pub(crate) fn to_point(cx: Scope<BoardProps>, position: &Position) -> ClientPoint {
-    match cx.props.perspective {
+pub(crate) fn to_point(position: &Position, board_size: u32, perspective: Color) -> ClientPoint {
+    match perspective {
         Color::White => ClientPoint {
-            x: cx.props.size as f64 * position.x as f64 / 8.0,
-            y: cx.props.size as f64 * (7.0 - position.y as f64) / 8.0,
+            x: board_size as f64 * position.x as f64 / 8.0,
+            y: board_size as f64 * (7.0 - position.y as f64) / 8.0,
             ..Default::default()
         },
         Color::Black => ClientPoint {
-            x: cx.props.size as f64 * (7.0 - position.x as f64) / 8.0,
-            y: cx.props.size as f64 * position.y as f64 / 8.0,
+            x: board_size as f64 * (7.0 - position.x as f64) / 8.0,
+            y: board_size as f64 * position.y as f64 / 8.0,
             ..Default::default()
         },
     }
@@ -157,7 +161,7 @@ fn complete_arrow(
     let from = to_position(cx, mouse_down);
     let to = to_position(cx, &event.client_coordinates());
     if to != from {
-        arrows.write().push(Move::new(from, to));
+        arrows.write().push(ArrowData::with_move(Move { from, to }));
     }
 }
 
@@ -203,10 +207,10 @@ fn handle_on_mouse_move_event(
     }
 }
 
-pub fn get_center(cx: Scope<BoardProps>, pos: &Position) -> ClientPoint {
-    let mut point = to_point(cx, pos);
-    point.x += cx.props.size as f64 / 16.0;
-    point.y += cx.props.size as f64 / 16.0;
+pub fn get_center(pos: &Position, board_size: u32, perspective: Color) -> ClientPoint {
+    let mut point = to_point(pos, board_size, perspective);
+    point.x += board_size as f64 / 16.0;
+    point.y += board_size as f64 / 16.0;
     point
 }
 
@@ -235,15 +239,15 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
     let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_ref(cx, Arrows::default);
     let stockfish_process = use_ref::<Option<Process>>(cx, || None);
-    use_effect(cx, cx.props.analyze, |analyze| {
+    use_effect(cx, &cx.props.analyze, |analyze| {
         toggle_stockfish(
             analyze.to_owned(),
             stockfish_process.to_owned(),
-            cx.props.game.to_owned(),
+            game.to_owned(),
             analysis_arrows.to_owned(),
         )
     });
-    use_effect(cx, cx.props.game, |game| {
+    use_effect(cx, game, |game| {
         on_game_changed(
             game.read().get_fen_str(),
             stockfish_process.to_owned(),
@@ -292,19 +296,21 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 arrows.read().get().into_iter().map(|data| {
                     rsx! {
                         Arrow {
-                          show: mv.from != mv.to,
-                          data: data, 
-                          board_size: cx.props.size
+                          show: data.mv.from != data.mv.to,
+                          data: data,
+                          board_size: cx.props.size,
+                          perspective: cx.props.perspective,
                         }
                     }
                 })
             },
-            if let Some(mv) = cx.props.get_move_for_arrow(mouse_down_state, dragging_point_state) {
+            if let Some(mv) = get_move_for_arrow(cx, mouse_down_state, dragging_point_state) {
                 rsx! {
-                    Arrow { 
+                    Arrow {
                       show: mv.from != mv.to,
                       data: ArrowData::with_move(mv),
-                      board_size: cx.props.size
+                      board_size: cx.props.size,
+                      perspective: cx.props.perspective
                     }
                 }
             }

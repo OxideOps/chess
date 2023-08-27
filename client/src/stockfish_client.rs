@@ -53,7 +53,7 @@ async fn wait_until_ready(process: &UseRef<Option<Process>>) {
 pub async fn toggle_stockfish(
     analyze: UseState<bool>,
     stockfish_process: UseRef<Option<Process>>,
-    game: UseRef<Game>,
+    game: UseSharedState<Game>,
     arrows: UseRef<Arrows>,
 ) {
     if *analyze.get() {

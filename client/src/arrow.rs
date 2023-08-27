@@ -1,5 +1,6 @@
 use crate::arrows::ArrowData;
 use crate::board::get_center;
+use chess::color::Color;
 use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
 use std::f64::consts::PI;
@@ -14,6 +15,7 @@ pub struct ArrowProps {
     show: bool,
     data: ArrowData,
     board_size: u32,
+    perspective: Color,
 }
 
 fn get_color(alpha: f64) -> String {
@@ -29,14 +31,22 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
         return None;
     }
 
-    let from = get_center(&cx.props.data.mv.from, cx.props.board_size);
-    let to = get_center(&cx.props.data.mv.to, cx.props.board_size);
+    let from = get_center(
+        &cx.props.data.mv.from,
+        cx.props.board_size,
+        cx.props.perspective,
+    );
+    let to = get_center(
+        &cx.props.data.mv.to,
+        cx.props.board_size,
+        cx.props.perspective,
+    );
 
-    let h = HEAD * board_size;
-    let w = WIDTH * board_size;
-    let o = OFFSET * board_size;
+    let h = HEAD * cx.props.board_size as f64;
+    let w = WIDTH * cx.props.board_size as f64;
+    let o = OFFSET * cx.props.board_size as f64;
 
-    let angle = get_angle_from_vertical(from, to);
+    let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
     let cos = angle.cos();
 
