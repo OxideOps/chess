@@ -25,13 +25,13 @@ pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
         return None;
     }
 
-    let (from, to) = (cx.props.from, cx.props.to);
+    let (from, to) = (&cx.props.from, &cx.props.to);
 
     let h = HEAD * cx.props.board_size as f64;
     let w = WIDTH * cx.props.board_size as f64;
     let o = OFFSET * cx.props.board_size as f64;
 
-    let angle = get_angle_from_vertical(&from, &to);
+    let angle = get_angle_from_vertical(from, to);
     let sin = angle.sin();
     let cos = angle.cos();
 
