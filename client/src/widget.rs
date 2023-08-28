@@ -20,17 +20,16 @@ pub struct WidgetProps {
 }
 
 pub fn Widget(cx: Scope<WidgetProps>) -> Element {
-    let game = use_ref(cx, || Game::with_start_time(cx.props.start_time));
+    use_shared_state_provider(cx, || Game::with_start_time(cx.props.start_time));
     cx.render(rsx! {
         Board {
             size: cx.props.height,
-            game: game,
             game_id: cx.props.game_id,
-            white_player_kind: cx.props.white_player.with(|player| player.kind),
-            black_player_kind: cx.props.black_player.with(|player| player.kind),
+            white_player_kind: cx.props.white_player.read().kind,
+            black_player_kind: cx.props.black_player.read().kind,
             perspective: cx.props.perspective,
-            analyze: &cx.props.analyze
+            analyze: cx.props.analyze.to_owned()
         }
-        InfoBar { game: game, start_time: cx.props.start_time, left: cx.props.height }
+        InfoBar { start_time: cx.props.start_time, left: cx.props.height }
     })
 }

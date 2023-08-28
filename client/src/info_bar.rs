@@ -7,14 +7,13 @@ use dioxus::prelude::*;
 use std::time::Duration;
 
 #[derive(Props, PartialEq)]
-pub struct InfoBarProps<'a> {
-    game: &'a UseRef<Game>,
+pub struct InfoBarProps {
     start_time: Duration,
     left: u32,
 }
 
-pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
-    let game_status = cx.props.game.with(|game| game.status);
+pub fn InfoBar(cx: Scope<InfoBarProps>) -> Element {
+    let game_status = use_shared_state::<Game>(cx).unwrap().read().status;
     let classes = if matches!(game_status, GameStatus::Check(..)) {
         "mb-4 bg-red-600/75"
     } else {
@@ -22,9 +21,9 @@ pub fn InfoBar<'a>(cx: Scope<'a, InfoBarProps<'a>>) -> Element<'a> {
     };
     cx.render(rsx! {
         div { class: "info-bar-container", style: "left: {cx.props.left}px;",
-            Timer { game: cx.props.game, start_time: cx.props.start_time }
+            Timer { start_time: cx.props.start_time }
             p { class: "{classes}", "GameStatus: {game_status:?}" }
-            RoundList { game: cx.props.game }
+            RoundList {}
         }
     })
 }
