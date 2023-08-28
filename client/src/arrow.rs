@@ -1,5 +1,6 @@
 use crate::arrows::ArrowData;
-use crate::board::BoardProps;
+use crate::board::get_center;
+use chess::color::Color;
 use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
 use std::f64::consts::PI;
@@ -10,9 +11,11 @@ const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
 
 #[derive(Props, PartialEq)]
-pub struct ArrowProps<'a> {
+pub struct ArrowProps {
+    show: bool,
     data: ArrowData,
-    board_props: &'a BoardProps<'a>,
+    board_size: u32,
+    perspective: Color,
 }
 
 fn get_color(alpha: f64) -> String {
@@ -23,13 +26,25 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
     (to.y - from.y).atan2(to.x - from.x) + PI / 2.0
 }
 
-pub fn Arrow<'a>(cx: Scope<'a, ArrowProps<'a>>) -> Element<'a> {
-    let h = HEAD * cx.props.board_props.size as f64;
-    let w = WIDTH * cx.props.board_props.size as f64;
-    let o = OFFSET * cx.props.board_props.size as f64;
+pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
+    if !cx.props.show {
+        return None;
+    }
 
-    let from = cx.props.board_props.get_center(&cx.props.data.mv.from);
-    let to = cx.props.board_props.get_center(&cx.props.data.mv.to);
+    let from = get_center(
+        &cx.props.data.mv.from,
+        cx.props.board_size,
+        cx.props.perspective,
+    );
+    let to = get_center(
+        &cx.props.data.mv.to,
+        cx.props.board_size,
+        cx.props.perspective,
+    );
+
+    let h = HEAD * cx.props.board_size as f64;
+    let w = WIDTH * cx.props.board_size as f64;
+    let o = OFFSET * cx.props.board_size as f64;
 
     let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
@@ -57,19 +72,15 @@ pub fn Arrow<'a>(cx: Scope<'a, ArrowProps<'a>>) -> Element<'a> {
     let y6 = (to.y - h * sin + h * cos) as u32;
 
     cx.render(rsx! {
-        if cx.props.data.mv.to != cx.props.data.mv.from {
-            rsx! {
-                svg {
-                    class: "absolute pointer-events-none",
-                    style: "z-index: 3",
-                    height: "{cx.props.board_props.size}",
-                    width: "{cx.props.board_props.size}",
-                    polygon {
-                        class: "absolute pointer-events-none",
-                        points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
-                        fill: "{get_color(cx.props.data.alpha)}"
-                    }
-                }
+        svg {
+            class: "absolute pointer-events-none",
+            style: "z-index: 3",
+            height: "{cx.props.board_size}",
+            width: "{cx.props.board_size}",
+            polygon {
+                class: "absolute pointer-events-none",
+                points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
+                fill: "{get_color(cx.props.data.alpha)}"
             }
         }
     })

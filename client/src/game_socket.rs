@@ -13,7 +13,11 @@ use url::Url;
 type WriteStream = SplitSink<WebSocketStream, Message>;
 type ReadStream = SplitStream<WebSocketStream>;
 
-pub async fn create_game_socket(game: UseRef<Game>, game_id: u32, rx: UnboundedReceiver<Move>) {
+pub async fn create_game_socket(
+    game: UseSharedState<Game>,
+    game_id: u32,
+    rx: UnboundedReceiver<Move>,
+) {
     match connect_to_socket(game_id).await {
         Ok((write, read)) => {
             join!(read_from_socket(read, &game), write_to_socket(rx, write));
@@ -41,14 +45,14 @@ async fn write_to_socket(mut rx: UnboundedReceiver<Move>, mut socket: WriteStrea
     }
 }
 
-fn handle_message(message: Result<Message>, game: &UseRef<Game>) -> anyhow::Result<()> {
+fn handle_message(message: Result<Message>, game: &UseSharedState<Game>) -> anyhow::Result<()> {
     let mv = serde_json::from_str::<Move>(&message?.into_text()?)?;
     log::info!("Got move {mv}");
-    game.with_mut(|game| game.move_piece(mv.from, mv.to))?;
+    game.write().move_piece(mv.from, mv.to)?;
     Ok(())
 }
 
-async fn read_from_socket(mut stream: ReadStream, game: &UseRef<Game>) {
+async fn read_from_socket(mut stream: ReadStream, game: &UseSharedState<Game>) {
     while let Some(message) = stream.next().await {
         if let Err(err) = handle_message(message, game) {
             log::error!("Error receiving move: {err:?}");
