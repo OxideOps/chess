@@ -1,9 +1,28 @@
 use std::process::Command;
 
-const STOCKFISH_SCRIPT: &str = "./build-stockfish.sh";
+const COMMANDS: &[(&str, &[&str])] = &[
+    ("./build-stockfish.sh", &[]),
+    (
+        "npx",
+        &[
+            "tailwindcss",
+            "-i",
+            "../styles/input.css",
+            "-o",
+            "../styles/output.css",
+        ],
+    ),
+];
+
+fn run_command(cmd: &str, args: &[&str]) -> bool {
+    Command::new(cmd).args(args).status().unwrap().success()
+}
 
 fn main() {
-    Command::new(STOCKFISH_SCRIPT)
-        .status()
-        .expect("Failed to build stockfish");
+    for &(cmd, args) in COMMANDS {
+        if !run_command(cmd, args) {
+            eprintln!("Command '{}' failed!", cmd);
+            return;
+        }
+    }
 }
