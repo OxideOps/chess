@@ -1,10 +1,5 @@
+use common::config::CommandConfig;
 use std::process::Command;
-
-struct CommandConfig {
-    cmd: &'static str,
-    args: Option<&'static [&'static str]>,
-    dir: Option<&'static str>,
-}
 
 const COMMANDS: &[CommandConfig] = &[
     CommandConfig {

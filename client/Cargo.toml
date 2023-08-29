@@ -5,6 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[build-dependencies]
+common = { path = "../common" }
+
 [dependencies]
 anyhow = "1.0.72"
 async-std = "1.12.0"
