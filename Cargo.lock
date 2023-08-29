@@ -464,6 +464,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "build_common"
+version = "0.1.0"
+
+[[package]]
 name = "bumpalo"
 version = "3.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -639,6 +643,7 @@ dependencies = [
  "anyhow",
  "async-process",
  "async-std",
+ "build_common",
  "chess",
  "clap",
  "common",

@@ -1,4 +1,4 @@
-use common::config::CommandConfig;
+use build_common::command_config::CommandConfig;
 use std::process::Command;
 
 const COMMANDS: &[CommandConfig] = &[
