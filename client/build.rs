@@ -1,27 +1,50 @@
+use build_common::command_config::CommandConfig;
 use std::process::Command;
 
-const COMMANDS: &[(&str, &[&str])] = &[
-    ("./build-stockfish.sh", &[]),
-    (
-        "npx",
-        &[
+const COMMANDS: &[CommandConfig] = &[
+    CommandConfig {
+        cmd: "./build-stockfish.sh",
+        args: None,
+        dir: None,
+    },
+    CommandConfig {
+        cmd: "npx",
+        args: Some(&[
             "tailwindcss",
             "-i",
-            "../styles/input.css",
+            "./styles/input.css",
             "-o",
-            "../styles/output.css",
-        ],
-    ),
+            "./styles/output.css",
+        ]),
+        dir: Some(".."),
+    },
 ];
 
-fn run_command(cmd: &str, args: &[&str]) -> bool {
-    Command::new(cmd).args(args).status().unwrap().success()
+fn run_command(config: &CommandConfig) -> Result<(), String> {
+    let mut command = Command::new(config.cmd);
+
+    if let Some(args) = config.args {
+        command.args(args);
+    }
+
+    if let Some(directory) = config.dir {
+        command.current_dir(directory);
+    }
+
+    match command.status() {
+        Ok(status) if status.success() => Ok(()),
+        Ok(_) => Err(format!(
+            "Command '{}' did not finish successfully.",
+            config.cmd
+        )),
+        Err(e) => Err(format!("Failed to execute command '{}': {}", config.cmd, e)),
+    }
 }
 
 fn main() {
-    for &(cmd, args) in COMMANDS {
-        if !run_command(cmd, args) {
-            eprintln!("Command '{}' failed!", cmd);
+    for command_config in COMMANDS {
+        if let Err(e) = run_command(command_config) {
+            eprintln!("{}", e);
             return;
         }
     }
