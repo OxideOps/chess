@@ -9,7 +9,7 @@ const COMMANDS: &[CommandConfig] = &[
     CommandConfig {
         program: "npx",
         args: Some(&[
-            "tailwindcss",
+            "tailwindcssasdsa",
             "-i",
             "./styles/input.css",
             "-o",
@@ -20,11 +20,12 @@ const COMMANDS: &[CommandConfig] = &[
 
 fn main() {
     for cmd_cfg in COMMANDS {
-        if !Command::new(cmd_cfg.program)
-            .status()
-            .expect("failed to execute process")
-            .success()
-        {
+        let mut cmd = Command::new(cmd_cfg.program);
+
+        if let Some(args) = cmd_cfg.args {
+            cmd.args(args);
+        }
+        if !cmd.status().expect("failed to execute process").success() {
             panic!("termination was not successful")
         }
     }
