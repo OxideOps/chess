@@ -21,11 +21,7 @@ pub fn main() {
                 .with_window(
                     WindowBuilder::new()
                         .with_title("Chess")
-                        .with_maximized(true)
-                        .with_inner_size(LogicalSize {
-                            width: WINDOW_SIZE,
-                            height: WINDOW_SIZE,
-                        }),
+                        .with_maximized(true),
                 )
                 .with_disable_context_menu(true),
         );
