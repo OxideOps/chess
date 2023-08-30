@@ -19,6 +19,9 @@ const COMMANDS: &[CommandConfig] = &[
 ];
 
 fn main() {
+    println!("cargo:rerun-if-changed=./styles");
+    println!("cargo:rerun-if-changed=./Stockfish");
+
     for cmd_cfg in COMMANDS {
         let mut cmd = Command::new(cmd_cfg.program);
 
