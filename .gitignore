@@ -1,5 +1,5 @@
 target
 .vscode
 dist
-styles/output.css
+client/styles/output.css
 Stockfish

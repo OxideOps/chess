@@ -1,6 +1,6 @@
 FROM ghcr.io/oxideops/chess:main
 COPY . .
-RUN npx tailwindcss -i ./styles/input.css -o ./styles/output.css
+RUN npx tailwindcss -i ./client/styles/input.css -o ./client/styles/output.css
 RUN trunk build
 RUN cargo build -p server
 ENTRYPOINT ./target/debug/server

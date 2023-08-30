@@ -21,7 +21,7 @@ jobs:
       run: cargo fmt -- --check
 
     - name: Build tailwind
-      run: npx tailwindcss -i ./styles/input.css -o ./styles/output.css
+      run: npx tailwindcss -i ./client/styles/input.css -o ./client/styles/output.css
 
     - name: Build WASM
       run: trunk build
