@@ -90,16 +90,14 @@ fn to_position(cx: Scope<BoardProps>, point: &ClientPoint) -> Position {
 
 pub(crate) fn to_point(position: &Position, board_size: u32, perspective: Color) -> ClientPoint {
     match perspective {
-        Color::White => ClientPoint {
-            x: board_size as f64 * position.x as f64 / 8.0,
-            y: board_size as f64 * (7.0 - position.y as f64) / 8.0,
-            ..Default::default()
-        },
-        Color::Black => ClientPoint {
-            x: board_size as f64 * (7.0 - position.x as f64) / 8.0,
-            y: board_size as f64 * position.y as f64 / 8.0,
-            ..Default::default()
-        },
+        Color::White => ClientPoint::new(
+            board_size as f64 * position.x as f64 / 8.0,
+            board_size as f64 * (7.0 - position.y as f64) / 8.0,
+        ),
+        Color::Black => ClientPoint::new(
+            board_size as f64 * (7.0 - position.x as f64) / 8.0,
+            board_size as f64 * position.y as f64 / 8.0,
+        ),
     }
 }
 
