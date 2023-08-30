@@ -9,7 +9,7 @@ const COMMANDS: &[CommandConfig] = &[
     CommandConfig {
         program: "npx",
         args: Some(&[
-            "tailwindcssasdsa",
+            "tailwindcss",
             "-i",
             "./styles/input.css",
             "-o",
@@ -25,8 +25,9 @@ fn main() {
         if let Some(args) = cmd_cfg.args {
             cmd.args(args);
         }
-        if !cmd.status().expect("failed to execute process").success() {
-            panic!("termination was not successful")
-        }
+        assert!(
+            cmd.status().expect("failed to execute process").success(),
+            "termination was not successful"
+        );
     }
 }
