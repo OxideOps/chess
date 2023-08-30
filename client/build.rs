@@ -16,7 +16,7 @@ const COMMANDS: &[CommandConfig] = &[
             "-o",
             "./styles/output.css",
         ]),
-        dir: Some(".."),
+        dir: None,
     },
 ];
 
