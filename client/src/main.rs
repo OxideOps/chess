@@ -10,9 +10,8 @@ pub fn main() {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
+        use dioxus_desktop::{Config, WindowBuilder};
         use dioxus_fullstack::prelude::server_fn::set_server_url;
-        const WINDOW_SIZE: u32 = 800;
         set_server_url("https://muddy-fog-684.fly.dev");
         log::info!("desktop launching");
         dioxus_desktop::launch_cfg(
@@ -21,11 +20,7 @@ pub fn main() {
                 .with_window(
                     WindowBuilder::new()
                         .with_title("Chess")
-                        .with_maximized(true)
-                        .with_inner_size(LogicalSize {
-                            width: WINDOW_SIZE,
-                            height: WINDOW_SIZE,
-                        }),
+                        .with_maximized(true),
                 )
                 .with_disable_context_menu(true),
         );
