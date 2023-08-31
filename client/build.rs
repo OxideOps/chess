@@ -7,14 +7,8 @@ const COMMANDS: &[CommandConfig] = &[
         args: None,
     },
     CommandConfig {
-        program: "npx",
-        args: Some(&[
-            "tailwindcss",
-            "-i",
-            "./styles/input.css",
-            "-o",
-            "./styles/output.css",
-        ]),
+        program: "./build-tailwind.sh",
+        args: None,
     },
 ];
 

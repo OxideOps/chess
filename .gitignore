@@ -2,4 +2,5 @@ target
 .vscode
 dist
 client/styles/output.css
-Stockfish
+client/Stockfish
+client/node_modules
