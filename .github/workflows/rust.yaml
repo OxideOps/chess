@@ -23,11 +23,11 @@ jobs:
     - name: Build Client
       run: cargo build -p client
 
-    - name: Build WASM
-      run: trunk build
-
     - name: Run Client Tests
       run: cargo test -p client
+
+    - name: Build WASM
+      run: trunk build
 
     - name: Build Server
       run: cargo build -p server
