@@ -2,8 +2,8 @@
 
 # Check for the existence of the Tailwind binary
 if [ ! -f ./node_modules/.bin/tailwindcss ]; then
-    echo "Tailwind CSS not found! Please run npm install inside the client directory."
-    exit 1
+    echo "Tailwind CSS not found! Installing dependencies from package.json..."
+    npm install
 fi
 
 # Run Tailwind CSS
