@@ -27,9 +27,11 @@ else
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 
-# Continue with the rest of the setup
+# Setup node.js
 curl -sL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs
+
+# Setup rust environment 
 rustup target add wasm32-unknown-unknown
 rustup component add rustfmt
 cargo install --locked trunk
