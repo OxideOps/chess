@@ -7,14 +7,8 @@ const COMMANDS: &[CommandConfig] = &[
         args: None,
     },
     CommandConfig {
-        program: "npx",
-        args: Some(&[
-            "tailwindcss",
-            "-i",
-            "./styles/input.css",
-            "-o",
-            "./styles/output.css",
-        ]),
+        program: "./build-tailwind.sh",
+        args: None,
     },
 ];
 
@@ -29,8 +23,11 @@ fn main() {
             cmd.args(args);
         }
         assert!(
-            cmd.status().expect("failed to execute process").success(),
-            "termination was not successful"
+            cmd.status()
+                .unwrap_or_else(|_| panic!("failed to execute {}", cmd_cfg.program))
+                .success(),
+            "termination was not successful for {}",
+            cmd_cfg.program
         );
     }
 }

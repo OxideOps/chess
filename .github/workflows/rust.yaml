@@ -19,18 +19,15 @@ jobs:
 
     - name: Check Formatting
       run: cargo fmt -- --check
-
-    - name: Build tailwind
-      run: npx tailwindcss -i ./client/styles/input.css -o ./client/styles/output.css
-
-    - name: Build WASM
-      run: trunk build
-
+      
     - name: Build Client
       run: cargo build -p client
 
     - name: Run Client Tests
       run: cargo test -p client
+
+    - name: Build WASM
+      run: trunk build
 
     - name: Build Server
       run: cargo build -p server
