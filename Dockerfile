@@ -9,4 +9,4 @@ ENV SERVER_FN_OVERRIDE_KEY=y
 COPY setup.sh .
 
 # Make the script executable and run it
-RUN chmod +x setup.sh && ./setup.sh
+RUN ./setup.sh -n
