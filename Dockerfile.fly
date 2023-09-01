@@ -8,7 +8,6 @@ WORKDIR /app
 COPY . .
 
 # Combine the build commands to reduce layers
-RUN trunk build && \
-    cargo build -p server
+RUN trunk build && cargo build -p server
 
 ENTRYPOINT ["./target/debug/server"]
