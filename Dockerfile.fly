@@ -1,6 +1,13 @@
+#Dockerfile for setting up fly
+
 FROM ghcr.io/oxideops/chess:main
+
+# Set a working directory
+WORKDIR /app
+
 COPY . .
-RUN npx tailwindcss -i ./client/styles/input.css -o ./client/styles/output.css
-RUN trunk build
-RUN cargo build -p server
-ENTRYPOINT ./target/debug/server
+
+# Combine the build commands to reduce layers
+RUN trunk build && cargo build -p server
+
+ENTRYPOINT ["./target/debug/server"]
