@@ -3,5 +3,5 @@
 FROM ghcr.io/oxideops/chess:main
 WORKDIR /app
 COPY . .
-RUN trunk build && cargo build -p server
+RUN cargo build -p server
 ENTRYPOINT ["./target/debug/server"]
