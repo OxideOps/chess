@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Check for the existence of the Tailwind binary
+# Install tailwind if we don't have it already
 if [ ! -f ./node_modules/.bin/tailwindcss ]; then
-    echo "Tailwind CSS not found! Installing dependencies from package.json..."
     npm install
 fi
 

@@ -9,6 +9,7 @@ fi
 
 main() {
   if [ ! -f "$OUT_FILE" ]; then
+    git submodule update --init --recursive
     if [ "$1" = "--wasm" ]; then
       install_emscripten
       ( cd "$DIR"/Stockfish/src && make clean && make emscripten_build ARCH=wasm )
@@ -21,7 +22,7 @@ main() {
 
 install_emscripten() {
   (
-    cd "$DIR"
+    cd "$DIR"/emsdk
     ./emsdk install 2.0.34
     ./emsdk activate 2.0.34
     source ./emsdk_env.sh

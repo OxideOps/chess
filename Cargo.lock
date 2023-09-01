@@ -3602,6 +3602,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "build_common",
  "common",
  "dioxus",
  "dioxus-fullstack",
