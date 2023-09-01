@@ -56,8 +56,6 @@ append_if_not_present() {
 }
 
 setup_environment_variable() {
-    echo "Setting up environment variable..."
-
     local content
     case $SHELL in
     */zsh)
@@ -81,17 +79,31 @@ setup_environment_variable() {
     eval $content
 }
 
+update_submodules() {
+    git submodule update --init --recursive
+}
+
+build_tailwind() {
+    (cd client && ./build-tailwind.sh)
+}
+
+build_client() {
+    cargo build -p client
+}
+
 main() {
     parse_arguments "$@"
     install_packages
     install_rust_and_cargo
     setup_nodejs
     setup_rust_environment
+    update_submodules
+    build_tailwind
     if ! $DOCKER_MODE; then
         setup_environment_variable
+        build_client
+        echo "Setup completed!\n\nRun 'cargo run -p client' to launch the client"
     fi
-
-    echo "Setup completed!"
 }
 
 main "$@"

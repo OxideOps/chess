@@ -1,13 +1,6 @@
 #Dockerfile for setting up fly
 
 FROM ghcr.io/oxideops/chess:main
-
-# Set a working directory
 WORKDIR /app
-
-COPY . .
-
-# Combine the build commands to reduce layers
 RUN cargo build -p server && trunk build
-
-ENTRYPOINT ["./target/debug/server"]
+ENTRYPOINT ["/app/target/debug/server"]
