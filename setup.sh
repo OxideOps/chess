@@ -6,6 +6,13 @@ DOCKER_MODE=false
 # Make the server functions not change based on the path to the repo 
 ENV_VAR="SERVER_FN_OVERRIDE_KEY=y"
 
+terminate_script() {
+    local message="$1"
+    echo "$message" >&2
+    # Exit if script is executed, return if sourced
+    [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1
+}
+
 parse_arguments() {
     while [[ "$#" -gt 0 ]]; do
         case $1 in
@@ -13,8 +20,7 @@ parse_arguments() {
                 DOCKER_MODE=true
                 ;;
             *)
-                echo "Invalid option: $1" >&2
-                exit 1
+                terminate_script "Invalid option: $1"
                 ;;
         esac
         shift
@@ -22,17 +28,14 @@ parse_arguments() {
 }
 
 install_packages() {
-    apt-get update
-    apt-get upgrade -y
+    apt-get update && apt-get upgrade -y
     apt-get install -y curl libjavascriptcoregtk-4.1-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev
 }
 
 install_rust_and_cargo() {
-    if $DOCKER_MODE; then
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    else
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    fi
+    local cmd="curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    $DOCKER_MODE && cmd+=" -s -- -y"
+    eval $cmd
 }
 
 setup_nodejs() {
@@ -46,28 +49,36 @@ setup_rust_environment() {
     cargo install --locked trunk
 }
 
+append_if_not_present() {
+    local file="$1"
+    local content="$2"
+    grep -qxF "$content" "$file" || echo "$content" >> "$file"
+}
+
 setup_environment_variable() {
     echo "Setting up environment variable..."
 
+    local content
     case $SHELL in
     */zsh)
-        echo "Detected zsh..."
-        echo "export $ENV_VAR" >> ~/.zshrc
+        content="export $ENV_VAR"
+        append_if_not_present ~/.zshrc "$content"
         ;;
     */bash)
-        echo "Detected bash..."
-        echo "export $ENV_VAR" >> ~/.bashrc
+        content="export $ENV_VAR"
+        append_if_not_present ~/.bashrc "$content"
         ;;
     */fish)
-        echo "Detected fish..."
-        # Fish shell doesn't use the "export" keyword
-        echo "set -gx $(echo $ENV_VAR | sed 's/=/ /')" >> ~/.config/fish/config.fish
+        content="set -gx $(echo $ENV_VAR | sed 's/=/ /')"
+        append_if_not_present ~/.config/fish/config.fish "$content"
         ;;
     *)
         echo "Shell not detected. Please add the following to your shell's startup file:"
         echo "export $ENV_VAR"
+        return
         ;;
     esac
+    eval $content
 }
 
 main() {
