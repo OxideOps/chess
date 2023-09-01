@@ -9,4 +9,4 @@ ENV SERVER_FN_OVERRIDE_KEY=y
 COPY setup.sh .
 
 # Make the script executable and run it
-RUN ./setup.sh -n
+RUN ./setup.sh --docker
