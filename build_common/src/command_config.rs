@@ -6,30 +6,7 @@ pub struct CommandConfig {
 }
 
 impl CommandConfig {
-    pub fn run_build_commands() {
-        println!("cargo:rerun-if-changed=../client/styles");
-        println!("cargo:rerun-if-changed=../client/Stockfish");
-
-        let is_wasm_target =
-            std::env::var("TARGET").map_or(false, |target| target.contains("wasm32"));
-        let stockfish_args = if is_wasm_target {
-            Some(&["--wasm"][..])
-        } else {
-            None
-        };
-        println!("{:?}", stockfish_args);
-
-        let commands = vec![
-            Self {
-                program: "../build_common/build-stockfish.sh",
-                args: stockfish_args,
-            },
-            Self {
-                program: "../build_common/build-tailwind.sh",
-                args: None,
-            },
-        ];
-
+    pub fn run_build_commands(commands: &[CommandConfig]) {
         for cmd_cfg in commands {
             let mut cmd = Command::new(cmd_cfg.program);
 
