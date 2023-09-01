@@ -1,10 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+import path from "path";
+
+const ROOT_PATH = path.resolve(__dirname);
 export const content = [
-  "./src/*.rs",
-  "./styles/*.css"
+  `${ROOT_PATH}/src/*.rs`,
+  `${ROOT_PATH}/styles/*.css`
 ];
 export const theme = {
   extend: {},
 };
 export const plugins = [];
-

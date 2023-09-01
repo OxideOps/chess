@@ -12,10 +12,10 @@ index d2a4233..b6e2f69 100644
  filehash = true
  
 diff --git a/client/src/game_socket.rs b/client/src/game_socket.rs
-index bdac8e9..c7fe372 100644
+index e971d89..4f55feb 100644
 --- a/client/src/game_socket.rs
 +++ b/client/src/game_socket.rs
-@@ -23,7 +23,7 @@ pub async fn create_game_socket(game: UseRef<Game>, game_id: u32, rx: UnboundedR
+@@ -27,7 +27,7 @@ pub async fn create_game_socket(
  }
  
  async fn connect_to_socket(game_id: u32) -> anyhow::Result<(WriteStream, ReadStream)> {
@@ -25,10 +25,11 @@ index bdac8e9..c7fe372 100644
  }
  
 diff --git a/client/src/main.rs b/client/src/main.rs
-index 0a411a0..9f244e6 100644
+index 1ce2cea..4fcea97 100644
 --- a/client/src/main.rs
 +++ b/client/src/main.rs
-@@ -13,7 +13,7 @@ pub fn main() {
+@@ -12,7 +12,7 @@ pub fn main() {
+     {
          use dioxus_desktop::{Config, WindowBuilder};
          use dioxus_fullstack::prelude::server_fn::set_server_url;
 -        set_server_url("https://muddy-fog-684.fly.dev");
