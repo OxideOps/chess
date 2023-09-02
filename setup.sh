@@ -80,25 +80,17 @@ setup_environment_variable() {
 }
 
 update_submodules() {
-    git submodule update --init --recursive
-}
-
-install_tailwind() {
-    # Check for the existence of the Tailwind binary
-    if [ ! -f ./node_modules/.bin/tailwindcss ]; then
-        (cd client && npm install)
-    fi
+    git submodule update --init
 }
 
 main() {
     parse_arguments "$@"
     install_packages
     install_rust_and_cargo
-    install_tailwind
     setup_nodejs
     setup_rust_environment
-    update_submodules
     if ! $DOCKER_MODE; then
+        update_submodules
         setup_environment_variable
         echo "Setup completed!\n\nRun 'cargo run -p client' to launch the client"
     fi
