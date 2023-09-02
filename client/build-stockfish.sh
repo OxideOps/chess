@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -o pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -22,12 +24,11 @@ main() {
 }
 
 install_emscripten() {
-  (
     cd "$DIR"/emsdk
     ./emsdk install 2.0.34
     ./emsdk activate 2.0.34
     source ./emsdk_env.sh
-  )
+    cd "$DIR"
 }
 
 get_x86_64_arch() {

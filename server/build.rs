@@ -7,7 +7,12 @@ fn main() {
 
     let commands = vec![
         CommandConfig {
-            program: fs::canonicalize("./build-tailwind.sh").unwrap(),
+            program: fs::canonicalize("../client/build-stockfish.sh").unwrap(),
+            args: Some(&["--wasm"]),
+            dir: None,
+        },
+        CommandConfig {
+            program: fs::canonicalize("../client/build-tailwind.sh").unwrap(),
             args: None,
             dir: None,
         },
