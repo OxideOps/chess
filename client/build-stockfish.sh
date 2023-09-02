@@ -12,7 +12,6 @@ fi
 
 main() {
   if [ ! -f "$OUT_FILE" ]; then
-    git submodule update --init
     if [ "$1" = "--wasm" ]; then
       install_emscripten
       ( cd "$CLIENT"/Stockfish/src && make clean && make emscripten_build ARCH=wasm )
