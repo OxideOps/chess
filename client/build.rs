@@ -1,11 +1,17 @@
 use build_common::command_config::CommandConfig;
+use std::{env, fs};
 
 fn main() {
-    let is_wasm_target = std::env::var("TARGET").map_or(false, |target| target.contains("wasm32"));
+    println!("cargo:rerun-if-changed=../client/styles");
+    println!("cargo:rerun-if-changed=../client/Stockfish");
+
+    let is_wasm_target = env::var("TARGET").map_or(false, |target| target.contains("wasm32"));
+    let stockfish_program = fs::canonicalize("./build-stockfish.sh").unwrap();
+    let tailwind_program = fs::canonicalize("./build-stockfish.sh").unwrap();
 
     let commands = vec![
         CommandConfig {
-            program: "./build-stockfish.sh",
+            program: &stockfish_program,
             args: if is_wasm_target {
                 Some(&["--wasm"])
             } else {
@@ -13,7 +19,7 @@ fn main() {
             },
         },
         CommandConfig {
-            program: "./build-tailwind.sh",
+            program: &tailwind_program,
             args: None,
         },
     ];
