@@ -16,8 +16,27 @@ use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 
-fn get_piece_image_file(piece: Piece) -> String {
-    format!("images/{piece}.png")
+fn get_board_image(theme: &str) -> String {
+    format!("images/boards/{theme}/{theme}.png")
+}
+
+fn get_piece_image_file(theme: &str, piece: Piece) -> String {
+    let piece_img = match piece {
+        Piece::Pawn(Color::White) => "pw",
+        Piece::Knight(Color::White) => "nw",
+        Piece::Bishop(Color::White) => "bw",
+        Piece::Rook(Color::White) => "rw",
+        Piece::Queen(Color::White) => "qw",
+        Piece::King(Color::White) => "kw",
+        Piece::Pawn(Color::Black) => "pb",
+        Piece::Knight(Color::Black) => "nb",
+        Piece::Bishop(Color::Black) => "bb",
+        Piece::Rook(Color::Black) => "rb",
+        Piece::Queen(Color::Black) => "qb",
+        Piece::King(Color::Black) => "kb",
+    };
+
+    format!("images/pieces/{theme}/{piece_img}.svg")
 }
 
 #[derive(Props, PartialEq)]
@@ -258,6 +277,9 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
         })
     });
 
+    let board_img = get_board_image("qootee");
+    let piece_theme = "maestro";
+
     cx.render(rsx! {
         // div for widget
         div {
@@ -271,7 +293,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
             // board
             img {
-                src: "images/board.png",
+                src: "{board_img}",
                 class: "images inset-0 z-0",
                 width: "{cx.props.size}",
                 height: "{cx.props.size}",
@@ -279,9 +301,10 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
                     img {
-                        src: "{get_piece_image_file(piece)}",
+                        src: "{piece_img}",
                         class: "images",
                         style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
                         width: "{cx.props.size / 8}",
