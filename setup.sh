@@ -56,8 +56,6 @@ append_if_not_present() {
 }
 
 setup_environment_variable() {
-    echo "Setting up environment variable..."
-
     local content
     case $SHELL in
     */zsh)
@@ -81,6 +79,10 @@ setup_environment_variable() {
     eval $content
 }
 
+update_submodules() {
+    git submodule update --init
+}
+
 main() {
     parse_arguments "$@"
     install_packages
@@ -88,10 +90,10 @@ main() {
     setup_nodejs
     setup_rust_environment
     if ! $DOCKER_MODE; then
+        update_submodules
         setup_environment_variable
+        echo "Setup completed!\n\nRun 'cargo run -p client' to launch the client"
     fi
-
-    echo "Setup completed!"
 }
 
 main "$@"

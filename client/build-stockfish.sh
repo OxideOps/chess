@@ -1,31 +1,33 @@
 #!/bin/bash
+set -e
+set -o pipefail
 
-DIR="$(dirname "$(realpath "$0")")"
+CLIENT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 if [ "$1" = "--wasm" ]; then
-  OUT_FILE="$DIR/Stockfish/src/stockfish.wasm"
+  OUT_FILE="$CLIENT/Stockfish/src/stockfish.wasm"
 else
-  OUT_FILE="$DIR/Stockfish/src/Stockfish"
+  OUT_FILE="$CLIENT/Stockfish/src/Stockfish"
 fi
 
 main() {
   if [ ! -f "$OUT_FILE" ]; then
     if [ "$1" = "--wasm" ]; then
       install_emscripten
-      ( cd "$DIR"/Stockfish/src && make clean && make emscripten_build ARCH=wasm )
-      ( cd "$DIR" && patch -p0 < .allow-stopping.patch ) || true
+      ( cd "$CLIENT"/Stockfish/src && make clean && make emscripten_build ARCH=wasm )
+      ( cd "$CLIENT" && patch -p0 < .allow-stopping.patch ) || true
     else
-      ( cd "$DIR"/Stockfish/src && make clean && make profile-build "ARCH=$(get_arch)" )
+      ( cd "$CLIENT"/Stockfish/src && make clean && make profile-build "ARCH=$(get_arch)" )
     fi
   fi
 }
 
 install_emscripten() {
-  (
-    cd "$DIR"
+    cd "$CLIENT"/emsdk
     ./emsdk install 2.0.34
     ./emsdk activate 2.0.34
     source ./emsdk_env.sh
-  )
+    cd -
 }
 
 get_x86_64_arch() {
