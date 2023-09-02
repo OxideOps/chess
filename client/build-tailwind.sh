@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Check for the existence of the Tailwind binary
-if [ ! -f ./node_modules/.bin/tailwindcss ]; then
-    echo "Tailwind CSS not found! Installing dependencies from package.json..."
-    npm install
+# Get the directory of the current script
+CLIENT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Install tailwind if we don't have it already
+if [ ! -f "$CLIENT/node_modules/.bin/tailwindcss" ]; then
+    npm install --prefix "$CLIENT"
 fi
 
 # Run Tailwind CSS
-./node_modules/.bin/tailwindcss -i ./styles/input.css -o ./styles/output.css
+"$CLIENT/node_modules/.bin/tailwindcss" -i "$CLIENT/styles/input.css" -o "$CLIENT/styles/output.css"
