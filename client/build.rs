@@ -17,11 +17,14 @@ fn main() {
             } else {
                 None
             },
+            dir: None,
         },
         CommandConfig {
             program: &tailwind_program,
             args: None,
+            dir: None,
         },
     ];
+
     CommandConfig::run_build_commands(&commands)
 }
