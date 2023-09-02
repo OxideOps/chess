@@ -7,7 +7,7 @@ CLIENT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ "$1" = "--wasm" ]; then
   OUT_FILE="$CLIENT/Stockfish/src/stockfish.wasm"
 else
-  OUT_FILE="$CLIENT/Stockfish/src/Stockfish"
+  OUT_FILE="$CLIENT/Stockfish/src/stockfish"
 fi
 
 main() {
