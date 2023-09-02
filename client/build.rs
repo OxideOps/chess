@@ -5,16 +5,14 @@ fn main() {
     println!("cargo:rerun-if-changed=../client/styles");
     println!("cargo:rerun-if-changed=../client/Stockfish");
 
-    let is_wasm_target = env::var("TARGET").map_or(false, |target| target.contains("wasm32"));
+    if env::var("TARGET").map_or(false, |target| target.contains("wasm32")) {
+        return;
+    }
 
     let commands = vec![
         CommandConfig {
             program: fs::canonicalize("./build-stockfish.sh").unwrap(),
-            args: if is_wasm_target {
-                Some(&["--wasm"])
-            } else {
-                None
-            },
+            args: None,
             dir: None,
         },
         CommandConfig {
