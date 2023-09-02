@@ -9,4 +9,4 @@ if [ ! -f "$CLIENT/node_modules/.bin/tailwindcss" ]; then
 fi
 
 # Run Tailwind CSS
-"$CLIENT/node_modules/.bin/tailwindcss" -i "$CLIENT/styles/input.css" -o "$CLIENT/styles/output.css"
+( cd "$CLIENT" && ./node_modules/.bin/tailwindcss -i ./styles/input.css -o ./styles/output.css )
