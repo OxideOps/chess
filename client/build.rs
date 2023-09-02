@@ -7,7 +7,7 @@ fn main() {
 
     let is_wasm_target = env::var("TARGET").map_or(false, |target| target.contains("wasm32"));
     let stockfish_program = fs::canonicalize("./build-stockfish.sh").unwrap();
-    let tailwind_program = fs::canonicalize("./build-stockfish.sh").unwrap();
+    let tailwind_program = fs::canonicalize("./build-tailwind.sh").unwrap();
 
     let commands = vec![
         CommandConfig {
