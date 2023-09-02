@@ -10,15 +10,15 @@ fn main() {
 
     let commands = vec![
         CommandConfig {
+            program: &tailwind_program,
+            args: None,
+            dir: None,
+        },
+        CommandConfig {
             program: Path::new("trunk"),
             args: Some(&["build"]),
             dir: Some(&trunk_path),
         },
-        CommandConfig {
-            program: &tailwind_program,
-            args: None,
-            dir: None,
-        }
     ];
 
     CommandConfig::run_build_commands(&commands);
