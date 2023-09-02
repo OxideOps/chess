@@ -1,17 +1,17 @@
-use std::{path::Path, process::Command};
+use std::{path::PathBuf, process::Command};
 
-pub struct CommandConfig<'a> {
-    pub program: &'a Path,
-    pub args: Option<&'a [&'a str]>,
-    pub dir: Option<&'a Path>,
+pub struct CommandConfig {
+    pub program: PathBuf,
+    pub args: Option<&'static [&'static str]>,
+    pub dir: Option<PathBuf>,
 }
 
-impl CommandConfig<'_> {
+impl CommandConfig {
     pub fn run_build_commands(commands: &[CommandConfig]) {
         for cmd_cfg in commands {
-            let mut cmd = Command::new(cmd_cfg.program);
+            let mut cmd = Command::new(&cmd_cfg.program);
 
-            if let Some(dir) = cmd_cfg.dir {
+            if let Some(dir) = &cmd_cfg.dir {
                 cmd.current_dir(dir);
             }
 

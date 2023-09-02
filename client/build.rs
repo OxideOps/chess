@@ -6,12 +6,10 @@ fn main() {
     println!("cargo:rerun-if-changed=../client/Stockfish");
 
     let is_wasm_target = env::var("TARGET").map_or(false, |target| target.contains("wasm32"));
-    let stockfish_program = fs::canonicalize("./build-stockfish.sh").unwrap();
-    let tailwind_program = fs::canonicalize("./build-tailwind.sh").unwrap();
 
     let commands = vec![
         CommandConfig {
-            program: &stockfish_program,
+            program: fs::canonicalize("./build-stockfish.sh").unwrap(),
             args: if is_wasm_target {
                 Some(&["--wasm"])
             } else {
@@ -20,7 +18,7 @@ fn main() {
             dir: None,
         },
         CommandConfig {
-            program: &tailwind_program,
+            program: fs::canonicalize("./build-tailwind.sh").unwrap(),
             args: None,
             dir: None,
         },

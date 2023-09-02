@@ -1,9 +1,12 @@
 #!/bin/bash
 
+# Get the directory of the current script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # Install tailwind if we don't have it already
-if [ ! -f ./node_modules/.bin/tailwindcss ]; then
-    npm install
+if [ ! -f "$DIR/node_modules/.bin/tailwindcss" ]; then
+    npm install --prefix "$DIR"
 fi
 
 # Run Tailwind CSS
-./node_modules/.bin/tailwindcss -i ./styles/input.css -o ./styles/output.css
+"$DIR/node_modules/.bin/tailwindcss" -i "$DIR/styles/input.css" -o "$DIR/styles/output.css"

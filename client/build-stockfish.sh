@@ -1,6 +1,7 @@
 #!/bin/bash
 
-DIR="$(dirname "$(realpath "$0")")"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 if [ "$1" = "--wasm" ]; then
   OUT_FILE="$DIR/Stockfish/src/stockfish.wasm"
 else
