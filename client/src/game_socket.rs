@@ -27,7 +27,7 @@ pub async fn create_game_socket(
 }
 
 async fn connect_to_socket(game_id: u32) -> anyhow::Result<(WriteStream, ReadStream)> {
-    let url = format!("wss://muddy-fog-684.fly.dev/game/{game_id}");
+    let url = format!("wss://oxide-chess.fly.dev/game/{game_id}");
     Ok(connect(Url::parse(&url)?).await?.split())
 }
 

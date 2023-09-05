@@ -12,7 +12,7 @@ pub fn main() {
     {
         use dioxus_desktop::{Config, WindowBuilder};
         use dioxus_fullstack::prelude::server_fn::set_server_url;
-        set_server_url("https://muddy-fog-684.fly.dev");
+        set_server_url("https://oxide-chess.fly.dev");
         log::info!("desktop launching");
         dioxus_desktop::launch_cfg(
             App,
