@@ -14,22 +14,25 @@ This project is a complete chess platform, allowing users to play chess games, a
 
 ## Getting Started
 
-### Setup
+1. Download and install rust:
+    ```bash
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
 
-1. Clone the repository:
+2. Clone the repository:
    ```bash
    git clone https://github.com/OxideOps/chess.git
    ```
 
-2. Install the `oxide` cli tool:
+3. Install the `oxide` cli tool:
     ```bash
     cargo install https://github.com/OxideOps/oxide-cli.git
     ```
-3. Setup your project. From the root, run:
+4. Setup your project. From the root, run:
     ```bash
     oxide setup
     ```
-4. Buid/Run the client or server:
+5. Buid/Run the client or server:
     ```bash
     oxide [build | run] [client | server]
     ```
