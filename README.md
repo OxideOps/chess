@@ -18,6 +18,11 @@ This project is a complete chess platform, allowing users to play chess games, a
     ```bash
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     ```
+    Ensure that everything went well with:
+    ```bash
+    rustc --version
+    ```
+    If you do not see output, ensure `~/.cargo/bin` was added to your `PATH`. You may need to restart your terminal
 
 2. Clone the repository:
    ```bash
