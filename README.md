@@ -14,7 +14,7 @@ This project is a complete chess platform, allowing users to play chess games, a
 
 ## Getting Started
 
-1. Download and install rust:
+1. Download and install [Rust](https://www.rust-lang.org/):
     ```bash
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     ```
