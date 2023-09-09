@@ -37,7 +37,7 @@ This project is a complete chess platform, allowing users to play chess games, a
 ## Building and Running
 
 There are two binary packages that can be compiled and ran: `client` and `server`. Execute `cargo [build | run]` with the `-p` (package) flag, followed by the package:
-```bash 
+```bash
 cargo [build | run] -p [client | server]
 ```
 
