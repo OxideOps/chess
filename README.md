@@ -41,7 +41,7 @@ There are two binary packages that can be compiled and ran: `client` and `server
 cargo [build | run] -p [client | server]
 ```
 
-Note that there are `build.rs` files in each package, called [build scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html), that causes Cargo to compile that script and execute it just before building the package.
+Note that there is a `build.rs` file in each package, called a [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html), that causes Cargo to compile that script and execute it just before building the package.
 
 ### Client
 
