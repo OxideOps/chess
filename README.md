@@ -47,11 +47,12 @@ Note that there are `build.rs` files in each package, called [build scripts](htt
 
 The `client` contains the following code:
 
-- User interface, using the ergonomic [Dioxus](https://github.com/DioxusLabs/dioxus) framework for building cross-platform interfaces in Rust.
-- Core chess logic, contained in the `chess` library.
-- [Stockfish](https://github.com/OxideOps/Stockfish.git) submodule for running Stockfish natively in `C++`.
-- [emsdk](https://github.com/emscripten-core/emsdk.git) submodule for compiling `wasm` from Stockfish when we build the `server`
-- [Tailwind](https://tailwindcss.com/) to make CSS a breeze
+- User interface, using the ergonomic [Dioxus](https://github.com/DioxusLabs/dioxus) framework for building cross-platform interfaces in Rust;
+- Core chess logic, contained in the `chess` library;
+- [Stockfish](https://github.com/OxideOps/Stockfish.git) submodule for running Stockfish natively in `C++`;
+- [emsdk](https://github.com/emscripten-core/emsdk.git) submodule for compiling web assembly from Stockfish when we build the `server`;
+- [Tailwind](https://tailwindcss.com/) to make CSS a breeze;
+- [Trunk](https://github.com/thedodd/trunk) to compile our program into web assembly.
 
 ### Server
 
