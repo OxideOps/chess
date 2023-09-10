@@ -2,7 +2,6 @@ use crate::board::Board;
 use crate::info_bar::InfoBar;
 
 use chess::color::Color;
-use chess::game::Game;
 use chess::player::Player;
 use dioxus::prelude::*;
 use std::time::Duration;
@@ -18,7 +17,6 @@ pub struct WidgetProps {
 }
 
 pub fn Widget(cx: Scope<WidgetProps>) -> Element {
-    use_shared_state_provider(cx, || Game::with_start_time(cx.props.start_time));
     cx.render(rsx! {
         Board {
             size: cx.props.height,
