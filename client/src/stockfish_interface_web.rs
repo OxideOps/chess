@@ -11,7 +11,7 @@ pub type Process = Object;
 
 type Channel = (Sender<String>, Receiver<String>);
 
-static CHANNEL: Lazy<Channel> = Lazy::new(unbounded::<String>);
+static CHANNEL: Lazy<Channel> = Lazy::new(unbounded);
 
 fn get_js_method(object: &Process, method: &str) -> Function {
     js_sys::Reflect::get(object, &method.into())

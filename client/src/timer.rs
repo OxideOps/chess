@@ -42,9 +42,7 @@ fn use_timer_future(
     black_time: &UseState<String>,
 ) {
     use_future(cx, use_shared_state::<Game>(cx).unwrap(), |game| {
-        let white_time = white_time.to_owned();
-        let black_time = black_time.to_owned();
-
+        to_owned![white_time, black_time];
         async move {
             if game.read().is_timer_active() {
                 let active_time_state = match game.read().get_real_player() {

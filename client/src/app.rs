@@ -1,3 +1,4 @@
+use crate::shared_states::GameId;
 use crate::widget::Widget;
 use std::time::Duration;
 
@@ -20,18 +21,20 @@ fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<
 }
 
 pub fn App(cx: Scope) -> Element {
+    use_shared_state_provider(cx, || GameId(None));
+
     #[cfg(not(target_arch = "wasm32"))]
     let window = dioxus_desktop::use_window(cx);
 
     let white_player = use_ref(cx, || Player::with_color(Color::White));
     let black_player = use_ref(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
-    let game_id = use_state::<Option<u32>>(cx, || None);
+    let game_id = use_shared_state::<GameId>(cx).unwrap();
     let analyze = use_state(cx, || false);
+
     cx.render(rsx! {
         style { include_str!("../styles/output.css") }
         Widget {
-            game_id: *game_id.get(),
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
             perspective: *perspective.get(),
@@ -51,7 +54,7 @@ pub fn App(cx: Scope) -> Element {
                         match setup_remote_game().await {
                             Ok(info) => {
                                 log::info!("Setting up remote game: {info:?}");
-                                game_id.set(Some(info.game_id));
+                                **game_id.write() = Some(info.game_id);
                                 let player = match info.local_color {
                                     Color::White => black_player.to_owned(),
                                     Color::Black => white_player.to_owned(),
