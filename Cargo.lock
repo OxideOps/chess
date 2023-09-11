@@ -303,6 +303,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1181e1e0d1fce796a03db1ae795d67167da795f9cf4a39c37589e85ef57f26d3"
 
 [[package]]
+name = "auto-deref"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.29",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -642,6 +650,7 @@ dependencies = [
  "anyhow",
  "async-process",
  "async-std",
+ "auto-deref",
  "build_common",
  "chess",
  "clap",
