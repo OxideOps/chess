@@ -33,8 +33,10 @@ install_packages() {
 }
 
 setup_nodejs() {
-    curl -sL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    nvm install node
 }
 
 setup_rust_environment() {
@@ -85,7 +87,7 @@ main() {
     if ! $DOCKER_MODE; then
         update_submodules
         setup_environment_variable
-        echo "Setup completed!\n\nRun 'cargo run -p client' to launch the client"
+        echo "Setup completed! Run 'cargo run -p client' to launch the client"
     fi
 }
 

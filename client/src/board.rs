@@ -2,8 +2,10 @@ use crate::arrow::Arrow;
 use crate::arrows::{ArrowData, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
+use crate::shared_states::GameId;
 use crate::stockfish_client::{on_game_changed, toggle_stockfish};
 use crate::stockfish_interface::Process;
+use async_std::channel::{unbounded, Receiver, Sender};
 use chess::color::Color;
 use chess::game::Game;
 use chess::game_status::GameStatus;
@@ -15,6 +17,11 @@ use dioxus::html::input_data::keyboard_types::Modifiers;
 use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
+use once_cell::sync::Lazy;
+
+pub type Channel = (Sender<Move>, Receiver<Move>);
+
+static CHANNEL: Lazy<Channel> = Lazy::new(unbounded);
 
 fn get_board_image(theme: &str) -> String {
     format!("images/boards/{theme}/{theme}.png")
@@ -41,8 +48,6 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
 
 #[derive(Props, PartialEq)]
 pub struct BoardProps {
-    #[props(!optional)]
-    game_id: Option<u32>,
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
     perspective: Color,
@@ -145,26 +150,27 @@ fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows:
     };
 }
 
-fn drop_piece(
-    cx: Scope<BoardProps>,
-    event: &Event<MouseData>,
-    point: &ClientPoint,
-    game_socket: Option<&Coroutine<Move>>,
-) {
+fn drop_piece(cx: Scope<BoardProps>, event: &Event<MouseData>, point: &ClientPoint) {
     let game = use_shared_state::<Game>(cx).unwrap();
     let from = to_position(cx, point);
     let to = get_dragged_piece_position(cx, point, &event.client_coordinates());
-    let current_player_kind = match game.read().get_current_player() {
-        Color::White => cx.props.white_player_kind,
-        Color::Black => cx.props.black_player_kind,
+    let (current_player_kind, opponent_player_kind) = match game.read().get_current_player() {
+        Color::White => (cx.props.white_player_kind, cx.props.black_player_kind),
+        Color::Black => (cx.props.black_player_kind, cx.props.white_player_kind),
     };
     if current_player_kind == PlayerKind::Local
         && game.read().status != GameStatus::Replay
         && game.read().is_move_valid(&Move::new(from, to)).is_ok()
     {
         game.write().move_piece(from, to).ok();
-        if let Some(game_socket) = game_socket {
-            game_socket.send(Move::new(from, to));
+        if opponent_player_kind == PlayerKind::Remote {
+            cx.spawn(async move {
+                CHANNEL
+                    .0
+                    .send(Move::new(from, to))
+                    .await
+                    .expect("Failed to send move!");
+            });
         }
     }
 }
@@ -199,12 +205,11 @@ fn handle_on_mouse_up_event(
     event: Event<MouseData>,
     mouse_down_state: &UseState<Option<MouseClick>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
-    game_socket: Option<&Coroutine<Move>>,
     arrows: &UseRef<Arrows>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
-            drop_piece(cx, &event, &mouse_down.point, game_socket);
+            drop_piece(cx, &event, &mouse_down.point);
         }
         if mouse_down.kind.contains(MouseButton::Secondary) {
             complete_arrow(cx, &event, &mouse_down.point, arrows);
@@ -271,10 +276,8 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             analysis_arrows.to_owned(),
         )
     });
-    let game_socket = cx.props.game_id.map(|game_id| {
-        use_coroutine(cx, |rx: UnboundedReceiver<Move>| {
-            create_game_socket(game.to_owned(), game_id, rx)
-        })
+    use_future(cx, use_shared_state::<GameId>(cx).unwrap(), |game_id| {
+        create_game_socket(game.to_owned(), game_id, &CHANNEL.1)
     });
 
     let board_img = get_board_image("qootee");
@@ -288,7 +291,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             tabindex: 0,
             // event handlers
             onmousedown: |event| handle_on_mouse_down_event(event, mouse_down_state, arrows),
-            onmouseup: move |event| handle_on_mouse_up_event(cx, event, mouse_down_state, dragging_point_state, game_socket, arrows),
+            onmouseup: move |event| handle_on_mouse_up_event(cx, event, mouse_down_state, dragging_point_state, arrows),
             onmousemove: |event| handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
             // board

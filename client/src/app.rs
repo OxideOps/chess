@@ -1,6 +1,8 @@
+use crate::shared_states::GameId;
 use crate::widget::Widget;
 use std::time::Duration;
 
+use chess::game::Game;
 use chess::{
     color::Color,
     player::{Player, PlayerKind},
@@ -8,6 +10,7 @@ use chess::{
 use dioxus::prelude::*;
 use server_functions::setup_remote_game::setup_remote_game;
 const WIDGET_HEIGHT: u32 = 800;
+const START_TIME: Duration = Duration::from_secs(3600);
 
 fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<Player>) -> Color {
     if black_player.read().kind == PlayerKind::Local
@@ -20,23 +23,27 @@ fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<
 }
 
 pub fn App(cx: Scope) -> Element {
+    use_shared_state_provider(cx, || GameId(None));
+    use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
+
     #[cfg(not(target_arch = "wasm32"))]
     let window = dioxus_desktop::use_window(cx);
 
     let white_player = use_ref(cx, || Player::with_color(Color::White));
     let black_player = use_ref(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
-    let game_id = use_state::<Option<u32>>(cx, || None);
+    let game = use_shared_state::<Game>(cx).unwrap();
+    let game_id = use_shared_state::<GameId>(cx).unwrap();
     let analyze = use_state(cx, || false);
+
     cx.render(rsx! {
         style { include_str!("../styles/output.css") }
         Widget {
-            game_id: *game_id.get(),
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
             perspective: *perspective.get(),
             analyze: analyze.to_owned(),
-            start_time: Duration::from_secs(3600),
+            start_time: START_TIME,
             height: WIDGET_HEIGHT
         }
         div {
@@ -46,12 +53,13 @@ pub fn App(cx: Scope) -> Element {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",
                 onclick: |_| {
-                    to_owned![white_player, black_player, perspective, game_id];
+                    to_owned![white_player, black_player, perspective, game, game_id];
                     cx.spawn(async move {
                         match setup_remote_game().await {
                             Ok(info) => {
                                 log::info!("Setting up remote game: {info:?}");
-                                game_id.set(Some(info.game_id));
+                                game.write().reset();
+                                **game_id.write() = Some(info.game_id);
                                 let player = match info.local_color {
                                     Color::White => black_player.to_owned(),
                                     Color::Black => white_player.to_owned(),
