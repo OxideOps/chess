@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "auto-deref",
     "client",
     "server",
     "chess",

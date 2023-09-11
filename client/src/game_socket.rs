@@ -1,4 +1,6 @@
+use crate::shared_states::GameId;
 use anyhow;
+use async_std::channel::Receiver;
 use chess::game::Game;
 use chess::moves::Move;
 use dioxus::prelude::*;
@@ -15,15 +17,17 @@ type ReadStream = SplitStream<WebSocketStream>;
 
 pub async fn create_game_socket(
     game: UseSharedState<Game>,
-    game_id: u32,
-    rx: UnboundedReceiver<Move>,
+    game_id: UseSharedState<GameId>,
+    rx: &Receiver<Move>,
 ) {
-    match connect_to_socket(game_id).await {
-        Ok((write, read)) => {
-            join!(read_from_socket(read, &game), write_to_socket(rx, write));
-        }
-        Err(err) => log::error!("Error connecting game socket: {err:?}"),
-    };
+    if let Some(game_id) = game_id.with(|id| **id) {
+        match connect_to_socket(game_id).await {
+            Ok((write, read)) => {
+                join!(read_from_socket(read, &game), write_to_socket(rx, write));
+            }
+            Err(err) => log::error!("Error connecting game socket: {err:?}"),
+        };
+    }
 }
 
 async fn connect_to_socket(game_id: u32) -> anyhow::Result<(WriteStream, ReadStream)> {
@@ -37,8 +41,8 @@ async fn send_move(mv: &Move, socket: &mut WriteStream) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn write_to_socket(mut rx: UnboundedReceiver<Move>, mut socket: WriteStream) {
-    while let Some(mv) = rx.next().await {
+async fn write_to_socket(rx: &Receiver<Move>, mut socket: WriteStream) {
+    while let Ok(mv) = rx.recv().await {
         if let Err(err) = send_move(&mv, &mut socket).await {
             log::error!("Error sending move: {err:?}");
         }

@@ -2,8 +2,7 @@ use build_common::command_config::CommandConfig;
 use std::{fs, path::PathBuf};
 
 fn main() {
-    println!("cargo:rerun-if-changed=../client/styles");
-    println!("cargo:rerun-if-changed=../client/Stockfish");
+    println!("cargo:rerun-if-changed=../client");
 
     let commands = vec![
         CommandConfig {
