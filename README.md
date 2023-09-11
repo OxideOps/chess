@@ -22,22 +22,42 @@ This project is a complete chess platform, allowing users to play chess games, a
     ```bash
     rustc --version
     ```
-    If you do not see output, ensure `~/.cargo/bin` was added to your `PATH`. You may need to restart your terminal
+    If you do not see output, you may need to restart your terminal. Also, ensure `~/.cargo/bin` was added to your `PATH`.
 
 2. Clone the repository:
    ```bash
    git clone https://github.com/OxideOps/chess.git
    ```
 
-3. Install the `oxide` cli tool:
+3. Download and install the necessary dependencies for this project. From the root of the project, run:
     ```bash
-    cargo install https://github.com/OxideOps/oxide-cli.git
+    ./setup.sh
     ```
-4. Setup your project. From the root, run:
-    ```bash
-    oxide setup
-    ```
-5. Buid/Run the client or server:
-    ```bash
-    oxide [build | run] [client | server]
-    ```
+
+## Building and Running
+
+There are two binary packages that can be compiled and ran: `client` and `server`. Execute `cargo [build | run]` with the `-p` (package) flag, followed by the package:
+```bash
+cargo [build | run] -p [client | server]
+```
+
+Note that there is a `build.rs` file in each package, called a [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html), that causes Cargo to compile that script and execute it just before building the package.
+
+### Client
+
+The `client` contains the following code:
+
+- User interface, using the ergonomic [Dioxus](https://github.com/DioxusLabs/dioxus) framework for building cross-platform interfaces in Rust;
+- Core chess logic, contained in the `chess` library;
+- [Stockfish](https://github.com/OxideOps/Stockfish.git) submodule for running Stockfish natively in `C++`;
+- [emsdk](https://github.com/emscripten-core/emsdk.git) submodule for compiling web assembly from Stockfish when we build the `server`;
+- [Tailwind](https://tailwindcss.com/) to make CSS a breeze.
+- [Trunk](https://github.com/thedodd/trunk) to compile our program into web assembly.
+
+### Server
+
+The `server` contains the following code:
+
+- Runs using the rust framework [Axum](https://github.com/tokio-rs/axum).
+- Serves compiled WASM to the web client.  
+- Uses web sockets to manage remote games between 2 clients.
