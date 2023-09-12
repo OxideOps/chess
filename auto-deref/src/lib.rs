@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Fields};
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 #[proc_macro_derive(AutoDeref)]
 pub fn auto_deref(input: TokenStream) -> TokenStream {
@@ -8,7 +8,7 @@ pub fn auto_deref(input: TokenStream) -> TokenStream {
     let name = &input.ident;
 
     let gen = match &input.data {
-        syn::Data::Struct(data) => match &data.fields {
+        Data::Struct(data) => match &data.fields {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
                 let field_type = &fields.unnamed.first().unwrap().ty;
                 quote! {
@@ -27,9 +27,13 @@ pub fn auto_deref(input: TokenStream) -> TokenStream {
                     }
                 }
             }
-            _ => panic!("AutoDeref can only be used with tuple structs with a single field"),
+            _ => quote! {
+                compile_error!("AutoDeref can only be used with tuple structs with a single field");
+            },
         },
-        _ => panic!("AutoDeref can only be used with structs"),
+        _ => quote! {
+            compile_error!("AutoDeref can only be used with structs");
+        },
     };
 
     gen.into()
