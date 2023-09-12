@@ -27,9 +27,13 @@ pub fn auto_deref(input: TokenStream) -> TokenStream {
                     }
                 }
             }
-            _ => panic!("AutoDeref can only be used with tuple structs with a single field"),
+            _ => quote! {
+                compile_error!("AutoDeref can only be used with tuple structs with a single field");
+            },
         },
-        _ => panic!("AutoDeref can only be used with structs"),
+        _ => quote! {
+            compile_error!("AutoDeref can only be used with structs");
+        },
     };
 
     gen.into()
