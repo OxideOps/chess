@@ -316,8 +316,12 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 }
             }),
             (0..64).map(|i| {
-                let pos = Position::new(i / 8, i % 8);
+                let pos = Position::new(i % 8, i / 8);
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                dbg!(pos);
+                dbg!(top_left);
+                dbg!(z_index);
+
                 rsx! {
                     div {
                         class: "squares",
