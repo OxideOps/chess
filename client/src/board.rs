@@ -315,6 +315,18 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
+            (0..64).map(|i| {
+                let pos = Position::new(i / 8, i % 8);
+                let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                rsx! {
+                    div {
+                        class: "squares",
+                        style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
+                        width: "{cx.props.size / 8}",
+                        height: "{cx.props.size / 8}",
+                    },
+                }
+            }),
             // arrows
             for arrows in [arrows, analysis_arrows] {
                 arrows.read().get().into_iter().map(|data| {
