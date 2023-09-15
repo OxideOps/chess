@@ -26,8 +26,7 @@ body {
 }
 
 .squares {
-    @apply absolute p-0 border-0 m-0 bg-red-500;
-    -webkit-user-drag: none;
+    @apply absolute bg-red-500;
 }
 
 td {
