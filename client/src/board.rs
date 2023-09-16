@@ -154,7 +154,7 @@ fn drop_piece(
     cx: Scope<BoardProps>,
     event: &Event<MouseData>,
     point: &ClientPoint,
-    last_moved_squares: &UseState<Option<(Position, Position)>>,
+    last_moved_squares: &UseState<Option<Move>>,
 ) {
     let game = use_shared_state::<Game>(cx).unwrap();
     let from = to_position(cx, point);
@@ -168,7 +168,7 @@ fn drop_piece(
         && game.read().is_move_valid(&Move::new(from, to)).is_ok()
     {
         game.write().move_piece(from, to).ok();
-        last_moved_squares.set(Some((from, to)));
+        last_moved_squares.set(Some(Move::new(from, to)));
         if opponent_player_kind == PlayerKind::Remote {
             cx.spawn(async move {
                 CHANNEL
@@ -212,7 +212,7 @@ fn handle_on_mouse_up_event(
     mouse_down_state: &UseState<Option<MouseClick>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
     arrows: &UseRef<Arrows>,
-    last_moved_squares: &UseState<Option<(Position, Position)>>,
+    last_moved_squares: &UseState<Option<Move>>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
@@ -265,7 +265,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let last_moved_squares = use_state::<Option<(Position, Position)>>(cx, || None);
+    let last_moved_squares = use_state::<Option<Move>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_ref(cx, Arrows::default);
     let stockfish_process = use_ref::<Option<Process>>(cx, || None);
@@ -310,38 +310,38 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 width: "{cx.props.size}",
                 height: "{cx.props.size}",
             },
-            // squares and pieces
-            (0..64).map(|i| {
-                let pos = Position::new(i % 8, i / 8);
-                let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
-                let square_class = if let Some((from, to)) = last_moved_squares.get() {
-                    if *from == pos || *to == pos {
-                        dbg!(from, to, pos);
-                        "squares-highlighted"
-                    } else {
-                        "squares"
-                    }
-                } else {
-                    "squares"
-                };
+            // highlight from-to squares
+            if let Some(mv) = last_moved_squares.get() {
                 rsx! {
-                    div {
-                        class: "{square_class}",
-                        style: "left: {top_left.x}px; top: {top_left.y}px;",
-                        width: "{cx.props.size / 8}px",
-                        height: "{cx.props.size / 8}px",
-                    },
-                    if let Some(piece) = game.read().get_piece(&pos) {
-                        let piece_img = get_piece_image_file(piece_theme, piece);
+                    mv.get_positions().into_iter().map(|pos| {
+                        let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                        let square_class = if mv.from == pos || mv.to == pos {
+                            "squares-highlighted"
+                        } else {
+                            "squares"
+                        };
                         rsx! {
-                            img {
-                                src: "{piece_img}",
-                                class: "images",
+                            div {
+                                class: "{square_class}",
                                 style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
-                                width: "{cx.props.size / 8}",
-                                height: "{cx.props.size / 8}",
+                                width: "{cx.props.size / 8}px",
+                                height: "{cx.props.size / 8}px",
                             }
                         }
+                    }),
+                } 
+            },
+            // pieces
+            game.read().get_pieces().into_iter().map(|(piece, pos)| {
+                let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                let piece_img = get_piece_image_file(piece_theme, piece);
+                rsx! {
+                    img {
+                        src: "{piece_img}",
+                        class: "images",
+                        style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
+                        width: "{cx.props.size / 8}",
+                        height: "{cx.props.size / 8}",
                     }
                 }
             }),
