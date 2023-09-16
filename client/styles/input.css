@@ -26,7 +26,11 @@ body {
 }
 
 .squares {
-    @apply absolute bg-red-500;
+    @apply absolute bg-transparent;
+}
+
+.squares-highlighted {
+    @apply absolute bg-yellow-500/50;
 }
 
 td {
