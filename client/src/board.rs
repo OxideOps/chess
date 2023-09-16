@@ -316,6 +316,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                     mv.get_positions().into_iter().map(|pos| {
                         let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                         let square_class = if mv.from == pos || mv.to == pos {
+                            dbg!(pos);
                             "squares-highlighted"
                         } else {
                             "squares"
