@@ -326,8 +326,8 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                     div {
                         class: "squares",
                         style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
-                        width: "{cx.props.size / 8}",
-                        height: "{cx.props.size / 8}",
+                        width: "{cx.props.size / 8}px",
+                        height: "{cx.props.size / 8}px",
                     },
                 }
             }),
