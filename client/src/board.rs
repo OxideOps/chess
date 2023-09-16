@@ -169,6 +169,7 @@ fn drop_piece(
     {
         game.write().move_piece(from, to).ok();
         last_moved_squares.set(Some(Move::new(from, to)));
+        dbg!(last_moved_squares);
         if opponent_player_kind == PlayerKind::Remote {
             cx.spawn(async move {
                 CHANNEL
@@ -291,7 +292,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
 
     let board_img = get_board_image("qootee");
     let piece_theme = "maestro";
-
+    
     cx.render(rsx! {
         // div for widget
         div {
@@ -314,9 +315,8 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             if let Some(mv) = last_moved_squares.get() {
                 rsx! {
                     mv.get_positions().into_iter().map(|pos| {
-                        let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                        let (top_left, _) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                         let square_class = if mv.from == pos || mv.to == pos {
-                            dbg!(pos);
                             "squares-highlighted"
                         } else {
                             "squares"
@@ -324,7 +324,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                         rsx! {
                             div {
                                 class: "{square_class}",
-                                style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
+                                style: "left: {top_left.x}px; top: {top_left.y}px;",
                                 width: "{cx.props.size / 8}px",
                                 height: "{cx.props.size / 8}px",
                             }
