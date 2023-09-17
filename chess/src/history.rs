@@ -31,7 +31,11 @@ impl History {
     }
 
     pub fn get_current_move(&self) -> Option<Move> {
-        self.turns.get(self.get_current_turn()).map(|turn| turn.mv)
+        if self.get_current_turn() == 0 {
+            None
+        } else {
+            Some(self.turns[self.get_current_turn() - 1].mv)
+        }
     }
 
     pub fn get_current_turn(&self) -> usize {
