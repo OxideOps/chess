@@ -163,21 +163,16 @@ fn drop_piece(
         Color::White => (cx.props.white_player_kind, cx.props.black_player_kind),
         Color::Black => (cx.props.black_player_kind, cx.props.white_player_kind),
     };
-    let mv = Move::new(from, to); 
+    let mv = Move::new(from, to);
     if current_player_kind == PlayerKind::Local
         && game.read().status != GameStatus::Replay
         && game.read().is_move_valid(&mv).is_ok()
     {
         game.write().move_piece(from, to).ok();
         last_move.set(Some(mv));
-        dbg!(last_move);
         if opponent_player_kind == PlayerKind::Remote {
             cx.spawn(async move {
-                CHANNEL
-                    .0
-                    .send(mv)
-                    .await
-                    .expect("Failed to send move!");
+                CHANNEL.0.send(mv).await.expect("Failed to send move!");
             });
         }
     }
@@ -293,7 +288,8 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
 
     let board_img = get_board_image("qootee");
     let piece_theme = "maestro";
-    
+    dbg!(last_move);
+
     cx.render(rsx! {
         // div for widget
         div {
@@ -302,7 +298,14 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             tabindex: 0,
             // event handlers
             onmousedown: |event| handle_on_mouse_down_event(event, mouse_down_state, arrows),
-            onmouseup: move |event| handle_on_mouse_up_event(cx, event, mouse_down_state, dragging_point_state, arrows, last_move),
+            onmouseup: move |event| handle_on_mouse_up_event(
+                cx,
+                event,
+                mouse_down_state,
+                dragging_point_state,
+                arrows,
+                last_move,
+            ),
             onmousemove: |event| handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
             // board
@@ -310,8 +313,8 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 src: "{board_img}",
                 class: "images inset-0 z-0",
                 width: "{cx.props.size}",
-                height: "{cx.props.size}",
-            },
+                height: "{cx.props.size}"
+            }
             // highlight from-to squares
             if let Some(mv) = last_move.get() {
                 rsx! {
@@ -326,22 +329,32 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                                         "squares"
                                     }
                                 },
-                                style: "left: {top_left.x}px; top: {top_left.y}px;",
-                                width: "{cx.props.size / 8}px",
-                                height: "{cx.props.size / 8}px",
+                                style: "
+                                    left: {top_left.x}px; 
+                                    top: {top_left.y}px; 
+                                    width: {cx.props.size / 8}px; 
+                                    height: {cx.props.size / 8}px;
+                                ",
                             }
                         }
                     }),
-                } 
-            },
+                }
+            }
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                 let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
+
                     img {
                         src: "{piece_img}",
                         class: "images",
+                        style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
+                        width: "{cx.props.size / 8}",
+                        height: "{cx.props.size / 8}",
+                    }
+                    div {
+                        class: "squares-highlighted",
                         style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
                         width: "{cx.props.size / 8}",
                         height: "{cx.props.size / 8}",
@@ -360,7 +373,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                         }
                     }
                 })
-            },
+            }
             if let Some(mv) = get_move_for_arrow(cx, mouse_down_state, dragging_point_state) {
                 rsx! {
                     Arrow {
@@ -371,6 +384,6 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }
-        },
+        }
     })
 }
