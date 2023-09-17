@@ -19,8 +19,8 @@ pub fn main() {
             Config::new()
                 .with_window(
                     WindowBuilder::new()
-                        .with_title("Chess")
-                        .with_maximized(true),
+                        .with_title("Oxide Chess")
+                        .with_maximized(true)
                 )
                 .with_disable_context_menu(true),
         );
