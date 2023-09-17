@@ -20,7 +20,7 @@ pub fn main() {
                 .with_window(
                     WindowBuilder::new()
                         .with_title("Oxide Chess")
-                        .with_maximized(true)
+                        .with_maximized(true),
                 )
                 .with_disable_context_menu(true),
         );
