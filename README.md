@@ -61,3 +61,44 @@ The `server` contains the following code:
 - Runs using the rust framework [Axum](https://github.com/tokio-rs/axum).
 - Serves compiled WASM to the web client.  
 - Uses web sockets to manage remote games between 2 clients.
+
+## Database
+
+### Mac OS
+
+### Install PostgreSQL
+```bash
+brew install postgresql
+```
+
+### Setting Username and Password
+Default Username: The default username is usually postgres.
+
+Password: To set or reset the password, open a terminal and start by running:
+```bash
+psql postgres
+```
+
+### List Existing Roles
+To list all roles, run:
+```sql
+\du
+```
+This will list all the roles. Identify a role that has superuser privileges.
+
+
+### Use Existing Role
+If you see a role that you'd like to use, you can set its password using:
+```sql
+ALTER USER role_name PASSWORD 'newpassword';
+```
+Replace `role_name` with the actual role name and `newpassword` with your desired password.
+
+
+### Create New Role
+If you'd like to create a new role, you can do so with:
+```sql
+CREATE ROLE role_name WITH LOGIN PASSWORD 'newpassword' SUPERUSER;
+```
+This will create `role_name` with superuser privileges.
+
