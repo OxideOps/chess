@@ -72,9 +72,9 @@ brew install postgresql
 ```
 
 ### Setting Username and Password
-Default Username: The default username is usually postgres.
+**Default Username**: The default username is usually postgres.
 
-Password: To set or reset the password, open a terminal and start by running:
+**Password**: To set or reset the password, open a terminal and start by running:
 ```bash
 psql postgres
 ```
@@ -102,3 +102,19 @@ CREATE ROLE role_name WITH LOGIN PASSWORD 'newpassword' SUPERUSER;
 ```
 This will create `role_name` with superuser privileges.
 
+Type `\q` to exit.
+
+### Creating a Database
+**Default Database**: PostgreSQL usually creates a default database named `postgres`.
+
+**Custom Database**: To create a new database, open a terminal and run:
+```bash
+createdb newdbname
+```
+
+### Setting the DATABASE_URL
+Once you have the username, password, and database name, you can set the DATABASE_URL environment variable in your shell:
+```bash
+export DATABASE_URL=postgresql://username:password@localhost/dbname
+```
+Replace `username`, `password`, and `dbname` with your PostgreSQL username, password, and database name.
