@@ -17,6 +17,7 @@ dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 futures = "0.3.28"
 hyper = "0.14.27"
 log = "0.4.19"
+once_cell = "1.18.0"
 server-functions = { path = "../server-functions", features = ["ssr"] }
 tokio = { version = "1.29.1", features = ["full"] }
 tokio-postgres = "0.7.10"
