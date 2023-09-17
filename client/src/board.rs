@@ -322,13 +322,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                         let (top_left, _) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                         rsx! {
                             div {
-                                class: {
-                                    if mv.from == pos || mv.to == pos {
-                                        "squares-highlighted"
-                                    } else {
-                                        "squares"
-                                    }
-                                },
+                                class: "squares-highlighted",
                                 style: "
                                     left: {top_left.x}px; 
                                     top: {top_left.y}px; 
@@ -345,16 +339,9 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                 let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
-
                     img {
                         src: "{piece_img}",
                         class: "images",
-                        style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
-                        width: "{cx.props.size / 8}",
-                        height: "{cx.props.size / 8}",
-                    }
-                    div {
-                        class: "squares-highlighted",
                         style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
                         width: "{cx.props.size / 8}",
                         height: "{cx.props.size / 8}",
