@@ -125,14 +125,26 @@ pub(crate) fn to_point(position: &Position, board_size: u32, perspective: Color)
     }
 }
 
-fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseRef<Arrows>) {
+fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseRef<Arrows>, last_move: &UseState<Option<Move>>) {
     let game = use_shared_state::<Game>(cx).unwrap();
 
     match event.key() {
-        Key::ArrowLeft => game.write().go_back_a_move(),
-        Key::ArrowRight => game.write().go_forward_a_move(),
-        Key::ArrowUp => game.write().resume(),
-        Key::ArrowDown => game.write().go_to_start(),
+        Key::ArrowLeft => {
+            game.write().go_back_a_move();
+            last_move.set(game.read().get_current_move());
+        },
+        Key::ArrowRight => {
+            game.write().go_forward_a_move();
+            last_move.set(game.read().get_current_move());
+        },
+        Key::ArrowUp => {
+            game.write().resume();
+            last_move.set(game.read().get_current_move());
+        },
+        Key::ArrowDown => {
+            game.write().go_to_start();
+            last_move.set(game.read().get_current_move());
+        },
         Key::Character(c) => match c.as_str() {
             "z" => {
                 if event.modifiers() == Modifiers::CONTROL {
@@ -307,7 +319,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 last_move,
             ),
             onmousemove: |event| handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
-            onkeydown: |event| handle_on_key_down(cx, event, arrows),
+            onkeydown: |event| handle_on_key_down(cx, event, arrows, last_move),
             // board
             img {
                 src: "{board_img}",
