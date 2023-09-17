@@ -4,4 +4,3 @@ target
 dist
 client/styles/output.css
 client/node_modules
-src/schema.rs
