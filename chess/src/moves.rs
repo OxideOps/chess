@@ -14,8 +14,8 @@ impl Move {
         Self { from, to }
     }
 
-    pub fn get_positions(&self) -> [Position; 2]{
-       [self.from, self.to]
+    pub fn get_positions(&self) -> [Position; 2] {
+        [self.from, self.to]
     }
 
     pub fn inverse(&self) -> Self {
