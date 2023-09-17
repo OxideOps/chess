@@ -25,6 +25,10 @@ body {
     -webkit-user-drag: none;
 }
 
+.squares-highlighted {
+    @apply absolute bg-yellow-500/50;
+}
+
 td {
     @apply pr-4;
 }
