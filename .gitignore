@@ -1,5 +1,6 @@
 target
 .vscode
+.env
 dist
 client/styles/output.css
 client/node_modules
