@@ -305,7 +305,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 height: "{cx.props.size}"
             }
             // highlight from-to squares
-            if let Some(mv) = game.read().get_current_move() {
+            if let Some(mv) = { game.read().get_current_move() }  {
                 rsx! {
                     mv.get_positions().into_iter().map(|pos| {
                         let (top_left, _) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
