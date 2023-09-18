@@ -17,3 +17,15 @@ pub mod stockfish_interface;
 pub mod stockfish_interface;
 pub mod timer;
 pub mod widget;
+
+
+pub fn setup_config(config: &mut LaunchBuilder) {
+    #[cfg(feature = "desktop")]
+    crate::desktop::setup_config(config);
+
+    #[cfg(feature = "web")]
+    crate::web::setup_config(config);
+
+    #[cfg(feature = "server")]
+    crate::server::setup_config(config);
+}
