@@ -4,7 +4,7 @@ fn main() {
     let mut config = LaunchBuilder::new(App);
 
     #[cfg(feature = "client")]
-    client::setup_config(&mut config);
+    core::setup_config(&mut config);
 
     #[cfg(feature = "server")]
     server::setup_config(&mut config);

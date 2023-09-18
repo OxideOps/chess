@@ -9,16 +9,4 @@ edition = "2021"
 build_common = { path = "../build_common" }
 
 [dependencies]
-axum = { version = "0.6.19", features = ["ws"] }
-common = { path = "../common" }
-dioxus = { git = "https://github.com/DanielAlbl/dioxus.git", branch = "gen-in-use-shared-state" }
-dioxus-fullstack = { git = "https://github.com/DanielAlbl/dioxus.git", branch = "gen-in-use-shared-state", features = ["axum"] }
-dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
-futures = "0.3.28"
-hyper = "0.14.27"
-log = "0.4.19"
-server-functions = { path = "../server-functions", features = ["ssr"] }
-tokio = { version = "1.29.1", features = ["full"] }
-tokio-postgres = "0.7.10"
-tower = "0.4.13"
-tower-http = "0.4.3"
+
