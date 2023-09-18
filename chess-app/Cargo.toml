@@ -5,18 +5,8 @@ edition = "2021"
 
 # Define features for conditional compilation
 [features]
-default = [
-    
-]
-desktop = [
-
-]
-ssr = [
-
-]
-web = [
-
-]
+client = []
+server = ["client"]
 
 # Common dependencies for all targets
 [dependencies]
