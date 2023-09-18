@@ -125,11 +125,7 @@ pub(crate) fn to_point(position: &Position, board_size: u32, perspective: Color)
     }
 }
 
-fn handle_on_key_down(
-    cx: Scope<BoardProps>,
-    event: Event<KeyboardData>,
-    arrows: &UseRef<Arrows>,
-) {
+fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseRef<Arrows>) {
     let game = use_shared_state::<Game>(cx).unwrap();
 
     match event.key() {
@@ -154,11 +150,7 @@ fn handle_on_key_down(
     };
 }
 
-fn drop_piece(
-    cx: Scope<BoardProps>,
-    event: &Event<MouseData>,
-    point: &ClientPoint,
-) {
+fn drop_piece(cx: Scope<BoardProps>, event: &Event<MouseData>, point: &ClientPoint) {
     let game = use_shared_state::<Game>(cx).unwrap();
     let from = to_position(cx, point);
     let to = get_dragged_piece_position(cx, point, &event.client_coordinates());
