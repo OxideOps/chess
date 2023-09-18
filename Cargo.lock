@@ -502,7 +502,6 @@ dependencies = [
  "dioxus-desktop",
  "dioxus-fullstack 0.4.1",
  "dioxus-logger",
- "dioxus-web",
 ]
 
 [[package]]
@@ -1015,9 +1014,11 @@ dependencies = [
  "base64 0.21.3",
  "bytes",
  "dioxus 0.4.0",
+ "dioxus-desktop",
  "dioxus-hot-reload 0.4.0",
  "dioxus-router 0.4.1",
  "dioxus-ssr 0.4.0",
+ "dioxus-web",
  "dioxus_server_macro 0.4.1",
  "futures-util",
  "http",
