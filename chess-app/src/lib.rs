@@ -6,4 +6,3 @@ pub mod server;
 
 #[cfg(feature = "web")]
 pub mod web;
-
