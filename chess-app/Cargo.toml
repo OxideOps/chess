@@ -6,11 +6,12 @@ edition = "2021"
 # Define features for conditional compilation
 [features]
 desktop = []
-server = []
+ssr = []
 web = []
 
 # Common dependencies for all targets
 [dependencies]
+dioxus-fullstack = "0.4.1"
 
 # Dependencies specific to the desktop
 [target.'cfg(feature = "desktop")'.dependencies]
