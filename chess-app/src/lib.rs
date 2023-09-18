@@ -1,8 +1,5 @@
-#[cfg(feature = "desktop")]
-pub mod desktop;
+#[cfg(any(feature = "web", feature = "desktop"))]
+pub mod client;
 
 #[cfg(feature = "ssr")]
 pub mod server;
-
-#[cfg(feature = "web")]
-pub mod web;
