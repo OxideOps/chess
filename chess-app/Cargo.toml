@@ -3,13 +3,11 @@ name = "chess-app"
 version = "0.1.0"
 edition = "2021"
 
-# Define features for conditional compilation
 [features]
 desktop = ["dioxus-desktop"]
 web = ["dioxus-web"]
 server = ["dioxus-fullstack/ssr"]
 
-# Common dependencies for all targets
 [dependencies]
 axum = { version = "0.6.19", features = ["ws"] }
 common = { path = "../common" }
