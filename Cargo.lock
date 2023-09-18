@@ -577,6 +577,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "chess-app"
+version = "0.1.0"
+
+[[package]]
 name = "ciborium"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

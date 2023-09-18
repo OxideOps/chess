@@ -1,0 +1,22 @@
+[package]
+name = "chess-app"
+version = "0.1.0"
+edition = "2021"
+
+# Define features for conditional compilation
+[features]
+web = []
+desktop = []
+server = []
+
+# Common dependencies for all targets
+[dependencies]
+
+# Dependencies specific to the web
+[target.'cfg(feature = "web")'.dependencies]
+
+# Dependencies specific to the desktop
+[target.'cfg(feature = "desktop")'.dependencies]
+
+# Dependencies specific to the server
+[target.'cfg(feature = "server")'.dependencies]

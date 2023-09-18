@@ -5,6 +5,7 @@ members = [
     "client",
     "server",
     "chess",
+    "chess-app",
     "common",
     "build_common",
     "server-functions",
