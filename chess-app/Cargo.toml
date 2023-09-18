@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-desktop = ["dioxus-desktop"]
+desktop = ["dioxus", "dioxus-desktop"]
 web = ["dioxus-web"]
-server = ["dioxus-fullstack/ssr"]
+server = ["dioxus-fullstack/ssr", "dioxus-fullstack/axum"]
 
 [dependencies]
-dioxus = "0.4.0"
+dioxus = {version = "0.4.0", optional = true }
 dioxus-desktop = {version = "0.4.0", optional = true }
 dioxus-web = {version = "0.4.0", optional = true}
-dioxus-fullstack = {version = "0.4.1", features = ["axum"] }
+dioxus-fullstack = "0.4.1"
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
