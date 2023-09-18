@@ -150,12 +150,7 @@ fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows:
     };
 }
 
-fn drop_piece(
-    cx: Scope<BoardProps>,
-    event: &Event<MouseData>,
-    point: &ClientPoint,
-    last_move: &UseState<Option<Move>>,
-) {
+fn drop_piece(cx: Scope<BoardProps>, event: &Event<MouseData>, point: &ClientPoint) {
     let game = use_shared_state::<Game>(cx).unwrap();
     let from = to_position(cx, point);
     let to = get_dragged_piece_position(cx, point, &event.client_coordinates());
@@ -169,7 +164,6 @@ fn drop_piece(
         && game.read().is_move_valid(&mv).is_ok()
     {
         game.write().move_piece(from, to).ok();
-        last_move.set(Some(mv));
         if opponent_player_kind == PlayerKind::Remote {
             cx.spawn(async move {
                 CHANNEL.0.send(mv).await.expect("Failed to send move!");
@@ -209,11 +203,10 @@ fn handle_on_mouse_up_event(
     mouse_down_state: &UseState<Option<MouseClick>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
     arrows: &UseRef<Arrows>,
-    last_move: &UseState<Option<Move>>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
-            drop_piece(cx, &event, &mouse_down.point, last_move);
+            drop_piece(cx, &event, &mouse_down.point);
         }
         if mouse_down.kind.contains(MouseButton::Secondary) {
             complete_arrow(cx, &event, &mouse_down.point, arrows);
@@ -262,7 +255,6 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let last_move = use_state::<Option<Move>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_ref(cx, Arrows::default);
     let stockfish_process = use_ref::<Option<Process>>(cx, || None);
@@ -288,8 +280,6 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
 
     let board_img = get_board_image("qootee");
     let piece_theme = "maestro";
-    dbg!(last_move);
-
     cx.render(rsx! {
         // div for widget
         div {
@@ -304,7 +294,6 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 mouse_down_state,
                 dragging_point_state,
                 arrows,
-                last_move,
             ),
             onmousemove: |event| handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
@@ -316,7 +305,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 height: "{cx.props.size}"
             }
             // highlight from-to squares
-            if let Some(mv) = last_move.get() {
+            if let Some(mv) = { game.read().get_current_move() }  {
                 rsx! {
                     mv.get_positions().into_iter().map(|pos| {
                         let (top_left, _) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);

@@ -418,6 +418,10 @@ impl Game {
         ));
         fen
     }
+
+    pub fn get_current_move(&self) -> Option<Move> {
+        self.history.get_current_move()
+    }
 }
 pub struct GameBuilder {
     start_time: Duration,
