@@ -1,5 +1,5 @@
 use crate::arrows::{ArrowData, Arrows, ALPHA};
-use crate::stockfish_interface::{run_stockfish, send_command, update_analysis_arrows, Process};
+use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::game::Game;
 use chess::moves::Move;

@@ -5,7 +5,7 @@ pub mod web;
 pub mod desktop;
 
 #[cfg(target_arch = "wasm32")]
-pub use web::stockfish_interface_web as stockfish_interface;
+pub use web::interface;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use desktop::stockfish_interface_desktop as stockfish_interface;
+pub use desktop::interface;

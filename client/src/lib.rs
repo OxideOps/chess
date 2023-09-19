@@ -12,5 +12,3 @@ pub mod stockfish_client;
 pub mod stockfish;
 pub mod timer;
 pub mod widget;
-
-pub use stockfish::stockfish_interface;
