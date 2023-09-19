@@ -11,6 +11,7 @@ build_common = { path = "../build_common" }
 [dependencies]
 anyhow = "1.0.72"
 async-std = "1.12.0"
+async-trait = "0.1.73"
 auto-deref = { path = "../auto-deref" }
 chess = { path = "../chess" }
 clap = { version = "4.3.19", features = ["derive"] }

@@ -650,6 +650,7 @@ dependencies = [
  "anyhow",
  "async-process",
  "async-std",
+ "async-trait",
  "auto-deref",
  "build_common",
  "chess",
