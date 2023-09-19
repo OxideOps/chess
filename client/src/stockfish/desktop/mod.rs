@@ -1,0 +1,1 @@
+pub mod stockfish_interface_desktop;

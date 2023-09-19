@@ -9,11 +9,8 @@ pub mod mouse_click;
 pub mod round_list;
 pub mod shared_states;
 pub mod stockfish_client;
-#[cfg(target_arch = "wasm32")]
-#[path = "stockfish_interface_web.rs"]
-pub mod stockfish_interface;
-#[cfg(not(target_arch = "wasm32"))]
-#[path = "stockfish_interface_desktop.rs"]
-pub mod stockfish_interface;
+pub mod stockfish;
 pub mod timer;
 pub mod widget;
+
+pub use stockfish::stockfish_interface;
