@@ -1,5 +1,5 @@
 use crate::arrows::Arrows;
-use crate::stockfish_client::{process_output, MOVES};
+use crate::stockfish::client::{process_output, MOVES};
 use async_process::{Child, Command, Stdio};
 use async_std::io::BufReader;
 use async_std::prelude::*;

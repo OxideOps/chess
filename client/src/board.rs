@@ -3,7 +3,7 @@ use crate::arrows::{ArrowData, Arrows};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;
-use crate::stockfish_client::{on_game_changed, toggle_stockfish};
+use crate::stockfish::client::{on_game_changed, toggle_stockfish};
 use crate::stockfish::interface::Process;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::color::Color;

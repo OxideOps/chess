@@ -8,7 +8,6 @@ pub mod info_bar;
 pub mod mouse_click;
 pub mod round_list;
 pub mod shared_states;
-pub mod stockfish_client;
 pub mod stockfish;
 pub mod timer;
 pub mod widget;
