@@ -668,6 +668,7 @@ dependencies = [
  "regex",
  "serde_json",
  "server-functions",
+ "tokio-tungstenite 0.16.1",
  "tokio-tungstenite-wasm",
  "url",
  "wasm-bindgen",
@@ -4297,7 +4298,9 @@ checksum = "e80b39df6afcc12cdf752398ade96a6b9e99c903dfdc36e53ad10b9c366bca72"
 dependencies = [
  "futures-util",
  "log",
+ "native-tls",
  "tokio",
+ "tokio-native-tls",
  "tungstenite 0.16.0",
 ]
 
@@ -4496,6 +4499,7 @@ dependencies = [
  "http",
  "httparse",
  "log",
+ "native-tls",
  "rand 0.8.5",
  "sha-1",
  "thiserror",
