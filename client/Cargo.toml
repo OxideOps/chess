@@ -38,4 +38,3 @@ wasm-bindgen-futures = "0.4.37"
 async-process = "1.7.0"
 dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git" }
 server-functions = { path = "../server-functions", features = ["desktop"] }
-tokio-tungstenite = { version = "*", features = ["native-tls"] }
