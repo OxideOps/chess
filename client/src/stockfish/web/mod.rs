@@ -1,1 +1,1 @@
-pub mod stockfish_interface_web;
+pub mod interface;
