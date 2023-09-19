@@ -17,4 +17,6 @@ serde = { version = "1.0.180", features = ["derive"] }
 tokio = { version = "1.29.1", features = ["full"], optional = true }
 
 [features]
+desktop = []
 ssr = ["axum", "dioxus-fullstack/axum", "futures", "tokio"]
+web = []
