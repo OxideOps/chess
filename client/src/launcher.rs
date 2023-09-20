@@ -1,7 +1,7 @@
-use dioxus_fullstack::prelude::LaunchBuilder;
+use dioxus_fullstack::prelude::*;
 
 pub fn launch() {
-    let mut config = LaunchBuilder::new(crate::components::App);
+    let mut builder = LaunchBuilder::new(crate::components::App);
     #[cfg(not(target_arch = "wasm32"))]
     configure_desktop(&mut config);
 
@@ -12,11 +12,13 @@ pub fn launch() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn configure_desktop<Props: Clone>(config: &mut LaunchBuilder<Props>) {
+fn configure_desktop<Props: Clone>(builder: &mut LaunchBuilder<Props>) {
     use dioxus_desktop::{Config, WindowBuilder};
+
+    server_fn::set_server_url("https://oxide-chess.fly.dev");
 }
 
 #[cfg(target_arch = "wasm32")]
-fn configure_web<Props: Clone>(builder: &mut config<Props>) {
-    
+fn configure_web<Props: Clone>(builder: &mut LaunchBuilder<Props>) {
+
 }
