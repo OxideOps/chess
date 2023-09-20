@@ -13,10 +13,10 @@ pub fn launch() {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn configure_desktop<Props: Clone>(config: &mut LaunchBuilder<Props>) {
-
+    use dioxus_desktop::{Config, WindowBuilder};
 }
 
 #[cfg(target_arch = "wasm32")]
 fn configure_web<Props: Clone>(builder: &mut config<Props>) {
-
+    
 }
