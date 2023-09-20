@@ -16,7 +16,6 @@ chess = { path = "../chess" }
 clap = { version = "4.3.19", features = ["derive"] }
 common = { path = "../common" }
 dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
-dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git" }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 futures = "0.3.28"
 futures-util = "0.3.28"
@@ -29,6 +28,7 @@ url = "2.4.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 dioxus-web = { git = "https://github.com/DioxusLabs/dioxus.git" }
+dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["web"] }
 js-sys = "0.3.64"
 server-functions = { path = "../server-functions", features = ["web"] }
 wasm-bindgen = "0.2.87"
@@ -36,6 +36,7 @@ wasm-bindgen-futures = "0.4.37"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 async-process = "1.7.0"
+dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["desktop"]}
 dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git" }
 server-functions = { path = "../server-functions", features = ["desktop"] }
 tokio-tungstenite = { version = "*", features = ["native-tls"] }
