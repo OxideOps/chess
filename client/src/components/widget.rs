@@ -1,5 +1,5 @@
-use crate::board::Board;
-use crate::info_bar::InfoBar;
+use crate::components::Board;
+use crate::components::InfoBar;
 
 use chess::color::Color;
 use chess::player::Player;

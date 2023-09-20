@@ -1,5 +1,5 @@
+use crate::components::Widget;
 use crate::shared_states::GameId;
-use crate::widget::Widget;
 use std::time::Duration;
 
 use chess::game::Game;
@@ -37,7 +37,7 @@ pub fn App(cx: Scope) -> Element {
     let analyze = use_state(cx, || false);
 
     cx.render(rsx! {
-        style { include_str!("../styles/output.css") }
+        style { include_str!("../../styles/output.css") }
         Widget {
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),

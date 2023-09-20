@@ -1,10 +1,10 @@
-use crate::arrow::Arrow;
 use crate::arrows::{ArrowData, Arrows};
+use crate::components::Arrow;
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;
-use crate::stockfish_client::{on_game_changed, toggle_stockfish};
-use crate::stockfish_interface::Process;
+use crate::stockfish::core::{on_game_changed, toggle_stockfish};
+use crate::stockfish::interface::Process;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::color::Color;
 use chess::game::Game;

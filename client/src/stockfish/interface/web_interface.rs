@@ -1,5 +1,5 @@
 use crate::arrows::Arrows;
-use crate::stockfish_client::{process_output, MOVES};
+use crate::stockfish::core::{process_output, MOVES};
 use async_std::channel::{unbounded, Receiver, Sender};
 use dioxus::prelude::*;
 use js_sys::{Function, Object};
