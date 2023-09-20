@@ -666,6 +666,7 @@ dependencies = [
  "log",
  "once_cell",
  "regex",
+ "serde",
  "serde_json",
  "server-functions",
  "tokio-tungstenite 0.16.1",

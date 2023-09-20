@@ -1,40 +1,42 @@
 use dioxus_fullstack::prelude::*;
 
 pub fn launch() {
-    let mut builder = LaunchBuilder::new(crate::components::App);
+    configure().launch()
+}
 
+fn configure() -> LaunchBuilder<()> {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        builder = configure_desktop(builder);
+        configure_desktop()
     }
-    
     #[cfg(target_arch = "wasm32")]
     {
-        builder = configure_web(builder);
+        configure_web()
     }
-
-    builder.launch();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn configure_desktop(builder: LaunchBuilder<()>) -> LaunchBuilder<()>{
+fn configure_desktop() -> LaunchBuilder<()>
+{
     use dioxus_desktop::{Config, WindowBuilder};
-    
+
     log::info!("configuring desktop..");
     server_fn::set_server_url("https://oxide-chess.fly.dev");
-    builder.desktop_cfg(
+
+    LaunchBuilder::new(crate::components::App).desktop_cfg(
         Config::new()
-        .with_window(
-            WindowBuilder::new()
-                .with_title("Oxide Chess")
-                .with_maximized(true),
-        )
-        .with_disable_context_menu(true)
+            .with_window(
+                WindowBuilder::new()
+                    .with_title("Oxide Chess")
+                    .with_maximized(true),
+            )
+            .with_disable_context_menu(true),
     )
 }
 
 #[cfg(target_arch = "wasm32")]
-fn configure_web<Props: Clone>(mut builder: LaunchBuilder<()>) -> LaunchBuilder<()> {
+fn configure_web() -> LaunchBuilder<()>
+{
     log::info!("configuring web..");
-    builder
+    LaunchBuilder::new(crate::components::App)
 }
