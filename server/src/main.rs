@@ -14,10 +14,10 @@ use tower_http::services::ServeFile;
 pub async fn main() {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
 
-    // Initialize database connection
-    let db_client = database::connect()
-        .await
-        .expect("Failed to connect to database");
+    // // Initialize database connection
+    // let db_client = database::connect()
+    //     .await
+    //     .expect("Failed to connect to database");
 
     log::info!("server launching");
     let addr = "[::]:8080".parse().unwrap();
