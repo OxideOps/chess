@@ -1,5 +1,4 @@
 pub mod core;
-pub mod stockfish_interface;
 
 #[cfg(target_arch = "wasm32")]
 mod web;
