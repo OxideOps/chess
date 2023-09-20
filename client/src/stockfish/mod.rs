@@ -1,4 +1,4 @@
-pub mod client;
+pub mod core;
 pub mod stockfish_interface;
 
 #[cfg(target_arch = "wasm32")]
