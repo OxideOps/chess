@@ -11,4 +11,4 @@ mod desktop;
 pub use web::interface;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use desktop::implement;
+pub use desktop::interface;
