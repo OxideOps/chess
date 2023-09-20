@@ -3,12 +3,12 @@ use dioxus_fullstack::prelude::*;
 pub fn launch() {
     let mut builder = LaunchBuilder::new(crate::components::App);
     #[cfg(not(target_arch = "wasm32"))]
-    configure_desktop(&mut config);
+    configure_desktop(&mut builder);
 
     #[cfg(target_arch = "wasm32")]
-    configure_web(&mut config);
+    configure_web(&mut builder);
 
-    config.launch();
+    builder.launch();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
