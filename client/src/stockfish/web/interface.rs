@@ -21,7 +21,7 @@ fn get_js_method(object: &Process, method: &str) -> Function {
         .clone()
 }
 
-pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
+fn send_command(process: &UseRef<Option<Process>>, command: &str) {
     if let Some(process) = &*process.write() {
         get_js_method(process, "postMessage")
             .call1(process, &command.into())
@@ -29,7 +29,7 @@ pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
     }
 }
 
-pub async fn run_stockfish() -> Result<Object, JsValue> {
+async fn run_stockfish() -> Result<Object, JsValue> {
     let sf_promise = js_sys::eval("Stockfish()").unwrap();
     let sf_jsvalue = JsFuture::from(js_sys::Promise::from(sf_promise)).await?;
     let sf_object = sf_jsvalue.dyn_into::<Object>()?;
