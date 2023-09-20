@@ -16,8 +16,7 @@ fn configure() -> LaunchBuilder<()> {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn configure_desktop() -> LaunchBuilder<()>
-{
+fn configure_desktop() -> LaunchBuilder<()> {
     use dioxus_desktop::{Config, WindowBuilder};
 
     log::info!("configuring desktop..");
@@ -35,8 +34,7 @@ fn configure_desktop() -> LaunchBuilder<()>
 }
 
 #[cfg(target_arch = "wasm32")]
-fn configure_web() -> LaunchBuilder<()>
-{
+fn configure_web() -> LaunchBuilder<()> {
     log::info!("configuring web..");
     LaunchBuilder::new(crate::components::App)
 }
