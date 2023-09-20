@@ -36,7 +36,7 @@ wasm-bindgen-futures = "0.4.37"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 async-process = "1.7.0"
-dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["desktop"]}
+dioxus-fullstack = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["desktop"] }
 dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git" }
 server-functions = { path = "../server-functions", features = ["desktop"] }
 tokio-tungstenite = { version = "*", features = ["native-tls"] }
