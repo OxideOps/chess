@@ -30,5 +30,4 @@ pub fn main() {
                 .with_disable_context_menu(true),
         );
     }
-
 }
