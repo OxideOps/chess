@@ -1,5 +1,5 @@
-use crate::round_list::RoundList;
-use crate::timer::Timer;
+use crate::components::RoundList;
+use crate::components::Timer;
 
 use chess::game::Game;
 use chess::game_status::GameStatus;

@@ -1,4 +1,4 @@
-use client::app::App;
+use client::components::App;
 use common::args::*;
 
 pub fn main() {

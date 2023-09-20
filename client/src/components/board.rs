@@ -1,5 +1,5 @@
-use crate::arrow::Arrow;
 use crate::arrows::{ArrowData, Arrows};
+use crate::components::Arrow;
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;
