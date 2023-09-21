@@ -2,7 +2,9 @@
 mod arrows;
 pub mod components;
 mod game_socket;
-pub mod launcher;
+mod launcher;
 mod mouse_click;
 mod shared_states;
 mod stockfish;
+
+pub use launcher::launch;
