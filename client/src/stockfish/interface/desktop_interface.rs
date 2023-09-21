@@ -23,9 +23,8 @@ pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
 }
 
 pub async fn run_stockfish() -> Result<Process> {
-    let mut cmd = Command::new("nice");
-    cmd.args(["-n", "19", "client/Stockfish/src/stockfish"])
-        .stdout(Stdio::piped())
+    let mut cmd = Command::new("client/Stockfish/src/stockfish");
+    cmd.stdout(Stdio::piped())
         .stdin(Stdio::piped())
         .kill_on_drop(true);
     cmd.spawn()
