@@ -51,7 +51,7 @@ pub fn get_stockfish_commands(wasm: bool) -> Vec<CommandConfig> {
     if cfg!(unix) {
         vec![CommandConfig {
             program: get_client_path().join("build-stockfish.sh"),
-            args: if wasm { vec![] } else { vec!["--wasm".into()] },
+            args: if wasm { vec!["--wasm".into()] } else { vec![] },
             ..Default::default()
         }]
     } else {
