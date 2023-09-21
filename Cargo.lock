@@ -41,9 +41,9 @@ dependencies = [
 
 [[package]]
 name = "aho-corasick"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f2135563fb5c609d2b2b87c1e8ce7bc41b0b45430fa9661f457981503dd5bf0"
+checksum = "ea5d730647d4fadd988536d06fecce94b7b4f2a7efdae548f1cf4b63205518ab"
 dependencies = [
  "memchr",
 ]
@@ -669,7 +669,7 @@ dependencies = [
  "serde",
  "serde_json",
  "server-functions",
- "tokio-tungstenite 0.16.1",
+ "tokio-tungstenite 0.20.0",
  "tokio-tungstenite-wasm",
  "url",
  "wasm-bindgen",
@@ -1006,7 +1006,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -1019,7 +1019,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "bumpalo",
  "futures-channel",
@@ -1035,7 +1035,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "constcat",
  "dioxus-core",
@@ -1054,7 +1054,7 @@ checksum = "2ea539174bb236e0e7dc9c12b19b88eae3cb574dedbd0252a2d43ea7e6de13e2"
 [[package]]
 name = "dioxus-desktop"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "async-trait",
  "core-foundation",
@@ -1083,7 +1083,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "anymap",
  "async-trait",
@@ -1125,7 +1125,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "dioxus-core",
  "dioxus-debug-cell",
@@ -1138,7 +1138,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -1151,7 +1151,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -1171,7 +1171,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "js-sys",
  "sledgehammer_bindgen",
@@ -1194,7 +1194,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "anyhow",
  "dioxus",
@@ -1216,7 +1216,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1227,7 +1227,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "dioxus-core",
  "proc-macro2",
@@ -1238,7 +1238,7 @@ dependencies = [
 [[package]]
 name = "dioxus-ssr"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "askama_escape",
  "dioxus-core",
@@ -1253,7 +1253,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -1277,7 +1277,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#07613c806b3240ac3c56052fe8737936386968af"
+source = "git+https://github.com/DioxusLabs/dioxus.git#60ee82942c4decf67b6ad263f639553d9b7e28a9"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -2135,9 +2135,9 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "443144c8cdadd93ebf52ddb4056d257f5b52c04d3c804e657d19eb73fc33668b"
+checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
 
 [[package]]
 name = "hmac"
@@ -3496,9 +3496,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.13"
+version = "0.38.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7db8590df6dfcd144d22afd1b83b36c21a18d7cbc1dc4bb5295a8712e9eb662"
+checksum = "747c788e9ce8e92b12cd485c49ddf90723550b654b32508f979b71a7b1ecda4f"
 dependencies = [
  "bitflags 2.4.0",
  "errno",
@@ -3896,9 +3896,9 @@ checksum = "4679d6eef28b85020158619fc09769de89e90886c5de7157587d87cb72648faa"
 
 [[package]]
 name = "smallvec"
-version = "1.11.0"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62bb4feee49fdd9f707ef802e22365a35de4b7b299de4763d44bfea899442ff9"
+checksum = "942b4a808e05215192e39f4ab80813e599068285906cc91aa64f923db842bd5a"
 
 [[package]]
 name = "socket2"
@@ -4135,7 +4135,7 @@ dependencies = [
  "cfg-if",
  "fastrand 2.0.0",
  "redox_syscall 0.3.5",
- "rustix 0.38.13",
+ "rustix 0.38.14",
  "windows-sys 0.48.0",
 ]
 
@@ -4301,9 +4301,7 @@ checksum = "e80b39df6afcc12cdf752398ade96a6b9e99c903dfdc36e53ad10b9c366bca72"
 dependencies = [
  "futures-util",
  "log",
- "native-tls",
  "tokio",
- "tokio-native-tls",
  "tungstenite 0.16.0",
 ]
 
@@ -4315,7 +4313,9 @@ checksum = "2b2dbec703c26b00d74844519606ef15d09a7d6857860f84ad223dec002ddea2"
 dependencies = [
  "futures-util",
  "log",
+ "native-tls",
  "tokio",
+ "tokio-native-tls",
  "tungstenite 0.20.0",
 ]
 
@@ -4339,9 +4339,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.8"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "806fe8c2c87eccc8b3267cbae29ed3ab2d0bd37fca70ab622e46aaa9375ddb7d"
+checksum = "1d68074620f57a0b21594d9735eb2e98ab38b17f80d3fcb189fca266771ca60d"
 dependencies = [
  "bytes",
  "futures-core",
@@ -4502,7 +4502,6 @@ dependencies = [
  "http",
  "httparse",
  "log",
- "native-tls",
  "rand 0.8.5",
  "sha-1",
  "thiserror",
@@ -4522,6 +4521,7 @@ dependencies = [
  "http",
  "httparse",
  "log",
+ "native-tls",
  "rand 0.8.5",
  "sha1",
  "thiserror",
@@ -4890,9 +4890,9 @@ checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
 
 [[package]]
 name = "winapi-util"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70ec6ce85bb158151cae5e5c87f95a8e97d2c0c4b001223f33a334e3ce5de178"
+checksum = "f29e6f9198ba0d26b4c9f07dbe6f9ed633e1f3d5b8b414090084349e46a52596"
 dependencies = [
  "winapi",
 ]

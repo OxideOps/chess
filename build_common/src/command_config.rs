@@ -1,8 +1,9 @@
 use std::{path::PathBuf, process::Command};
 
+#[derive(Debug)]
 pub struct CommandConfig {
     pub program: PathBuf,
-    pub args: Option<&'static [&'static str]>,
+    pub args: Vec<String>,
     pub dir: Option<PathBuf>,
 }
 
@@ -15,9 +16,7 @@ impl CommandConfig {
                 cmd.current_dir(dir);
             }
 
-            if let Some(args) = cmd_cfg.args {
-                cmd.args(args);
-            }
+            cmd.args(&cmd_cfg.args);
 
             assert!(
                 cmd.status()

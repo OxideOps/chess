@@ -1,5 +1,6 @@
 use build_common::command_config::CommandConfig;
-use std::{env, fs};
+use build_common::helpers::{get_stockfish_commands, get_tailwind_commands};
+use std::env;
 
 fn main() {
     println!("cargo:rerun-if-changed=../client/styles");
@@ -9,18 +10,7 @@ fn main() {
         return;
     }
 
-    let commands = vec![
-        CommandConfig {
-            program: fs::canonicalize("./build-stockfish.sh").unwrap(),
-            args: None,
-            dir: None,
-        },
-        CommandConfig {
-            program: fs::canonicalize("./build-tailwind.sh").unwrap(),
-            args: None,
-            dir: None,
-        },
-    ];
-
+    let mut commands = get_tailwind_commands();
+    commands.extend(get_stockfish_commands(false));
     CommandConfig::run_build_commands(&commands)
 }
