@@ -1,4 +1,4 @@
-use crate::command_config::CommandConfig;
+use crate::CommandConfig;
 use std::env;
 use std::path::PathBuf;
 
@@ -61,7 +61,10 @@ pub fn get_stockfish_commands(wasm: bool) -> Vec<CommandConfig> {
 
 pub fn get_trunk_commands() -> Vec<CommandConfig> {
     // Using a different target directory for wasm prevents deadlock when building
-    let target_dir = format!("{}/wasm", env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".into()));
+    let target_dir = format!(
+        "{}/wasm",
+        env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".into())
+    );
     let mut args = vec!["build".into()];
     if env::var("PROFILE") == Ok("release".into()) {
         args.push("--release".into());
@@ -70,7 +73,7 @@ pub fn get_trunk_commands() -> Vec<CommandConfig> {
     vec![CommandConfig {
         program: PathBuf::from("trunk"),
         args,
-        dir: Some(PathBuf::from(get_project_root())),
-        envs: vec![("CARGO_TARGET_DIR".into(), target_dir)]
+        dir: Some(get_project_root()),
+        envs: vec![("CARGO_TARGET_DIR".into(), target_dir)],
     }]
 }

@@ -1,5 +1,4 @@
-use build_common::command_config::CommandConfig;
-use build_common::helpers::{get_stockfish_commands, get_tailwind_commands};
+use build_common::{get_stockfish_commands, get_tailwind_commands, CommandConfig};
 use std::env;
 
 fn main() {

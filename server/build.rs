@@ -1,5 +1,6 @@
-use build_common::command_config::CommandConfig;
-use build_common::helpers::{get_stockfish_commands, get_tailwind_commands, get_trunk_commands};
+use build_common::{
+    get_stockfish_commands, get_tailwind_commands, get_trunk_commands, CommandConfig,
+};
 
 fn main() {
     println!("cargo:rerun-if-changed=../client");
