@@ -1,10 +1,11 @@
 use std::{path::PathBuf, process::Command};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CommandConfig {
     pub program: PathBuf,
     pub args: Vec<String>,
     pub dir: Option<PathBuf>,
+    pub envs: Vec<(String, String)>,
 }
 
 impl CommandConfig {
@@ -17,6 +18,8 @@ impl CommandConfig {
             }
 
             cmd.args(&cmd_cfg.args);
+
+            cmd.envs(cmd_cfg.envs.clone());
 
             assert!(
                 cmd.status()
