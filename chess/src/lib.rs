@@ -1,17 +1,16 @@
-// Expose modules to entire crate (so we can use public modules in crate/tests (integration tests))
-pub mod board;
-pub mod board_state;
-pub mod castling_rights;
-pub mod chess_result;
+mod board;
+mod board_state;
+mod castling_rights;
 pub mod color;
-pub mod displacement;
+mod displacement;
 pub mod game;
-pub mod game_status;
-pub mod history;
+pub(crate) mod game_status;
+mod history;
 pub mod moves;
 pub mod piece;
 pub mod player;
 pub mod position;
-pub mod round_info;
-pub mod timer;
-pub mod turn;
+mod result;
+mod round_info;
+mod timer;
+mod turn;

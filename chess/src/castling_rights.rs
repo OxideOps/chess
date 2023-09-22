@@ -6,7 +6,7 @@ use crate::piece::Piece;
 use crate::position::Position;
 
 #[derive(Clone, Copy)]
-pub enum CastlingRightsKind {
+pub(super) enum CastlingRightsKind {
     WhiteKingside,
     WhiteQueenside,
     BlackKingside,
@@ -14,7 +14,7 @@ pub enum CastlingRightsKind {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub struct CastlingRights([bool; 4]);
+pub(super) struct CastlingRights([bool; 4]);
 
 impl Default for CastlingRights {
     fn default() -> Self {
@@ -23,18 +23,18 @@ impl Default for CastlingRights {
 }
 
 impl CastlingRights {
-    pub const WHITE_KING: Position = Position { x: 4, y: 0 };
-    pub const BLACK_KING: Position = Position { x: 4, y: 7 };
-    pub const WHITE_KINGSIDE_ROOK: Position = Position { x: 7, y: 0 };
-    pub const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
-    pub const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
-    pub const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
+    pub(super) const WHITE_KING: Position = Position { x: 4, y: 0 };
+    pub(super) const BLACK_KING: Position = Position { x: 4, y: 7 };
+    pub(super) const WHITE_KINGSIDE_ROOK: Position = Position { x: 7, y: 0 };
+    pub(super) const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
+    pub(super) const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
+    pub(super) const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
 
-    pub fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self::default()
     }
 
-    pub fn rook_positions() -> [(Position, Piece, CastlingRightsKind); 4] {
+    pub(super) fn rook_positions() -> [(Position, Piece, CastlingRightsKind); 4] {
         [
             (
                 CastlingRights::WHITE_KINGSIDE_ROOK,
@@ -59,7 +59,8 @@ impl CastlingRights {
         ]
     }
 
-    pub fn king_positions() -> [(Position, Piece, CastlingRightsKind, CastlingRightsKind); 2] {
+    pub(super) fn king_positions() -> [(Position, Piece, CastlingRightsKind, CastlingRightsKind); 2]
+    {
         [
             (
                 CastlingRights::WHITE_KING,
@@ -76,7 +77,7 @@ impl CastlingRights {
         ]
     }
 
-    pub fn get_castling_positions(player: Color) -> (Position, Position, Position) {
+    pub(super) fn get_castling_positions(player: Color) -> (Position, Position, Position) {
         match player {
             Color::White => (
                 CastlingRights::WHITE_KING,
@@ -91,7 +92,9 @@ impl CastlingRights {
         }
     }
 
-    pub fn get_castling_info(player: Color) -> (Position, CastlingRightsKind, CastlingRightsKind) {
+    pub(super) fn get_castling_info(
+        player: Color,
+    ) -> (Position, CastlingRightsKind, CastlingRightsKind) {
         match player {
             Color::White => (
                 CastlingRights::WHITE_KING,
@@ -106,7 +109,7 @@ impl CastlingRights {
         }
     }
 
-    pub fn update_castling_rights(&mut self, board: &Board) {
+    pub(super) fn update_castling_rights(&mut self, board: &Board) {
         for (position, piece, rights) in CastlingRights::rook_positions() {
             if board.get_piece(&position) != Some(piece) {
                 self.0[rights as usize] = false;
@@ -122,7 +125,7 @@ impl CastlingRights {
         }
     }
 
-    pub fn handle_castling_the_rook(&self, mv: &Move, board: &mut Board, player: Color) {
+    pub(super) fn handle_castling_the_rook(&self, mv: &Move, board: &mut Board, player: Color) {
         let (king, kingside_rook, queenside_rook) = CastlingRights::get_castling_positions(player);
 
         if mv.from == king {
@@ -136,11 +139,11 @@ impl CastlingRights {
         }
     }
 
-    pub fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
+    pub(super) fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
         self.0[right as usize]
     }
 
-    pub fn get_fen_str(&self) -> String {
+    pub(super) fn get_fen_str(&self) -> String {
         let mut fen = String::default();
         if self.0[CastlingRightsKind::WhiteKingside as usize] {
             fen.push(Piece::King(Color::White).get_fen_char())

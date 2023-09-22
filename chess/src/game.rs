@@ -1,6 +1,5 @@
 use crate::board_state::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
-use crate::chess_result::{ChessError, ChessResult};
 use crate::color::Color;
 use crate::displacement::Displacement;
 use crate::game_status::{DrawKind, GameStatus};
@@ -8,6 +7,7 @@ use crate::history::History;
 use crate::moves::Move;
 use crate::piece::Piece;
 use crate::position::Position;
+use crate::result::{ChessError, ChessResult};
 use crate::round_info::RoundInfo;
 use crate::timer::Timer;
 use std::collections::HashSet;
@@ -18,9 +18,9 @@ const MAX_FEN_STR: usize = 87;
 #[derive(Clone)]
 pub struct Game {
     valid_moves: HashSet<Move>,
-    pub status: GameStatus,
+    pub(super) status: GameStatus,
     history: History,
-    pub timer: Timer,
+    timer: Timer,
 }
 
 impl Default for Game {
@@ -34,7 +34,7 @@ impl Game {
         Self::default()
     }
 
-    pub fn builder() -> GameBuilder {
+    fn builder() -> GameBuilder {
         GameBuilder::new()
     }
 
@@ -42,8 +42,16 @@ impl Game {
         GameBuilder::new().start_time(start_time).build()
     }
 
-    pub fn with_state(state: BoardState) -> Self {
+    fn with_state(state: BoardState) -> Self {
         Self::builder().state(state).build()
+    }
+
+    pub fn is_replaying(&self) -> bool {
+        self.status == GameStatus::Replay
+    }
+
+    pub fn is_in_check(&self) -> bool {
+        matches!(self.status, GameStatus::Check(..))
     }
 
     pub fn reset(&mut self) {
@@ -66,7 +74,7 @@ impl Game {
         self.get_current_state().is_piece_some(at)
     }
 
-    pub fn has_piece(&self, position: &Position) -> bool {
+    pub(super) fn has_piece(&self, position: &Position) -> bool {
         self.get_current_state().has_piece(position)
     }
 
@@ -279,7 +287,7 @@ impl Game {
         }
     }
 
-    pub fn add_moves(&mut self) {
+    fn add_moves(&mut self) {
         self.valid_moves.clear();
         for y in 0..8 {
             for x in 0..8 {
@@ -318,10 +326,6 @@ impl Game {
         }
     }
 
-    pub fn get_real_state_hash(&self) -> u64 {
-        self.history.get_real_state().get_hash()
-    }
-
     pub fn get_active_time(&self) -> Duration {
         self.timer.get_active_time()
     }
@@ -347,7 +351,7 @@ impl Game {
         pieces
     }
 
-    pub fn get_move_history(&self) -> Vec<String> {
+    pub(super) fn get_move_history(&self) -> Vec<String> {
         self.history
             .turns
             .iter()
@@ -372,7 +376,7 @@ impl Game {
         self.history.get_current_round()
     }
 
-    pub fn get_current_turn(&self) -> usize {
+    pub(super) fn get_current_turn(&self) -> usize {
         self.history.get_current_turn()
     }
 
@@ -423,7 +427,7 @@ impl Game {
         self.history.get_current_move()
     }
 }
-pub struct GameBuilder {
+struct GameBuilder {
     start_time: Duration,
     state: BoardState,
 }
@@ -438,11 +442,11 @@ impl Default for GameBuilder {
 }
 
 impl GameBuilder {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self::default()
     }
 
-    pub fn build(self) -> Game {
+    fn build(self) -> Game {
         let mut game = Game {
             valid_moves: HashSet::default(),
             history: History::with_state(self.state),
@@ -453,17 +457,17 @@ impl GameBuilder {
         game
     }
 
-    pub fn start_time(mut self, start_time: Duration) -> Self {
+    fn start_time(mut self, start_time: Duration) -> Self {
         self.start_time = start_time;
         self
     }
 
-    pub fn state(mut self, state: BoardState) -> Self {
+    fn state(mut self, state: BoardState) -> Self {
         self.state = state;
         self
     }
 
-    pub fn player(mut self, player: Color) -> Self {
+    fn player(mut self, player: Color) -> Self {
         self.state.player = player;
         self
     }

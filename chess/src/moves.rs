@@ -18,7 +18,7 @@ impl Move {
         [self.from, self.to]
     }
 
-    pub fn inverse(&self) -> Self {
+    pub(super) fn inverse(&self) -> Self {
         Self {
             from: self.to,
             to: self.from,

@@ -8,7 +8,7 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn get_fen_char(self) -> char {
+    pub(super) fn get_fen_char(self) -> char {
         match self {
             Self::White => 'w',
             Self::Black => 'b',

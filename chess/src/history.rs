@@ -5,7 +5,7 @@ use crate::moves::Move;
 use crate::turn::Turn;
 
 #[derive(Clone)]
-pub struct History {
+pub(super) struct History {
     pub(super) turns: Vec<Turn>,
     pub(super) repetition_counter: HashMap<BoardState, usize>,
     current_turn: usize,
@@ -14,7 +14,7 @@ pub struct History {
 }
 
 impl History {
-    pub fn with_state(initial_state: BoardState) -> Self {
+    pub(super) fn with_state(initial_state: BoardState) -> Self {
         Self {
             initial_state,
             repetition_counter: vec![(initial_state, 1)].into_iter().collect(),
@@ -22,7 +22,7 @@ impl History {
         }
     }
 
-    pub fn get_real_turn(&self) -> Turn {
+    pub(super) fn get_real_turn(&self) -> Turn {
         if let Some(&turn) = self.turns.last() {
             turn
         } else {
@@ -30,7 +30,7 @@ impl History {
         }
     }
 
-    pub fn get_current_move(&self) -> Option<Move> {
+    pub(super) fn get_current_move(&self) -> Option<Move> {
         if self.get_current_turn() == 0 {
             None
         } else {
@@ -38,11 +38,11 @@ impl History {
         }
     }
 
-    pub fn get_current_turn(&self) -> usize {
+    pub(super) fn get_current_turn(&self) -> usize {
         self.current_turn
     }
 
-    pub fn get_board_state(&self, turn: usize) -> &BoardState {
+    pub(super) fn get_board_state(&self, turn: usize) -> &BoardState {
         if turn == 0 {
             &self.initial_state
         } else {
@@ -50,11 +50,11 @@ impl History {
         }
     }
 
-    pub fn get_real_state_repetition_count(&self) -> usize {
+    pub(super) fn get_real_state_repetition_count(&self) -> usize {
         *self.repetition_counter.get(self.get_real_state()).unwrap()
     }
 
-    pub fn update_fifty_move_info(&mut self, piece_captured: bool, pawn_moved: bool) {
+    fn update_fifty_move_info(&mut self, piece_captured: bool, pawn_moved: bool) {
         if piece_captured || pawn_moved {
             self.fifty_move_count = 0
         } else {
@@ -62,16 +62,16 @@ impl History {
         }
     }
 
-    pub fn update_repetition_info(&mut self, next_state: BoardState) {
+    fn update_repetition_info(&mut self, next_state: BoardState) {
         *self.repetition_counter.entry(next_state).or_insert(0) += 1;
     }
 
-    pub fn add_turn(&mut self, turn: Turn) {
+    fn add_turn(&mut self, turn: Turn) {
         self.turns.push(turn);
         self.current_turn += 1
     }
 
-    pub fn add_info(&mut self, next_state: BoardState, mv: Move, king_is_checked: bool) {
+    pub(super) fn add_info(&mut self, next_state: BoardState, mv: Move, king_is_checked: bool) {
         let real_state = *self.get_real_state();
         let is_pawn = real_state.get_piece(&mv.from).unwrap().is_pawn();
         let is_capture_move =
@@ -82,46 +82,46 @@ impl History {
         self.add_turn(Turn::new(next_state, mv, is_capture_move, king_is_checked));
     }
 
-    pub fn get_fifty_move_count(&self) -> u8 {
+    pub(super) fn get_fifty_move_count(&self) -> u8 {
         self.fifty_move_count / 2
     }
 
-    pub fn get_current_state(&self) -> &BoardState {
+    pub(super) fn get_current_state(&self) -> &BoardState {
         self.get_board_state(self.current_turn)
     }
 
-    pub fn get_real_state(&self) -> &BoardState {
+    pub(super) fn get_real_state(&self) -> &BoardState {
         self.get_board_state(self.turns.len())
     }
 
-    pub fn get_info_for_move(&self, turn: usize) -> &Turn {
+    pub(super) fn get_info_for_move(&self, turn: usize) -> &Turn {
         &self.turns[turn]
     }
 
-    pub fn resume(&mut self) {
+    pub(super) fn resume(&mut self) {
         self.current_turn = self.turns.len()
     }
 
-    pub fn previous_move(&mut self) {
+    pub(super) fn previous_move(&mut self) {
         if self.current_turn > 0 {
             self.current_turn -= 1
         }
     }
 
-    pub fn next_move(&mut self) {
+    pub(super) fn next_move(&mut self) {
         if self.current_turn < self.turns.len() {
             self.current_turn += 1
         }
     }
 
-    pub fn go_to_start(&mut self) {
+    pub(super) fn go_to_start(&mut self) {
         self.current_turn = 0
     }
 
-    pub fn is_replaying(&self) -> bool {
+    pub(super) fn is_replaying(&self) -> bool {
         self.current_turn != self.turns.len()
     }
-    pub fn get_current_round(&self) -> usize {
+    pub(super) fn get_current_round(&self) -> usize {
         (self.current_turn + 1) / 2
     }
 }

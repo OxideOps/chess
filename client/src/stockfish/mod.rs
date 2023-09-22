@@ -1,2 +1,2 @@
-pub mod core;
-pub mod interface;
+pub(super) mod core;
+pub(super) mod interface;

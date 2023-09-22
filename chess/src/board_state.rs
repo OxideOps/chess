@@ -1,29 +1,29 @@
 use crate::board::{Board, Square};
 use crate::castling_rights::CastlingRights;
-use crate::chess_result::{ChessError, ChessResult};
 use crate::color::Color;
 use crate::displacement::Displacement;
 use crate::moves::Move;
 use crate::piece::Piece;
 use crate::position::Position;
+use crate::result::{ChessError, ChessResult};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
 /// A struct encapsulating the state for the `Board`.
-pub struct BoardState {
-    pub player: Color,
+pub(super) struct BoardState {
+    pub(super) player: Color,
     board: Board,
-    pub castling_rights: CastlingRights,
-    pub en_passant_position: Option<Position>,
+    pub(super) castling_rights: CastlingRights,
+    pub(super) en_passant_position: Option<Position>,
 }
 
 impl BoardState {
-    pub fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self::default()
     }
 
-    pub fn get_piece(&self, at: &Position) -> Square {
+    pub(super) fn get_piece(&self, at: &Position) -> Square {
         self.board.get_piece(at)
     }
 
@@ -33,7 +33,7 @@ impl BoardState {
                 || (self.player == Color::Black && at.y == 0))
     }
 
-    pub fn move_piece(&mut self, mv: &Move) {
+    pub(super) fn move_piece(&mut self, mv: &Move) {
         let mut piece = self.board.take_piece(&mv.from).unwrap();
         if self.can_promote_piece(piece, &mv.to) {
             piece = Piece::Queen(self.player)
@@ -43,7 +43,7 @@ impl BoardState {
         self.update(mv)
     }
 
-    pub fn is_in_bounds(at: &Position) -> ChessResult {
+    pub(super) fn is_in_bounds(at: &Position) -> ChessResult {
         if at.x > 7 || at.y > 7 {
             Err(ChessError::OutOfBounds)
         } else {
@@ -51,7 +51,7 @@ impl BoardState {
         }
     }
 
-    pub fn is_piece_some(&self, at: &Position) -> ChessResult {
+    pub(super) fn is_piece_some(&self, at: &Position) -> ChessResult {
         if self.board.get_piece(at).is_none() {
             return Err(ChessError::NoPieceAtPosition);
         }
@@ -67,11 +67,11 @@ impl BoardState {
         self.player = !self.player;
     }
 
-    pub fn has_piece(&self, position: &Position) -> bool {
+    pub(super) fn has_piece(&self, position: &Position) -> bool {
         Self::is_in_bounds(position).is_ok() && self.board.get_piece(position).is_some()
     }
 
-    pub fn was_double_move(&self, mv: &Move) -> bool {
+    pub(super) fn was_double_move(&self, mv: &Move) -> bool {
         if let Some(Piece::Pawn(player)) = self.board.get_piece(&mv.to) {
             return match player {
                 Color::White => mv.from.y == 1 && mv.to.y == 3,
@@ -98,7 +98,7 @@ impl BoardState {
         }
     }
 
-    pub fn get_hash(&self) -> u64 {
+    pub(super) fn get_hash(&self) -> u64 {
         let mut s = DefaultHasher::new();
         self.hash(&mut s);
         s.finish()
