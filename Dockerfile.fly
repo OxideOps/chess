@@ -1,5 +1,4 @@
 #Dockerfile for setting up fly
-
 FROM ghcr.io/oxideops/chess:main
 WORKDIR /app
 COPY . .
