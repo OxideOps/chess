@@ -328,6 +328,21 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                 let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
+                    if matches!(game.read().status, GameStatus::Check(..)) 
+                        && matches!(piece, Piece::King(color) if color == game.read().get_current_player()) 
+                    {
+                        rsx! {
+                            div {
+                                class: "highlight-check",
+                                style: "
+                                    left: {top_left.x}px; 
+                                    top: {top_left.y}px; 
+                                    width: {cx.props.size / 8}px; 
+                                    height: {cx.props.size / 8}px;
+                                ", 
+                            }
+                        }
+                    },
                     img {
                         src: "{piece_img}",
                         class: "images",

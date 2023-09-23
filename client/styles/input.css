@@ -29,6 +29,10 @@ body {
     @apply absolute bg-yellow-500/50;
 }
 
+.highlight-check {
+    @apply absolute bg-red-600/60;
+}
+
 td {
     @apply pr-4;
 }
