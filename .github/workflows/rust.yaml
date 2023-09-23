@@ -6,8 +6,8 @@ on:
 
 jobs:
   check:
-
     runs-on: ubuntu-latest
+
     container:
       image: ghcr.io/oxideops/chess:main
       credentials:
