@@ -328,35 +328,21 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                 let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
-                    if matches!(game.read().status, GameStatus::Check(..)) 
-                        && matches!(piece, Piece::King(color) if color == game.read().get_current_player()) 
-                    {   
+                    if matches!(piece, Piece::King(color) if color == game.read().get_current_player()) {   
                         let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                         rsx! {
                             div {
-                                class: "highlight-check",
+                                class: match game.read().status {
+                                    GameStatus::Check(..) => "check-square",
+                                    GameStatus::Checkmate(..) => "checkmate-square",
+                                    _ => "transparent-square"
+                                },
                                 style: "
                                     left: {top_left.x}px; 
                                     top: {top_left.y}px; 
                                     width: {cx.props.size / 8}px; 
                                     height: {cx.props.size / 8}px;
-                                ", 
-                            }
-                        }
-                    },
-                    if matches!(game.read().status, GameStatus::Checkmate(..)) 
-                        && matches!(piece, Piece::King(color) if color == game.read().get_current_player()) 
-                    {   
-                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
-                        rsx! {
-                            div {
-                                class: "highlight-checkmate",
-                                style: "
-                                    left: {top_left.x}px; 
-                                    top: {top_left.y}px; 
-                                    width: {cx.props.size / 8}px; 
-                                    height: {cx.props.size / 8}px;
-                                ", 
+                                ",
                             }
                         }
                     },

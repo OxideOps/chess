@@ -29,12 +29,16 @@ body {
     @apply absolute bg-yellow-500/50;
 }
 
-.highlight-check {
+.check-square {
     @apply absolute bg-red-600/60;
 }
 
-.highlight-checkmate {
+.checkmate-square {
     @apply absolute bg-green-700/80;
+}
+
+.transparent-square {
+    @apply absolute bg-transparent;
 }
 
 td {
