@@ -1,5 +1,5 @@
 #Dockerfile for setting up a docker for our CI
-FROM docker-rust-nightly:nightly
+FROM rustlang/rust:nightly
 LABEL org.opencontainers.image.source=https://github.com/OxideOps/chess
 WORKDIR /app
 ENV SERVER_FN_OVERRIDE_KEY=y
