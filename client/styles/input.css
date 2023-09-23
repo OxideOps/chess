@@ -33,6 +33,10 @@ body {
     @apply absolute bg-red-600/60;
 }
 
+.highlight-checkmate {
+    @apply absolute bg-green-700/80;
+}
+
 td {
     @apply pr-4;
 }

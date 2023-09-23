@@ -308,7 +308,7 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
             if let Some(mv) = { game.read().get_current_move() }  {
                 rsx! {
                     mv.get_positions().into_iter().map(|pos| {
-                        let (top_left, _) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
+                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                         rsx! {
                             div {
                                 class: "squares-highlighted",
@@ -330,10 +330,27 @@ pub fn Board(cx: Scope<BoardProps>) -> Element {
                 rsx! {
                     if matches!(game.read().status, GameStatus::Check(..)) 
                         && matches!(piece, Piece::King(color) if color == game.read().get_current_player()) 
-                    {
+                    {   
+                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                         rsx! {
                             div {
                                 class: "highlight-check",
+                                style: "
+                                    left: {top_left.x}px; 
+                                    top: {top_left.y}px; 
+                                    width: {cx.props.size / 8}px; 
+                                    height: {cx.props.size / 8}px;
+                                ", 
+                            }
+                        }
+                    },
+                    if matches!(game.read().status, GameStatus::Checkmate(..)) 
+                        && matches!(piece, Piece::King(color) if color == game.read().get_current_player()) 
+                    {   
+                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
+                        rsx! {
+                            div {
+                                class: "highlight-checkmate",
                                 style: "
                                     left: {top_left.x}px; 
                                     top: {top_left.y}px; 
