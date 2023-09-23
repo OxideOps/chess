@@ -1,5 +1,5 @@
 #Dockerfile for setting up fly
-FROM ghcr.io/oxideops/chess:main
+FROM ghcr.io/oxideops/oxide-chess:main
 WORKDIR /app
 COPY . .
 RUN cargo build -p server --release
