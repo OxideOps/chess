@@ -40,10 +40,10 @@ setup_nodejs() {
 }
 
 setup_rust_environment() {
+    rustup override set nightly
     rustup target add wasm32-unknown-unknown
     rustup component add rustfmt
-    rustup toolchain install nightly
-    rustup override set nightly
+    rustup toolchain install nightly 
     cargo install --locked trunk
 }
 
