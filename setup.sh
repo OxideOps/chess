@@ -51,7 +51,11 @@ install_rust() {
 }
 
 setup_rust_environment() {
-    rustup override set nightly
+    if "$DOCKER_MODE"; then
+        rustup default nightly
+    else
+        rustup override set nightly
+    fi
     rustup target add wasm32-unknown-unknown
     rustup component add rustfmt
     cargo install --locked trunk
