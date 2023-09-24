@@ -12,7 +12,6 @@ const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting 
 
 #[derive(Props, PartialEq)]
 pub(crate) struct ArrowProps {
-    show: bool,
     data: ArrowData,
     board_size: u32,
     perspective: Color,
@@ -27,7 +26,7 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
 }
 
 pub(crate) fn Arrow(cx: Scope<ArrowProps>) -> Element {
-    if !cx.props.show {
+    if !cx.props.data.has_length() {
         return None;
     }
 
