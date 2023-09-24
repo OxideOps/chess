@@ -30,9 +30,9 @@ parse_arguments() {
 
 install_packages() {
     if "$DOCKER_MODE"; then
-        apt-get update && apt-get upgrade -y && apt-get install -y "$PACKAGES"
+        apt-get update && apt-get upgrade -y && apt-get install -y $PACKAGES
     else
-        sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y "$PACKAGES"
+        sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y $PACKAGES
     fi
 }
 
