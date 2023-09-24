@@ -5,6 +5,9 @@ DOCKER_MODE=false
 
 # Make the server functions not change based on the path to the repo 
 ENV_VAR="SERVER_FN_OVERRIDE_KEY=y"
+PACKAGES="build-essential curl libjavascriptcoregtk-4.1-dev libgtk-3-dev libsoup-3.0-dev libssl-dev libwebkit2gtk-4.1-dev"
+
+trap 'echo "Setup failed!"; exit 1' ERR
 
 terminate_script() {
     local message="$1"
@@ -28,8 +31,11 @@ parse_arguments() {
 }
 
 install_packages() {
-    apt-get update && apt-get upgrade -y
-    apt-get install -y curl libjavascriptcoregtk-4.1-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev
+    if "$DOCKER_MODE"; then
+        apt-get update && apt-get upgrade -y && apt-get install -y $PACKAGES
+    else
+        sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y $PACKAGES
+    fi
 }
 
 setup_nodejs() {
@@ -39,12 +45,13 @@ setup_nodejs() {
     nvm install node
 }
 
+install_rust() {
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+    source ~/.cargo/env
+}
+
 setup_rust_environment() {
-    if $DOCKER_MODE; then
-        rustup default nightly
-    else
-        rustup override set nightly
-    fi
+    rustup override set nightly
     rustup target add wasm32-unknown-unknown
     rustup component add rustfmt
     cargo install --locked trunk
@@ -88,6 +95,9 @@ main() {
     parse_arguments "$@"
     install_packages
     setup_nodejs
+    if $DOCKER_MODE; then
+        install_rust
+    fi
     setup_rust_environment
     if ! $DOCKER_MODE; then
         update_submodules
