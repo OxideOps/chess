@@ -22,12 +22,12 @@ This project is a complete chess platform, allowing users to play chess games, a
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/OxideOps/chess.git
+   git clone https://github.com/OxideOps/oxide-chess.git
    ```
 
 3. Download and install the necessary dependencies for this project. From the root of the project, run:
     ```bash
-    ./setup.sh
+    source ./setup.sh
     ```
 
 ## Building and Running
