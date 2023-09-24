@@ -422,6 +422,21 @@ impl Game {
     pub fn get_current_move(&self) -> Option<Move> {
         self.history.get_current_move()
     }
+
+    pub fn get_highlighted_squares_info(&self) -> Vec<(Position, String)> {
+        let mut info: Vec<(Position, String)> = vec![];
+
+        // from-to square of current move
+        if let Some(mv) = &self.get_current_move() {
+            let class = "moved-square";
+            info.push((mv.from, class.into()));
+            info.push((mv.to, class.into()));
+        }
+        // king in check square
+
+        // king in checkmate square
+        info
+    }
 }
 pub struct GameBuilder {
     start_time: Duration,

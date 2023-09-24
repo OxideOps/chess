@@ -25,7 +25,7 @@ body {
     -webkit-user-drag: none;
 }
 
-.squares-highlighted {
+.moved-square {
     @apply absolute bg-yellow-500/50;
 }
 
