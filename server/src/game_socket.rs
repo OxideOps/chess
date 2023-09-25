@@ -2,27 +2,24 @@ use axum::{
     extract::{ws::WebSocket, WebSocketUpgrade},
     response::Response,
 };
-use futures::{
-    executor::block_on,
-    {SinkExt, StreamExt},
-};
+use futures::{SinkExt, StreamExt};
 use server_functions::*;
 
 pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
-    ws.on_upgrade(move |socket| {
-        if let Some(connections) = block_on(GAMES.lock()).get(&game_id) {
-            if let Some(index) = block_on(store_socket(socket, connections.clone())) {
+    ws.on_upgrade(move |socket| async move {
+        if let Some(connections) = GAMES.lock().await.get(&game_id) {
+            if let Some(index) = store_socket(socket, connections.clone()).await {
                 let other_index = (index + 1) % 2;
                 let sink = connections[other_index].0.clone();
                 let stream = connections[index].1.clone();
-                handle_socket(Some((game_id, sink, stream)))
+                handle_socket(Some((game_id, sink, stream))).await
             } else {
                 log::warn!("Cannot connect client to socket. Already 2 clients.");
-                handle_socket(None)
+                handle_socket(None).await
             }
         } else {
             log::warn!("Cannot connect client to socket. Game id does not exist.");
-            handle_socket(None)
+            handle_socket(None).await
         }
     })
 }

@@ -8,8 +8,8 @@ use std::time::Duration;
 
 #[derive(Props, PartialEq)]
 pub(crate) struct WidgetProps {
-    white_player: UseRef<Player>,
-    black_player: UseRef<Player>,
+    white_player: UseLock<Player>,
+    black_player: UseLock<Player>,
     perspective: Color,
     analyze: UseState<bool>,
     start_time: Duration,
