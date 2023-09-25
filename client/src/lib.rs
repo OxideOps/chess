@@ -1,3 +1,4 @@
+#![feature(async_fn_in_trait)]
 #![allow(non_snake_case)]
 mod arrows;
 pub mod components;
