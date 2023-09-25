@@ -1,7 +1,7 @@
 use chess::game::Game;
 use dioxus::prelude::*;
 
-pub fn RoundList(cx: Scope) -> Element {
+pub(crate) fn RoundList(cx: Scope) -> Element {
     let game = use_shared_state::<Game>(cx).unwrap().read();
     let current_round = game.get_current_round();
 

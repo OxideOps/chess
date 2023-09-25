@@ -2,9 +2,9 @@ use crate::color::Color;
 use std::ops::Mul;
 
 #[derive(Clone, Copy)]
-pub struct Displacement {
-    pub dx: i8,
-    pub dy: i8,
+pub(super) struct Displacement {
+    pub(super) dx: i8,
+    pub(super) dy: i8,
 }
 
 impl Displacement {
@@ -28,42 +28,40 @@ impl Displacement {
         Self { dx: -2, dy: 1 },
         Self { dx: -2, dy: -1 },
     ];
-    pub const UP: Self = Self { dx: 0, dy: 1 };
-    pub const DOWN: Self = Self { dx: 0, dy: -1 };
-    pub const RIGHT: Self = Self { dx: 1, dy: 0 };
-    pub const LEFT: Self = Self { dx: -1, dy: 0 };
+    pub(super) const RIGHT: Self = Self { dx: 1, dy: 0 };
+    pub(super) const LEFT: Self = Self { dx: -1, dy: 0 };
 
-    pub fn get_pawn_advance_vector(player: Color) -> Self {
+    pub(super) fn get_pawn_advance_vector(player: Color) -> Self {
         match player {
             Color::White => Self { dx: 0, dy: 1 },
             Color::Black => Self { dx: 0, dy: -1 },
         }
     }
 
-    pub fn get_pawn_capture_vectors(player: Color) -> &'static [Self] {
+    pub(super) fn get_pawn_capture_vectors(player: Color) -> &'static [Self] {
         match player {
             Color::White => &[Self { dx: 1, dy: 1 }, Self { dx: -1, dy: 1 }],
             Color::Black => &[Self { dx: -1, dy: -1 }, Self { dx: 1, dy: -1 }],
         }
     }
 
-    pub fn get_queen_vectors() -> &'static [Self] {
+    pub(super) fn get_queen_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS
     }
 
-    pub fn get_king_vectors() -> &'static [Self] {
+    pub(super) fn get_king_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS
     }
 
-    pub fn get_rook_vectors() -> &'static [Self] {
+    pub(super) fn get_rook_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS[0..4]
     }
 
-    pub fn get_bishop_vectors() -> &'static [Self] {
+    pub(super) fn get_bishop_vectors() -> &'static [Self] {
         &Self::QUEEN_VECTORS[4..8]
     }
 
-    pub fn get_knight_vectors() -> &'static [Self] {
+    pub(super) fn get_knight_vectors() -> &'static [Self] {
         &Self::KNIGHT_VECTORS
     }
 }

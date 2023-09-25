@@ -13,11 +13,11 @@ pub enum Piece {
 }
 
 impl Piece {
-    pub fn is_pawn(self) -> bool {
+    pub(super) fn is_pawn(self) -> bool {
         matches!(self, Piece::Pawn(..))
     }
 
-    pub fn get_player(self) -> Color {
+    pub(super) fn get_player(self) -> Color {
         match self {
             Self::Pawn(player)
             | Self::Knight(player)
@@ -28,7 +28,7 @@ impl Piece {
         }
     }
 
-    pub fn get_vectors(self) -> &'static [Displacement] {
+    pub(super) fn get_vectors(self) -> &'static [Displacement] {
         match self {
             Self::Pawn(..) => panic!("Try calling `Displacement::get_pawn_*_vector()` instead"),
             Self::Rook(..) => Displacement::get_rook_vectors(),
@@ -39,11 +39,11 @@ impl Piece {
         }
     }
 
-    pub fn can_snipe(self) -> bool {
+    pub(super) fn can_snipe(self) -> bool {
         matches!(self, Self::Bishop(..) | Self::Rook(..) | Self::Queen(..))
     }
 
-    pub fn get_fen_char(&self) -> char {
+    pub(super) fn get_fen_char(&self) -> char {
         let c = match self {
             Piece::Pawn(..) => 'p',
             Piece::Bishop(..) => 'b',

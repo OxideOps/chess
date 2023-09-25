@@ -8,7 +8,7 @@ use chess::{
     player::{Player, PlayerKind},
 };
 use dioxus::prelude::*;
-use server_functions::setup_remote_game::setup_remote_game;
+use server_functions::setup_remote_game;
 const WIDGET_HEIGHT: u32 = 800;
 const START_TIME: Duration = Duration::from_secs(3600);
 
@@ -22,7 +22,7 @@ fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<
     }
 }
 
-pub fn App(cx: Scope) -> Element {
+pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
 

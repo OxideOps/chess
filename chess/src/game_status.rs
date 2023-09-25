@@ -1,7 +1,7 @@
 use crate::color::Color;
 
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
-pub enum GameStatus {
+pub(super) enum GameStatus {
     #[default]
     NotStarted,
     Ongoing,
@@ -14,7 +14,7 @@ pub enum GameStatus {
 }
 
 impl GameStatus {
-    pub fn update(&mut self, status: GameStatus) {
+    pub(super) fn update(&mut self, status: GameStatus) {
         if *self != status {
             log::info!("GameStatus changing from {:?} to {:?}", *self, status);
             *self = status
@@ -23,8 +23,7 @@ impl GameStatus {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DrawKind {
-    Stalemate,
+pub(super) enum DrawKind {
     FiftyMoveRule,
     Repetition,
 }

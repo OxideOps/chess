@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 use std::time::Duration;
 
 #[derive(Props, PartialEq)]
-pub struct WidgetProps {
+pub(crate) struct WidgetProps {
     white_player: UseRef<Player>,
     black_player: UseRef<Player>,
     perspective: Color,
@@ -16,7 +16,7 @@ pub struct WidgetProps {
     height: u32,
 }
 
-pub fn Widget(cx: Scope<WidgetProps>) -> Element {
+pub(crate) fn Widget(cx: Scope<WidgetProps>) -> Element {
     cx.render(rsx! {
         Board {
             size: cx.props.height,

@@ -4,11 +4,11 @@ use dioxus::prelude::*;
 use std::time::Duration;
 
 #[derive(Props, PartialEq)]
-pub struct TimerProps {
+pub(crate) struct TimerProps {
     start_time: Duration,
 }
 
-pub fn Timer(cx: Scope<TimerProps>) -> Element {
+pub(crate) fn Timer(cx: Scope<TimerProps>) -> Element {
     let white_time = use_state(cx, || display_time(cx.props.start_time));
     let black_time = use_state(cx, || display_time(cx.props.start_time));
     let player = use_shared_state::<Game>(cx)

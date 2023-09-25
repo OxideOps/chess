@@ -2,9 +2,9 @@ use dioxus::html::geometry::ClientPoint;
 use dioxus::html::input_data::MouseButtonSet;
 use dioxus::prelude::*;
 
-pub struct MouseClick {
-    pub point: ClientPoint,
-    pub kind: MouseButtonSet,
+pub(super) struct MouseClick {
+    pub(super) point: ClientPoint,
+    pub(super) kind: MouseButtonSet,
 }
 
 impl From<Event<MouseData>> for MouseClick {

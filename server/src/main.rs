@@ -15,7 +15,7 @@ pub async fn main() {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
 
     // Initialize database connection
-    let db_client = database::connect()
+    let _db_client = database::connect()
         .await
         .expect("Failed to connect to database");
 

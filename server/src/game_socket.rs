@@ -6,9 +6,7 @@ use futures::{
     executor::block_on,
     {SinkExt, StreamExt},
 };
-use server_functions::setup_remote_game::games::{
-    PlayerConnections, ReadStream, WriteStream, GAMES, PENDING_GAME,
-};
+use server_functions::*;
 
 pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
     ws.on_upgrade(move |socket| {
