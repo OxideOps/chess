@@ -8,7 +8,6 @@ use crate::stockfish::interface::Process;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::color::Color;
 use chess::game::Game;
-use chess::game_status::GameStatus;
 use chess::moves::Move;
 use chess::piece::Piece;
 use chess::player::PlayerKind;
@@ -19,7 +18,7 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 
-pub type Channel = (Sender<Move>, Receiver<Move>);
+pub(crate) type Channel = (Sender<Move>, Receiver<Move>);
 
 static CHANNEL: Lazy<Channel> = Lazy::new(unbounded);
 
@@ -47,7 +46,7 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
 }
 
 #[derive(Props, PartialEq)]
-pub struct BoardProps {
+pub(crate) struct BoardProps {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
     perspective: Color,
@@ -160,7 +159,7 @@ fn drop_piece(cx: Scope<BoardProps>, event: &Event<MouseData>, point: &ClientPoi
     };
     let mv = Move::new(from, to);
     if current_player_kind == PlayerKind::Local
-        && game.read().status != GameStatus::Replay
+        && !game.read().is_replaying()
         && game.read().is_move_valid(&mv).is_ok()
     {
         game.write().move_piece(from, to).ok();
@@ -226,14 +225,14 @@ fn handle_on_mouse_move_event(
     }
 }
 
-pub fn get_center(pos: &Position, board_size: u32, perspective: Color) -> ClientPoint {
+pub(crate) fn get_center(pos: &Position, board_size: u32, perspective: Color) -> ClientPoint {
     let mut point = to_point(pos, board_size, perspective);
     point.x += board_size as f64 / 16.0;
     point.y += board_size as f64 / 16.0;
     point
 }
 
-pub fn get_move_for_arrow(
+pub(crate) fn get_move_for_arrow(
     cx: Scope<BoardProps>,
     mouse_down_state: &UseState<Option<MouseClick>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
@@ -250,7 +249,7 @@ pub fn get_move_for_arrow(
     None
 }
 
-pub fn Board(cx: Scope<BoardProps>) -> Element {
+pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     // hooks
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);

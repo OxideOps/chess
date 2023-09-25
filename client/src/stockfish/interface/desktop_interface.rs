@@ -7,9 +7,9 @@ use dioxus::prelude::*;
 use futures::executor::block_on;
 use std::io::Result;
 
-pub type Process = Child;
+pub(crate) type Process = Child;
 
-pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
+pub(crate) async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
     if let Some(process) = &mut *process.write() {
         block_on(
             process
@@ -22,7 +22,7 @@ pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
     }
 }
 
-pub async fn run_stockfish() -> Result<Process> {
+pub(crate) async fn run_stockfish() -> Result<Process> {
     let mut cmd = Command::new("client/Stockfish/src/stockfish");
     cmd.stdout(Stdio::piped())
         .stdin(Stdio::piped())
@@ -30,7 +30,10 @@ pub async fn run_stockfish() -> Result<Process> {
     cmd.spawn()
 }
 
-pub async fn update_analysis_arrows(arrows: UseRef<Arrows>, process: UseRef<Option<Process>>) {
+pub(crate) async fn update_analysis_arrows(
+    arrows: UseRef<Arrows>,
+    process: UseRef<Option<Process>>,
+) {
     let stdout = process.with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap());
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];

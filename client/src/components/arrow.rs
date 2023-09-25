@@ -11,7 +11,7 @@ const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
 
 #[derive(Props, PartialEq)]
-pub struct ArrowProps {
+pub(crate) struct ArrowProps {
     show: bool,
     data: ArrowData,
     board_size: u32,
@@ -26,7 +26,7 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
     (to.y - from.y).atan2(to.x - from.x) + PI / 2.0
 }
 
-pub fn Arrow(cx: Scope<ArrowProps>) -> Element {
+pub(crate) fn Arrow(cx: Scope<ArrowProps>) -> Element {
     if !cx.props.show {
         return None;
     }

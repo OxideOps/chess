@@ -3,10 +3,10 @@ use std::hash::Hash;
 
 const BOARD_SIZE: usize = 8;
 
-pub type Square = Option<Piece>;
+pub(super) type Square = Option<Piece>;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
+pub(super) struct Board([[Square; BOARD_SIZE]; BOARD_SIZE]);
 
 impl Default for Board {
     fn default() -> Self {
@@ -27,10 +27,6 @@ impl Default for Board {
 }
 
 impl Board {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     fn get_back_rank(player: Color) -> [Square; 8] {
         [
             Some(Piece::Rook(player)),
@@ -44,15 +40,15 @@ impl Board {
         ]
     }
 
-    pub fn get_piece(&self, at: &Position) -> Square {
+    pub(super) fn get_piece(&self, at: &Position) -> Square {
         self.0[at.y][at.x]
     }
 
-    pub fn set_piece(&mut self, at: &Position, square: Square) {
+    pub(super) fn set_piece(&mut self, at: &Position, square: Square) {
         self.0[at.y][at.x] = square;
     }
 
-    pub fn take_piece(&mut self, from: &Position) -> Square {
+    pub(super) fn take_piece(&mut self, from: &Position) -> Square {
         self.0[from.y][from.x].take()
     }
 }

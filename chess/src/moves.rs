@@ -14,11 +14,8 @@ impl Move {
         Self { from, to }
     }
 
-    pub fn inverse(&self) -> Self {
-        Self {
-            from: self.to,
-            to: self.from,
-        }
+    pub fn get_positions(&self) -> [Position; 2] {
+        [self.from, self.to]
     }
 
     // creates move from the "long algebraic notation" that stockfish uses
