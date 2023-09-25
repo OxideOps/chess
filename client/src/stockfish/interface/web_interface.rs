@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 
-pub type Process = Object;
+pub(crate) type Process = Object;
 
 type Channel = (Sender<String>, Receiver<String>);
 
@@ -21,7 +21,7 @@ fn get_js_method(object: &Process, method: &str) -> Function {
         .clone()
 }
 
-pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
+pub(crate) async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
     if let Some(process) = &*process.write() {
         get_js_method(process, "postMessage")
             .call1(process, &command.into())
@@ -29,7 +29,7 @@ pub async fn send_command(process: &UseRef<Option<Process>>, command: &str) {
     }
 }
 
-pub async fn run_stockfish() -> Result<Object, JsValue> {
+pub(crate) async fn run_stockfish() -> Result<Object, JsValue> {
     let sf_promise = js_sys::eval("Stockfish()").unwrap();
     let sf_jsvalue = JsFuture::from(js_sys::Promise::from(sf_promise)).await?;
     let sf_object = sf_jsvalue.dyn_into::<Object>()?;
@@ -50,7 +50,7 @@ pub async fn run_stockfish() -> Result<Object, JsValue> {
     Ok(sf_object)
 }
 
-pub async fn update_analysis_arrows(arrows: UseRef<Arrows>, _process: UseRef<Option<Process>>) {
+pub(crate) async fn update_analysis_arrows(arrows: UseRef<Arrows>, _process: UseRef<Option<Process>>) {
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Ok(output) = CHANNEL.1.recv().await {
         process_output(&output, &mut evals, &arrows).await;

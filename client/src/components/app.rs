@@ -22,7 +22,7 @@ fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<
     }
 }
 
-pub fn App(cx: Scope) -> Element {
+pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
 

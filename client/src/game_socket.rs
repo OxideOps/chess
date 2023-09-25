@@ -15,7 +15,7 @@ use url::Url;
 type WriteStream = SplitSink<WebSocketStream, Message>;
 type ReadStream = SplitStream<WebSocketStream>;
 
-pub async fn create_game_socket(
+pub(super) async fn create_game_socket(
     game: UseSharedState<Game>,
     game_id: UseSharedState<GameId>,
     rx: &Receiver<Move>,
