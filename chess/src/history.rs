@@ -24,7 +24,7 @@ impl History {
     }
 
     pub(super) fn update_status(&self, status: GameStatus) {
-
+        self.get_real_turn().status = status;
     }
 
     pub(super) fn get_real_turn(&self) -> Turn {
