@@ -8,6 +8,7 @@ pub struct Turn {
     pub(super) mv: Move,
     pub(super) piece_captured: bool,
     pub(super) king_is_checked: bool,
+    // TODO: add GameStatus here
 }
 
 impl Turn {
