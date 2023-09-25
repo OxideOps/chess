@@ -419,7 +419,16 @@ impl Game {
         self.history.get_current_move()
     }
 
+    pub fn is_in_checkmate(&self) -> bool {
+        matches!(self.status, GameStatus::Checkmate(..))
+    }
+
     pub fn get_highlighted_squares_info(&self) -> Vec<(Position, String)> {
+        const MOVED_CLASS: &str = "moved-square";
+        const CHECK_CLASS: &str = "check-square";
+        const CHECKMATE_CLASS: &str = "checkmate-square";
+        const TRANSPARENT_CLASS: &str = "transparent-square";
+
         let mut info: Vec<(Position, String)> = vec![];
 
         // from-to square of current move

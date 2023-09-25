@@ -303,48 +303,26 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 width: "{cx.props.size}",
                 height: "{cx.props.size}"
             }
-            // highlight from-to squares
-            if let Some(mv) = { game.read().get_current_move() }  {
+            // highlight squares
+            game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
+                let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                 rsx! {
-                    mv.get_positions().into_iter().map(|pos| {
-                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
-                        rsx! {
-                            div {
-                                class: "squares-highlighted",
-                                style: "
-                                    left: {top_left.x}px; 
-                                    top: {top_left.y}px; 
-                                    width: {cx.props.size / 8}px; 
-                                    height: {cx.props.size / 8}px;
-                                ",
-                            }
-                        }
-                    }),
+                    div {
+                        class: "{class}",
+                        style: "
+                            left: {top_left.x}px; 
+                            top: {top_left.y}px; 
+                            width: {cx.props.size / 8}px; 
+                            height: {cx.props.size / 8}px;
+                        ",
+                    }
                 }
-            }
+            })
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
                 let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
-                    if matches!(piece, Piece::King(color) if color == game.read().get_current_player()) {   
-                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
-                        rsx! {
-                            div {
-                                class: match game.read().status {
-                                    GameStatus::Check(..) => "check-square",
-                                    GameStatus::Checkmate(..) => "checkmate-square",
-                                    _ => "transparent-square"
-                                },
-                                style: "
-                                    left: {top_left.x}px; 
-                                    top: {top_left.y}px; 
-                                    width: {cx.props.size / 8}px; 
-                                    height: {cx.props.size / 8}px;
-                                ",
-                            }
-                        }
-                    },
                     img {
                         src: "{piece_img}",
                         class: "images",

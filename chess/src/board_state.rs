@@ -15,6 +15,8 @@ pub(super) struct BoardState {
     board: Board,
     pub(super) castling_rights: CastlingRights,
     pub(super) en_passant_position: Option<Position>,
+    white_king_position: Position,
+    black_king_position: Position,
 }
 
 impl BoardState {
@@ -35,6 +37,15 @@ impl BoardState {
         }
         self.board
             .set_piece(&Position::new(mv.to.x, mv.to.y), Some(piece));
+
+        // Update king's position if a king is moved
+        if piece == Piece::King(self.player) {
+            match self.player {
+                Color::White => self.white_king_position = mv.to,
+                Color::Black => self.black_king_position = mv.to,
+            }
+        }
+
         self.update(mv)
     }
 
