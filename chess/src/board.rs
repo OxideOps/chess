@@ -27,10 +27,6 @@ impl Default for Board {
 }
 
 impl Board {
-    pub(super) fn new() -> Self {
-        Self::default()
-    }
-
     fn get_back_rank(player: Color) -> [Square; 8] {
         [
             Some(Piece::Rook(player)),

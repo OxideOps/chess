@@ -6,8 +6,7 @@ use crate::moves::Move;
 use crate::piece::Piece;
 use crate::position::Position;
 use crate::result::{ChessError, ChessResult};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
 /// A struct encapsulating the state for the `Board`.
@@ -19,10 +18,6 @@ pub(super) struct BoardState {
 }
 
 impl BoardState {
-    pub(super) fn new() -> Self {
-        Self::default()
-    }
-
     pub(super) fn get_piece(&self, at: &Position) -> Square {
         self.board.get_piece(at)
     }
@@ -96,11 +91,5 @@ impl BoardState {
         } else {
             None
         }
-    }
-
-    pub(super) fn get_hash(&self) -> u64 {
-        let mut s = DefaultHasher::new();
-        self.hash(&mut s);
-        s.finish()
     }
 }

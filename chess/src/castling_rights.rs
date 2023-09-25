@@ -29,11 +29,7 @@ impl CastlingRights {
     pub(super) const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
     pub(super) const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
     pub(super) const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
-
-    pub(super) fn new() -> Self {
-        Self::default()
-    }
-
+    
     pub(super) fn rook_positions() -> [(Position, Piece, CastlingRightsKind); 4] {
         [
             (

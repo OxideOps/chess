@@ -24,12 +24,6 @@ impl Turn {
             king_is_checked,
         }
     }
-    pub fn with_state(board_state: BoardState) -> Self {
-        Self {
-            board_state,
-            ..Default::default()
-        }
-    }
 }
 
 impl fmt::Display for Turn {

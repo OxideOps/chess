@@ -94,10 +94,6 @@ impl History {
         self.get_board_state(self.turns.len())
     }
 
-    pub(super) fn get_info_for_move(&self, turn: usize) -> &Turn {
-        &self.turns[turn]
-    }
-
     pub(super) fn resume(&mut self) {
         self.current_turn = self.turns.len()
     }

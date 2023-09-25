@@ -18,13 +18,6 @@ impl Move {
         [self.from, self.to]
     }
 
-    pub(super) fn inverse(&self) -> Self {
-        Self {
-            from: self.to,
-            to: self.from,
-        }
-    }
-
     // creates move from the "long algebraic notation" that stockfish uses
     pub fn from_lan(lan: &str) -> Option<Self> {
         Some(Self::new(

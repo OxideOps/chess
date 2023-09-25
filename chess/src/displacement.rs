@@ -28,8 +28,6 @@ impl Displacement {
         Self { dx: -2, dy: 1 },
         Self { dx: -2, dy: -1 },
     ];
-    pub(super) const UP: Self = Self { dx: 0, dy: 1 };
-    pub(super) const DOWN: Self = Self { dx: 0, dy: -1 };
     pub(super) const RIGHT: Self = Self { dx: 1, dy: 0 };
     pub(super) const LEFT: Self = Self { dx: -1, dy: 0 };
 

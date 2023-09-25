@@ -351,14 +351,6 @@ impl Game {
         pieces
     }
 
-    pub(super) fn get_move_history(&self) -> Vec<String> {
-        self.history
-            .turns
-            .iter()
-            .map(|turn| format!("{turn}"))
-            .collect()
-    }
-
     pub fn get_rounds_info(&self) -> Vec<RoundInfo> {
         self.history
             .turns
@@ -464,11 +456,6 @@ impl GameBuilder {
 
     fn state(mut self, state: BoardState) -> Self {
         self.state = state;
-        self
-    }
-
-    fn player(mut self, player: Color) -> Self {
-        self.state.player = player;
         self
     }
 }

@@ -24,7 +24,6 @@ impl GameStatus {
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub(super) enum DrawKind {
-    Stalemate,
     FiftyMoveRule,
     Repetition,
 }
