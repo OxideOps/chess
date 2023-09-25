@@ -36,14 +36,22 @@ impl History {
     }
 
     pub(super) fn get_current_move(&self) -> Option<Move> {
-        if self.get_current_turn() == 0 {
+        if self.get_current_turn_index() == 0 {
             None
         } else {
-            Some(self.turns[self.get_current_turn() - 1].mv)
+            Some(self.turns[self.get_current_turn_index() - 1].mv)
         }
     }
 
-    pub(super) fn get_current_turn(&self) -> usize {
+    pub(super) fn get_current_turn(&self) -> Option<Turn> {
+        if self.get_current_turn_index() == 0 {
+            None
+        } else {
+            Some(self.turns[self.get_current_turn_index() - 1])
+        }
+    }
+
+    pub(super) fn get_current_turn_index(&self) -> usize {
         self.current_turn
     }
 

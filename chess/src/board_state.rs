@@ -15,8 +15,8 @@ pub(super) struct BoardState {
     board: Board,
     pub(super) castling_rights: CastlingRights,
     pub(super) en_passant_position: Option<Position>,
-    white_king_position: Position,
-    black_king_position: Position,
+    pub(super) white_king_position: Position,
+    pub(super) black_king_position: Position,
 }
 
 impl BoardState {

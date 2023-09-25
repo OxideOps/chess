@@ -115,8 +115,7 @@ impl Game {
             self.is_move_valid(&mv)?;
             let mut next_state = *self.get_current_state();
             next_state.move_piece(&mv);
-            self.history
-                .add_info(next_state, mv);
+            self.history.add_info(next_state, mv);
 
             log::info!("{} : {}", piece, mv);
             self.update();
@@ -166,7 +165,8 @@ impl Game {
         if self.check_for_draw() {
             return;
         }
-        let king_is_under_attack = Self::is_king_under_attack(&self.history.get_real_turn().board_state);
+        let king_is_under_attack =
+            Self::is_king_under_attack(&self.history.get_real_turn().board_state);
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
         if !king_is_under_attack && valid_moves_is_empty {
@@ -369,8 +369,8 @@ impl Game {
         self.history.get_current_round()
     }
 
-    pub(super) fn get_current_turn(&self) -> usize {
-        self.history.get_current_turn()
+    pub(super) fn get_current_turn_index(&self) -> usize {
+        self.history.get_current_turn_index()
     }
 
     pub fn get_real_player(&self) -> Color {
@@ -411,7 +411,7 @@ impl Game {
                 .en_passant_position
                 .map_or("-".to_string(), |pos| pos.to_string()),
             self.history.fifty_move_count,
-            self.get_current_turn() / 2 + 1
+            self.get_current_turn_index() / 2 + 1
         ));
         fen
     }
@@ -428,19 +428,37 @@ impl Game {
         const MOVED_CLASS: &str = "moved-square";
         const CHECK_CLASS: &str = "check-square";
         const CHECKMATE_CLASS: &str = "checkmate-square";
-        const TRANSPARENT_CLASS: &str = "transparent-square";
 
         let mut info: Vec<(Position, String)> = vec![];
 
         // from-to square of current move
         if let Some(mv) = &self.get_current_move() {
-            let class = "moved-square";
-            info.push((mv.from, class.into()));
-            info.push((mv.to, class.into()));
+            info.push((mv.from, MOVED_CLASS.into()));
+            info.push((mv.to, MOVED_CLASS.into()));
         }
-        // king in check square
 
-        // king in checkmate square
+        // highlight king depending on status
+        if let Some(turn) = self.history.get_current_turn() {
+            match turn.status {
+                GameStatus::Check(color) => match color {
+                    Color::White => {
+                        info.push((turn.board_state.white_king_position, CHECK_CLASS.into()))
+                    }
+                    Color::Black => {
+                        info.push((turn.board_state.black_king_position, CHECK_CLASS.into()))
+                    }
+                },
+                GameStatus::Checkmate(color) => {
+                    match color {
+                        Color::White => info
+                            .push((turn.board_state.white_king_position, CHECKMATE_CLASS.into())),
+                        Color::Black => info
+                            .push((turn.board_state.black_king_position, CHECKMATE_CLASS.into())),
+                    }
+                }
+                _ => (),
+            }
+        }
         info
     }
 }
