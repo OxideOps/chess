@@ -24,10 +24,14 @@ impl History {
     }
 
     pub(super) fn update_status(&mut self, status: GameStatus) {
-        self.get_real_turn().unwrap().status = status;
+        self.get_real_turn_mut().unwrap().status = status;
     }
 
-    pub(super) fn get_real_turn(&mut self) -> Option<&mut Turn> {
+    pub(super) fn get_real_turn(&self) -> Option<&Turn> {
+        self.turns.last()
+    }
+
+    pub(super) fn get_real_turn_mut(&mut self) -> Option<&mut Turn> {
         self.turns.last_mut()
     }
 

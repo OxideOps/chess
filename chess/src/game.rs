@@ -167,7 +167,7 @@ impl Game {
             return;
         }
         let king_is_under_attack =
-            Self::is_king_under_attack(&self.history.get_real_turn().unwrap_or(&mut Turn::default()).board_state);
+            Self::is_king_under_attack(&self.history.get_real_turn().unwrap_or(&Turn::default()).board_state);
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
         if !king_is_under_attack && valid_moves_is_empty {
