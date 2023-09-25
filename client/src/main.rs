@@ -1,4 +1,3 @@
-#[feature(async_fn_in_trait)]
 use common::args::*;
 
 pub fn main() {
