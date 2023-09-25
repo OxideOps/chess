@@ -1,6 +1,5 @@
 use dioxus::prelude::{UseAsyncLock, UseLock};
-
-#[feature(async_fn_in_trait)]
+use crate::arrows::Arrows;
 pub trait Stockfish {
     type Process;
     type Error;
