@@ -166,8 +166,13 @@ impl Game {
         if self.check_for_draw() {
             return;
         }
-        let king_is_under_attack =
-            Self::is_king_under_attack(&self.history.get_real_turn().unwrap_or(&Turn::default()).board_state);
+        let king_is_under_attack = Self::is_king_under_attack(
+            &self
+                .history
+                .get_real_turn()
+                .unwrap_or(&Turn::default())
+                .board_state,
+        );
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
         if !king_is_under_attack && valid_moves_is_empty {
@@ -440,7 +445,6 @@ impl Game {
 
         // highlight king depending on status
         if let Some(turn) = self.history.get_current_turn() {
-            dbg!(turn.status);
             match turn.status {
                 GameStatus::Check(color) => match color {
                     Color::White => {
@@ -461,7 +465,6 @@ impl Game {
                 _ => (),
             }
         }
-        dbg!(info.clone());
         info
     }
 }
