@@ -16,7 +16,10 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn new(x: usize, y: usize) -> Self {
+    pub(super) const WHITE_KING: Position = Position::new(4, 0);
+    pub(super) const BLACK_KING: Position = Position::new(4, 7);
+    
+    pub const fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
 }

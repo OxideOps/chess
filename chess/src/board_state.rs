@@ -26,8 +26,8 @@ impl Default for BoardState {
             board: Board::default(),
             castling_rights: CastlingRights::default(),
             en_passant_position: None,
-            white_king_position: Position::new(4, 0),
-            black_king_position: Position::new(4, 7),
+            white_king_position: Position::WHITE_KING,
+            black_king_position: Position::BLACK_KING,
         }
     }
 }
