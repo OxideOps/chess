@@ -8,7 +8,7 @@ use chess::{
     player::{Player, PlayerKind},
 };
 use dioxus::prelude::*;
-use server_functions::setup_remote_game::setup_remote_game;
+use server_functions::setup_remote_game;
 const WIDGET_HEIGHT: u32 = 800;
 const START_TIME: Duration = Duration::from_secs(3600);
 

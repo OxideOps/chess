@@ -50,7 +50,10 @@ pub(crate) async fn run_stockfish() -> Result<Object, JsValue> {
     Ok(sf_object)
 }
 
-pub(crate) async fn update_analysis_arrows(arrows: UseRef<Arrows>, _process: UseRef<Option<Process>>) {
+pub(crate) async fn update_analysis_arrows(
+    arrows: UseRef<Arrows>,
+    _process: UseRef<Option<Process>>,
+) {
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Ok(output) = CHANNEL.1.recv().await {
         process_output(&output, &mut evals, &arrows).await;
