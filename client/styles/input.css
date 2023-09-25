@@ -30,11 +30,11 @@ body {
 }
 
 .check-square {
-    @apply absolute bg-red-600/60;
+    @apply absolute bg-red-600/70;
 }
 
 .checkmate-square {
-    @apply absolute bg-green-700/80;
+    @apply absolute bg-black/70;
 }
 
 .transparent-square {
