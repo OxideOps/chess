@@ -124,7 +124,7 @@ pub(crate) fn to_point(position: &Position, board_size: u32, perspective: Color)
     }
 }
 
-fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseRef<Arrows>) {
+fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseLock<Arrows>) {
     let game = use_shared_state::<Game>(cx).unwrap();
 
     match event.key() {
@@ -175,7 +175,7 @@ fn complete_arrow(
     cx: Scope<BoardProps>,
     event: &Event<MouseData>,
     mouse_down: &ClientPoint,
-    arrows: &UseRef<Arrows>,
+    arrows: &UseLock<Arrows>,
 ) {
     let from = to_position(cx, mouse_down);
     let to = to_position(cx, &event.client_coordinates());
@@ -187,7 +187,7 @@ fn complete_arrow(
 fn handle_on_mouse_down_event(
     event: Event<MouseData>,
     mouse_down_state: &UseState<Option<MouseClick>>,
-    arrows: &UseRef<Arrows>,
+    arrows: &UseLock<Arrows>,
 ) {
     let mouse_down = MouseClick::from(event);
     if mouse_down.kind.contains(MouseButton::Primary) {
@@ -201,7 +201,7 @@ fn handle_on_mouse_up_event(
     event: Event<MouseData>,
     mouse_down_state: &UseState<Option<MouseClick>>,
     dragging_point_state: &UseState<Option<ClientPoint>>,
-    arrows: &UseRef<Arrows>,
+    arrows: &UseLock<Arrows>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
@@ -254,9 +254,9 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let arrows = use_ref(cx, Arrows::default);
-    let analysis_arrows = use_ref(cx, Arrows::default);
-    let stockfish_process = use_ref::<Option<Process>>(cx, || None);
+    let arrows = use_lock(cx, Arrows::default);
+    let analysis_arrows = use_lock(cx, Arrows::default);
+    let stockfish_process = use_async_lock::<Option<Process>>(cx, || None);
 
     use_effect(cx, &cx.props.analyze, |analyze| {
         toggle_stockfish(

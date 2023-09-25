@@ -12,7 +12,10 @@ use server_functions::setup_remote_game;
 const WIDGET_HEIGHT: u32 = 800;
 const START_TIME: Duration = Duration::from_secs(3600);
 
-fn get_default_perspective(white_player: &UseRef<Player>, black_player: &UseRef<Player>) -> Color {
+fn get_default_perspective(
+    white_player: &UseLock<Player>,
+    black_player: &UseLock<Player>,
+) -> Color {
     if black_player.read().kind == PlayerKind::Local
         && white_player.read().kind != PlayerKind::Local
     {
@@ -29,8 +32,8 @@ pub(crate) fn App(cx: Scope) -> Element {
     #[cfg(not(target_arch = "wasm32"))]
     let window = dioxus_desktop::use_window(cx);
 
-    let white_player = use_ref(cx, || Player::with_color(Color::White));
-    let black_player = use_ref(cx, || Player::with_color(Color::Black));
+    let white_player = use_lock(cx, || Player::with_color(Color::White));
+    let black_player = use_lock(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
     let game = use_shared_state::<Game>(cx).unwrap();
     let game_id = use_shared_state::<GameId>(cx).unwrap();

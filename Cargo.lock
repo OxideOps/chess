@@ -127,7 +127,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81953c529336010edd6d8e358f886d9581267795c61b19475b71314bffa46d35"
 dependencies = [
  "concurrent-queue",
- "event-listener",
+ "event-listener 2.5.3",
  "futures-core",
 ]
 
@@ -146,14 +146,14 @@ dependencies = [
 
 [[package]]
 name = "async-executor"
-version = "1.5.1"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fa3dc5f2a8564f07759c008b9109dc0d39de92a88d5588b8a5036d286383afb"
+checksum = "78f2db9467baa66a700abce2a18c5ad793f6f83310aca1284796fc3921d113fd"
 dependencies = [
  "async-lock",
  "async-task",
  "concurrent-queue",
- "fastrand 1.9.0",
+ "fastrand 2.0.0",
  "futures-lite",
  "slab",
 ]
@@ -199,24 +199,42 @@ version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "287272293e9d8c41773cec55e365490fe034813a2f172f502d6ddcf75b2f582b"
 dependencies = [
- "event-listener",
+ "event-listener 2.5.3",
 ]
 
 [[package]]
 name = "async-process"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a9d28b1d97e08915212e2e45310d47854eafa69600756fc735fb788f75199c9"
+checksum = "bf012553ce51eb7aa6dc2143804cc8252bd1cb681a1c5cb7fa94ca88682dee1d"
 dependencies = [
  "async-io",
  "async-lock",
- "autocfg",
+ "async-signal",
  "blocking",
  "cfg-if",
- "event-listener",
+ "event-listener 3.0.0",
  "futures-lite",
- "rustix 0.37.23",
- "signal-hook",
+ "rustix 0.38.14",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "async-signal"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4af361a844928cb7d36590d406709473a1b574f443094422ef166daa3b493208"
+dependencies = [
+ "async-io",
+ "async-lock",
+ "atomic-waker",
+ "cfg-if",
+ "concurrent-queue",
+ "futures-core",
+ "futures-io",
+ "libc",
+ "signal-hook-registry",
+ "slab",
  "windows-sys 0.48.0",
 ]
 
@@ -1005,7 +1023,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -1018,7 +1036,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "bumpalo",
  "futures-channel",
@@ -1034,7 +1052,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "constcat",
  "dioxus-core",
@@ -1053,7 +1071,7 @@ checksum = "2ea539174bb236e0e7dc9c12b19b88eae3cb574dedbd0252a2d43ea7e6de13e2"
 [[package]]
 name = "dioxus-desktop"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "async-trait",
  "core-foundation",
@@ -1082,7 +1100,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "anymap",
  "async-trait",
@@ -1124,8 +1142,9 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
+ "async-std",
  "dioxus-core",
  "dioxus-debug-cell",
  "futures-channel",
@@ -1137,7 +1156,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -1150,7 +1169,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -1170,7 +1189,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "js-sys",
  "sledgehammer_bindgen",
@@ -1193,7 +1212,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "anyhow",
  "dioxus",
@@ -1215,7 +1234,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1226,7 +1245,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "dioxus-core",
  "proc-macro2",
@@ -1237,7 +1256,7 @@ dependencies = [
 [[package]]
 name = "dioxus-ssr"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "askama_escape",
  "dioxus-core",
@@ -1252,7 +1271,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -1276,7 +1295,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.4.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#7063c6272be125cdf1448580896749ae6157378e"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -1384,6 +1403,17 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
+
+[[package]]
+name = "event-listener"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29e56284f00d94c1bc7fd3c77027b4623c88c1f53d8d2394c6199f2921dea325"
+dependencies = [
+ "concurrent-queue",
+ "parking",
+ "pin-project-lite",
+]
 
 [[package]]
 name = "fallible-iterator"
@@ -3828,16 +3858,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signal-hook"
-version = "0.3.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8621587d4798caf8eb44879d42e56b9a93ea5dcd315a6487c357130095b62801"
-dependencies = [
- "libc",
- "signal-hook-registry",
-]
-
-[[package]]
 name = "signal-hook-registry"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4178,9 +4198,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.28"
+version = "0.3.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17f6bb557fd245c28e6411aa56b6403c689ad95061f50e4be16c274e70a17e48"
+checksum = "426f806f4089c493dcac0d24c29c01e2c38baf8e30f1b716ee37e83d200b18fe"
 dependencies = [
  "deranged",
  "js-sys",
@@ -4190,9 +4210,9 @@ dependencies = [
 
 [[package]]
 name = "time-core"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7300fbefb4dadc1af235a9cef3737cea692a9d97e1b9cbcd4ebdae6f8868e6fb"
+checksum = "ef927ca75afb808a4d64dd374f00a2adf8d0fcff8e7b184af886c3c87ec4a3f3"
 
 [[package]]
 name = "tinyvec"
@@ -4641,9 +4661,9 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "waker-fn"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d5b2c62b4012a3e1eca5a7e077d13b3bf498c4073e33ccd58626607748ceeca"
+checksum = "f3c4517f54858c779bbcbf228f4fca63d121bf85fbecb2dc578cdf4a39395690"
 
 [[package]]
 name = "walkdir"
