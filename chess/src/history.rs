@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::board_state::BoardState;
+use crate::game_status::GameStatus;
 use crate::moves::Move;
 use crate::turn::Turn;
 
@@ -20,6 +21,10 @@ impl History {
             repetition_counter: vec![(initial_state, 1)].into_iter().collect(),
             ..Default::default()
         }
+    }
+
+    pub(super) fn update_status(&self, status: GameStatus) {
+
     }
 
     pub(super) fn get_real_turn(&self) -> Turn {
@@ -71,7 +76,7 @@ impl History {
         self.current_turn += 1
     }
 
-    pub(super) fn add_info(&mut self, next_state: BoardState, mv: Move, king_is_checked: bool) {
+    pub(super) fn add_info(&mut self, next_state: BoardState, mv: Move) {
         let real_state = *self.get_real_state();
         let is_pawn = real_state.get_piece(&mv.from).unwrap().is_pawn();
         let is_capture_move =
@@ -79,7 +84,7 @@ impl History {
 
         self.update_fifty_move_info(is_capture_move, is_pawn);
         self.update_repetition_info(next_state);
-        self.add_turn(Turn::new(next_state, mv, is_capture_move, king_is_checked));
+        self.add_turn(Turn::new(next_state, mv, is_capture_move));
     }
 
     pub(super) fn get_fifty_move_count(&self) -> u8 {
