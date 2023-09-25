@@ -23,16 +23,12 @@ impl History {
         }
     }
 
-    pub(super) fn update_status(&self, status: GameStatus) {
-        self.get_real_turn().status = status;
+    pub(super) fn update_status(&mut self, status: GameStatus) {
+        self.get_real_turn().unwrap().status = status;
     }
 
-    pub(super) fn get_real_turn(&self) -> Turn {
-        if let Some(&turn) = self.turns.last() {
-            turn
-        } else {
-            Turn::default()
-        }
+    pub(super) fn get_real_turn(&mut self) -> Option<&mut Turn> {
+        self.turns.last_mut()
     }
 
     pub(super) fn get_current_move(&self) -> Option<Move> {
