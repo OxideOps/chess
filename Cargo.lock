@@ -673,9 +673,9 @@ dependencies = [
  "chess",
  "clap",
  "common",
- "dioxus",
+ "dioxus 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-desktop",
- "dioxus-fullstack",
+ "dioxus-fullstack 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
  "dioxus-logger",
  "dioxus-web",
  "futures",
@@ -1023,14 +1023,43 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "dioxus-core 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-core-macro 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-hooks 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-hot-reload 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-html 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-rsx 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+]
+
+[[package]]
+name = "dioxus"
+version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
- "dioxus-core",
- "dioxus-core-macro",
- "dioxus-hooks",
- "dioxus-hot-reload",
- "dioxus-html",
- "dioxus-rsx",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-core-macro 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-hooks 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-hot-reload 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-html 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-rsx 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+]
+
+[[package]]
+name = "dioxus-core"
+version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "bumpalo",
+ "futures-channel",
+ "futures-util",
+ "longest-increasing-subsequence",
+ "rustc-hash",
+ "serde",
+ "slab",
+ "smallbox",
+ "tracing",
 ]
 
 [[package]]
@@ -1052,11 +1081,24 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "constcat",
+ "dioxus-core 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-rsx 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.37",
+]
+
+[[package]]
+name = "dioxus-core-macro"
+version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "constcat",
- "dioxus-core",
- "dioxus-rsx",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-rsx 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "proc-macro2",
  "quote",
  "syn 2.0.37",
@@ -1075,9 +1117,9 @@ source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f67188
 dependencies = [
  "async-trait",
  "core-foundation",
- "dioxus-core",
- "dioxus-hot-reload",
- "dioxus-html",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-hot-reload 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-html 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-interpreter-js",
  "dunce",
  "futures-channel",
@@ -1100,6 +1142,35 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "anymap",
+ "async-trait",
+ "axum-macros",
+ "base64 0.21.4",
+ "bytes",
+ "dioxus 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-hot-reload 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus_server_macro 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "futures-util",
+ "http-body-util",
+ "object-pool",
+ "once_cell",
+ "pin-project",
+ "postcard",
+ "serde",
+ "serde_json",
+ "server_fn",
+ "thiserror",
+ "tower-layer",
+ "tracing",
+ "tracing-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "dioxus-fullstack"
+version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "anymap",
@@ -1108,13 +1179,11 @@ dependencies = [
  "axum-macros",
  "base64 0.21.4",
  "bytes",
- "dioxus",
- "dioxus-desktop",
- "dioxus-hot-reload",
+ "dioxus 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-hot-reload 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-router",
  "dioxus-ssr",
- "dioxus-web",
- "dioxus_server_macro",
+ "dioxus_server_macro 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "futures-util",
  "http",
  "http-body 0.4.5",
@@ -1142,10 +1211,23 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "dioxus-core 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-debug-cell",
+ "futures-channel",
+ "slab",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "dioxus-hooks"
+version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "async-std",
- "dioxus-core",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-debug-cell",
  "futures-channel",
  "slab",
@@ -1156,14 +1238,45 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
 dependencies = [
- "dioxus-core",
- "dioxus-html",
- "dioxus-rsx",
+ "dioxus-core 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-html 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "dioxus-rsx 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
  "interprocess-docfix",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "dioxus-hot-reload"
+version = "0.4.2"
+source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
+dependencies = [
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-html 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-rsx 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "interprocess-docfix",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "dioxus-html"
+version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "async-channel",
+ "async-trait",
+ "dioxus-core 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "enumset",
+ "euclid",
+ "keyboard-types",
+ "serde",
+ "serde-value",
+ "serde_json",
+ "serde_repr",
+ "web-sys",
 ]
 
 [[package]]
@@ -1173,7 +1286,7 @@ source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f67188
 dependencies = [
  "async-channel",
  "async-trait",
- "dioxus-core",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "enumset",
  "euclid",
  "keyboard-types",
@@ -1215,7 +1328,7 @@ version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "anyhow",
- "dioxus",
+ "dioxus 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-router-macro",
  "dioxus-ssr",
  "futures-util",
@@ -1245,9 +1358,20 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "dioxus-core 0.4.2 (git+https://github.com/DioxusLabs/dioxus.git)",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.37",
+]
+
+[[package]]
+name = "dioxus-rsx"
+version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
- "dioxus-core",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "proc-macro2",
  "quote",
  "syn 2.0.37",
@@ -1259,7 +1383,7 @@ version = "0.4.2"
 source = "git+https://github.com/OxideOps/dioxus.git#d541a64107f5ddbccc4d5f671887e6a80260b92a"
 dependencies = [
  "askama_escape",
- "dioxus-core",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "http",
  "lru 0.10.1",
  "rustc-hash",
@@ -1276,8 +1400,8 @@ dependencies = [
  "async-channel",
  "async-trait",
  "console_error_panic_hook",
- "dioxus-core",
- "dioxus-html",
+ "dioxus-core 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-html 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-interpreter-js",
  "futures-channel",
  "futures-util",
@@ -1290,6 +1414,18 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "dioxus_server_macro"
+version = "0.4.2"
+source = "git+https://github.com/DioxusLabs/dioxus.git#517a43d7659680a05c1705426f9d5da55579458e"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro2",
+ "quote",
+ "server_fn_macro",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -3734,8 +3870,8 @@ dependencies = [
  "axum",
  "build_common",
  "common",
- "dioxus",
- "dioxus-fullstack",
+ "dioxus 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-fullstack 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "dioxus-logger",
  "futures",
  "hyper",
@@ -3753,8 +3889,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "chess",
- "dioxus",
- "dioxus-fullstack",
+ "dioxus 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
+ "dioxus-fullstack 0.4.2 (git+https://github.com/OxideOps/dioxus.git)",
  "futures",
  "once_cell",
  "rand 0.8.5",
