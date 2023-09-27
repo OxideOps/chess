@@ -30,10 +30,17 @@ pub(crate) async fn update_analysis_arrows(
     arrows: &UseLock<Arrows>,
     process: &UseAsyncLock<Option<Process>>,
 ) {
-    let stdout = process.write().await.as_mut().unwrap().stdout.take().unwrap();
+    let stdout = process
+        .write()
+        .await
+        .as_mut()
+        .unwrap()
+        .stdout
+        .take()
+        .unwrap();
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {
-        process_output(output, &mut evals, &arrows).await;
+        process_output(output, &mut evals, arrows).await;
     }
 }
