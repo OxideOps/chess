@@ -26,7 +26,10 @@ pub(crate) async fn run_stockfish() -> Result<Process> {
     Ok(cmd.spawn()?)
 }
 
-pub(crate) async fn update_analysis_arrows(arrows: &UseLock<Arrows>, process: &UseAsyncLock<Option<Process>>) {
+pub(crate) async fn update_analysis_arrows(
+    arrows: &UseLock<Arrows>,
+    process: &UseAsyncLock<Option<Process>>,
+) {
     let stdout = process
         .with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap())
         .await;
