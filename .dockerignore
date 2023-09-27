@@ -1,7 +1,5 @@
 # flyctl launch added from .gitignore
-target
 .vscode
-dist
 
 # flyctl launch added from .idea/.gitignore
 # Default ignored files
