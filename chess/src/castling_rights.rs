@@ -23,32 +23,25 @@ impl Default for CastlingRights {
 }
 
 impl CastlingRights {
-    pub(super) const WHITE_KING: Position = Position { x: 4, y: 0 };
-    pub(super) const BLACK_KING: Position = Position { x: 4, y: 7 };
-    pub(super) const WHITE_KINGSIDE_ROOK: Position = Position { x: 7, y: 0 };
-    pub(super) const WHITE_QUEENSIDE_ROOK: Position = Position { x: 0, y: 0 };
-    pub(super) const BLACK_KINGSIDE_ROOK: Position = Position { x: 7, y: 7 };
-    pub(super) const BLACK_QUEENSIDE_ROOK: Position = Position { x: 0, y: 7 };
-
     pub(super) fn rook_positions() -> [(Position, Piece, CastlingRightsKind); 4] {
         [
             (
-                CastlingRights::WHITE_KINGSIDE_ROOK,
+                Position::WHITE_KINGSIDE_ROOK,
                 Piece::Rook(Color::White),
                 CastlingRightsKind::WhiteKingside,
             ),
             (
-                CastlingRights::WHITE_QUEENSIDE_ROOK,
+                Position::WHITE_QUEENSIDE_ROOK,
                 Piece::Rook(Color::White),
                 CastlingRightsKind::WhiteQueenside,
             ),
             (
-                CastlingRights::BLACK_KINGSIDE_ROOK,
+                Position::BLACK_KINGSIDE_ROOK,
                 Piece::Rook(Color::Black),
                 CastlingRightsKind::BlackKingside,
             ),
             (
-                CastlingRights::BLACK_QUEENSIDE_ROOK,
+                Position::BLACK_QUEENSIDE_ROOK,
                 Piece::Rook(Color::Black),
                 CastlingRightsKind::BlackQueenside,
             ),
@@ -59,13 +52,13 @@ impl CastlingRights {
     {
         [
             (
-                CastlingRights::WHITE_KING,
+                Position::WHITE_KING,
                 Piece::King(Color::White),
                 CastlingRightsKind::WhiteKingside,
                 CastlingRightsKind::WhiteQueenside,
             ),
             (
-                CastlingRights::BLACK_KING,
+                Position::BLACK_KING,
                 Piece::King(Color::Black),
                 CastlingRightsKind::BlackKingside,
                 CastlingRightsKind::BlackQueenside,
@@ -76,14 +69,14 @@ impl CastlingRights {
     pub(super) fn get_castling_positions(player: Color) -> (Position, Position, Position) {
         match player {
             Color::White => (
-                CastlingRights::WHITE_KING,
-                CastlingRights::WHITE_KINGSIDE_ROOK,
-                CastlingRights::WHITE_QUEENSIDE_ROOK,
+                Position::WHITE_KING,
+                Position::WHITE_KINGSIDE_ROOK,
+                Position::WHITE_QUEENSIDE_ROOK,
             ),
             Color::Black => (
-                CastlingRights::BLACK_KING,
-                CastlingRights::BLACK_KINGSIDE_ROOK,
-                CastlingRights::BLACK_QUEENSIDE_ROOK,
+                Position::BLACK_KING,
+                Position::BLACK_KINGSIDE_ROOK,
+                Position::BLACK_QUEENSIDE_ROOK,
             ),
         }
     }
@@ -93,12 +86,12 @@ impl CastlingRights {
     ) -> (Position, CastlingRightsKind, CastlingRightsKind) {
         match player {
             Color::White => (
-                CastlingRights::WHITE_KING,
+                Position::WHITE_KING,
                 CastlingRightsKind::WhiteKingside,
                 CastlingRightsKind::WhiteQueenside,
             ),
             Color::Black => (
-                CastlingRights::BLACK_KING,
+                Position::BLACK_KING,
                 CastlingRightsKind::BlackKingside,
                 CastlingRightsKind::BlackQueenside,
             ),
