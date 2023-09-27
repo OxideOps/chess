@@ -1,5 +1,4 @@
 use crate::shared_states::GameId;
-use anyhow;
 use async_std::channel::Receiver;
 use chess::game::Game;
 use chess::moves::Move;
