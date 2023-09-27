@@ -26,8 +26,10 @@ pub(crate) async fn run_stockfish() -> Result<Process> {
     Ok(cmd.spawn()?)
 }
 
-pub(crate) async fn update_analysis_arrows(arrows: UseLock<Arrows>, process: &mut Process) {
-    let stdout = process.stdout.take().unwrap();
+pub(crate) async fn update_analysis_arrows(arrows: &UseLock<Arrows>, process: &UseAsyncLock<Option<Process>>) {
+    let stdout = process
+        .with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap())
+        .await;
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {

@@ -61,9 +61,9 @@ pub async fn toggle_stockfish(
             Ok(mut process) => {
                 init_stockfish(&mut process).await;
                 update_position(&game.read().get_fen_str(), &mut process).await;
-                update_analysis_arrows(arrows.clone(), &mut process).await;
                 arrows.set(Arrows::with_size(MOVES));
                 stockfish_process.set(Some(process)).await;
+                update_analysis_arrows(&arrows, &stockfish_process).await;
             }
             Err(err) => log::error!("Failed to start stockfish: {err:?}"),
         }
