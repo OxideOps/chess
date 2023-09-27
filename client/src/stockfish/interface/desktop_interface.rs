@@ -1,10 +1,10 @@
 use crate::arrows::Arrows;
 use crate::stockfish::core::{process_output, MOVES};
+use anyhow::Result;
 use async_process::{Child, Command, Stdio};
 use async_std::io::BufReader;
 use async_std::prelude::*;
 use dioxus::prelude::*;
-use anyhow::Result;
 
 pub(crate) type Process = Child;
 
@@ -26,10 +26,7 @@ pub(crate) async fn run_stockfish() -> Result<Process> {
     Ok(cmd.spawn()?)
 }
 
-pub(crate) async fn update_analysis_arrows(
-    arrows: UseLock<Arrows>,
-    process: &mut Process,
-) {
+pub(crate) async fn update_analysis_arrows(arrows: UseLock<Arrows>, process: &mut Process) {
     let stdout = process.stdout.take().unwrap();
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
