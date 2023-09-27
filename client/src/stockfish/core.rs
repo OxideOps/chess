@@ -79,12 +79,10 @@ pub async fn on_game_changed(
     process: UseAsyncLock<Option<Process>>,
     arrows: UseLock<Arrows>,
 ) {
-    if process.read().await.is_some() {
-        if let Some(process) = process.write().await.as_mut() {
-            update_position(&fen, process).await;
-            wait_until_ready(process).await;
-            arrows.set(Arrows::with_size(MOVES));
-        }
+    if let Some(process) = process.write().await.as_mut() {
+        update_position(&fen, process).await;
+        wait_until_ready(process).await;
+        arrows.set(Arrows::with_size(MOVES));
     }
 }
 
