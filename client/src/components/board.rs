@@ -303,25 +303,21 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 width: "{cx.props.size}",
                 height: "{cx.props.size}"
             }
-            // highlight from-to squares
-            if let Some(mv) = { game.read().get_current_move() }  {
+            // highlight squares
+            game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
+                let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                 rsx! {
-                    mv.get_positions().into_iter().map(|pos| {
-                        let (top_left, _) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
-                        rsx! {
-                            div {
-                                class: "squares-highlighted",
-                                style: "
-                                    left: {top_left.x}px; 
-                                    top: {top_left.y}px; 
-                                    width: {cx.props.size / 8}px; 
-                                    height: {cx.props.size / 8}px;
-                                ",
-                            }
-                        }
-                    }),
+                    div {
+                        class: "{class}",
+                        style: "
+                            left: {top_left.x}px; 
+                            top: {top_left.y}px; 
+                            width: {cx.props.size / 8}px; 
+                            height: {cx.props.size / 8}px;
+                        ",
+                    }
                 }
-            }
+            })
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);

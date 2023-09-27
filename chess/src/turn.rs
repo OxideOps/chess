@@ -1,4 +1,4 @@
-use crate::{board_state::BoardState, moves::Move};
+use crate::{board_state::BoardState, game_status::GameStatus, moves::Move};
 
 use std::fmt;
 
@@ -7,21 +7,16 @@ pub struct Turn {
     pub(super) board_state: BoardState,
     pub(super) mv: Move,
     pub(super) piece_captured: bool,
-    pub(super) king_is_checked: bool,
+    pub(crate) status: GameStatus,
 }
 
 impl Turn {
-    pub fn new(
-        board_state: BoardState,
-        mv: Move,
-        piece_captured: bool,
-        king_is_checked: bool,
-    ) -> Self {
+    pub fn new(board_state: BoardState, mv: Move, piece_captured: bool) -> Self {
         Self {
             board_state,
             mv,
             piece_captured,
-            king_is_checked,
+            ..Default::default()
         }
     }
 }
@@ -34,7 +29,13 @@ impl fmt::Display for Turn {
             self.board_state.get_piece(&self.mv.to).unwrap(),
             if self.piece_captured { "x" } else { "" },
             self.mv.to,
-            if self.king_is_checked { "+" } else { "" }
+            if matches!(self.status, GameStatus::Check(..)) {
+                "+"
+            } else if matches!(self.status, GameStatus::Checkmate(..)) {
+                "#"
+            } else {
+                ""
+            }
         )
     }
 }

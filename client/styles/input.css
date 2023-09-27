@@ -25,8 +25,20 @@ body {
     -webkit-user-drag: none;
 }
 
-.squares-highlighted {
+.moved-square {
     @apply absolute bg-yellow-500/50;
+}
+
+.check-square {
+    @apply absolute bg-red-600/70;
+}
+
+.checkmate-square {
+    @apply absolute bg-black/70;
+}
+
+.transparent-square {
+    @apply absolute bg-transparent;
 }
 
 td {

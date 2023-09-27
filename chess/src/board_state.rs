@@ -8,13 +8,28 @@ use crate::position::Position;
 use crate::result::{ChessError, ChessResult};
 use std::hash::Hash;
 
-#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 /// A struct encapsulating the state for the `Board`.
 pub(super) struct BoardState {
     pub(super) player: Color,
     board: Board,
     pub(super) castling_rights: CastlingRights,
     pub(super) en_passant_position: Option<Position>,
+    pub(super) white_king_position: Position,
+    pub(super) black_king_position: Position,
+}
+
+impl Default for BoardState {
+    fn default() -> Self {
+        Self {
+            player: Color::default(),
+            board: Board::default(),
+            castling_rights: CastlingRights::default(),
+            en_passant_position: None,
+            white_king_position: Position::WHITE_KING,
+            black_king_position: Position::BLACK_KING,
+        }
+    }
 }
 
 impl BoardState {
@@ -35,6 +50,15 @@ impl BoardState {
         }
         self.board
             .set_piece(&Position::new(mv.to.x, mv.to.y), Some(piece));
+
+        // Update king's position if a king is moved
+        if piece == Piece::King(self.player) {
+            match self.player {
+                Color::White => self.white_king_position = mv.to,
+                Color::Black => self.black_king_position = mv.to,
+            }
+        }
+
         self.update(mv)
     }
 
