@@ -4,20 +4,18 @@ use async_process::{Child, Command, Stdio};
 use async_std::io::BufReader;
 use async_std::prelude::*;
 use dioxus::prelude::*;
-use std::io::Result;
+use anyhow::Result;
 
 pub(crate) type Process = Child;
 
-pub(crate) async fn send_command(process: &UseAsyncLock<Option<Process>>, command: &str) {
-    if let Some(process) = &mut *process.write().await {
-        process
-            .stdin
-            .as_mut()
-            .unwrap()
-            .write_all(&format!("{command}\n").into_bytes())
-            .await
-            .expect("Failed to send stockfish command")
-    }
+pub(crate) async fn send_command(process: &mut Process, command: &str) {
+    process
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(&format!("{command}\n").into_bytes())
+        .await
+        .expect("Failed to send stockfish command")
 }
 
 pub(crate) async fn run_stockfish() -> Result<Process> {
@@ -25,16 +23,14 @@ pub(crate) async fn run_stockfish() -> Result<Process> {
     cmd.stdout(Stdio::piped())
         .stdin(Stdio::piped())
         .kill_on_drop(true);
-    cmd.spawn()
+    Ok(cmd.spawn()?)
 }
 
 pub(crate) async fn update_analysis_arrows(
     arrows: UseLock<Arrows>,
-    process: UseAsyncLock<Option<Process>>,
+    process: &mut Process,
 ) {
-    let stdout = process
-        .with_mut(|process| process.as_mut().unwrap().stdout.take().unwrap())
-        .await;
+    let stdout = process.stdout.take().unwrap();
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {
