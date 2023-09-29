@@ -21,12 +21,10 @@ fn get_js_method(object: &Process, method: &str) -> Function {
         .clone()
 }
 
-pub(crate) async fn send_command(process: &UseAsyncLock<Option<Process>>, command: &str) {
-    if let Some(process) = &*process.write().await {
-        get_js_method(process, "postMessage")
-            .call1(process, &command.into())
-            .expect("Failed to send stockfish output");
-    }
+pub(crate) async fn send_command(process: &mut Process, command: &str) {
+    get_js_method(process, "postMessage")
+        .call1(process, &command.into())
+        .expect("Failed to send stockfish output");
 }
 
 pub(crate) async fn run_stockfish() -> Result<Object, JsValue> {
@@ -51,8 +49,8 @@ pub(crate) async fn run_stockfish() -> Result<Object, JsValue> {
 }
 
 pub(crate) async fn update_analysis_arrows(
-    arrows: UseLock<Arrows>,
-    _process: UseAsyncLock<Option<Process>>,
+    arrows: &UseLock<Arrows>,
+    _process: &UseAsyncLock<Option<Process>>,
 ) {
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Ok(output) = CHANNEL.1.recv().await {

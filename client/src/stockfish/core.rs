@@ -45,7 +45,7 @@ fn eval_to_alpha(eval: f64, evals: &[f64]) -> f64 {
     sigmoid(inv_sigmoid(ALPHA) + eval - evals.iter().max_by(|a, b| a.total_cmp(b)).unwrap())
 }
 
-async fn wait_until_ready(process: &UseAsyncLock<Option<Process>>) {
+async fn wait_until_ready(process: &mut Process) {
     send_command(process, "isready").await;
     READY_CHANNEL.1.recv().await.ok();
 }
@@ -58,17 +58,17 @@ pub async fn toggle_stockfish(
 ) {
     if *analyze.get() {
         match run_stockfish().await {
-            Ok(process) => {
-                stockfish_process.set(Some(process)).await;
+            Ok(mut process) => {
+                init_stockfish(&mut process).await;
+                update_position(&game.read().get_fen_str(), &mut process).await;
                 arrows.set(Arrows::with_size(MOVES));
-                init_stockfish(&stockfish_process).await;
-                update_position(game.with(|game| game.get_fen_str()), &stockfish_process).await;
-                update_analysis_arrows(arrows, stockfish_process).await;
+                stockfish_process.set(Some(process)).await;
+                update_analysis_arrows(&arrows, &stockfish_process).await;
             }
-            Err(err) => log::error!("Failed to start stockfi1sh: {err:?}"),
+            Err(err) => log::error!("Failed to start stockfish: {err:?}"),
         }
     } else if stockfish_process.read().await.is_some() {
-        stop_stockfish(&stockfish_process).await;
+        stop_stockfish(stockfish_process.write().await.as_mut().unwrap()).await;
         arrows.set(Arrows::default());
         stockfish_process.set(None).await;
     }
@@ -79,9 +79,9 @@ pub async fn on_game_changed(
     process: UseAsyncLock<Option<Process>>,
     arrows: UseLock<Arrows>,
 ) {
-    if process.read().await.is_some() {
-        update_position(fen, &process).await;
-        wait_until_ready(&process).await;
+    if let Some(process) = process.write().await.as_mut() {
+        update_position(&fen, process).await;
+        wait_until_ready(process).await;
         arrows.set(Arrows::with_size(MOVES));
     }
 }
@@ -106,7 +106,7 @@ pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseLock<Ar
     }
 }
 
-pub async fn init_stockfish(process: &UseAsyncLock<Option<Process>>) {
+pub async fn init_stockfish(process: &mut Process) {
     log::info!("Starting Stockfish");
     send_command(process, "uci").await;
     send_command(process, &format!("setoption name MultiPV value {MOVES}")).await;
@@ -114,13 +114,13 @@ pub async fn init_stockfish(process: &UseAsyncLock<Option<Process>>) {
     send_command(process, &format!("setoption name Hash value {HASH}")).await;
 }
 
-pub async fn stop_stockfish(process: &UseAsyncLock<Option<Process>>) {
+pub async fn stop_stockfish(process: &mut Process) {
     log::info!("Stopping Stockfish");
     send_command(process, "stop").await;
     send_command(process, "quit").await;
 }
 
-pub async fn update_position(fen_str: String, process: &UseAsyncLock<Option<Process>>) {
+pub async fn update_position(fen_str: &str, process: &mut Process) {
     log::debug!("Setting stockfish position: {fen_str:?}");
     send_command(process, "stop").await;
     send_command(process, &format!("position fen {fen_str}")).await;
