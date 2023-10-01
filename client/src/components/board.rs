@@ -1,5 +1,5 @@
 use crate::arrows::{ArrowData, Arrows};
-use crate::components::Arrow;
+use crate::components::{Arrow, Piece};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;
@@ -16,11 +16,15 @@ use dioxus::html::input_data::keyboard_types::Modifiers;
 use dioxus::html::input_data::MouseButton;
 use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
+use futures::executor::block_on;
 use once_cell::sync::Lazy;
 
-pub(crate) type Channel = (Sender<Move>, Receiver<Move>);
+pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 
-static CHANNEL: Lazy<Channel> = Lazy::new(unbounded);
+// Channel for sending moves to `game_socket` to be sent to a remote player
+static MOVE_CHANNEL: Lazy<Channel<Move>> = Lazy::new(unbounded);
+// Channel for telling dragged pieces how far they have been dragged
+static DRAG_CHANNEL: Lazy<Channel<ClientPoint>> = Lazy::new(unbounded);
 
 fn get_board_image(theme: &str) -> String {
     format!("images/boards/{theme}/{theme}.png")
@@ -76,28 +80,6 @@ fn get_dragged_piece_position(
     )
 }
 
-fn get_positions(
-    cx: Scope<BoardProps>,
-    pos: &Position,
-    mouse_down_state: &Option<MouseClick>,
-    dragging_point_state: &Option<ClientPoint>,
-) -> (ClientPoint, usize) {
-    let mut top_left = to_point(pos, cx.props.size, cx.props.perspective);
-    let mut z_index = 1;
-    if let Some(mouse_down) = mouse_down_state {
-        if mouse_down.kind == MouseButton::Primary {
-            if let Some(dragging_point) = dragging_point_state {
-                if *pos == to_position(cx, &mouse_down.point) {
-                    z_index = 2;
-                    top_left.x += dragging_point.x - mouse_down.point.x;
-                    top_left.y += dragging_point.y - mouse_down.point.y;
-                }
-            }
-        }
-    }
-    (top_left, z_index)
-}
-
 fn to_position(cx: Scope<BoardProps>, point: &ClientPoint) -> Position {
     match cx.props.perspective {
         Color::White => Position {
@@ -124,7 +106,7 @@ pub(crate) fn to_point(position: &Position, board_size: u32, perspective: Color)
     }
 }
 
-fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseLock<Arrows>) {
+fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows: &UseRef<Arrows>) {
     let game = use_shared_state::<Game>(cx).unwrap();
 
     match event.key() {
@@ -165,33 +147,34 @@ fn drop_piece(cx: Scope<BoardProps>, event: &Event<MouseData>, point: &ClientPoi
         game.write().move_piece(from, to).ok();
         if opponent_player_kind == PlayerKind::Remote {
             cx.spawn(async move {
-                CHANNEL.0.send(mv).await.expect("Failed to send move!");
+                MOVE_CHANNEL.0.send(mv).await.expect("Failed to send move!");
             });
         }
     }
 }
 
-fn complete_arrow(
-    cx: Scope<BoardProps>,
-    event: &Event<MouseData>,
-    mouse_down: &ClientPoint,
-    arrows: &UseLock<Arrows>,
-) {
-    let from = to_position(cx, mouse_down);
-    let to = to_position(cx, &event.client_coordinates());
-    if to != from {
-        arrows.write().push(ArrowData::with_move(Move { from, to }));
+fn complete_arrow(arrows: &UseRef<Arrows>, drawing_arrow: &UseRef<Option<ArrowData>>) {
+    if let Some(arrow_data) = *drawing_arrow.read() {
+        if arrow_data.has_length() {
+            arrows.write().push(arrow_data);
+        }
     }
+    *drawing_arrow.write() = None;
 }
 
 fn handle_on_mouse_down_event(
+    cx: Scope<BoardProps>,
     event: Event<MouseData>,
     mouse_down_state: &UseState<Option<MouseClick>>,
-    arrows: &UseLock<Arrows>,
+    arrows: &UseRef<Arrows>,
+    drawing_arrow: &UseRef<Option<ArrowData>>,
 ) {
     let mouse_down = MouseClick::from(event);
     if mouse_down.kind.contains(MouseButton::Primary) {
         arrows.write().clear();
+    } else if mouse_down.kind.contains(MouseButton::Secondary) {
+        let pos = to_position(cx, &mouse_down.point);
+        *drawing_arrow.write() = Some(ArrowData::with_move(Move::new(pos, pos)));
     }
     mouse_down_state.set(Some(mouse_down));
 }
@@ -200,28 +183,38 @@ fn handle_on_mouse_up_event(
     cx: Scope<BoardProps>,
     event: Event<MouseData>,
     mouse_down_state: &UseState<Option<MouseClick>>,
-    dragging_point_state: &UseState<Option<ClientPoint>>,
-    arrows: &UseLock<Arrows>,
+    arrows: &UseRef<Arrows>,
+    drawing_arrow: &UseRef<Option<ArrowData>>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             drop_piece(cx, &event, &mouse_down.point);
-        }
-        if mouse_down.kind.contains(MouseButton::Secondary) {
-            complete_arrow(cx, &event, &mouse_down.point, arrows);
+        } else if mouse_down.kind.contains(MouseButton::Secondary) {
+            complete_arrow(arrows, drawing_arrow);
         }
         mouse_down_state.set(None);
     }
-    dragging_point_state.set(None);
 }
 
 fn handle_on_mouse_move_event(
+    cx: Scope<BoardProps>,
     event: Event<MouseData>,
     mouse_down_state: &UseState<Option<MouseClick>>,
-    dragging_point_state: &UseState<Option<ClientPoint>>,
+    drawing_arrow: &UseRef<Option<ArrowData>>,
 ) {
-    if mouse_down_state.is_some() {
-        dragging_point_state.set(Some(event.client_coordinates()));
+    if let Some(mouse_down) = mouse_down_state.get() {
+        if mouse_down.kind.contains(MouseButton::Primary) {
+            block_on(DRAG_CHANNEL.0.send(ClientPoint::new(
+                event.client_coordinates().x - mouse_down.point.x,
+                event.client_coordinates().y - mouse_down.point.y,
+            )))
+            .expect("Failed to send drag offset");
+        } else if mouse_down.kind.contains(MouseButton::Secondary) {
+            let pos = to_position(cx, &event.client_coordinates());
+            if drawing_arrow.read().unwrap().mv.to != pos {
+                drawing_arrow.write().as_mut().unwrap().mv.to = pos;
+            }
+        }
     }
 }
 
@@ -232,30 +225,15 @@ pub(crate) fn get_center(pos: &Position, board_size: u32, perspective: Color) ->
     point
 }
 
-pub(crate) fn get_move_for_arrow(
-    cx: Scope<BoardProps>,
-    mouse_down_state: &UseState<Option<MouseClick>>,
-    dragging_point_state: &UseState<Option<ClientPoint>>,
-) -> Option<Move> {
-    if let Some(mouse_down) = mouse_down_state.get() {
-        if mouse_down.kind.contains(MouseButton::Secondary) {
-            if let Some(dragging_point) = *dragging_point_state.get() {
-                let from = to_position(cx, &mouse_down.point);
-                let to = to_position(cx, &dragging_point);
-                return Some(Move::new(from, to));
-            }
-        }
-    }
-    None
-}
-
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
+    cx.provide_context(DRAG_CHANNEL.1.clone());
+
     // hooks
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
-    let dragging_point_state = use_state::<Option<ClientPoint>>(cx, || None);
-    let arrows = use_lock(cx, Arrows::default);
+    let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_lock(cx, Arrows::default);
+    let drawing_arrow = use_ref::<Option<ArrowData>>(cx, || None);
     let stockfish_process = use_async_lock::<Option<Process>>(cx, || None);
 
     use_effect(cx, &cx.props.analyze, |analyze| {
@@ -274,7 +252,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         )
     });
     use_future(cx, use_shared_state::<GameId>(cx).unwrap(), |game_id| {
-        create_game_socket(game.to_owned(), game_id, &CHANNEL.1)
+        create_game_socket(game.to_owned(), game_id, &MOVE_CHANNEL.1)
     });
 
     let board_img = get_board_image("qootee");
@@ -286,15 +264,14 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             autofocus: true,
             tabindex: 0,
             // event handlers
-            onmousedown: |event| handle_on_mouse_down_event(event, mouse_down_state, arrows),
-            onmouseup: move |event| handle_on_mouse_up_event(
-                cx,
+            onmousedown: |event| handle_on_mouse_down_event(cx, event, mouse_down_state, arrows, drawing_arrow),
+            onmouseup: move |event| handle_on_mouse_up_event(cx,
                 event,
                 mouse_down_state,
-                dragging_point_state,
                 arrows,
+                drawing_arrow
             ),
-            onmousemove: |event| handle_on_mouse_move_event(event, mouse_down_state, dragging_point_state),
+            onmousemove: |event| handle_on_mouse_move_event(cx, event, mouse_down_state, drawing_arrow),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
             // board
             img {
@@ -320,41 +297,29 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             })
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
-                let (top_left, z_index) = get_positions(cx, &pos, mouse_down_state, dragging_point_state);
-                let piece_img = get_piece_image_file(piece_theme, piece);
                 rsx! {
-                    img {
-                        src: "{piece_img}",
-                        class: "images",
-                        style: "left: {top_left.x}px; top: {top_left.y}px; z-index: {z_index}",
-                        width: "{cx.props.size / 8}",
-                        height: "{cx.props.size / 8}",
+                    Piece {
+                        image: get_piece_image_file(piece_theme, piece),
+                        top_left_starting: to_point(&pos, cx.props.size, cx.props.perspective),
+                        size: cx.props.size / 8,
+                        is_dragging: mouse_down_state.get().as_ref().map_or(false, |mouse_down| {
+                            mouse_down.kind.contains(MouseButton::Primary)
+                                && pos == to_position(cx, &mouse_down.point)
+                        }),
                     }
                 }
             }),
             // arrows
-            for arrows in [arrows, analysis_arrows] {
-                arrows.read().get().into_iter().map(|data| {
-                    rsx! {
-                        Arrow {
-                          show: data.mv.from != data.mv.to,
-                          data: data,
-                          board_size: cx.props.size,
-                          perspective: cx.props.perspective,
-                        }
+            arrows.read().get().into_iter()
+                .chain(analysis_arrows.read().get().into_iter())
+                .chain(drawing_arrow.read().into_iter())
+                .map(|data| rsx! {
+                    Arrow {
+                        data: data,
+                        board_size: cx.props.size,
+                        perspective: cx.props.perspective,
                     }
                 })
-            }
-            if let Some(mv) = get_move_for_arrow(cx, mouse_down_state, dragging_point_state) {
-                rsx! {
-                    Arrow {
-                      show: mv.from != mv.to,
-                      data: ArrowData::with_move(mv),
-                      board_size: cx.props.size,
-                      perspective: cx.props.perspective
-                    }
-                }
-            }
         }
     })
 }

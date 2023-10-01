@@ -49,7 +49,9 @@ pub(crate) fn App(cx: Scope) -> Element {
             start_time: START_TIME,
             height: WIDGET_HEIGHT
         }
-        div { class: "flex justify-center items-center", style: "width: {WIDGET_HEIGHT}px",
+        div {
+            class: "flex justify-center items-center",
+            style: "width: {WIDGET_HEIGHT}px",
             button {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",

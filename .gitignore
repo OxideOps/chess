@@ -1,6 +1,7 @@
 target
 .vscode
 .idea
+.run
 dist
 client/styles/output.css
 client/node_modules

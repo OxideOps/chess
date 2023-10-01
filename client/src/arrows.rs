@@ -27,6 +27,10 @@ impl ArrowData {
             ..Self::default()
         }
     }
+
+    pub(super) fn has_length(&self) -> bool {
+        self.mv.from != self.mv.to
+    }
 }
 
 #[derive(Default, Debug)]

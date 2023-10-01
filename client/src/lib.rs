@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 mod arrows;
 pub mod components;
 mod game_socket;

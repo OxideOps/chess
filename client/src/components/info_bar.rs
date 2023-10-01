@@ -13,7 +13,7 @@ pub(crate) struct InfoBarProps {
 pub(crate) fn InfoBar(cx: Scope<InfoBarProps>) -> Element {
     cx.render(rsx! {
         div { class: "info-bar-container", style: "left: {cx.props.left}px;",
-            Timer { start_time: cx.props.start_time },
+            Timer { start_time: cx.props.start_time }
             RoundList {}
         }
     })
