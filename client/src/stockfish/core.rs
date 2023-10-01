@@ -100,6 +100,10 @@ pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseLock<Ar
             let i = move_number.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();
             let eval = get_eval(output);
+            if i == 0 {
+                // clear out old evals when we get a new set
+                evals.fill(f64::NEG_INFINITY);
+            }
             evals[i] = eval;
             arrows.write().set(
                 i,
