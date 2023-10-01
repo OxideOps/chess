@@ -1,5 +1,7 @@
 use crate::arrows::{ArrowData, Arrows, ALPHA};
 use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
+use crate::system_info::{get_num_cores, get_total_ram};
+
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::game::Game;
 use chess::moves::Move;
@@ -10,11 +12,13 @@ use regex::Regex;
 type Channel = (Sender<()>, Receiver<()>);
 
 pub const MOVES: usize = 10;
-pub const THREADS: usize = 4;
 pub const DEPTH: usize = 40;
-pub const HASH: usize = 256;
 // How much differences in stockfish evaluation affect the alpha of the arrows
 const ALPHA_SENSITIVITY: f64 = 1.0 / 20.0;
+// How much a mate in 1 is worth in centipawns
+const MATE_IN_1_EVAL: f64 = 100000.0;
+// How much (in centipawns) getting a mate 1 move sooner is worth
+const MATE_MOVE_EVAL: f64 = 50.0;
 
 static READY_CHANNEL: Lazy<Channel> = Lazy::new(unbounded::<()>);
 
@@ -34,10 +38,13 @@ fn sigmoid(x: f64) -> f64 {
 
 fn get_eval(output: &str) -> f64 {
     ALPHA_SENSITIVITY
-        * get_info(output, "score cp")
-            .unwrap()
-            .parse::<f64>()
-            .unwrap()
+        * if let Some(mate_in) = get_info(output, "mate") {
+            MATE_IN_1_EVAL - MATE_MOVE_EVAL * (mate_in.parse::<f64>().unwrap() - 1.0)
+        } else if let Some(score) = get_info(output, "score cp") {
+            score.parse::<f64>().unwrap()
+        } else {
+            panic!("Couldn't get stockfish eval for move!")
+        }
 }
 
 // Makes it so the arrow for the best move has the default ALPHA value
@@ -92,6 +99,10 @@ pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseLock<Ar
             let i = move_number.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();
             let eval = get_eval(output);
+            if i == 0 {
+                // clear out old evals when we get a new set
+                evals.fill(f64::NEG_INFINITY);
+            }
             evals[i] = eval;
             arrows.write().set(
                 i,
@@ -108,10 +119,14 @@ pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseLock<Ar
 
 pub async fn init_stockfish(process: &mut Process) {
     log::info!("Starting Stockfish");
+    // Using all the cores on the system. Should we subtract 1-2 threads to give the UI some room?
+    let threads = get_num_cores();
+    // Use hash size around 50% of total ram in MB that is a multiple of 2048
+    let hash = 2048 * (0.0005 * get_total_ram() as f64 / 2048.0).round() as usize;
     send_command(process, "uci").await;
     send_command(process, &format!("setoption name MultiPV value {MOVES}")).await;
-    send_command(process, &format!("setoption name Threads value {THREADS}")).await;
-    send_command(process, &format!("setoption name Hash value {HASH}")).await;
+    send_command(process, &format!("setoption name Threads value {threads}")).await;
+    send_command(process, &format!("setoption name Hash value {hash}")).await;
 }
 
 pub async fn stop_stockfish(process: &mut Process) {
