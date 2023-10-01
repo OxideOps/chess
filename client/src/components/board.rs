@@ -265,12 +265,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             tabindex: 0,
             // event handlers
             onmousedown: |event| handle_on_mouse_down_event(cx, event, mouse_down_state, arrows, drawing_arrow),
-            onmouseup: move |event| handle_on_mouse_up_event(cx,
-                event,
-                mouse_down_state,
-                arrows,
-                drawing_arrow
-            ),
+            onmouseup: move |event| handle_on_mouse_up_event(cx, event, mouse_down_state, arrows, drawing_arrow),
             onmousemove: |event| handle_on_mouse_move_event(cx, event, mouse_down_state, drawing_arrow),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
             // board
@@ -294,7 +289,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         ",
                     }
                 }
-            })
+            }),
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 rsx! {

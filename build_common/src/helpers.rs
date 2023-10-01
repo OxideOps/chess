@@ -9,6 +9,7 @@ fn get_project_root() -> PathBuf {
             .unwrap(),
     )
 }
+
 fn get_client_path() -> PathBuf {
     get_project_root().join("client")
 }
