@@ -23,11 +23,10 @@ pub fn Piece(cx: Scope<PieceProps>) -> Element {
             async move {
                 if is_dragging {
                     while let Ok(offset) = drag_offset_receiver.recv().await {
-                        top_left.set(ClientPoint {
-                            x: top_left_starting.x + offset.x,
-                            y: top_left_starting.y + offset.y,
-                            _unit: Default::default(),
-                        });
+                        top_left.set(ClientPoint::new(
+                            top_left_starting.x + offset.x,
+                            top_left_starting.y + offset.y,
+                        ));
                     }
                 } else {
                     top_left.set(top_left_starting);

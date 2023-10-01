@@ -174,7 +174,7 @@ fn handle_on_mouse_down_event(
         arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = to_position(cx, &mouse_down.point);
-        *drawing_arrow.write() = Some(ArrowData::with_move(Move { from: pos, to: pos }));
+        *drawing_arrow.write() = Some(ArrowData::with_move(Move::new(pos, pos)));
     }
     mouse_down_state.set(Some(mouse_down));
 }
@@ -204,11 +204,10 @@ fn handle_on_mouse_move_event(
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
-            block_on(DRAG_CHANNEL.0.send(ClientPoint {
-                x: event.client_coordinates().x - mouse_down.point.x,
-                y: event.client_coordinates().y - mouse_down.point.y,
-                _unit: Default::default(),
-            }))
+            block_on(DRAG_CHANNEL.0.send(ClientPoint::new(
+                event.client_coordinates().x - mouse_down.point.x,
+                event.client_coordinates().y - mouse_down.point.y,
+            )))
             .expect("Failed to send drag offset");
         } else if mouse_down.kind.contains(MouseButton::Secondary) {
             let pos = to_position(cx, &event.client_coordinates());
