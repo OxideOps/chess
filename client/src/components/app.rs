@@ -86,19 +86,17 @@ pub(crate) fn App(cx: Scope) -> Element {
                 onclick: |_| analyze.modify(|analyze| !analyze),
                 if *analyze.get() { "Stop analyzing" } else { "Analyze" }
             }
+            #[cfg(not(target_arch = "wasm32"))]
             {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    rsx! {
-                        button {
-                            class: "button",
-                            style: "top: {WIDGET_HEIGHT}px",
-                            onclick: |_| {
-                                log::info!("Quitting game..");
-                                window.close()
-                            },
-                            "Quit"
-                        }
+                rsx! {
+                    button {
+                        class: "button",
+                        style: "top: {WIDGET_HEIGHT}px",
+                        onclick: |_| {
+                            log::info!("Quitting game..");
+                            window.close()
+                        },
+                        "Quit"
                     }
                 }
             }
