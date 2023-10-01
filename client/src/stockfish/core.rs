@@ -1,5 +1,7 @@
 use crate::arrows::{ArrowData, Arrows, ALPHA};
 use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
+use crate::system_info::get_num_cores;
+
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::game::Game;
 use chess::moves::Move;
@@ -10,7 +12,6 @@ use regex::Regex;
 type Channel = (Sender<()>, Receiver<()>);
 
 pub const MOVES: usize = 10;
-pub const THREADS: usize = 4;
 pub const DEPTH: usize = 40;
 pub const HASH: usize = 256;
 // How much differences in stockfish evaluation affect the alpha of the arrows
@@ -108,9 +109,11 @@ pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseLock<Ar
 
 pub async fn init_stockfish(process: &mut Process) {
     log::info!("Starting Stockfish");
+    // Using all the cores on the system. Should we subtract 1-2 threads to give the UI some room?
+    let threads = get_num_cores();
     send_command(process, "uci").await;
     send_command(process, &format!("setoption name MultiPV value {MOVES}")).await;
-    send_command(process, &format!("setoption name Threads value {THREADS}")).await;
+    send_command(process, &format!("setoption name Threads value {threads}")).await;
     send_command(process, &format!("setoption name Hash value {HASH}")).await;
 }
 
