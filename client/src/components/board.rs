@@ -172,11 +172,11 @@ fn handle_on_mouse_down_event(
 ) {
     let mouse_down = MouseClick::from(event);
     if mouse_down.kind.contains(MouseButton::Primary) {
-        *selected_piece.write() = Some(to_position(cx, &mouse_down.point));
+        selected_piece.set(Some(to_position(cx, &mouse_down.point)));
         arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = to_position(cx, &mouse_down.point);
-        *drawing_arrow.write() = Some(ArrowData::with_move(Move::new(pos, pos)));
+        drawing_arrow.set(Some(ArrowData::with_move(Move::new(pos, pos))));
     }
     mouse_down_state.set(Some(mouse_down));
 }
@@ -187,6 +187,7 @@ fn handle_on_mouse_up_event(
     mouse_down_state: &UseState<Option<MouseClick>>,
     arrows: &UseRef<Arrows>,
     drawing_arrow: &UseRef<Option<ArrowData>>,
+    selected_piece: &UseRef<Option<Position>>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
@@ -195,6 +196,7 @@ fn handle_on_mouse_up_event(
             complete_arrow(arrows, drawing_arrow);
         }
         mouse_down_state.set(None);
+        selected_piece.set(None);
     }
 }
 
@@ -275,7 +277,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 drawing_arrow,
                 selected_piece,
             ),
-            onmouseup: move |event| handle_on_mouse_up_event(cx, event, mouse_down_state, arrows, drawing_arrow),
+            onmouseup: move |event| handle_on_mouse_up_event(cx, event, mouse_down_state, arrows, drawing_arrow, selected_piece),
             onmousemove: |event| handle_on_mouse_move_event(cx, event, mouse_down_state, drawing_arrow),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
             // board
