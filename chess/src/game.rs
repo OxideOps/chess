@@ -89,6 +89,14 @@ impl Game {
             .has_castling_right(right)
     }
 
+    pub fn get_valid_destinations_for_piece(&self, position: &Position) -> Vec<Position> {
+        self.valid_moves
+            .iter()
+            .filter(|mv| mv.from == *position)
+            .map(|mv| mv.to)
+            .collect()
+    }
+
     fn navigate_history(&mut self, navigate: impl FnOnce(&mut History)) {
         navigate(&mut self.history);
         self.update_status();

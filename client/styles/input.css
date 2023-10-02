@@ -41,6 +41,10 @@ body {
     @apply absolute bg-transparent;
 }
 
+.circle {
+    @apply absolute bg-green-500/30;
+}
+
 td {
     @apply pr-4;
 }
