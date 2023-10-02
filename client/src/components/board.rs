@@ -323,6 +323,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
+            // Show valid destination for selected piece
             if !game.read().is_replaying() && selected_piece.read().is_some() {
                 rsx! {
                     game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
