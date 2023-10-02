@@ -314,7 +314,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
-            if selected_piece.read().is_some() {
+            if !game.read().is_replaying() && selected_piece.read().is_some() {
                 rsx! {
                     game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
                         let top_left = to_point(&pos, cx.props.size, cx.props.perspective);

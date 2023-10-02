@@ -42,7 +42,7 @@ body {
 }
 
 .circle {
-    @apply absolute bg-green-500/30;
+    @apply absolute bg-green-700/40;
 }
 
 td {
