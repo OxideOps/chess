@@ -41,7 +41,7 @@ body {
     @apply absolute bg-transparent;
 }
 
-.circle {
+.destination-square {
     @apply absolute bg-green-700/40;
 }
 

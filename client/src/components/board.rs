@@ -330,7 +330,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                         rsx! {
                             div {
-                                class: "circle",
+                                class: "destination-square",
                                 style: "
                                     left: {top_left.x}px;
                                     top: {top_left.y}px;
