@@ -168,13 +168,15 @@ fn handle_on_mouse_down_event(
     mouse_down_state: &UseState<Option<MouseClick>>,
     arrows: &UseRef<Arrows>,
     drawing_arrow: &UseRef<Option<ArrowData>>,
+    selected_piece: &UseRef<Option<Position>>,
 ) {
     let mouse_down = MouseClick::from(event);
     if mouse_down.kind.contains(MouseButton::Primary) {
+        selected_piece.set(Some(to_position(cx, &mouse_down.point)));
         arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = to_position(cx, &mouse_down.point);
-        *drawing_arrow.write() = Some(ArrowData::with_move(Move::new(pos, pos)));
+        drawing_arrow.set(Some(ArrowData::with_move(Move::new(pos, pos))));
     }
     mouse_down_state.set(Some(mouse_down));
 }
@@ -185,6 +187,7 @@ fn handle_on_mouse_up_event(
     mouse_down_state: &UseState<Option<MouseClick>>,
     arrows: &UseRef<Arrows>,
     drawing_arrow: &UseRef<Option<ArrowData>>,
+    selected_piece: &UseRef<Option<Position>>,
 ) {
     if let Some(mouse_down) = mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
@@ -193,6 +196,7 @@ fn handle_on_mouse_up_event(
             complete_arrow(arrows, drawing_arrow);
         }
         mouse_down_state.set(None);
+        selected_piece.set(None);
     }
 }
 
@@ -231,6 +235,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     // hooks
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
+    let selected_piece = use_ref::<Option<Position>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
     let analysis_arrows = use_lock(cx, Arrows::default);
     let drawing_arrow = use_ref::<Option<ArrowData>>(cx, || None);
@@ -264,12 +269,21 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             autofocus: true,
             tabindex: 0,
             // event handlers
-            onmousedown: |event| handle_on_mouse_down_event(cx, event, mouse_down_state, arrows, drawing_arrow),
-            onmouseup: move |event| handle_on_mouse_up_event(cx,
+            onmousedown: |event| handle_on_mouse_down_event(
+                cx,
                 event,
                 mouse_down_state,
                 arrows,
-                drawing_arrow
+                drawing_arrow,
+                selected_piece,
+            ),
+            onmouseup: move |event| handle_on_mouse_up_event(
+                cx,
+                event,
+                mouse_down_state,
+                arrows,
+                drawing_arrow,
+                selected_piece,
             ),
             onmousemove: |event| handle_on_mouse_move_event(cx, event, mouse_down_state, drawing_arrow),
             onkeydown: |event| handle_on_key_down(cx, event, arrows),
@@ -294,7 +308,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         ",
                     }
                 }
-            })
+            }),
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 rsx! {
@@ -309,6 +323,25 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
+            // Show valid destination for selected piece
+            if !game.read().is_replaying() && selected_piece.read().is_some() {
+                rsx! {
+                    game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
+                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
+                        rsx! {
+                            div {
+                                class: "destination-square",
+                                style: "
+                                    left: {top_left.x}px;
+                                    top: {top_left.y}px;
+                                    width: {cx.props.size / 8}px;
+                                    height: {cx.props.size / 8}px;
+                                ",
+                            }
+                        }
+                    })
+                }
+            }
             // arrows
             arrows.read().get().into_iter()
                 .chain(analysis_arrows.read().get().into_iter())

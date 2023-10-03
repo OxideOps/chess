@@ -49,9 +49,7 @@ pub(crate) fn App(cx: Scope) -> Element {
             start_time: START_TIME,
             height: WIDGET_HEIGHT
         }
-        div {
-            class: "flex justify-center items-center",
-            style: "width: {WIDGET_HEIGHT}px",
+        div { class: "flex justify-center items-center", style: "width: {WIDGET_HEIGHT}px",
             button {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",
@@ -90,17 +88,15 @@ pub(crate) fn App(cx: Scope) -> Element {
             }
             {
                 #[cfg(not(target_arch = "wasm32"))]
-                {
-                    rsx! {
-                        button {
-                            class: "button",
-                            style: "top: {WIDGET_HEIGHT}px",
-                            onclick: |_| {
-                                log::info!("Quitting game..");
-                                window.close()
-                            },
-                            "Quit"
-                        }
+                rsx! {
+                    button {
+                        class: "button",
+                        style: "top: {WIDGET_HEIGHT}px",
+                        onclick: |_| {
+                            log::info!("Quitting game..");
+                            window.close()
+                        },
+                        "Quit"
                     }
                 }
             }

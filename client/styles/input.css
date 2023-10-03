@@ -41,6 +41,10 @@ body {
     @apply absolute bg-transparent;
 }
 
+.destination-square {
+    @apply absolute bg-green-700/40;
+}
+
 td {
     @apply pr-4;
 }
