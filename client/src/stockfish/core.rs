@@ -39,7 +39,9 @@ fn sigmoid(x: f64) -> f64 {
 fn get_eval(output: &str) -> f64 {
     ALPHA_SENSITIVITY
         * if let Some(mate_in) = get_info(output, "mate") {
-            MATE_IN_1_EVAL - MATE_MOVE_EVAL * (mate_in.parse::<f64>().unwrap() - 1.0)
+            let mate_in = mate_in.parse::<f64>().unwrap();
+            let base_eval = MATE_IN_1_EVAL * if mate_in >= 0.0 { 1.0 } else { -1.0 };
+            base_eval - MATE_MOVE_EVAL * (mate_in - 1.0)
         } else if let Some(score) = get_info(output, "score cp") {
             score.parse::<f64>().unwrap()
         } else {
@@ -95,7 +97,9 @@ pub async fn on_game_changed(
 
 pub async fn process_output(output: &str, evals: &mut [f64], arrows: &UseLock<Arrows>) {
     if let Some(move_number) = get_info(output, "multipv") {
-        if !arrows.read().is_empty() {
+        if !arrows.read().is_empty()
+            && !(output.contains("upperbound") || output.contains("lowerbound"))
+        {
             let i = move_number.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();
             let eval = get_eval(output);
