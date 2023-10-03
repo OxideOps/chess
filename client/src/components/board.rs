@@ -1,11 +1,3 @@
-use crate::arrows::{ArrowData, Arrows};
-use crate::components::square::Square;
-use crate::components::{Arrow, Piece};
-use crate::game_socket::create_game_socket;
-use crate::mouse_click::MouseClick;
-use crate::shared_states::GameId;
-use crate::stockfish::core::{on_game_changed, toggle_stockfish};
-use crate::stockfish::interface::Process;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::color::Color;
 use chess::game::Game;
@@ -19,6 +11,14 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use futures::executor::block_on;
 use once_cell::sync::Lazy;
+
+use crate::arrows::{ArrowData, Arrows};
+use crate::components::{Arrow, Piece, Square};
+use crate::game_socket::create_game_socket;
+use crate::mouse_click::MouseClick;
+use crate::shared_states::GameId;
+use crate::stockfish::core::{on_game_changed, toggle_stockfish};
+use crate::stockfish::interface::Process;
 
 pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 
