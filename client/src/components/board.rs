@@ -1,4 +1,5 @@
 use crate::arrows::{ArrowData, Arrows};
+use crate::components::square::Square;
 use crate::components::{Arrow, Piece};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
@@ -296,16 +297,12 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             }
             // highlight squares
             game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
-                let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                 rsx! {
-                    div {
-                        class: "{class}",
-                        style: "
-                            left: {top_left.x}px; 
-                            top: {top_left.y}px; 
-                            width: {cx.props.size / 8}px; 
-                            height: {cx.props.size / 8}px;
-                        ",
+                    Square {
+                        class: class,
+                        pos: pos,
+                        board_size: cx.props.size,
+                        perspective: cx.props.perspective,
                     }
                 }
             }),
@@ -327,16 +324,12 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             if !game.read().is_replaying() && selected_piece.read().is_some() {
                 rsx! {
                     game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
-                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                         rsx! {
-                            div {
-                                class: "destination-square",
-                                style: "
-                                    left: {top_left.x}px;
-                                    top: {top_left.y}px;
-                                    width: {cx.props.size / 8}px;
-                                    height: {cx.props.size / 8}px;
-                                ",
+                            Square {
+                                class: "destination-square".into(),
+                                pos: pos,
+                                board_size: cx.props.size,
+                                perspective: cx.props.perspective,
                             }
                         }
                     })

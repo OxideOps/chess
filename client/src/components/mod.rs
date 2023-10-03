@@ -5,6 +5,7 @@ mod board;
 mod info_bar;
 mod piece;
 mod round_list;
+mod square;
 mod timer;
 mod widget;
 
