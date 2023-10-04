@@ -278,7 +278,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 drawing_arrow,
                 selected_piece,
             ),
-            onmouseup: move |event| handle_on_mouse_up_event(
+            onmouseup: |event| handle_on_mouse_up_event(
                 cx,
                 event,
                 mouse_down_state,
