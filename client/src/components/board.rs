@@ -306,21 +306,6 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
-            // pieces
-            game.read().get_pieces().into_iter().map(|(piece, pos)| {
-                rsx! {
-                    Piece {
-                        image: get_piece_image_file(piece_theme, piece),
-                        top_left_starting: to_point(&pos, cx.props.size, cx.props.perspective),
-                        size: cx.props.size / 8,
-                        is_dragging: mouse_down_state.get().as_ref().map_or(false, |mouse_down| {
-                            mouse_down.kind.contains(MouseButton::Primary)
-                                && pos == to_position(cx, &mouse_down.point)
-                        }),
-                    }
-                }
-            }),
-            // Show valid destination for selected piece
             if !game.read().is_replaying() && selected_piece.read().is_some() {
                 rsx! {
                     game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
@@ -335,6 +320,20 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     })
                 }
             }
+            // pieces
+            game.read().get_pieces().into_iter().map(|(piece, pos)| {
+                rsx! {
+                    Piece {
+                        image: get_piece_image_file(piece_theme, piece),
+                        top_left_starting: to_point(&pos, cx.props.size, cx.props.perspective),
+                        size: cx.props.size / 8,
+                        is_dragging: mouse_down_state.get().as_ref().map_or(false, |mouse_down| {
+                            mouse_down.kind.contains(MouseButton::Primary)
+                                && pos == to_position(cx, &mouse_down.point)
+                        }),
+                    }
+                }
+            }),
             // arrows
             arrows.read().get().into_iter()
                 .chain(analysis_arrows.read().get().into_iter())
