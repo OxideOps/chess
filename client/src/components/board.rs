@@ -349,7 +349,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         image: get_piece_image_file(piece_theme, piece),
                         top_left_starting: to_point(&pos, cx.props.size, cx.props.perspective),
                         size: cx.props.size / 8,
-                        is_dragging: mouse_down_state.get().as_ref().map_or(false, |mouse_down| {
+                        is_dragging: mouse_down_state.as_ref().map_or(false, |mouse_down| {
                             mouse_down.kind.contains(MouseButton::Primary)
                                 && pos == to_position(cx, &mouse_down.point)
                         }),
