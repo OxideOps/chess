@@ -13,7 +13,7 @@ use futures::executor::block_on;
 use once_cell::sync::Lazy;
 
 use crate::arrows::{ArrowData, Arrows};
-use crate::components::{Arrow, Piece};
+use crate::components::{Arrow, Piece, BoardSquare};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;
@@ -230,28 +230,6 @@ pub(crate) fn get_center(pos: &Position, board_size: u32, perspective: Color) ->
     point
 }
 
-#[component]
-pub(crate) fn Square(
-    cx: Scope,
-    class: String,
-    pos: Position,
-    board_size: u32,
-    perspective: Color,
-) -> Element {
-    let top_left = to_point(pos, *board_size, *perspective);
-    cx.render(rsx! {
-        div {
-            class: "{class}",
-            style: "
-                left: {top_left.x}px;
-                top: {top_left.y}px;
-                width: {cx.props.board_size / 8}px;
-                height: {cx.props.board_size / 8}px;
-            "
-        }
-    })
-}
-
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     cx.provide_context(DRAG_CHANNEL.1.clone());
 
@@ -320,7 +298,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             // highlight squares
             game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
                 rsx! {
-                    Square {
+                    BoardSquare {
                         class: class,
                         pos: pos,
                         board_size: cx.props.size,
@@ -332,7 +310,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 rsx! {
                     game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
                         rsx! {
-                            Square {
+                            BoardSquare {
                                 class: "destination-square".into(),
                                 pos: pos,
                                 board_size: cx.props.size,
