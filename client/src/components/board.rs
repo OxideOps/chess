@@ -1,10 +1,3 @@
-use crate::arrows::{ArrowData, Arrows};
-use crate::components::{Arrow, Piece};
-use crate::game_socket::create_game_socket;
-use crate::mouse_click::MouseClick;
-use crate::shared_states::GameId;
-use crate::stockfish::core::{on_game_changed, toggle_stockfish};
-use crate::stockfish::interface::Process;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::color::Color;
 use chess::game::Game;
@@ -18,6 +11,14 @@ use dioxus::html::{geometry::ClientPoint, input_data::keyboard_types::Key};
 use dioxus::prelude::*;
 use futures::executor::block_on;
 use once_cell::sync::Lazy;
+
+use crate::arrows::{ArrowData, Arrows};
+use crate::components::{Arrow, BoardSquare, Piece};
+use crate::game_socket::create_game_socket;
+use crate::mouse_click::MouseClick;
+use crate::shared_states::GameId;
+use crate::stockfish::core::{on_game_changed, toggle_stockfish};
+use crate::stockfish::interface::Process;
 
 pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 
@@ -277,7 +278,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 drawing_arrow,
                 selected_piece,
             ),
-            onmouseup: move |event| handle_on_mouse_up_event(
+            onmouseup: |event| handle_on_mouse_up_event(
                 cx,
                 event,
                 mouse_down_state,
@@ -296,19 +297,27 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             }
             // highlight squares
             game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
-                let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
                 rsx! {
-                    div {
-                        class: "{class}",
-                        style: "
-                            left: {top_left.x}px; 
-                            top: {top_left.y}px; 
-                            width: {cx.props.size / 8}px; 
-                            height: {cx.props.size / 8}px;
-                        ",
+                    BoardSquare {
+                        class: class,
+                        top_left: to_point(&pos, cx.props.size, cx.props.perspective),
+                        board_size: cx.props.size,
                     }
                 }
             }),
+            if !game.read().is_replaying() && let Some(pos) = &*selected_piece.read() {
+                rsx! {
+                    game.read().get_valid_destinations_for_piece(pos).into_iter().map(|pos| {
+                        rsx! {
+                            BoardSquare {
+                                class: "destination-square".into(),
+                                top_left: to_point(&pos, cx.props.size, cx.props.perspective),
+                                board_size: cx.props.size,
+                            }
+                        }
+                    })
+                }
+            }
             // pieces
             game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 rsx! {
@@ -316,32 +325,13 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         image: get_piece_image_file(piece_theme, piece),
                         top_left_starting: to_point(&pos, cx.props.size, cx.props.perspective),
                         size: cx.props.size / 8,
-                        is_dragging: mouse_down_state.get().as_ref().map_or(false, |mouse_down| {
+                        is_dragging: mouse_down_state.as_ref().map_or(false, |mouse_down| {
                             mouse_down.kind.contains(MouseButton::Primary)
                                 && pos == to_position(cx, &mouse_down.point)
                         }),
                     }
                 }
             }),
-            // Show valid destination for selected piece
-            if !game.read().is_replaying() && selected_piece.read().is_some() {
-                rsx! {
-                    game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
-                        let top_left = to_point(&pos, cx.props.size, cx.props.perspective);
-                        rsx! {
-                            div {
-                                class: "destination-square",
-                                style: "
-                                    left: {top_left.x}px;
-                                    top: {top_left.y}px;
-                                    width: {cx.props.size / 8}px;
-                                    height: {cx.props.size / 8}px;
-                                ",
-                            }
-                        }
-                    })
-                }
-            }
             // arrows
             arrows.read().get().into_iter()
                 .chain(analysis_arrows.read().get().into_iter())
