@@ -300,9 +300,8 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 rsx! {
                     BoardSquare {
                         class: class,
-                        pos: pos,
+                        top_left: to_point(&pos, cx.props.size, cx.props.perspective),
                         board_size: cx.props.size,
-                        perspective: cx.props.perspective,
                     }
                 }
             }),
@@ -312,9 +311,8 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         rsx! {
                             BoardSquare {
                                 class: "destination-square".into(),
-                                pos: pos,
+                                top_left: to_point(&pos, cx.props.size, cx.props.perspective),
                                 board_size: cx.props.size,
-                                perspective: cx.props.perspective,
                             }
                         }
                     })
