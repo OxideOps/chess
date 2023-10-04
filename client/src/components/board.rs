@@ -13,7 +13,7 @@ use futures::executor::block_on;
 use once_cell::sync::Lazy;
 
 use crate::arrows::{ArrowData, Arrows};
-use crate::components::{Arrow, Piece, BoardSquare};
+use crate::components::{Arrow, BoardSquare, Piece};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;

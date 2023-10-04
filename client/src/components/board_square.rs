@@ -1,7 +1,7 @@
-use dioxus::prelude::*;
+use crate::components::board::to_point;
 use chess::color::Color;
 use chess::position::Position;
-use crate::components::board::to_point;
+use dioxus::prelude::*;
 
 #[component]
 pub(crate) fn BoardSquare(
