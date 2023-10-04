@@ -305,9 +305,9 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
-            if !game.read().is_replaying() && selected_piece.read().is_some() {
+            if !game.read().is_replaying() && let Some(pos) = &*selected_piece.read() {
                 rsx! {
-                    game.read().get_valid_destinations_for_piece(&selected_piece.read().unwrap()).into_iter().map(|pos| {
+                    game.read().get_valid_destinations_for_piece(pos).into_iter().map(|pos| {
                         rsx! {
                             BoardSquare {
                                 class: "destination-square".into(),
