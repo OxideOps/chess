@@ -672,7 +672,7 @@ dependencies = [
  "serde_json",
  "server-functions",
  "sys-info",
- "tokio-tungstenite 0.20.1",
+ "tokio-tungstenite 0.16.1",
  "tokio-tungstenite-wasm",
  "url",
  "wasm-bindgen",
@@ -1008,7 +1008,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -1021,7 +1021,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "bumpalo",
  "futures-channel",
@@ -1037,7 +1037,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "constcat",
  "dioxus-core",
@@ -1056,7 +1056,7 @@ checksum = "2ea539174bb236e0e7dc9c12b19b88eae3cb574dedbd0252a2d43ea7e6de13e2"
 [[package]]
 name = "dioxus-desktop"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "async-trait",
  "core-foundation",
@@ -1085,7 +1085,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "anymap",
  "async-trait",
@@ -1127,7 +1127,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "async-std",
  "dioxus-core",
@@ -1141,7 +1141,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -1154,7 +1154,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -1174,7 +1174,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "js-sys",
  "sledgehammer_bindgen",
@@ -1197,7 +1197,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "anyhow",
  "dioxus",
@@ -1219,7 +1219,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1230,7 +1230,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "dioxus-core",
  "proc-macro2",
@@ -1241,7 +1241,7 @@ dependencies = [
 [[package]]
 name = "dioxus-ssr"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "askama_escape",
  "dioxus-core",
@@ -1256,7 +1256,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -1280,7 +1280,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#05a4950291b2fd6e0ccecf0b915be9043f38289d"
+source = "git+https://github.com/OxideOps/dioxus.git#4b014c83ed18753f8923ba910078b09dc0dc1757"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -4355,7 +4355,9 @@ checksum = "e80b39df6afcc12cdf752398ade96a6b9e99c903dfdc36e53ad10b9c366bca72"
 dependencies = [
  "futures-util",
  "log",
+ "native-tls",
  "tokio",
+ "tokio-native-tls",
  "tungstenite 0.16.0",
 ]
 
@@ -4367,9 +4369,7 @@ checksum = "212d5dcb2a1ce06d81107c3d0ffa3121fe974b73f068c8282cb1c32328113b6c"
 dependencies = [
  "futures-util",
  "log",
- "native-tls",
  "tokio",
- "tokio-native-tls",
  "tungstenite 0.20.1",
 ]
 
@@ -4567,6 +4567,7 @@ dependencies = [
  "http",
  "httparse",
  "log",
+ "native-tls",
  "rand 0.8.5",
  "sha-1",
  "thiserror",
@@ -4586,7 +4587,6 @@ dependencies = [
  "http",
  "httparse",
  "log",
- "native-tls",
  "rand 0.8.5",
  "sha1",
  "thiserror",
