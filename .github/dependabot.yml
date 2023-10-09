@@ -4,3 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      - name: "all"
+        dependencies:
+          - match:
+              dependency-type: "all"
