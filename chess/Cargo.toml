@@ -9,4 +9,4 @@ edition = "2021"
 log = "0.4.19"
 serde = { version = "1.0.180", features = ["derive"] }
 thiserror = "1.0.44"
-web-time = "0.2.0"
+web-time = "0.2.2"
