@@ -5,11 +5,9 @@ pub(super) enum GameStatus {
     #[default]
     NotStarted,
     Ongoing,
-    Stalemate,
     Check(Color),
     Checkmate(Color),
     Timeout(Color),
-    Replay,
     Draw(DrawKind),
 }
 
@@ -26,4 +24,5 @@ impl GameStatus {
 pub(super) enum DrawKind {
     FiftyMoveRule,
     Repetition,
+    Stalemate,
 }

@@ -80,15 +80,16 @@ impl History {
     }
 
     fn add_turn(&mut self, turn: Turn) {
+        self.turns.drain(self.current_turn_index..self.turns.len());
         self.turns.push(turn);
         self.current_turn_index += 1
     }
 
     pub(super) fn add_info(&mut self, next_state: BoardState, mv: Move) {
-        let real_state = *self.get_real_state();
-        let is_pawn = real_state.get_piece(&mv.from).unwrap().is_pawn();
+        let current_state = *self.get_current_state();
+        let is_pawn = current_state.get_piece(&mv.from).unwrap().is_pawn();
         let is_capture_move =
-            real_state.get_piece(&mv.to).is_some() || (is_pawn && mv.from.x != mv.to.x);
+            current_state.get_piece(&mv.to).is_some() || (is_pawn && mv.from.x != mv.to.x);
 
         self.update_fifty_move_info(is_capture_move, is_pawn);
         self.update_repetition_info(next_state);
