@@ -99,7 +99,7 @@ impl Game {
 
     fn navigate_history(&mut self, navigate: impl FnOnce(&mut History)) {
         navigate(&mut self.history);
-        self.update_status();
+        self.update();
     }
 
     pub fn go_back_a_move(&mut self) {

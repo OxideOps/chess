@@ -142,7 +142,7 @@ fn drop_piece(cx: Scope<BoardProps>, event: &Event<MouseData>, point: &ClientPoi
     };
     let mv = Move::new(from, to);
     if current_player_kind == PlayerKind::Local
-        && !game.read().is_replaying()
+        && (!game.read().is_replaying() || opponent_player_kind == PlayerKind::Local)
         && game.read().is_move_valid(&mv).is_ok()
     {
         game.write().move_piece(from, to).ok();
