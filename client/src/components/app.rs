@@ -49,12 +49,14 @@ pub(crate) fn App(cx: Scope) -> Element {
             start_time: START_TIME,
             height: WIDGET_HEIGHT
         }
-        div { class: "flex justify-center items-center", style: "width: {WIDGET_HEIGHT}px",
+        div {
+            class: "flex justify-center items-center",
+            style: "width: {WIDGET_HEIGHT}px",
             button {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",
                 onclick: |_| {
-                    to_owned![white_player, black_player, perspective, game, game_id];
+                    to_owned![analyze, white_player, black_player, perspective, game, game_id];
                     cx.spawn(async move {
                         match setup_remote_game().await {
                             Ok(info) => {
@@ -67,6 +69,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                                 };
                                 player.write().kind = PlayerKind::Remote;
                                 perspective.set(get_default_perspective(&white_player, &black_player));
+                                analyze.set(false);
                             }
                             Err(err) => log::error!("Error starting remote game: {err:?}"),
                         }
@@ -83,8 +86,10 @@ pub(crate) fn App(cx: Scope) -> Element {
             button {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",
+                hidden: white_player.read().kind != PlayerKind::Local
+                    || black_player.read().kind != PlayerKind::Local,
                 onclick: |_| analyze.modify(|analyze| !analyze),
-                if *analyze.get() { "Stop analyzing" } else { "Analyze" }
+                if **analyze { "Stop analyzing" } else { "Analyze" }
             }
             {
                 #[cfg(not(target_arch = "wasm32"))]
