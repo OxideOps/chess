@@ -48,7 +48,7 @@ impl Game {
     }
 
     pub fn is_replaying(&self) -> bool {
-        self.status == GameStatus::Replay
+        self.history.is_replaying()
     }
 
     pub fn is_in_check(&self) -> bool {
@@ -162,10 +162,6 @@ impl Game {
     }
 
     fn update_status(&mut self) {
-        if self.history.is_replaying() {
-            self.status.update(GameStatus::Replay);
-            return;
-        }
         if self.get_active_time().is_zero() {
             self.status
                 .update(GameStatus::Timeout(self.get_real_player()));
@@ -184,7 +180,7 @@ impl Game {
         let valid_moves_is_empty = self.valid_moves.is_empty();
 
         if !king_is_under_attack && valid_moves_is_empty {
-            self.status.update(GameStatus::Stalemate)
+            self.status.update(GameStatus::Draw(DrawKind::Stalemate))
         } else if king_is_under_attack && valid_moves_is_empty {
             self.status
                 .update(GameStatus::Checkmate(self.get_real_player()))
@@ -470,6 +466,13 @@ impl Game {
             }
         }
         info
+    }
+
+    pub fn game_over(&self) -> bool {
+        matches!(
+            self.status,
+            GameStatus::Checkmate(..) | GameStatus::Draw(..)
+        )
     }
 }
 struct GameBuilder {

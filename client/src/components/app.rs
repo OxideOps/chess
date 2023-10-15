@@ -86,8 +86,9 @@ pub(crate) fn App(cx: Scope) -> Element {
             button {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",
-                hidden: white_player.read().kind != PlayerKind::Local
-                    || black_player.read().kind != PlayerKind::Local,
+                hidden: !game.game_over()
+                    && (white_player.read().kind != PlayerKind::Local
+                        || black_player.read().kind != PlayerKind::Local),
                 onclick: |_| analyze.modify(|analyze| !analyze),
                 if **analyze { "Stop analyzing" } else { "Analyze" }
             }
