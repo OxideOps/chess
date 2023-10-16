@@ -11,10 +11,10 @@ use regex::Regex;
 
 type Channel = (Sender<()>, Receiver<()>);
 
-pub const MOVES: usize = 10;
+pub const MOVES: usize = 5;
 pub const DEPTH: usize = 40;
 // How much differences in stockfish evaluation affect the alpha of the arrows
-const ALPHA_SENSITIVITY: f64 = 1.0 / 20.0;
+const ALPHA_SENSITIVITY: f64 = 1.0 / 30.0;
 // How much a mate in 1 is worth in centipawns
 const MATE_IN_1_EVAL: f64 = 100000.0;
 // How much (in centipawns) getting a mate 1 move sooner is worth
@@ -40,8 +40,11 @@ fn get_eval(output: &str) -> f64 {
     ALPHA_SENSITIVITY
         * if let Some(mate_in) = get_info(output, "mate") {
             let mate_in = mate_in.parse::<f64>().unwrap();
-            let base_eval = MATE_IN_1_EVAL * if mate_in >= 0.0 { 1.0 } else { -1.0 };
-            base_eval - MATE_MOVE_EVAL * (mate_in - 1.0)
+            if mate_in >= 0.0 {
+                MATE_IN_1_EVAL - MATE_MOVE_EVAL * (mate_in - 1.0)
+            } else {
+                -MATE_IN_1_EVAL - MATE_MOVE_EVAL * (mate_in + 1.0)
+            }
         } else if let Some(score) = get_info(output, "score cp") {
             score.parse::<f64>().unwrap()
         } else {
@@ -59,6 +62,14 @@ async fn wait_until_ready(process: &mut Process) {
     READY_CHANNEL.1.recv().await.ok();
 }
 
+async fn stop(process: &mut Process) {
+    send_command(process, "stop").await;
+}
+
+async fn go(process: &mut Process) {
+    send_command(process, &format!("go depth {DEPTH}")).await;
+}
+
 pub async fn toggle_stockfish(
     analyze: UseState<bool>,
     stockfish_process: UseAsyncLock<Option<Process>>,
@@ -69,8 +80,9 @@ pub async fn toggle_stockfish(
         match run_stockfish().await {
             Ok(mut process) => {
                 init_stockfish(&mut process).await;
-                update_position(&game.read().get_fen_str(), &mut process).await;
                 arrows.set(Arrows::with_size(MOVES));
+                update_position(&game.read().get_fen_str(), &mut process).await;
+                go(&mut process).await;
                 stockfish_process.set(Some(process)).await;
                 update_analysis_arrows(&arrows, &stockfish_process).await;
             }
@@ -89,9 +101,11 @@ pub async fn on_game_changed(
     arrows: UseLock<Arrows>,
 ) {
     if let Some(process) = process.write().await.as_mut() {
+        stop(process).await;
         update_position(&fen, process).await;
         wait_until_ready(process).await;
         arrows.set(Arrows::with_size(MOVES));
+        go(process).await;
     }
 }
 
@@ -133,15 +147,13 @@ pub async fn init_stockfish(process: &mut Process) {
     send_command(process, &format!("setoption name Hash value {hash}")).await;
 }
 
-pub async fn stop_stockfish(process: &mut Process) {
+async fn stop_stockfish(process: &mut Process) {
     log::info!("Stopping Stockfish");
-    send_command(process, "stop").await;
+    stop(process).await;
     send_command(process, "quit").await;
 }
 
-pub async fn update_position(fen_str: &str, process: &mut Process) {
+async fn update_position(fen_str: &str, process: &mut Process) {
     log::debug!("Setting stockfish position: {fen_str:?}");
-    send_command(process, "stop").await;
     send_command(process, &format!("position fen {fen_str}")).await;
-    send_command(process, &format!("go depth {DEPTH}")).await;
 }
