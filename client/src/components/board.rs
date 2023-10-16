@@ -230,6 +230,10 @@ pub(crate) fn get_center(pos: &Position, board_size: u32, perspective: Color) ->
     point
 }
 
+fn is_local_game(props: &BoardProps) -> bool {
+    props.white_player_kind == PlayerKind::Local && props.black_player_kind == PlayerKind::Local
+}
+
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     cx.provide_context(DRAG_CHANNEL.1.clone());
 
@@ -305,7 +309,9 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     }
                 }
             }),
-            if !game.read().is_replaying() && let Some(pos) = &*selected_piece.read() {
+            if (!game.read().is_replaying() || is_local_game(cx.props))
+                && let Some(pos) = &*selected_piece.read()
+            {
                 rsx! {
                     game.read().get_valid_destinations_for_piece(pos).into_iter().map(|pos| {
                         rsx! {
