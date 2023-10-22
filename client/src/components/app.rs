@@ -89,7 +89,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                 hidden: !game.read().game_over()
                     && (white_player.read().kind != PlayerKind::Local
                         || black_player.read().kind != PlayerKind::Local),
-                onclick: |_| analyze.modify(|analyze| !analyze),
+                onclick: |_| analyze.modify(|analyze| !*analyze),
                 if **analyze { "Stop analyzing" } else { "Analyze" }
             }
             {
