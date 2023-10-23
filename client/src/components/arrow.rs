@@ -10,13 +10,6 @@ const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
 
-#[derive(Props, PartialEq)]
-pub(crate) struct ArrowProps {
-    data: ArrowData,
-    board_size: u32,
-    perspective: Color,
-}
-
 fn get_color(alpha: f64) -> String {
     format!("rgba(27, 135, 185, {})", alpha)
 }
@@ -25,25 +18,18 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
     (to.y - from.y).atan2(to.x - from.x) + PI / 2.0
 }
 
-pub(crate) fn Arrow(cx: Scope<ArrowProps>) -> Element {
-    if !cx.props.data.has_length() {
+#[component]
+pub(crate) fn Arrow(cx: Scope, data: ArrowData, board_size: u32, perspective: Color) -> Element {
+    if !data.has_length() {
         return None;
     }
 
-    let from = get_center(
-        &cx.props.data.mv.from,
-        cx.props.board_size,
-        cx.props.perspective,
-    );
-    let to = get_center(
-        &cx.props.data.mv.to,
-        cx.props.board_size,
-        cx.props.perspective,
-    );
+    let from = get_center(&data.mv.from, *board_size, *perspective);
+    let to = get_center(&data.mv.to, *board_size, *perspective);
 
-    let h = HEAD * cx.props.board_size as f64;
-    let w = WIDTH * cx.props.board_size as f64;
-    let o = OFFSET * cx.props.board_size as f64;
+    let h = HEAD * *board_size as f64;
+    let w = WIDTH * *board_size as f64;
+    let o = OFFSET * *board_size as f64;
 
     let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
@@ -74,12 +60,12 @@ pub(crate) fn Arrow(cx: Scope<ArrowProps>) -> Element {
         svg {
             class: "absolute pointer-events-none",
             style: "z-index: 3",
-            height: "{cx.props.board_size}",
-            width: "{cx.props.board_size}",
+            height: "{board_size}",
+            width: "{board_size}",
             polygon {
                 class: "absolute pointer-events-none",
                 points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
-                fill: "{get_color(cx.props.data.alpha)}"
+                fill: "{get_color(data.alpha)}"
             }
         }
     })
