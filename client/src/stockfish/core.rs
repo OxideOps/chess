@@ -12,7 +12,7 @@ use regex::Regex;
 type Channel = (Sender<()>, Receiver<()>);
 
 pub const MOVES: usize = 5;
-pub const DEPTH: usize = 40;
+pub const DEPTH: usize = 30;
 // How much differences in stockfish evaluation affect the alpha of the arrows
 const ALPHA_SENSITIVITY: f64 = 1.0 / 30.0;
 // How much a mate in 1 is worth in centipawns
