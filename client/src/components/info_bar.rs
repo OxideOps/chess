@@ -1,5 +1,5 @@
-use crate::components::RoundList;
-use crate::components::Timer;
+use super::RoundList;
+use super::Timer;
 
 use dioxus::prelude::*;
 use std::time::Duration;
