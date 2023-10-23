@@ -139,8 +139,8 @@ pub async fn init_stockfish(process: &mut Process) {
     log::info!("Starting Stockfish");
     // Using all the cores on the system. Should we subtract 1-2 threads to give the UI some room?
     let threads = get_num_cores();
-    // Use hash size around 50% of total ram in MB that is a multiple of 2048
-    let hash = 2048 * (0.0005 * get_total_ram() as f64 / 2048.0).round() as usize;
+    // Use hash size around 25% of total ram in MB that is a multiple of 2048
+    let hash = 2048 * (0.00025 * get_total_ram() as f64 / 2048.0).round() as usize;
     send_command(process, "uci").await;
     send_command(process, &format!("setoption name MultiPV value {MOVES}")).await;
     send_command(process, &format!("setoption name Threads value {threads}")).await;
