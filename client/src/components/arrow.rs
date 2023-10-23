@@ -1,5 +1,5 @@
-use crate::arrows::ArrowData;
 use super::get_center;
+use crate::arrows::ArrowData;
 use chess::color::Color;
 use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
