@@ -3,7 +3,13 @@ use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
 
 #[component]
-pub fn Piece(cx: Scope, image: String, top_left_starting: ClientPoint, size: u32, is_dragging: bool) -> Element {
+pub fn Piece(
+    cx: Scope,
+    image: String,
+    top_left_starting: ClientPoint,
+    size: u32,
+    is_dragging: bool,
+) -> Element {
     let top_left = use_state(cx, || *top_left_starting);
     let drag_offset_receiver = cx.consume_context::<Receiver<ClientPoint>>().unwrap();
     let z_index = cx.props.is_dragging as u32 + 1; // 🏌️
