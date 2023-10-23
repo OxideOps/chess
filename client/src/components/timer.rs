@@ -3,14 +3,10 @@ use chess::{color::Color, game::Game};
 use dioxus::prelude::*;
 use std::time::Duration;
 
-#[derive(Props, PartialEq)]
-pub(crate) struct TimerProps {
-    start_time: Duration,
-}
-
-pub(crate) fn Timer(cx: Scope<TimerProps>) -> Element {
-    let white_time = use_state(cx, || display_time(cx.props.start_time));
-    let black_time = use_state(cx, || display_time(cx.props.start_time));
+#[component]
+pub(crate) fn Timer(cx: Scope, start_time: Duration) -> Element {
+    let white_time = use_state(cx, || display_time(*start_time));
+    let black_time = use_state(cx, || display_time(*start_time));
     let player = use_shared_state::<Game>(cx)
         .unwrap()
         .read()

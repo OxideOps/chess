@@ -1,4 +1,4 @@
-use crate::components::Widget;
+use super::Widget;
 use crate::shared_states::GameId;
 use std::time::Duration;
 
