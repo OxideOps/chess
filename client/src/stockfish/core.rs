@@ -1,4 +1,5 @@
 use crate::arrows::{ArrowData, Arrows, ALPHA};
+use crate::shared_states::Analyze;
 use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
 use crate::system_info::{get_num_cores, get_total_ram};
 
@@ -71,12 +72,12 @@ async fn go(process: &mut Process) {
 }
 
 pub async fn toggle_stockfish(
-    analyze: UseState<bool>,
+    analyze: UseSharedState<Analyze>,
     stockfish_process: UseAsyncLock<Option<Process>>,
     game: UseSharedState<Game>,
     arrows: UseLock<Arrows>,
 ) {
-    if *analyze.get() {
+    if **analyze.read() {
         match run_stockfish().await {
             Ok(mut process) => {
                 init_stockfish(&mut process).await;

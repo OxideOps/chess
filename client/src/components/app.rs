@@ -1,6 +1,5 @@
 use super::Widget;
-use crate::shared_states::GameId;
-use std::time::Duration;
+use crate::shared_states::*;
 
 use chess::game::Game;
 use chess::{
@@ -9,6 +8,8 @@ use chess::{
 };
 use dioxus::prelude::*;
 use server_functions::setup_remote_game;
+use std::time::Duration;
+
 const WIDGET_HEIGHT: u32 = 800;
 const START_TIME: Duration = Duration::from_secs(3600);
 
@@ -28,24 +29,23 @@ fn get_default_perspective(
 pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
+    use_shared_state_provider(cx, || Perspective(Color::White));
+    use_shared_state_provider(cx, || Analyze(false));
 
     #[cfg(not(target_arch = "wasm32"))]
     let window = dioxus_desktop::use_window(cx);
-
     let white_player = use_lock(cx, || Player::with_color(Color::White));
     let black_player = use_lock(cx, || Player::with_color(Color::Black));
-    let perspective = use_state(cx, || Color::White);
     let game = use_shared_state::<Game>(cx).unwrap();
     let game_id = use_shared_state::<GameId>(cx).unwrap();
-    let analyze = use_state(cx, || false);
+    let perspective = use_shared_state::<Perspective>(cx).unwrap();
+    let analyze = use_shared_state::<Analyze>(cx).unwrap();
 
     cx.render(rsx! {
         style { include_str!("../../styles/output.css") }
         Widget {
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
-            perspective: *perspective.get(),
-            analyze: analyze.to_owned(),
             start_time: START_TIME,
             height: WIDGET_HEIGHT
         }
@@ -68,8 +68,8 @@ pub(crate) fn App(cx: Scope) -> Element {
                                     Color::Black => white_player.to_owned(),
                                 };
                                 player.write().kind = PlayerKind::Remote;
-                                perspective.set(get_default_perspective(&white_player, &black_player));
-                                analyze.set(false);
+                                **perspective.write() = get_default_perspective(&white_player, &black_player);
+                                **analyze.write() = false;
                             }
                             Err(err) => log::error!("Error starting remote game: {err:?}"),
                         }
@@ -80,7 +80,10 @@ pub(crate) fn App(cx: Scope) -> Element {
             button {
                 class: "button",
                 style: "top: {WIDGET_HEIGHT}px",
-                onclick: |_| perspective.modify(|perspective| !*perspective),
+                onclick: |_| {
+                    let cur_val = **perspective.read();
+                    **perspective.write() = !cur_val;
+                },
                 "Flip Board"
             }
             button {
@@ -89,8 +92,11 @@ pub(crate) fn App(cx: Scope) -> Element {
                 hidden: !game.read().game_over()
                     && (white_player.read().kind != PlayerKind::Local
                         || black_player.read().kind != PlayerKind::Local),
-                onclick: |_| analyze.modify(|analyze| !*analyze),
-                if **analyze { "Stop analyzing" } else { "Analyze" }
+                onclick: |_| {
+                    let cur_val = **analyze.read();
+                    **analyze.write() = !cur_val;
+                },
+                if **analyze.read() { "Stop analyzing" } else { "Analyze" }
             }
             {
                 #[cfg(not(target_arch = "wasm32"))]

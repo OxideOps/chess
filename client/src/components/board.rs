@@ -16,7 +16,7 @@ use crate::arrows::{ArrowData, Arrows};
 use crate::components::{Arrow, BoardSquare, Piece};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
-use crate::shared_states::GameId;
+use crate::shared_states::*;
 use crate::stockfish::core::{on_game_changed, toggle_stockfish};
 use crate::stockfish::interface::Process;
 
@@ -54,9 +54,7 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
 pub(crate) struct BoardProps {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
-    perspective: Color,
     size: u32,
-    analyze: UseState<bool>,
 }
 
 // We want the square a dragged piece is considered to be on to be based on the center of
@@ -70,7 +68,7 @@ fn get_dragged_piece_position(
     let center = get_center(
         &to_position(cx, mouse_down),
         cx.props.size,
-        cx.props.perspective,
+        **use_shared_state::<Perspective>(cx).unwrap().read(),
     );
     to_position(
         cx,
@@ -82,7 +80,7 @@ fn get_dragged_piece_position(
 }
 
 fn to_position(cx: Scope<BoardProps>, point: &ClientPoint) -> Position {
-    match cx.props.perspective {
+    match **use_shared_state::<Perspective>(cx).unwrap().read() {
         Color::White => Position {
             x: (8.0 * point.x / cx.props.size as f64).floor() as usize,
             y: (8.0 * (1.0 - point.y / cx.props.size as f64)).floor() as usize,
@@ -239,6 +237,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
 
     // hooks
     let game = use_shared_state::<Game>(cx).unwrap();
+    let perspective = use_shared_state::<Perspective>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let selected_piece = use_ref::<Option<Position>>(cx, || None);
     let arrows = use_ref(cx, Arrows::default);
@@ -246,7 +245,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     let drawing_arrow = use_ref::<Option<ArrowData>>(cx, || None);
     let stockfish_process = use_async_lock::<Option<Process>>(cx, || None);
 
-    use_effect(cx, &cx.props.analyze, |analyze| {
+    use_effect(cx, use_shared_state::<Analyze>(cx).unwrap(), |analyze| {
         toggle_stockfish(
             analyze.to_owned(),
             stockfish_process.to_owned(),
@@ -304,7 +303,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 rsx! {
                     BoardSquare {
                         class: class,
-                        top_left: to_point(&pos, cx.props.size, cx.props.perspective),
+                        top_left: to_point(&pos, cx.props.size, **perspective.read()),
                         board_size: cx.props.size,
                     }
                 }
@@ -317,7 +316,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         rsx! {
                             BoardSquare {
                                 class: "destination-square".into(),
-                                top_left: to_point(&pos, cx.props.size, cx.props.perspective),
+                                top_left: to_point(&pos, cx.props.size, **perspective.read()),
                                 board_size: cx.props.size,
                             }
                         }
@@ -329,7 +328,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 rsx! {
                     Piece {
                         image: get_piece_image_file(piece_theme, piece),
-                        top_left_starting: to_point(&pos, cx.props.size, cx.props.perspective),
+                        top_left_starting: to_point(&pos, cx.props.size, **perspective.read()),
                         size: cx.props.size / 8,
                         is_dragging: mouse_down_state.as_ref().map_or(false, |mouse_down| {
                             mouse_down.kind.contains(MouseButton::Primary)
@@ -346,7 +345,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     Arrow {
                         data: data,
                         board_size: cx.props.size,
-                        perspective: cx.props.perspective,
+                        perspective: **perspective.read(),
                     }
                 })
         }

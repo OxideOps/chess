@@ -1,6 +1,6 @@
 #![feature(let_chains)]
 mod arrows;
-pub mod components;
+mod components;
 mod game_socket;
 mod launcher;
 mod mouse_click;
