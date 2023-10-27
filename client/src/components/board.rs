@@ -116,15 +116,11 @@ fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows:
         Key::ArrowUp => game.write().resume(),
         Key::ArrowDown => game.write().go_to_start(),
         Key::Character(c) => match c.as_str() {
-            "z" => {
-                if event.modifiers() == Modifiers::CONTROL {
-                    arrows.write().undo();
-                }
+            "z" if event.modifiers() == Modifiers::CONTROL => {
+                arrows.write().undo();
             }
-            "y" => {
-                if event.modifiers() == Modifiers::CONTROL {
-                    arrows.write().redo();
-                }
+            "y" if event.modifiers() == Modifiers::CONTROL => {
+                arrows.write().redo();
             }
             #[cfg(not(target_arch = "wasm32"))]
             "q" if event.modifiers() == Modifiers::CONTROL => {
