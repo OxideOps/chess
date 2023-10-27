@@ -126,6 +126,10 @@ fn handle_on_key_down(cx: Scope<BoardProps>, event: Event<KeyboardData>, arrows:
                     arrows.write().redo();
                 }
             }
+            #[cfg(not(target_arch = "wasm32"))]
+            "q" if event.modifiers() == Modifiers::CONTROL => {
+                dioxus_desktop::use_window(cx).close();
+            }
             _ => log::debug!("{:?} key pressed", c),
         },
         _ => log::debug!("{:?} key pressed", event.key()),
