@@ -2,6 +2,7 @@ use crate::arrows::Arrows;
 use crate::shared_states::Eval;
 use crate::stockfish::core::{process_output, MOVES};
 use async_std::channel::{unbounded, Receiver, Sender};
+use chess::game::Game;
 use dioxus::prelude::*;
 use js_sys::{Function, Object};
 use once_cell::sync::Lazy;
@@ -53,9 +54,10 @@ pub(crate) async fn update_analysis_arrows(
     arrows: &UseLock<Arrows>,
     _process: &UseAsyncLock<Option<Process>>,
     eval_hook: &UseSharedState<Eval>,
+    game: &UseSharedState<Game>,
 ) {
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Ok(output) = CHANNEL.1.recv().await {
-        process_output(&output, &mut evals, &arrows, eval_hook).await;
+        process_output(&output, &mut evals, &arrows, eval_hook, game).await;
     }
 }

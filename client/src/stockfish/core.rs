@@ -1,10 +1,13 @@
 use crate::arrows::{ArrowData, Arrows, ALPHA};
 use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
 use crate::system_info::{get_num_cores, get_total_ram};
+use std::sync::Arc;
 
 use crate::helpers::{inv_sigmoid, sigmoid};
 use crate::shared_states::Eval;
 use async_std::channel::{unbounded, Receiver, Sender};
+use async_std::sync::RwLock;
+use chess::color::Color;
 use chess::game::Game;
 use chess::moves::Move;
 use dioxus::prelude::*;
@@ -23,6 +26,7 @@ const MATE_IN_1_EVAL: f64 = 100000.0;
 const MATE_MOVE_EVAL: f64 = 50.0;
 
 static READY_CHANNEL: Lazy<Channel> = Lazy::new(unbounded::<()>);
+static IS_READY: Lazy<Arc<RwLock<bool>>> = Lazy::new(|| Arc::new(RwLock::new(true)));
 
 fn get_info<'a>(output: &'a str, key: &'a str) -> Option<&'a str> {
     let re = Regex::new(&format!(r"{key} (\S+)")).unwrap();
@@ -50,9 +54,15 @@ fn eval_to_alpha(eval: f64, evals: &[f64]) -> f64 {
     sigmoid(inv_sigmoid(ALPHA) + eval - evals.iter().max_by(|a, b| a.total_cmp(b)).unwrap())
 }
 
+async fn set_ready(ready: bool) {
+    *IS_READY.write().await = ready;
+}
+
 async fn wait_until_ready(process: &mut Process) {
+    set_ready(false).await;
     send_command(process, "isready").await;
     READY_CHANNEL.1.recv().await.ok();
+    set_ready(true).await;
 }
 
 async fn stop(process: &mut Process) {
@@ -78,7 +88,7 @@ pub async fn toggle_stockfish(
                 update_position(&game.read().get_fen_str(), &mut process).await;
                 go(&mut process).await;
                 stockfish_process.set(Some(process)).await;
-                update_analysis_arrows(&arrows, &stockfish_process, &eval_hook).await;
+                update_analysis_arrows(&arrows, &stockfish_process, &eval_hook, &game).await;
             }
             Err(err) => log::error!("Failed to start stockfish: {err:?}"),
         }
@@ -108,26 +118,31 @@ pub async fn process_output(
     evals: &mut [f64],
     arrows: &UseLock<Arrows>,
     eval_hook: &UseSharedState<Eval>,
+    game: &UseSharedState<Game>,
 ) {
     if let Some(move_number) = get_info(output, "multipv") {
-        if !arrows.read().is_empty()
+        println!("Before");
+        if *IS_READY.read().await
+            && !arrows.read().is_empty()
             && !(output.contains("upperbound") || output.contains("lowerbound"))
         {
             let i = move_number.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();
-            let mut eval = get_eval(output);
+            let eval = get_eval(output);
             if i == 0 {
                 // clear out old evals when we get a new set
                 evals.fill(f64::NEG_INFINITY);
-                **eval_hook.write() = eval;
+                **eval_hook.write() = match game.read().get_current_player() {
+                    Color::White => eval,
+                    Color::Black => -eval,
+                };
             }
-            eval *= ALPHA_SENSITIVITY;
-            evals[i] = eval;
+            evals[i] = ALPHA_SENSITIVITY * eval;
             arrows.write().set(
                 i,
                 ArrowData::new(
                     Move::from_lan(move_str).unwrap(),
-                    eval_to_alpha(eval, evals),
+                    eval_to_alpha(evals[i], evals),
                 ),
             );
         }

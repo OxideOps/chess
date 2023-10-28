@@ -5,6 +5,7 @@ use anyhow::Result;
 use async_process::{Child, Command, Stdio};
 use async_std::io::BufReader;
 use async_std::prelude::*;
+use chess::game::Game;
 use dioxus::prelude::*;
 
 pub(crate) type Process = Child;
@@ -31,6 +32,7 @@ pub(crate) async fn update_analysis_arrows(
     arrows: &UseLock<Arrows>,
     process: &UseAsyncLock<Option<Process>>,
     eval_hook: &UseSharedState<Eval>,
+    game: &UseSharedState<Game>,
 ) {
     let stdout = process
         .write()
@@ -43,6 +45,6 @@ pub(crate) async fn update_analysis_arrows(
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {
-        process_output(output, &mut evals, arrows, eval_hook).await;
+        process_output(output, &mut evals, arrows, eval_hook, game).await;
     }
 }
