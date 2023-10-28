@@ -1,4 +1,5 @@
 use crate::arrows::Arrows;
+use crate::shared_states::Eval;
 use crate::stockfish::core::{process_output, MOVES};
 use anyhow::Result;
 use async_process::{Child, Command, Stdio};
@@ -29,6 +30,7 @@ pub(crate) async fn run_stockfish() -> Result<Process> {
 pub(crate) async fn update_analysis_arrows(
     arrows: &UseLock<Arrows>,
     process: &UseAsyncLock<Option<Process>>,
+    eval_hook: &UseSharedState<Eval>,
 ) {
     let stdout = process
         .write()
@@ -41,6 +43,6 @@ pub(crate) async fn update_analysis_arrows(
     let mut lines = BufReader::new(stdout).lines();
     let mut evals = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {
-        process_output(output, &mut evals, arrows).await;
+        process_output(output, &mut evals, arrows, eval_hook).await;
     }
 }

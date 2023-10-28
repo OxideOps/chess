@@ -1,4 +1,5 @@
 use super::Widget;
+use crate::shared_states::Eval;
 use crate::shared_states::GameId;
 use std::time::Duration;
 
@@ -26,6 +27,7 @@ fn get_default_perspective(
 }
 
 pub(crate) fn App(cx: Scope) -> Element {
+    use_shared_state_provider(cx, || Eval(0.0));
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
 
@@ -54,7 +56,6 @@ pub(crate) fn App(cx: Scope) -> Element {
             style: "width: {WIDGET_HEIGHT}px",
             button {
                 class: "button",
-                style: "top: {WIDGET_HEIGHT}px",
                 onclick: |_| {
                     to_owned![analyze, white_player, black_player, perspective, game, game_id];
                     cx.spawn(async move {
@@ -79,15 +80,13 @@ pub(crate) fn App(cx: Scope) -> Element {
             }
             button {
                 class: "button",
-                style: "top: {WIDGET_HEIGHT}px",
                 onclick: |_| perspective.modify(|perspective| !*perspective),
                 "Flip Board"
             }
             button {
                 class: "button",
-                style: "top: {WIDGET_HEIGHT}px",
                 hidden: !game.read().game_over()
-                    && (white_player.read().kind != PlayerKind::Local
+                        && (white_player.read().kind != PlayerKind::Local
                         || black_player.read().kind != PlayerKind::Local),
                 onclick: |_| analyze.modify(|analyze| !*analyze),
                 if **analyze { "Stop analyzing" } else { "Analyze" }
@@ -97,7 +96,6 @@ pub(crate) fn App(cx: Scope) -> Element {
                 rsx! {
                     button {
                         class: "button",
-                        style: "top: {WIDGET_HEIGHT}px",
                         onclick: |_| {
                             log::info!("Quitting game..");
                             window.close()
