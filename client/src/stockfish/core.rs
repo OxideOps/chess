@@ -1,10 +1,10 @@
 use crate::arrows::{ArrowData, Arrows, ALPHA};
 use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
+use crate::stockfish::Eval;
 use crate::system_info::{get_num_cores, get_total_ram};
 use std::sync::Arc;
 
 use crate::helpers::{inv_sigmoid, sigmoid};
-use crate::shared_states::Eval;
 use async_std::channel::{unbounded, Receiver, Sender};
 use async_std::sync::RwLock;
 use chess::color::Color;
@@ -18,12 +18,6 @@ type Channel = (Sender<()>, Receiver<()>);
 
 pub const MOVES: usize = 5;
 pub const DEPTH: usize = 30;
-// How much differences in stockfish evaluation affect the alpha of the arrows
-const ALPHA_SENSITIVITY: f64 = 1.0 / 30.0;
-// How much a mate in 1 is worth in centipawns
-const MATE_IN_1_EVAL: f64 = 100000.0;
-// How much (in centipawns) getting a mate 1 move sooner is worth
-const MATE_MOVE_EVAL: f64 = 50.0;
 
 static READY_CHANNEL: Lazy<Channel> = Lazy::new(unbounded::<()>);
 static IS_READY: Lazy<Arc<RwLock<bool>>> = Lazy::new(|| Arc::new(RwLock::new(true)));
@@ -34,24 +28,19 @@ fn get_info<'a>(output: &'a str, key: &'a str) -> Option<&'a str> {
         .and_then(|cap| cap.get(1).map(|m| m.as_str()))
 }
 
-fn get_eval(output: &str) -> f64 {
-    if let Some(mate_in) = get_info(output, "mate") {
-        let mate_in = mate_in.parse::<f64>().unwrap();
-        if mate_in >= 0.0 {
-            MATE_IN_1_EVAL - MATE_MOVE_EVAL * (mate_in - 1.0)
-        } else {
-            -MATE_IN_1_EVAL - MATE_MOVE_EVAL * (mate_in + 1.0)
-        }
+fn get_eval(output: &str) -> Eval {
+    if let Some(mate_in) = get_info(output, "score mate") {
+        Eval::Mate(mate_in.parse::<i32>().unwrap())
     } else if let Some(score) = get_info(output, "score cp") {
-        score.parse::<f64>().unwrap()
+        Eval::Centipawns(score.parse::<i32>().unwrap())
     } else {
         panic!("Couldn't get stockfish eval for move!")
     }
 }
 
 // Makes it so the arrow for the best move has the default ALPHA value
-fn eval_to_alpha(eval: f64, evals: &[f64]) -> f64 {
-    sigmoid(inv_sigmoid(ALPHA) + eval - evals.iter().max_by(|a, b| a.total_cmp(b)).unwrap())
+fn score_to_alpha(score: f64, scores: &[f64]) -> f64 {
+    sigmoid(inv_sigmoid(ALPHA) + score - scores.iter().max_by(|a, b| a.total_cmp(b)).unwrap())
 }
 
 async fn set_ready(ready: bool) {
@@ -115,34 +104,34 @@ pub async fn on_game_changed(
 
 pub async fn process_output(
     output: &str,
-    evals: &mut [f64],
+    scores: &mut [f64],
     arrows: &UseLock<Arrows>,
     eval_hook: &UseSharedState<Eval>,
     game: &UseSharedState<Game>,
 ) {
     if let Some(move_number) = get_info(output, "multipv") {
-        println!("Before");
         if *IS_READY.read().await
             && !arrows.read().is_empty()
             && !(output.contains("upperbound") || output.contains("lowerbound"))
         {
             let i = move_number.parse::<usize>().unwrap() - 1;
             let move_str = get_info(output, " pv").unwrap();
-            let eval = get_eval(output);
+            let mut eval = get_eval(output);
+            let score = eval.to_score();
             if i == 0 {
-                // clear out old evals when we get a new set
-                evals.fill(f64::NEG_INFINITY);
-                **eval_hook.write() = match game.read().get_current_player() {
-                    Color::White => eval,
-                    Color::Black => -eval,
-                };
+                // clear out old scores when we get a new set
+                scores.fill(f64::NEG_INFINITY);
+                if game.read().get_current_player() == Color::Black {
+                    eval.change_perspective();
+                }
+                *eval_hook.write() = eval;
             }
-            evals[i] = ALPHA_SENSITIVITY * eval;
+            scores[i] = score;
             arrows.write().set(
                 i,
                 ArrowData::new(
                     Move::from_lan(move_str).unwrap(),
-                    eval_to_alpha(evals[i], evals),
+                    score_to_alpha(score, scores),
                 ),
             );
         }

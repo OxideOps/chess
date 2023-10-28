@@ -1,6 +1,6 @@
 use super::Widget;
-use crate::shared_states::Eval;
 use crate::shared_states::GameId;
+use crate::stockfish::Eval;
 use std::time::Duration;
 
 use chess::game::Game;
@@ -10,6 +10,7 @@ use chess::{
 };
 use dioxus::prelude::*;
 use server_functions::setup_remote_game;
+
 const WIDGET_HEIGHT: u32 = 800;
 const START_TIME: Duration = Duration::from_secs(3600);
 
@@ -27,7 +28,7 @@ fn get_default_perspective(
 }
 
 pub(crate) fn App(cx: Scope) -> Element {
-    use_shared_state_provider(cx, || Eval(0.0));
+    use_shared_state_provider(cx, || Eval::Centipawns(0));
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
 

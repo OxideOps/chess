@@ -16,9 +16,10 @@ use crate::arrows::{ArrowData, Arrows};
 use crate::components::{Arrow, BoardSquare, Piece};
 use crate::game_socket::create_game_socket;
 use crate::mouse_click::MouseClick;
-use crate::shared_states::{Eval, GameId};
+use crate::shared_states::GameId;
 use crate::stockfish::core::{on_game_changed, toggle_stockfish};
 use crate::stockfish::interface::Process;
+use crate::stockfish::Eval;
 
 pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 

@@ -1,6 +1,6 @@
 use crate::arrows::Arrows;
-use crate::shared_states::Eval;
 use crate::stockfish::core::{process_output, MOVES};
+use crate::stockfish::Eval;
 use anyhow::Result;
 use async_process::{Child, Command, Stdio};
 use async_std::io::BufReader;
@@ -43,8 +43,8 @@ pub(crate) async fn update_analysis_arrows(
         .take()
         .unwrap();
     let mut lines = BufReader::new(stdout).lines();
-    let mut evals = vec![f64::NEG_INFINITY; MOVES];
+    let mut scores = vec![f64::NEG_INFINITY; MOVES];
     while let Some(Ok(output)) = &lines.next().await {
-        process_output(output, &mut evals, arrows, eval_hook, game).await;
+        process_output(output, &mut scores, arrows, eval_hook, game).await;
     }
 }

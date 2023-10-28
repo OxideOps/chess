@@ -17,7 +17,7 @@ body {
 }
 
 .eval-container {
-    @apply border border-gray-200 flex flex-col h-full justify-end relative rounded-md text-center w-9;
+    @apply border border-gray-200 flex flex-col h-full relative rounded-md text-center w-9;
 }
 
 .info-bar-container {
