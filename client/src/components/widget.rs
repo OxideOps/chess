@@ -19,8 +19,8 @@ pub(crate) fn Widget(
     start_time: Duration,
     height: u32,
 ) -> Element {
-    let board_theme = use_state::<Option<String>>(cx, || None);
-    let piece_theme = use_state::<Option<String>>(cx, || None);
+    let board_theme = use_state(cx, || String::from("qootee"));
+    let piece_theme = use_state(cx, || String::from("maestro"));
     cx.render(rsx! {
         div { class: "widget-container", style: "height: {height}px",
             Board {
@@ -28,7 +28,7 @@ pub(crate) fn Widget(
                 white_player_kind: white_player.read().kind,
                 black_player_kind: black_player.read().kind,
                 perspective: *perspective,
-                analyze: analyze.to_owned()
+                analyze: analyze.to_owned(),
             }
             if **analyze {
                 rsx! { EvalBar { perspective: *perspective } }
@@ -36,7 +36,7 @@ pub(crate) fn Widget(
             InfoBar { start_time: *start_time },
             // Dropdown for selecting board theme
             select {
-                onchange: |event| board_theme.set(Some(event.value.clone())),
+                onchange: |event| board_theme.set(event.value.clone()),
                 get_themes(ThemeType::Board).unwrap().into_iter().map(|theme| {
                     rsx! {
                         option { value: "{theme}", "{theme}" }
@@ -46,7 +46,7 @@ pub(crate) fn Widget(
             }
             // Dropdown for selecting piece theme
             select {
-                onchange: |event| piece_theme.set(Some(event.value.clone())),
+                onchange: |event| piece_theme.set(event.value.clone()),
                 get_themes(ThemeType::Piece).unwrap().into_iter().map(|theme| {
                     rsx! {
                         option { value: "{theme}", "{theme}" }
@@ -58,12 +58,12 @@ pub(crate) fn Widget(
     })
 }
 
-pub enum ThemeType {
+enum ThemeType {
     Board,
     Piece,
 }
 
-pub fn get_themes(theme_type: ThemeType) -> io::Result<Vec<String>> {
+fn get_themes(theme_type: ThemeType) -> io::Result<Vec<String>> {
     let mut themes = Vec::new();
     let dir_path = match theme_type {
         ThemeType::Board => "images/boards/",
