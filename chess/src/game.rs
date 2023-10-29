@@ -80,7 +80,7 @@ impl Game {
     }
 
     fn piece_can_snipe(&self, at: &Position) -> bool {
-        self.get_piece(at).unwrap().can_snipe()
+        self.get_piece(at).map_or(false, |piece| piece.can_snipe())
     }
 
     fn has_castling_right(&self, right: CastlingRightsKind) -> bool {
@@ -246,7 +246,7 @@ impl Game {
     }
 
     fn can_double_move(&self, from: &Position) -> bool {
-        if let Piece::Pawn(player) = self.get_piece(from).unwrap() {
+        if let Some(Piece::Pawn(player)) = self.get_piece(from) {
             return match player {
                 Color::White => from.y == 1,
                 Color::Black => from.y == 6,

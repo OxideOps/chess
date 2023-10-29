@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 
 #[component]
 pub(crate) fn RoundList(cx: Scope) -> Element {
-    let game = use_shared_state::<Game>(cx).unwrap().read();
+    let game = use_shared_state::<Game>(cx)?.read();
     let current_round = game.get_current_round();
 
     cx.render(rsx! {

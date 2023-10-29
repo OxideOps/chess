@@ -7,10 +7,7 @@ use std::time::Duration;
 pub(crate) fn Timer(cx: Scope, start_time: Duration) -> Element {
     let white_time = use_state(cx, || display_time(*start_time));
     let black_time = use_state(cx, || display_time(*start_time));
-    let player = use_shared_state::<Game>(cx)
-        .unwrap()
-        .read()
-        .get_real_player();
+    let player = use_shared_state::<Game>(cx)?.read().get_real_player();
 
     use_timer_future(cx, white_time, black_time);
 

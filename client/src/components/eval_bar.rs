@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 const EVAL_SENSITIVITY: f64 = 1.0 / 800.0;
 #[component]
 pub(crate) fn EvalBar(cx: Scope, perspective: Color) -> Element {
-    let eval = *use_shared_state::<Eval>(cx).unwrap().read();
+    let eval = *use_shared_state::<Eval>(cx)?.read();
     let winning_player = eval.get_winning_player();
     let percent = match eval {
         Eval::Centipawns(cp) => 100.0 * sigmoid(EVAL_SENSITIVITY * cp as f64),
