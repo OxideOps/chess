@@ -4,6 +4,7 @@ use crate::stockfish::Eval;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::game::Game;
 use dioxus::prelude::*;
+use futures_util::TryFutureExt;
 use js_sys::{Function, Object};
 use once_cell::sync::Lazy;
 use wasm_bindgen::prelude::*;
@@ -30,18 +31,17 @@ pub(crate) async fn send_command(process: &mut Process, command: &str) {
 }
 
 pub(crate) async fn run_stockfish() -> Result<Object, JsValue> {
-    let sf_promise = js_sys::eval("Stockfish()").unwrap();
+    let sf_promise = js_sys::eval("Stockfish()")?;
     let sf_jsvalue = JsFuture::from(js_sys::Promise::from(sf_promise)).await?;
     let sf_object = sf_jsvalue.dyn_into::<Object>()?;
     let callback = Closure::wrap(Box::new(|line: JsValue| {
         if let Some(line) = line.as_string() {
-            spawn_local(async {
+            spawn_local(
                 CHANNEL
                     .0
                     .send(line)
-                    .await
-                    .expect("Failed to send stockfish output");
-            });
+                    .unwrap_or_else(|e| log::error!("Failed to send stockfish output: {e}")),
+            );
         }
     }) as Box<dyn FnMut(JsValue)>);
     get_js_method(&sf_object, "addMessageListener")

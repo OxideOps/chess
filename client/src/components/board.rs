@@ -234,8 +234,8 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
 
     // hooks
     let hooks = BoardHooks {
-        eval: use_shared_state::<Eval>(cx).unwrap(),
-        game: use_shared_state::<Game>(cx).unwrap(),
+        eval: use_shared_state::<Eval>(cx)?,
+        game: use_shared_state::<Game>(cx)?,
         mouse_down_state: use_state::<Option<MouseClick>>(cx, || None),
         selected_piece: use_ref::<Option<Position>>(cx, || None),
         arrows: use_ref(cx, Arrows::default),
@@ -260,7 +260,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             hooks.analysis_arrows.to_owned(),
         )
     });
-    use_future(cx, use_shared_state::<GameId>(cx).unwrap(), |game_id| {
+    use_future(cx, use_shared_state::<GameId>(cx)?, |game_id| {
         create_game_socket(hooks.game.to_owned(), game_id, &MOVE_CHANNEL.1)
     });
 

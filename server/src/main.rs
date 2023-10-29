@@ -11,7 +11,7 @@ use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeFile;
 
 #[tokio::main]
-pub async fn main() {
+pub async fn main() -> hyper::Result<()> {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
 
     // Initialize database connection
@@ -45,5 +45,4 @@ pub async fn main() {
                 .into_make_service(),
         )
         .await
-        .unwrap();
 }

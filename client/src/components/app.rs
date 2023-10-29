@@ -35,8 +35,8 @@ pub(crate) fn App(cx: Scope) -> Element {
     let white_player = use_lock(cx, || Player::with_color(Color::White));
     let black_player = use_lock(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
-    let game = use_shared_state::<Game>(cx).unwrap();
-    let game_id = use_shared_state::<GameId>(cx).unwrap();
+    let game = use_shared_state::<Game>(cx)?;
+    let game_id = use_shared_state::<GameId>(cx)?;
     let analyze = use_state(cx, || false);
 
     cx.render(rsx! {
