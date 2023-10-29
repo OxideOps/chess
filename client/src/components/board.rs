@@ -240,6 +240,7 @@ fn handle_on_key_down(cx: Scope<BoardProps>, hooks: &BoardHooks, event: Event<Ke
             }
             #[cfg(not(target_arch = "wasm32"))]
             "q" if event.modifiers() == Modifiers::CONTROL => {
+                log::info!("Quitting game..");
                 dioxus_desktop::use_window(cx).close();
             }
             _ => log::debug!("{:?} key pressed", c),

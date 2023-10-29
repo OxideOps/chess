@@ -81,8 +81,8 @@ pub async fn toggle_stockfish(
             }
             Err(err) => log::error!("Failed to start stockfish: {err:?}"),
         }
-    } else if stockfish_process.read().await.is_some() {
-        stop_stockfish(stockfish_process.write().await.as_mut().unwrap()).await;
+    } else if let Some(process) = stockfish_process.write().await.as_mut() {
+        stop_stockfish(process).await;
         arrows.set(Arrows::default());
         stockfish_process.set(None).await;
     }

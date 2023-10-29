@@ -32,14 +32,11 @@ pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
 
-    #[cfg(not(target_arch = "wasm32"))]
-    let window = dioxus_desktop::use_window(cx);
-
     let white_player = use_lock(cx, || Player::with_color(Color::White));
     let black_player = use_lock(cx, || Player::with_color(Color::Black));
     let perspective = use_state(cx, || Color::White);
-    let game = use_shared_state::<Game>(cx).unwrap();
-    let game_id = use_shared_state::<GameId>(cx).unwrap();
+    let game = use_shared_state::<Game>(cx)?;
+    let game_id = use_shared_state::<GameId>(cx)?;
     let analyze = use_state(cx, || false);
 
     cx.render(rsx! {
@@ -86,9 +83,8 @@ pub(crate) fn App(cx: Scope) -> Element {
             }
             button {
                 class: "button",
-                hidden: !game.read().game_over()
-                        && (white_player.read().kind != PlayerKind::Local
-                        || black_player.read().kind != PlayerKind::Local),
+                hidden: !game.read().game_over() && (white_player.read().kind != PlayerKind::Local ||
+                    black_player.read().kind != PlayerKind::Local),
                 onclick: |_| analyze.modify(|analyze| !*analyze),
                 if **analyze { "Stop analyzing" } else { "Analyze" }
             }
@@ -99,7 +95,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                         class: "button",
                         onclick: |_| {
                             log::info!("Quitting game..");
-                            window.close()
+                            dioxus_desktop::use_window(cx).close()
                         },
                         "Quit"
                     }

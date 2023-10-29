@@ -11,7 +11,7 @@ pub fn Piece(
     is_dragging: bool,
 ) -> Element {
     let top_left = use_state(cx, || *top_left_starting);
-    let drag_offset_receiver = cx.consume_context::<Receiver<ClientPoint>>().unwrap();
+    let drag_offset_receiver = cx.consume_context::<Receiver<ClientPoint>>()?;
     let z_index = cx.props.is_dragging as u32 + 1; // 🏌️
 
     use_future(
