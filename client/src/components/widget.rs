@@ -1,4 +1,5 @@
 use super::Board;
+use super::EvalBar;
 use super::InfoBar;
 
 use chess::color::Color;
@@ -17,13 +18,18 @@ pub(crate) fn Widget(
     height: u32,
 ) -> Element {
     cx.render(rsx! {
-        Board {
-            size: *height,
-            white_player_kind: white_player.read().kind,
-            black_player_kind: black_player.read().kind,
-            perspective: *perspective,
-            analyze: analyze.to_owned()
+        div { class: "widget-container", style: "height: {height}px",
+            Board {
+                size: *height,
+                white_player_kind: white_player.read().kind,
+                black_player_kind: black_player.read().kind,
+                perspective: *perspective,
+                analyze: analyze.to_owned()
+            }
+            if **analyze {
+                rsx! { EvalBar { perspective: *perspective } }
+            }
+            InfoBar { start_time: *start_time }
         }
-        InfoBar { start_time: *start_time, left: *height }
     })
 }

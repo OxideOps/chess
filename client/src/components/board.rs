@@ -19,6 +19,7 @@ use crate::mouse_click::MouseClick;
 use crate::shared_states::GameId;
 use crate::stockfish::core::{on_game_changed, toggle_stockfish};
 use crate::stockfish::interface::Process;
+use crate::stockfish::Eval;
 
 pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 
@@ -238,6 +239,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     cx.provide_context(DRAG_CHANNEL.1.clone());
 
     // hooks
+    let eval = use_shared_state::<Eval>(cx).unwrap();
     let game = use_shared_state::<Game>(cx).unwrap();
     let mouse_down_state = use_state::<Option<MouseClick>>(cx, || None);
     let selected_piece = use_ref::<Option<Position>>(cx, || None);
@@ -252,6 +254,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             stockfish_process.to_owned(),
             game.to_owned(),
             analysis_arrows.to_owned(),
+            eval.to_owned(),
         )
     });
     use_effect(cx, game, |game| {
@@ -271,6 +274,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         // div for widget
         div {
             class: "relative z-0",
+            style: "height: {cx.props.size}px; width: {cx.props.size}px;",
             autofocus: true,
             tabindex: 0,
             // event handlers
