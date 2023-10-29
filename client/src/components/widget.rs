@@ -19,8 +19,8 @@ pub(crate) fn Widget(
     start_time: Duration,
     height: u32,
 ) -> Element {
-    let board_theme = use_ref::<Option<String>>(cx, || None);
-    let piece_theme = use_ref::<Option<String>>(cx, || None);
+    let board_theme = use_state::<Option<String>>(cx, || None);
+    let piece_theme = use_state::<Option<String>>(cx, || None);
     cx.render(rsx! {
         div { class: "widget-container", style: "height: {height}px",
             Board {
