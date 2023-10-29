@@ -141,7 +141,7 @@ fn handle_on_key_down(cx: Scope<BoardProps>, hooks: &BoardHooks, event: Event<Ke
 
 fn drop_piece(
     props: &BoardProps,
-    hooks: &BoardHooks<'_>,
+    hooks: &BoardHooks,
     event: &Event<MouseData>,
     point: &ClientPoint,
 ) {
@@ -163,7 +163,7 @@ fn drop_piece(
     }
 }
 
-fn complete_arrow(hooks: &BoardHooks<'_>) {
+fn complete_arrow(hooks: &BoardHooks) {
     if let Some(arrow_data) = *hooks.drawing_arrow.read() {
         if arrow_data.has_length() {
             hooks.arrows.write().push(arrow_data);
@@ -172,7 +172,7 @@ fn complete_arrow(hooks: &BoardHooks<'_>) {
     *hooks.drawing_arrow.write() = None;
 }
 
-fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks<'_>, event: Event<MouseData>) {
+fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
     let mouse_down = MouseClick::from(event);
     if mouse_down.kind.contains(MouseButton::Primary) {
         hooks
@@ -188,19 +188,19 @@ fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks<'_>, event:
     hooks.mouse_down_state.set(Some(mouse_down));
 }
 
-fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks<'_>, event: Event<MouseData>) {
+fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             drop_piece(props, hooks, &event, &mouse_down.point);
         } else if mouse_down.kind.contains(MouseButton::Secondary) {
-            complete_arrow(&hooks);
+            complete_arrow(hooks);
         }
         hooks.mouse_down_state.set(None);
         hooks.selected_piece.set(None);
     }
 }
 
-fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks<'_>, event: Event<MouseData>) {
+fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             block_on(DRAG_CHANNEL.0.send(ClientPoint::new(
