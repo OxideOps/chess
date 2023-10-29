@@ -5,6 +5,8 @@ use super::InfoBar;
 use chess::color::Color;
 use chess::player::Player;
 use dioxus::prelude::*;
+use std::fs;
+use std::io;
 use std::time::Duration;
 
 #[component]
@@ -17,6 +19,8 @@ pub(crate) fn Widget(
     start_time: Duration,
     height: u32,
 ) -> Element {
+    let board_theme = use_ref::<Option<String>>(cx, || None);
+    let piece_theme = use_ref::<Option<String>>(cx, || None);
     cx.render(rsx! {
         div { class: "widget-container", style: "height: {height}px",
             Board {
@@ -29,7 +33,54 @@ pub(crate) fn Widget(
             if **analyze {
                 rsx! { EvalBar { perspective: *perspective } }
             }
-            InfoBar { start_time: *start_time }
+            InfoBar { start_time: *start_time },
+            // Dropdown for selecting board theme
+            select {
+                onchange: |event| board_theme.set(Some(event.value.clone())),
+                get_themes(ThemeType::Board).unwrap().into_iter().map(|theme| {
+                    rsx! {
+                        option { value: "{theme}", "{theme}" }
+                    }
+                })
+                "Select board theme"
+            }
+            // Dropdown for selecting piece theme
+            select {
+                onchange: |event| piece_theme.set(Some(event.value.clone())),
+                get_themes(ThemeType::Piece).unwrap().into_iter().map(|theme| {
+                    rsx! {
+                        option { value: "{theme}", "{theme}" }
+                    }
+                })
+                "Select piece theme"
+            }
         }
     })
+}
+
+pub enum ThemeType {
+    Board,
+    Piece,
+}
+
+pub fn get_themes(theme_type: ThemeType) -> io::Result<Vec<String>> {
+    let mut themes = Vec::new();
+    let dir_path = match theme_type {
+        ThemeType::Board => "images/boards/",
+        ThemeType::Piece => "images/pieces/",
+    };
+
+    for entry in fs::read_dir(dir_path)? {
+        let path = entry?.path();
+
+        if path.is_dir() {
+            if let Some(theme_name) = path.file_name() {
+                if let Some(theme_str) = theme_name.to_str() {
+                    themes.push(theme_str.to_string());
+                }
+            }
+        }
+    }
+
+    Ok(themes)
 }
