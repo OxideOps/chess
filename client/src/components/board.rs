@@ -28,6 +28,136 @@ static MOVE_CHANNEL: Lazy<Channel<Move>> = Lazy::new(unbounded);
 // Channel for telling dragged pieces how far they have been dragged
 static DRAG_CHANNEL: Lazy<Channel<ClientPoint>> = Lazy::new(unbounded);
 
+#[derive(Props, PartialEq)]
+pub(crate) struct BoardProps {
+    white_player_kind: PlayerKind,
+    black_player_kind: PlayerKind,
+    perspective: Color,
+    pub(crate) size: u32,
+    analyze: UseState<bool>,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct BoardHooks<'a> {
+    pub(crate) eval: &'a UseSharedState<Eval>,
+    pub(crate) game: &'a UseSharedState<Game>,
+    pub(crate) mouse_down_state: &'a UseState<Option<MouseClick>>,
+    pub(crate) selected_piece: &'a UseRef<Option<Position>>,
+    pub(crate) arrows: &'a UseRef<Arrows>,
+    pub(crate) analysis_arrows: &'a UseLock<Arrows>,
+    pub(crate) drawing_arrow: &'a UseRef<Option<ArrowData>>,
+    pub(crate) stockfish_process: &'a UseAsyncLock<Option<Process>>,
+}
+
+pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
+    cx.provide_context(DRAG_CHANNEL.1.clone());
+
+    // hooks
+    let hooks = BoardHooks {
+        eval: use_shared_state::<Eval>(cx).unwrap(),
+        game: use_shared_state::<Game>(cx).unwrap(),
+        mouse_down_state: use_state::<Option<MouseClick>>(cx, || None),
+        selected_piece: use_ref::<Option<Position>>(cx, || None),
+        arrows: use_ref(cx, Arrows::default),
+        analysis_arrows: use_lock(cx, Arrows::default),
+        drawing_arrow: use_ref::<Option<ArrowData>>(cx, || None),
+        stockfish_process: use_async_lock::<Option<Process>>(cx, || None),
+    };
+
+    use_effect(cx, &cx.props.analyze, |analyze| {
+        toggle_stockfish(
+            analyze,
+            hooks.stockfish_process.to_owned(),
+            hooks.game.to_owned(),
+            hooks.analysis_arrows.to_owned(),
+            hooks.eval.to_owned(),
+        )
+    });
+    use_effect(cx, hooks.game, |game| {
+        on_game_changed(
+            game.read().get_fen_str(),
+            hooks.stockfish_process.to_owned(),
+            hooks.analysis_arrows.to_owned(),
+        )
+    });
+    use_future(cx, use_shared_state::<GameId>(cx).unwrap(), |game_id| {
+        create_game_socket(hooks.game.to_owned(), game_id, &MOVE_CHANNEL.1)
+    });
+
+    let board_img = get_board_image("qootee");
+    let piece_theme = "maestro";
+    cx.render(rsx! {
+        // div for widget
+        div {
+            class: "relative z-0",
+            style: "height: {cx.props.size}px; width: {cx.props.size}px;",
+            autofocus: true,
+            tabindex: 0,
+            // event handlers
+            onmousedown: move |event| handle_on_mouse_down_event(cx.props, &hooks, event),
+            onmouseup: move |event| handle_on_mouse_up_event(cx.props, &hooks, event),
+            onmousemove: move |event| handle_on_mouse_move_event(cx.props, &hooks, event),
+            onkeydown: move |event| handle_on_key_down(cx, &hooks, event),
+            // board
+            img {
+                src: "{board_img}",
+                class: "images inset-0 z-0",
+                width: "{cx.props.size}",
+                height: "{cx.props.size}"
+            }
+            // highlight squares
+            hooks.game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
+                rsx! {
+                    BoardSquare {
+                        class: class,
+                        top_left: to_point(cx.props, &pos),
+                        board_size: cx.props.size,
+                    }
+                }
+            }),
+            if (!hooks.game.read().is_replaying() || is_local_game(cx.props))
+                && let Some(pos) = &*hooks.selected_piece.read()
+            {
+                rsx! {
+                    hooks.game.read().get_valid_destinations_for_piece(pos).into_iter().map(|pos| {
+                        rsx! {
+                            BoardSquare {
+                                class: "destination-square".into(),
+                                top_left: to_point(cx.props, &pos),
+                                board_size: cx.props.size,
+                            }
+                        }
+                    })
+                }
+            }
+            // pieces
+            hooks.game.read().get_pieces().into_iter().map(|(piece, pos)| {
+                rsx! {
+                    Piece {
+                        image: get_piece_image_file(piece_theme, piece),
+                        top_left_starting: to_point(cx.props, &pos),
+                        size: cx.props.size / 8,
+                        is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {
+                            mouse_down.kind.contains(MouseButton::Primary)
+                                && pos == to_position(cx.props, &mouse_down.point)
+                        }),
+                    }
+                }
+            }),
+            // arrows
+            hooks.arrows.read().get().into_iter()
+                .chain(hooks.analysis_arrows.read().get().into_iter())
+                .chain(hooks.drawing_arrow.read().into_iter())
+                .map(|data| rsx! {
+                    Arrow {
+                        data: data,
+                        board_props: &cx.props,
+                    }
+                })
+        }
+    })
+}
+
 fn get_board_image(theme: &str) -> String {
     format!("images/boards/{theme}/{theme}.png")
 }
@@ -49,27 +179,6 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
     };
 
     format!("images/pieces/{theme}/{piece_img}.svg")
-}
-
-#[derive(Props, PartialEq)]
-pub(crate) struct BoardProps {
-    white_player_kind: PlayerKind,
-    black_player_kind: PlayerKind,
-    perspective: Color,
-    pub(crate) size: u32,
-    analyze: UseState<bool>,
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct BoardHooks<'a> {
-    pub(crate) eval: &'a UseSharedState<Eval>,
-    pub(crate) game: &'a UseSharedState<Game>,
-    pub(crate) mouse_down_state: &'a UseState<Option<MouseClick>>,
-    pub(crate) selected_piece: &'a UseRef<Option<Position>>,
-    pub(crate) arrows: &'a UseRef<Arrows>,
-    pub(crate) analysis_arrows: &'a UseLock<Arrows>,
-    pub(crate) drawing_arrow: &'a UseRef<Option<ArrowData>>,
-    pub(crate) stockfish_process: &'a UseAsyncLock<Option<Process>>,
 }
 
 // We want the square a dragged piece is considered to be on to be based on the center of
@@ -226,113 +335,4 @@ pub(crate) fn get_center(props: &BoardProps, pos: &Position) -> ClientPoint {
 
 fn is_local_game(props: &BoardProps) -> bool {
     props.white_player_kind == PlayerKind::Local && props.black_player_kind == PlayerKind::Local
-}
-
-pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
-    cx.provide_context(DRAG_CHANNEL.1.clone());
-
-    // hooks
-    let hooks = BoardHooks {
-        eval: use_shared_state::<Eval>(cx).unwrap(),
-        game: use_shared_state::<Game>(cx).unwrap(),
-        mouse_down_state: use_state::<Option<MouseClick>>(cx, || None),
-        selected_piece: use_ref::<Option<Position>>(cx, || None),
-        arrows: use_ref(cx, Arrows::default),
-        analysis_arrows: use_lock(cx, Arrows::default),
-        drawing_arrow: use_ref::<Option<ArrowData>>(cx, || None),
-        stockfish_process: use_async_lock::<Option<Process>>(cx, || None),
-    };
-
-    use_effect(cx, &cx.props.analyze, |analyze| {
-        toggle_stockfish(
-            analyze,
-            hooks.stockfish_process.to_owned(),
-            hooks.game.to_owned(),
-            hooks.analysis_arrows.to_owned(),
-            hooks.eval.to_owned(),
-        )
-    });
-    use_effect(cx, hooks.game, |game| {
-        on_game_changed(
-            game.read().get_fen_str(),
-            hooks.stockfish_process.to_owned(),
-            hooks.analysis_arrows.to_owned(),
-        )
-    });
-    use_future(cx, use_shared_state::<GameId>(cx).unwrap(), |game_id| {
-        create_game_socket(hooks.game.to_owned(), game_id, &MOVE_CHANNEL.1)
-    });
-
-    let board_img = get_board_image("qootee");
-    let piece_theme = "maestro";
-    cx.render(rsx! {
-        // div for widget
-        div {
-            class: "relative z-0",
-            style: "height: {cx.props.size}px; width: {cx.props.size}px;",
-            autofocus: true,
-            tabindex: 0,
-            // event handlers
-            onmousedown: move |event| handle_on_mouse_down_event(cx.props, &hooks, event),
-            onmouseup: move |event| handle_on_mouse_up_event(cx.props, &hooks, event),
-            onmousemove: move |event| handle_on_mouse_move_event(cx.props, &hooks, event),
-            onkeydown: move |event| handle_on_key_down(cx, &hooks, event),
-            // board
-            img {
-                src: "{board_img}",
-                class: "images inset-0 z-0",
-                width: "{cx.props.size}",
-                height: "{cx.props.size}"
-            }
-            // highlight squares
-            hooks.game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
-                rsx! {
-                    BoardSquare {
-                        class: class,
-                        top_left: to_point(cx.props, &pos),
-                        board_size: cx.props.size,
-                    }
-                }
-            }),
-            if (!hooks.game.read().is_replaying() || is_local_game(cx.props))
-                && let Some(pos) = &*hooks.selected_piece.read()
-            {
-                rsx! {
-                    hooks.game.read().get_valid_destinations_for_piece(pos).into_iter().map(|pos| {
-                        rsx! {
-                            BoardSquare {
-                                class: "destination-square".into(),
-                                top_left: to_point(cx.props, &pos),
-                                board_size: cx.props.size,
-                            }
-                        }
-                    })
-                }
-            }
-            // pieces
-            hooks.game.read().get_pieces().into_iter().map(|(piece, pos)| {
-                rsx! {
-                    Piece {
-                        image: get_piece_image_file(piece_theme, piece),
-                        top_left_starting: to_point(cx.props, &pos),
-                        size: cx.props.size / 8,
-                        is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {
-                            mouse_down.kind.contains(MouseButton::Primary)
-                                && pos == to_position(cx.props, &mouse_down.point)
-                        }),
-                    }
-                }
-            }),
-            // arrows
-            hooks.arrows.read().get().into_iter()
-                .chain(hooks.analysis_arrows.read().get().into_iter())
-                .chain(hooks.drawing_arrow.read().into_iter())
-                .map(|data| rsx! {
-                    Arrow {
-                        data: data,
-                        board_props: &cx.props,
-                    }
-                })
-        }
-    })
 }

@@ -21,6 +21,7 @@ pub(crate) fn Widget(
 ) -> Element {
     let board_theme = use_state(cx, || String::from("qootee"));
     let piece_theme = use_state(cx, || String::from("maestro"));
+
     cx.render(rsx! {
         div { class: "widget-container", style: "height: {height}px",
             Board {
