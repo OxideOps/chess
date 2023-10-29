@@ -1,6 +1,6 @@
 use super::get_center;
 use crate::arrows::ArrowData;
-use chess::color::Color;
+use crate::components::board::BoardProps;
 use dioxus::html::geometry::ClientPoint;
 use dioxus::prelude::*;
 use std::f64::consts::PI;
@@ -19,17 +19,17 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
 }
 
 #[component]
-pub(crate) fn Arrow(cx: Scope, data: ArrowData, board_size: u32, perspective: Color) -> Element {
+pub(crate) fn Arrow<'a>(cx: Scope, data: ArrowData, board_props: &'a BoardProps) -> Element {
     if !data.has_length() {
         return None;
     }
 
-    let from = get_center(&data.mv.from, *board_size, *perspective);
-    let to = get_center(&data.mv.to, *board_size, *perspective);
+    let from = get_center(board_props, &data.mv.from);
+    let to = get_center(board_props, &data.mv.to);
 
-    let h = HEAD * *board_size as f64;
-    let w = WIDTH * *board_size as f64;
-    let o = OFFSET * *board_size as f64;
+    let h = HEAD * board_props.size as f64;
+    let w = WIDTH * board_props.size as f64;
+    let o = OFFSET * board_props.size as f64;
 
     let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
@@ -60,8 +60,8 @@ pub(crate) fn Arrow(cx: Scope, data: ArrowData, board_size: u32, perspective: Co
         svg {
             class: "absolute pointer-events-none",
             style: "z-index: 3",
-            height: "{board_size}",
-            width: "{board_size}",
+            height: "{board_props.size}",
+            width: "{board_props.size}",
             polygon {
                 class: "absolute pointer-events-none",
                 points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
