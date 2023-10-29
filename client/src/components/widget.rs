@@ -37,25 +37,32 @@ pub(crate) fn Widget(
                 rsx! { EvalBar { perspective: *perspective } }
             }
             InfoBar { start_time: *start_time },
-            // Dropdown for selecting board theme
-            select {
-                onchange: |event| board_theme.set(event.value.clone()),
-                get_themes(ThemeType::Board).unwrap().into_iter().map(|theme| {
-                    rsx! {
-                        option { value: "{theme}", "{theme}" }
+            // Theme selection
+            div {
+                div {
+                    label { "Board theme: " }
+                    select {
+                        class: "select",
+                        onchange: |event| board_theme.set(event.value.clone()),
+                        get_themes(ThemeType::Board).unwrap().into_iter().map(|theme| {
+                            rsx! {
+                                option { value: "{theme}", "{theme}" }
+                            }
+                        })
                     }
-                })
-                "Select board theme"
-            }
-            // Dropdown for selecting piece theme
-            select {
-                onchange: |event| piece_theme.set(event.value.clone()),
-                get_themes(ThemeType::Piece).unwrap().into_iter().map(|theme| {
-                    rsx! {
-                        option { value: "{theme}", "{theme}" }
+                }
+                div {
+                    label { "Piece theme: " }
+                    select {
+                        class: "select",
+                        onchange: |event| piece_theme.set(event.value.clone()),
+                        get_themes(ThemeType::Piece).unwrap().into_iter().map(|theme| {
+                            rsx! {
+                                option { value: "{theme}", "{theme}" }
+                            }
+                        })
                     }
-                })
-                "Select piece theme"
+                }
             }
         }
     })
