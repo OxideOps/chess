@@ -35,6 +35,8 @@ pub(crate) struct BoardProps {
     perspective: Color,
     pub(crate) size: u32,
     analyze: UseState<bool>,
+    board_theme: String,
+    piece_theme: String,
 }
 
 #[derive(Clone, Copy)]
@@ -84,8 +86,6 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         create_game_socket(hooks.game.to_owned(), game_id, &MOVE_CHANNEL.1)
     });
 
-    let board_img = get_board_image("qootee");
-    let piece_theme = "maestro";
     cx.render(rsx! {
         // div for widget
         div {
@@ -100,7 +100,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             onkeydown: move |event| handle_on_key_down(cx, &hooks, event),
             // board
             img {
-                src: "{board_img}",
+                src: "{get_board_image(&cx.props.board_theme)}",
                 class: "images inset-0 z-0",
                 width: "{cx.props.size}",
                 height: "{cx.props.size}"
@@ -134,7 +134,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             hooks.game.read().get_pieces().into_iter().map(|(piece, pos)| {
                 rsx! {
                     Piece {
-                        image: get_piece_image_file(piece_theme, piece),
+                        image: get_piece_image_file(&cx.props.piece_theme, piece),
                         top_left_starting: to_point(cx.props, &pos),
                         size: cx.props.size / 8,
                         is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {

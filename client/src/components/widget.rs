@@ -30,6 +30,8 @@ pub(crate) fn Widget(
                 black_player_kind: black_player.read().kind,
                 perspective: *perspective,
                 analyze: analyze.to_owned(),
+                board_theme: board_theme.to_string(),
+                piece_theme: piece_theme.to_string(),
             }
             if **analyze {
                 rsx! { EvalBar { perspective: *perspective } }
