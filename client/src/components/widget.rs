@@ -5,6 +5,8 @@ use super::InfoBar;
 use chess::color::Color;
 use chess::player::Player;
 use dioxus::prelude::*;
+use dioxus_fullstack::prelude::use_server_future;
+use server_functions::{get_themes, ThemeType};
 use std::time::Duration;
 
 #[component]
@@ -17,6 +19,11 @@ pub(crate) fn Widget(
     start_time: Duration,
     height: u32,
 ) -> Element {
+    let board_theme_list =
+        use_server_future(cx, (), |_| async { get_themes(ThemeType::Board).await })?;
+    let piece_theme_list =
+        use_server_future(cx, (), |_| async { get_themes(ThemeType::Piece).await })?;
+
     let board_theme = use_state(cx, || String::from("qootee"));
     let piece_theme = use_state(cx, || String::from("maestro"));
 
@@ -42,7 +49,7 @@ pub(crate) fn Widget(
                     select {
                         class: "select",
                         onchange: |event| board_theme.set(event.value.clone()),
-                        get_themes(ThemeType::Board).unwrap().into_iter().map(|theme| {
+                        board_theme_list.value().clone().unwrap().iter().map(|theme| {
                             rsx! {
                                 option { value: "{theme}", "{theme}" }
                             }
@@ -54,7 +61,7 @@ pub(crate) fn Widget(
                     select {
                         class: "select",
                         onchange: |event| piece_theme.set(event.value.clone()),
-                        get_themes(ThemeType::Piece).unwrap().into_iter().map(|theme| {
+                        piece_theme_list.value().clone().unwrap().into_iter().map(|theme| {
                             rsx! {
                                 option { value: "{theme}", "{theme}" }
                             }
