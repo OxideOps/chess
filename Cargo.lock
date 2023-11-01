@@ -779,6 +779,7 @@ dependencies = [
  "clap",
  "getrandom 0.2.10",
  "log",
+ "serde",
 ]
 
 [[package]]
@@ -3804,6 +3805,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "chess",
+ "common",
  "dioxus",
  "dioxus-fullstack",
  "futures",

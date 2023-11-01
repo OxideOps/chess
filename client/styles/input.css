@@ -12,6 +12,10 @@ body {
     @apply relative w-48 border border-gray-200 p-2.5 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 m-1;
 }
 
+.select {
+    @apply relative w-48 border border-gray-200 p-2.5 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 m-1;
+}
+
 .widget-container {
     @apply flex space-x-1;
 }

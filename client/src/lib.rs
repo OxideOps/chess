@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(stmt_expr_attributes)]
 mod arrows;
 pub mod components;
 mod game_socket;
