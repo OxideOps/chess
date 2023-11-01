@@ -18,25 +18,8 @@ pub(crate) fn Widget(
     start_time: Duration,
     height: u32,
 ) -> Element {
-    let board_theme_list;
-    let piece_theme_list;
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use server_functions::get_themes as get_themes_server;
-        board_theme_list = use_future(cx, (), |_| async {
-            get_themes_server(ThemeType::Board).await
-        });
-        piece_theme_list = use_future(cx, (), |_| async {
-            get_themes_server(ThemeType::Piece).await
-        });
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        board_theme_list = use_future(cx, (), |_| async { get_themes(ThemeType::Board).await });
-        piece_theme_list = use_future(cx, (), |_| async { get_themes(ThemeType::Piece).await });
-    }
+    let board_theme_list = get_theme_future(cx, ThemeType::Board);
+    let piece_theme_list = get_theme_future(cx, ThemeType::Piece);
 
     let board_theme = use_state(cx, || String::from("qootee"));
     let piece_theme = use_state(cx, || String::from("maestro"));
@@ -65,7 +48,7 @@ pub(crate) fn Widget(
                         onchange: |event| board_theme.set(event.value.clone()),
                         if let Some(list) = board_theme_list.value() {
                             rsx! {
-                                list.as_ref().unwrap().iter().map(|theme| {
+                                list.iter().map(|theme| {
                                     rsx! {
                                         option { value: "{theme}", "{theme}" }
                                     }
@@ -81,7 +64,7 @@ pub(crate) fn Widget(
                         onchange: |event| piece_theme.set(event.value.clone()),
                         if let Some(list) = piece_theme_list.value() {
                             rsx! {
-                                list.as_ref().unwrap().iter().map(|theme| {
+                                list.iter().map(|theme| {
                                     rsx! {
                                         option { value: "{theme}", "{theme}" }
                                     }
@@ -93,4 +76,32 @@ pub(crate) fn Widget(
             }
         }
     })
+}
+
+fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        use_future(cx, (), |_| async {
+            match server_functions::get_themes(theme_type).await {
+                Ok(themes) => themes,
+                Err(e) => {
+                    log::error!("Failed to get themes: {:?}", e);
+                    Vec::new()
+                }
+            }
+        })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use_future(cx, (), |_| async {
+            match get_themes(theme_type).await {
+                Ok(themes) => themes,
+                Err(e) => {
+                    log::error!("Failed to get themes: {:?}", e);
+                    Vec::new()
+                }
+            }
+        })
+    }
 }
