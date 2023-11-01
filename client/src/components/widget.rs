@@ -46,15 +46,9 @@ pub(crate) fn Widget(
                     select {
                         class: "select",
                         onchange: |event| board_theme.set(event.value.clone()),
-                        if let Some(list) = board_theme_list.value() {
-                            rsx! {
-                                list.iter().map(|theme| {
-                                    rsx! {
-                                        option { value: "{theme}", "{theme}" }
-                                    }
-                                })
-                            }
-                        },
+                        piece_theme_list.value().iter().flat_map(|themes| themes.iter()).map(|theme| rsx! {
+                            option { value: "{theme}", "{theme}" }
+                        })
                     }
                 }
                 div {
@@ -62,15 +56,9 @@ pub(crate) fn Widget(
                     select {
                         class: "select",
                         onchange: |event| piece_theme.set(event.value.clone()),
-                        if let Some(list) = piece_theme_list.value() {
-                            rsx! {
-                                list.iter().map(|theme| {
-                                    rsx! {
-                                        option { value: "{theme}", "{theme}" }
-                                    }
-                                })
-                            }
-                        },
+                        piece_theme_list.value().iter().flat_map(|themes| themes.iter()).map(|theme| rsx! {
+                            option { value: "{theme}", "{theme}" }
+                        })
                     }
                 }
             }
