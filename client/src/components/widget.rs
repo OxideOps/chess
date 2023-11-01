@@ -4,7 +4,7 @@ use super::InfoBar;
 
 use chess::color::Color;
 use chess::player::Player;
-use common::theme::{get_themes, ThemeType};
+use common::theme::ThemeType;
 use dioxus::prelude::*;
 use std::time::Duration;
 
@@ -79,29 +79,18 @@ pub(crate) fn Widget(
 }
 
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
-    #[cfg(target_arch = "wasm32")]
-    {
-        use_future(cx, (), |_| async {
-            match server_functions::get_themes(theme_type).await {
-                Ok(themes) => themes,
-                Err(e) => {
-                    log::error!("Failed to get themes: {:?}", e);
-                    Vec::new()
-                }
-            }
-        })
-    }
-
     #[cfg(not(target_arch = "wasm32"))]
-    {
-        use_future(cx, (), |_| async {
-            match get_themes(theme_type).await {
-                Ok(themes) => themes,
-                Err(e) => {
-                    log::error!("Failed to get themes: {:?}", e);
-                    Vec::new()
-                }
+    use common::theme::get_themes;
+    #[cfg(target_arch = "wasm32")]
+    use server_functions::get_themes;
+
+    use_future(cx, (), |_| async {
+        match get_themes(theme_type).await {
+            Ok(themes) => themes,
+            Err(e) => {
+                log::error!("Failed to get themes: {:?}", e);
+                Vec::new()
             }
-        })
-    }
+        }
+    })
 }
