@@ -57,7 +57,7 @@ pub(crate) fn Widget(
                         class: "select",
                         onchange: |event| piece_theme.set(event.value.clone()),
                         piece_theme_list.value().iter().flat_map(|themes| themes.iter()).map(|theme|
-                            rsx!{ option { value: "{theme}", "{theme}" } }
+                            rsx! { option { value: "{theme}", "{theme}" } }
                         )
                     }
                 }
