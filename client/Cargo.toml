@@ -30,13 +30,13 @@ url = "2.4.0"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 dioxus-web = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git", features = ["web"] }
-js-sys = "0.3.64"
+js-sys = "0.3.65"
 server-functions = { path = "../server-functions", features = ["web"] }
 wasm-bindgen = "0.2.87"
-wasm-bindgen-futures = "0.4.37"
+wasm-bindgen-futures = "0.4.38"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-async-process = "1.8.1"
+async-process = "2.0.0"
 dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git", features = ["desktop"] }
 dioxus-desktop = { git = "https://github.com/OxideOps/dioxus.git" }
 num_cpus = "1.16.0"
