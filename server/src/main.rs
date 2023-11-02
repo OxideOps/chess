@@ -8,7 +8,7 @@ use dioxus_fullstack::prelude::*;
 use server::database;
 use server::game_socket::handler;
 use tower::ServiceExt as OtherServiceExt;
-use tower_http::services::ServeFile;
+use tower_http::services::{ServeDir, ServeFile};
 
 #[tokio::main]
 pub async fn main() -> hyper::Result<()> {
@@ -32,6 +32,7 @@ pub async fn main() -> hyper::Result<()> {
                     get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| handler(game_id, ws)),
                 )
                 .serve_static_assets("dist")
+                .nest_service("/images", ServeDir::new("images"))
                 .map_response(|mut response| {
                     response
                         .headers_mut()
