@@ -2,5 +2,6 @@
 FROM ghcr.io/oxideops/oxide-chess:main
 WORKDIR /app
 COPY ./dist ./dist
+COPY ./images ./images
 COPY ./target/release ./target/release
 ENTRYPOINT ["./target/release/server"]
