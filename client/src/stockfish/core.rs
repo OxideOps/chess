@@ -1,18 +1,23 @@
-use crate::arrows::{ArrowData, Arrows, ALPHA};
-use crate::stockfish::interface::{run_stockfish, send_command, update_analysis_arrows, Process};
-use crate::stockfish::Eval;
-use crate::system_info::{get_num_cores, get_total_ram};
 use std::sync::Arc;
 
-use crate::helpers::{inv_sigmoid, sigmoid};
-use async_std::channel::{unbounded, Receiver, Sender};
-use async_std::sync::RwLock;
-use chess::color::Color;
-use chess::game::Game;
-use chess::moves::Move;
+use async_std::{
+    channel::{unbounded, Receiver, Sender},
+    sync::RwLock,
+};
+use chess::{color::Color, game::Game, moves::Move};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
+
+use crate::{
+    arrows::{ArrowData, Arrows, ALPHA},
+    helpers::{inv_sigmoid, sigmoid},
+    stockfish::{
+        interface::{run_stockfish, send_command, update_analysis_arrows, Process},
+        Eval,
+    },
+    system_info::{get_num_cores, get_total_ram},
+};
 
 type Channel = (Sender<()>, Receiver<()>);
 

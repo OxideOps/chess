@@ -1,5 +1,4 @@
-use dioxus::html::geometry::ClientPoint;
-use dioxus::prelude::*;
+use dioxus::{html::geometry::ClientPoint, prelude::*};
 
 #[component]
 pub(crate) fn BoardSquare(

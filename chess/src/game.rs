@@ -1,18 +1,22 @@
-use crate::board_state::BoardState;
-use crate::castling_rights::{CastlingRights, CastlingRightsKind};
-use crate::color::Color;
-use crate::displacement::Displacement;
-use crate::game_status::{DrawKind, GameStatus};
-use crate::history::History;
-use crate::moves::Move;
-use crate::piece::Piece;
-use crate::position::Position;
-use crate::result::{ChessError, ChessResult};
-use crate::round_info::RoundInfo;
-use crate::timer::Timer;
-use crate::turn::Turn;
 use std::collections::HashSet;
+
 use web_time::Duration;
+
+use crate::{
+    board_state::BoardState,
+    castling_rights::{CastlingRights, CastlingRightsKind},
+    color::Color,
+    displacement::Displacement,
+    game_status::{DrawKind, GameStatus},
+    history::History,
+    moves::Move,
+    piece::Piece,
+    position::Position,
+    result::{ChessError, ChessResult},
+    round_info::RoundInfo,
+    timer::Timer,
+    turn::Turn,
+};
 
 const MAX_FEN_STR: usize = 87;
 
