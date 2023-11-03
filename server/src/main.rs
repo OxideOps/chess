@@ -1,8 +1,6 @@
-use axum::{
-    extract::{Path, WebSocketUpgrade},
-    routing::get,
-    ServiceExt,
-};
+use axum::extract::{Path, WebSocketUpgrade};
+use axum::routing::get;
+use axum::ServiceExt;
 use common::args::*;
 use dioxus_fullstack::prelude::*;
 use server::database;

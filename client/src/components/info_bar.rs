@@ -1,5 +1,4 @@
-use super::RoundList;
-use super::Timer;
+use super::{RoundList, Timer};
 
 use dioxus::prelude::*;
 use std::time::Duration;

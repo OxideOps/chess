@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::{
-    fmt,
-    ops::{Add, AddAssign, Sub},
-};
+use std::fmt;
+use std::ops::{Add, AddAssign, Sub};
 
 use crate::displacement::Displacement;
 

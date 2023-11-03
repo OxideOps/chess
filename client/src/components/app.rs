@@ -3,11 +3,9 @@ use crate::shared_states::GameId;
 use crate::stockfish::Eval;
 use std::time::Duration;
 
+use chess::color::Color;
 use chess::game::Game;
-use chess::{
-    color::Color,
-    player::{Player, PlayerKind},
-};
+use chess::player::{Player, PlayerKind};
 use dioxus::prelude::*;
 use server_functions::setup_remote_game;
 

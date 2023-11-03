@@ -1,6 +1,4 @@
-use super::Board;
-use super::EvalBar;
-use super::InfoBar;
+use super::{Board, EvalBar, InfoBar};
 
 use chess::color::Color;
 use chess::player::Player;
