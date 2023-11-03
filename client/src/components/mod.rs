@@ -21,3 +21,4 @@ pub(super) use piece::Piece;
 pub(super) use round_list::RoundList;
 pub(super) use timer::Timer;
 pub(super) use widget::Widget;
+pub(super) use theme_select::ThemeSelect;
