@@ -1,13 +1,15 @@
 use std::hash::Hash;
 
-use crate::board::{Board, Square};
-use crate::castling_rights::CastlingRights;
-use crate::color::Color;
-use crate::displacement::Displacement;
-use crate::moves::Move;
-use crate::piece::Piece;
-use crate::position::Position;
-use crate::result::{ChessError, ChessResult};
+use crate::{
+    board::{Board, Square},
+    castling_rights::CastlingRights,
+    color::Color,
+    displacement::Displacement,
+    moves::Move,
+    piece::Piece,
+    position::Position,
+    result::{ChessError, ChessResult},
+};
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 /// A struct encapsulating the state for the `Board`.

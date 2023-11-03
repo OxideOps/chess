@@ -10,8 +10,7 @@ pub struct RemoteGameInfo {
 
 #[cfg(feature = "ssr")]
 pub mod games {
-    use std::collections::HashMap;
-    use std::sync::Arc;
+    use std::{collections::HashMap, sync::Arc};
 
     use axum::extract::ws::{Message, WebSocket};
     use futures::stream::{SplitSink, SplitStream};

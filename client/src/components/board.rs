@@ -1,25 +1,32 @@
 use async_std::channel::{unbounded, Receiver, Sender};
-use chess::color::Color;
-use chess::game::Game;
-use chess::moves::Move;
-use chess::piece::Piece;
-use chess::player::PlayerKind;
-use chess::position::Position;
-use dioxus::html::geometry::ClientPoint;
-use dioxus::html::input_data::keyboard_types::{Key, Modifiers};
-use dioxus::html::input_data::MouseButton;
-use dioxus::prelude::*;
+use chess::{
+    color::Color, game::Game, moves::Move, piece::Piece, player::PlayerKind, position::Position,
+};
+use dioxus::{
+    html::{
+        geometry::ClientPoint,
+        input_data::{
+            keyboard_types::{Key, Modifiers},
+            MouseButton,
+        },
+    },
+    prelude::*,
+};
 use futures::executor::block_on;
 use once_cell::sync::Lazy;
 
-use crate::arrows::{ArrowData, Arrows};
-use crate::components::{Arrow, BoardSquare, Piece};
-use crate::game_socket::create_game_socket;
-use crate::mouse_click::MouseClick;
-use crate::shared_states::GameId;
-use crate::stockfish::core::{on_game_changed, toggle_stockfish};
-use crate::stockfish::interface::Process;
-use crate::stockfish::Eval;
+use crate::{
+    arrows::{ArrowData, Arrows},
+    components::{Arrow, BoardSquare, Piece},
+    game_socket::create_game_socket,
+    mouse_click::MouseClick,
+    shared_states::GameId,
+    stockfish::{
+        core::{on_game_changed, toggle_stockfish},
+        interface::Process,
+        Eval,
+    },
+};
 
 pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 

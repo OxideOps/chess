@@ -1,8 +1,6 @@
 use std::fmt;
 
-use crate::board_state::BoardState;
-use crate::game_status::GameStatus;
-use crate::moves::Move;
+use crate::{board_state::BoardState, game_status::GameStatus, moves::Move};
 
 #[derive(Clone, Copy, Default)]
 pub struct Turn {

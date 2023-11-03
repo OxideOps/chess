@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use async_std::task::sleep;
-use chess::color::Color;
-use chess::game::Game;
+use chess::{color::Color, game::Game};
 use dioxus::prelude::*;
 
 #[component]

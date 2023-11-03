@@ -1,6 +1,5 @@
 use async_std::channel::Receiver;
-use dioxus::html::geometry::ClientPoint;
-use dioxus::prelude::*;
+use dioxus::{html::geometry::ClientPoint, prelude::*};
 
 #[component]
 pub fn Piece(

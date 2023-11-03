@@ -1,10 +1,11 @@
-use axum::extract::{Path, WebSocketUpgrade};
-use axum::routing::get;
-use axum::ServiceExt;
+use axum::{
+    extract::{Path, WebSocketUpgrade},
+    routing::get,
+    ServiceExt,
+};
 use common::args::*;
 use dioxus_fullstack::prelude::*;
-use server::database;
-use server::game_socket::handler;
+use server::{database, game_socket::handler};
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::{ServeDir, ServeFile};
 

@@ -1,8 +1,6 @@
 use std::hash::Hash;
 
-use crate::color::Color;
-use crate::piece::Piece;
-use crate::position::Position;
+use crate::{color::Color, piece::Piece, position::Position};
 
 const BOARD_SIZE: usize = 8;
 

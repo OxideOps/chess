@@ -1,7 +1,6 @@
 use std::time::Duration;
 
-use chess::color::Color;
-use chess::player::Player;
+use chess::{color::Color, player::Player};
 use common::theme::ThemeType;
 use dioxus::prelude::*;
 

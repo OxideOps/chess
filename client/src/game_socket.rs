@@ -1,11 +1,12 @@
 use async_std::channel::Receiver;
-use chess::game::Game;
-use chess::moves::Move;
+use chess::{game::Game, moves::Move};
 use dioxus::prelude::*;
-use futures_util::stream::{SplitSink, SplitStream};
-use futures_util::{join, SinkExt, StreamExt};
-use tokio_tungstenite_wasm::Message::Text;
-use tokio_tungstenite_wasm::{connect, Message, Result, WebSocketStream};
+use futures_util::{
+    join,
+    stream::{SplitSink, SplitStream},
+    SinkExt, StreamExt,
+};
+use tokio_tungstenite_wasm::{connect, Message, Message::Text, Result, WebSocketStream};
 use url::Url;
 
 use crate::shared_states::GameId;
