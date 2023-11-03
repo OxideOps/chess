@@ -18,7 +18,7 @@ pub(crate) fn ThemeSelect(
                     select {
                         class: "select",
                         onchange: |event| board_theme.set(event.value.clone()),
-                        board_theme_list.value().into_iter().flat_map(|themes| themes.iter()).map(|theme|
+                        board_theme_list.value().into_iter().flatten().map(|theme|
                             rsx! { option { value: "{theme}", "{theme}" } }
                         )
                     }
@@ -30,7 +30,7 @@ pub(crate) fn ThemeSelect(
                     select {
                         class: "select",
                         onchange: |event| piece_theme.set(event.value.clone()),
-                        piece_theme_list.value().into_iter().flat_map(|themes| themes.iter()).map(|theme|
+                        piece_theme_list.value().into_iter().flatten().map(|theme|
                             rsx! { option { value: "{theme}", "{theme}" } }
                         )
                     }
