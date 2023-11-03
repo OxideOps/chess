@@ -36,6 +36,7 @@ impl Eval {
                 }
             }
     }
+
     pub(crate) fn get_winning_player(self) -> Color {
         if self.to_score() > 0.0 {
             Color::White

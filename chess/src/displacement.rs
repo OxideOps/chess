@@ -9,16 +9,6 @@ pub(super) struct Displacement {
 }
 
 impl Displacement {
-    const QUEEN_VECTORS: [Self; 8] = [
-        Self { dx: 1, dy: 0 },
-        Self { dx: -1, dy: 0 },
-        Self { dx: 0, dy: 1 },
-        Self { dx: 0, dy: -1 },
-        Self { dx: 1, dy: 1 },
-        Self { dx: 1, dy: -1 },
-        Self { dx: -1, dy: 1 },
-        Self { dx: -1, dy: -1 },
-    ];
     const KNIGHT_VECTORS: [Self; 8] = [
         Self { dx: 1, dy: 2 },
         Self { dx: 1, dy: -2 },
@@ -29,8 +19,18 @@ impl Displacement {
         Self { dx: -2, dy: 1 },
         Self { dx: -2, dy: -1 },
     ];
-    pub(super) const RIGHT: Self = Self { dx: 1, dy: 0 };
     pub(super) const LEFT: Self = Self { dx: -1, dy: 0 };
+    const QUEEN_VECTORS: [Self; 8] = [
+        Self { dx: 1, dy: 0 },
+        Self { dx: -1, dy: 0 },
+        Self { dx: 0, dy: 1 },
+        Self { dx: 0, dy: -1 },
+        Self { dx: 1, dy: 1 },
+        Self { dx: 1, dy: -1 },
+        Self { dx: -1, dy: 1 },
+        Self { dx: -1, dy: -1 },
+    ];
+    pub(super) const RIGHT: Self = Self { dx: 1, dy: 0 };
 
     pub(super) fn get_pawn_advance_vector(player: Color) -> Self {
         match player {

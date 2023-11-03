@@ -18,6 +18,7 @@ impl Color {
 
 impl std::ops::Not for Color {
     type Output = Self;
+
     fn not(self) -> Self::Output {
         match self {
             Self::White => Self::Black,

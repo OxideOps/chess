@@ -131,6 +131,7 @@ impl History {
     pub(super) fn is_replaying(&self) -> bool {
         self.current_turn_index != self.turns.len()
     }
+
     pub(super) fn get_current_round(&self) -> usize {
         (self.current_turn_index + 1) / 2
     }
