@@ -1,7 +1,8 @@
-use super::{RoundList, Timer};
+use std::time::Duration;
 
 use dioxus::prelude::*;
-use std::time::Duration;
+
+use super::{RoundList, Timer};
 
 #[component]
 pub(crate) fn InfoBar(cx: Scope, start_time: Duration) -> Element {

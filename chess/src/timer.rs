@@ -1,6 +1,6 @@
-use crate::color::Color;
-
 use web_time::{Duration, Instant};
+
+use crate::color::Color;
 
 #[derive(Clone)]
 pub(super) struct Timer {

@@ -1,6 +1,3 @@
-use super::Widget;
-use crate::shared_states::GameId;
-use crate::stockfish::Eval;
 use std::time::Duration;
 
 use chess::color::Color;
@@ -8,6 +5,10 @@ use chess::game::Game;
 use chess::player::{Player, PlayerKind};
 use dioxus::prelude::*;
 use server_functions::setup_remote_game;
+
+use super::Widget;
+use crate::shared_states::GameId;
+use crate::stockfish::Eval;
 
 const WIDGET_HEIGHT: u32 = 800;
 const START_TIME: Duration = Duration::from_secs(3600);

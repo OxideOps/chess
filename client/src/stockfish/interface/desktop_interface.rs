@@ -1,12 +1,13 @@
-use crate::arrows::Arrows;
-use crate::stockfish::core::{process_output, MOVES};
-use crate::stockfish::Eval;
 use anyhow::Result;
 use async_process::{Child, Command, Stdio};
 use async_std::io::BufReader;
 use async_std::prelude::*;
 use chess::game::Game;
 use dioxus::prelude::*;
+
+use crate::arrows::Arrows;
+use crate::stockfish::core::{process_output, MOVES};
+use crate::stockfish::Eval;
 
 pub(crate) type Process = Child;
 

@@ -1,6 +1,7 @@
+use std::fmt;
+
 use crate::color::Color;
 use crate::displacement::Displacement;
-use std::fmt;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Piece {

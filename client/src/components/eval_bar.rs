@@ -1,7 +1,8 @@
-use crate::helpers::sigmoid;
-use crate::stockfish::Eval;
 use chess::color::Color;
 use dioxus::prelude::*;
+
+use crate::helpers::sigmoid;
+use crate::stockfish::Eval;
 
 const EVAL_SENSITIVITY: f64 = 1.0 / 800.0;
 #[component]

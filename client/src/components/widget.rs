@@ -1,10 +1,11 @@
-use super::{Board, EvalBar, InfoBar};
+use std::time::Duration;
 
 use chess::color::Color;
 use chess::player::Player;
 use common::theme::ThemeType;
 use dioxus::prelude::*;
-use std::time::Duration;
+
+use super::{Board, EvalBar, InfoBar};
 
 #[component]
 pub(crate) fn Widget(

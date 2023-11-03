@@ -1,7 +1,9 @@
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
 use crate::piece::Piece;
 use crate::position::Position;
-use serde::{Deserialize, Serialize};
-use std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct Move {

@@ -1,3 +1,7 @@
+use std::collections::HashSet;
+
+use web_time::Duration;
+
 use crate::board_state::BoardState;
 use crate::castling_rights::{CastlingRights, CastlingRightsKind};
 use crate::color::Color;
@@ -11,8 +15,6 @@ use crate::result::{ChessError, ChessResult};
 use crate::round_info::RoundInfo;
 use crate::timer::Timer;
 use crate::turn::Turn;
-use std::collections::HashSet;
-use web_time::Duration;
 
 const MAX_FEN_STR: usize = 87;
 

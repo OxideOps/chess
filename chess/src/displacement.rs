@@ -1,5 +1,6 @@
-use crate::color::Color;
 use std::ops::Mul;
+
+use crate::color::Color;
 
 #[derive(Clone, Copy)]
 pub(super) struct Displacement {

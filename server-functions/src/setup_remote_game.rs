@@ -10,11 +10,12 @@ pub struct RemoteGameInfo {
 
 #[cfg(feature = "ssr")]
 pub mod games {
+    use std::collections::HashMap;
+    use std::sync::Arc;
+
     use axum::extract::ws::{Message, WebSocket};
     use futures::stream::{SplitSink, SplitStream};
     use once_cell::sync::Lazy;
-    use std::collections::HashMap;
-    use std::sync::Arc;
     use tokio::sync::{Mutex, RwLock};
 
     pub type WriteStream = Arc<Mutex<Option<SplitSink<WebSocket, Message>>>>;

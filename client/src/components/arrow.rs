@@ -1,9 +1,11 @@
+use std::f64::consts::PI;
+
+use dioxus::html::geometry::ClientPoint;
+use dioxus::prelude::*;
+
 use super::get_center;
 use crate::arrows::ArrowData;
 use crate::components::board::BoardProps;
-use dioxus::html::geometry::ClientPoint;
-use dioxus::prelude::*;
-use std::f64::consts::PI;
 
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head

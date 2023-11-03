@@ -1,5 +1,6 @@
-use build_common::{get_stockfish_commands, get_tailwind_commands, CommandConfig};
 use std::env;
+
+use build_common::{get_stockfish_commands, get_tailwind_commands, CommandConfig};
 
 fn main() {
     println!("cargo:rerun-if-changed=../client/styles");
