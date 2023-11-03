@@ -7,6 +7,7 @@ mod eval_bar;
 mod info_bar;
 mod piece;
 mod round_list;
+mod theme_select;
 mod timer;
 mod widget;
 
