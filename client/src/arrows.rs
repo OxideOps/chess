@@ -21,6 +21,7 @@ impl ArrowData {
     pub(super) fn new(mv: Move, alpha: f64) -> Self {
         Self { mv, alpha }
     }
+
     pub(super) fn with_move(mv: Move) -> Self {
         Self {
             mv,

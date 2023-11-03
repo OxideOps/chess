@@ -1,6 +1,6 @@
+use std::{env, path::PathBuf};
+
 use crate::CommandConfig;
-use std::env;
-use std::path::PathBuf;
 
 fn get_project_root() -> PathBuf {
     PathBuf::from(

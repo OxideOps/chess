@@ -1,6 +1,3 @@
-use crate::arrows::Arrows;
-use crate::stockfish::core::{process_output, MOVES};
-use crate::stockfish::Eval;
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::game::Game;
 use dioxus::prelude::*;
@@ -9,6 +6,14 @@ use js_sys::{Function, Object};
 use once_cell::sync::Lazy;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{spawn_local, JsFuture};
+
+use crate::{
+    arrows::Arrows,
+    stockfish::{
+        core::{process_output, MOVES},
+        Eval,
+    },
+};
 
 pub(crate) type Process = Object;
 

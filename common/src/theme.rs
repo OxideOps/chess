@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::{fs, io};
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ThemeType {

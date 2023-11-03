@@ -5,8 +5,7 @@ use axum::{
 };
 use common::args::*;
 use dioxus_fullstack::prelude::*;
-use server::database;
-use server::game_socket::handler;
+use server::{database, game_socket::handler};
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 

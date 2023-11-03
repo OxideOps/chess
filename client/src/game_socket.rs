@@ -1,7 +1,5 @@
-use crate::shared_states::GameId;
 use async_std::channel::Receiver;
-use chess::game::Game;
-use chess::moves::Move;
+use chess::{game::Game, moves::Move};
 use dioxus::prelude::*;
 use futures_util::{
     join,
@@ -10,6 +8,8 @@ use futures_util::{
 };
 use tokio_tungstenite_wasm::{connect, Message, Message::Text, Result, WebSocketStream};
 use url::Url;
+
+use crate::shared_states::GameId;
 
 type WriteStream = SplitSink<WebSocketStream, Message>;
 type ReadStream = SplitStream<WebSocketStream>;

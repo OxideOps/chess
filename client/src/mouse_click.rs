@@ -1,6 +1,7 @@
-use dioxus::html::geometry::ClientPoint;
-use dioxus::html::input_data::MouseButtonSet;
-use dioxus::prelude::*;
+use dioxus::{
+    html::{geometry::ClientPoint, input_data::MouseButtonSet},
+    prelude::*,
+};
 
 pub(super) struct MouseClick {
     pub(super) point: ClientPoint,

@@ -1,5 +1,6 @@
-use chess::color::Color;
 use std::fmt;
+
+use chess::color::Color;
 
 // How much differences in stockfish evaluation affect the alpha of the arrows
 const ALPHA_SENSITIVITY: f64 = 1.0 / 30.0;
@@ -35,6 +36,7 @@ impl Eval {
                 }
             }
     }
+
     pub(crate) fn get_winning_player(self) -> Color {
         if self.to_score() > 0.0 {
             Color::White

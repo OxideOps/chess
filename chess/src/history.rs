@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use crate::board_state::BoardState;
-use crate::game_status::GameStatus;
-use crate::moves::Move;
-use crate::turn::Turn;
+use crate::{board_state::BoardState, game_status::GameStatus, moves::Move, turn::Turn};
 
 #[derive(Clone)]
 pub(super) struct History {
@@ -131,6 +128,7 @@ impl History {
     pub(super) fn is_replaying(&self) -> bool {
         self.current_turn_index != self.turns.len()
     }
+
     pub(super) fn get_current_round(&self) -> usize {
         (self.current_turn_index + 1) / 2
     }
