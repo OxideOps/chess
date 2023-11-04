@@ -2,7 +2,7 @@ use common::theme::ThemeType;
 use dioxus::prelude::*;
 
 #[component]
-pub(crate) fn ThemeSelect(
+pub(crate) fn Settings(
     cx: Scope,
     board_theme: UseState<String>,
     piece_theme: UseState<String>,
@@ -15,7 +15,7 @@ pub(crate) fn ThemeSelect(
             table {
                 tr {
                     td {
-                        label { "Board theme: " }
+                        "Board theme: "
                     }
                     td {
                         select {
@@ -29,7 +29,7 @@ pub(crate) fn ThemeSelect(
                 }
                 tr {
                     td {
-                        label { "Piece theme: " }
+                        "Piece theme: "
                     }
                     td {
                         select {

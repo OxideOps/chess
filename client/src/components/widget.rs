@@ -1,10 +1,9 @@
 use std::time::Duration;
 
 use chess::{color::Color, player::Player};
-use common::theme::ThemeType;
 use dioxus::prelude::*;
 
-use super::{Board, EvalBar, InfoBar, ThemeSelect};
+use super::{Board, EvalBar, InfoBar, Settings};
 
 #[component]
 pub(crate) fn Widget(
@@ -34,7 +33,7 @@ pub(crate) fn Widget(
                 rsx! { EvalBar { perspective: *perspective } }
             },
             InfoBar { start_time: *start_time },
-            ThemeSelect {
+            Settings {
                 board_theme: board_theme.to_owned(),
                 piece_theme: piece_theme.to_owned(),
             },
