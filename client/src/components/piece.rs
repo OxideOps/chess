@@ -10,7 +10,7 @@ pub fn Piece(
     is_dragging: bool,
 ) -> Element {
     let top_left = use_state(cx, || *top_left_starting);
-    let drag_offset_receiver = cx.consume_context::<Receiver<ClientPoint>>()?;
+    let drag_point_receiver = cx.consume_context::<Receiver<ClientPoint>>()?;
     let z_index = cx.props.is_dragging as u32 + 1; // 🏌️
 
     use_future(
@@ -20,11 +20,8 @@ pub fn Piece(
             to_owned![top_left];
             async move {
                 if is_dragging {
-                    while let Ok(offset) = drag_offset_receiver.recv().await {
-                        top_left.set(ClientPoint::new(
-                            top_left_starting.x + offset.x,
-                            top_left_starting.y + offset.y,
-                        ));
+                    while let Ok(point) = drag_point_receiver.recv().await {
+                        top_left.set(point);
                     }
                 } else {
                     top_left.set(top_left_starting);
