@@ -1,10 +1,9 @@
 use std::time::Duration;
 
 use chess::{color::Color, player::Player};
-use common::theme::ThemeType;
 use dioxus::prelude::*;
 
-use super::{Board, EvalBar, InfoBar};
+use super::{Board, EvalBar, InfoBar, Settings};
 
 #[component]
 pub(crate) fn Widget(
@@ -16,9 +15,6 @@ pub(crate) fn Widget(
     start_time: Duration,
     height: u32,
 ) -> Element {
-    let board_theme_list = get_theme_future(cx, ThemeType::Board);
-    let piece_theme_list = get_theme_future(cx, ThemeType::Piece);
-
     let board_theme = use_state(cx, || String::from("qootee"));
     let piece_theme = use_state(cx, || String::from("maestro"));
 
@@ -32,51 +28,15 @@ pub(crate) fn Widget(
                 analyze: analyze.to_owned(),
                 board_theme: board_theme.to_string(),
                 piece_theme: piece_theme.to_string(),
-            }
+            },
             if **analyze {
                 rsx! { EvalBar { perspective: *perspective } }
-            }
+            },
             InfoBar { start_time: *start_time },
-            // Theme selection
-            div {
-                div {
-                    label { "Board theme: " }
-                    select {
-                        class: "select",
-                        onchange: |event| board_theme.set(event.value.clone()),
-                        board_theme_list.value().into_iter().flatten().map(|theme|
-                            rsx! { option { value: "{theme}", "{theme}" } }
-                        )
-                    }
-                }
-                div {
-                    label { "Piece theme: " }
-                    select {
-                        class: "select",
-                        onchange: |event| piece_theme.set(event.value.clone()),
-                        piece_theme_list.value().into_iter().flatten().map(|theme|
-                            rsx! { option { value: "{theme}", "{theme}" } }
-                        )
-                    }
-                }
-            }
-        }
-    })
-}
-
-fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
-    #[cfg(not(target_arch = "wasm32"))]
-    use common::theme::get_themes;
-    #[cfg(target_arch = "wasm32")]
-    use server_functions::get_themes;
-
-    use_future(cx, (), |_| async {
-        match get_themes(theme_type).await {
-            Ok(themes) => themes,
-            Err(e) => {
-                log::error!("Failed to get themes: {:?}", e);
-                Vec::new()
-            }
+            Settings {
+                board_theme: board_theme.to_owned(),
+                piece_theme: piece_theme.to_owned(),
+            },
         }
     })
 }
