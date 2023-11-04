@@ -14,9 +14,7 @@ pub(crate) fn Settings(
         div {
             table {
                 tr {
-                    td {
-                        "Board theme: "
-                    }
+                    td { "Board theme: " }
                     td {
                         select {
                             class: "select",
@@ -28,9 +26,7 @@ pub(crate) fn Settings(
                     }
                 }
                 tr {
-                    td {
-                        "Piece theme: "
-                    }
+                    td { "Piece theme: " }
                     td {
                         select {
                             class: "select",
