@@ -48,9 +48,7 @@ fn score_to_alpha(score: f64, scores: &[f64]) -> f64 {
     sigmoid(inv_sigmoid(ALPHA) + score - scores.iter().max_by(|a, b| a.total_cmp(b)).unwrap())
 }
 
-async fn set_ready(ready: bool) {
-    *IS_READY.write().await = ready;
-}
+async fn set_ready(ready: bool) { *IS_READY.write().await = ready; }
 
 async fn wait_until_ready(process: &mut Process) {
     set_ready(false).await;
@@ -59,13 +57,9 @@ async fn wait_until_ready(process: &mut Process) {
     set_ready(true).await;
 }
 
-async fn stop(process: &mut Process) {
-    send_command(process, "stop").await;
-}
+async fn stop(process: &mut Process) { send_command(process, "stop").await; }
 
-async fn go(process: &mut Process) {
-    send_command(process, &format!("go depth {DEPTH}")).await;
-}
+async fn go(process: &mut Process) { send_command(process, &format!("go depth {DEPTH}")).await; }
 
 pub async fn toggle_stockfish(
     analyze: UseState<bool>,

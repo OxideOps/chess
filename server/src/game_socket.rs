@@ -53,9 +53,7 @@ async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
     *read.lock().await = None;
 }
 
-async fn game_exists(game_id: u32) -> bool {
-    GAMES.lock().await.contains_key(&game_id)
-}
+async fn game_exists(game_id: u32) -> bool { GAMES.lock().await.contains_key(&game_id) }
 
 async fn forward_messages(game_id: u32, write: WriteStream, read: ReadStream) {
     if let Some(read) = read.lock().await.as_mut() {

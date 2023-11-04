@@ -41,15 +41,11 @@ impl Board {
         ]
     }
 
-    pub(super) fn get_piece(&self, at: &Position) -> Square {
-        self.0[at.y][at.x]
-    }
+    pub(super) fn get_piece(&self, at: &Position) -> Square { self.0[at.y][at.x] }
 
     pub(super) fn set_piece(&mut self, at: &Position, square: Square) {
         self.0[at.y][at.x] = square;
     }
 
-    pub(super) fn take_piece(&mut self, from: &Position) -> Square {
-        self.0[from.y][from.x].take()
-    }
+    pub(super) fn take_piece(&mut self, from: &Position) -> Square { self.0[from.y][from.x].take() }
 }

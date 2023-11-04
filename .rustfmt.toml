@@ -1,4 +1,5 @@
 edition = "2021"
+fn_single_line = true
 group_imports = "StdExternalCrate"
 imports_granularity = "Crate"
 reorder_impl_items = true

@@ -36,9 +36,7 @@ impl Default for BoardState {
 }
 
 impl BoardState {
-    pub(super) fn get_piece(&self, at: &Position) -> Square {
-        self.board.get_piece(at)
-    }
+    pub(super) fn get_piece(&self, at: &Position) -> Square { self.board.get_piece(at) }
 
     fn can_promote_piece(&self, piece: Piece, at: &Position) -> bool {
         piece.is_pawn()

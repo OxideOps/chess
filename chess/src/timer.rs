@@ -31,9 +31,7 @@ impl Timer {
         }
     }
 
-    pub(super) fn start(&mut self) {
-        self.time_started = Some(Instant::now());
-    }
+    pub(super) fn start(&mut self) { self.time_started = Some(Instant::now()); }
 
     pub(super) fn stop(&mut self) {
         self.pause_active_time();
@@ -84,9 +82,7 @@ impl Timer {
         }
     }
 
-    pub(super) fn get_active_time(&self) -> Duration {
-        self.get_time(self.current_player)
-    }
+    pub(super) fn get_active_time(&self) -> Duration { self.get_time(self.current_player) }
 
     pub(super) fn print(&self) {
         for &player in &[Color::White, Color::Black] {
@@ -98,7 +94,5 @@ impl Timer {
         }
     }
 
-    pub(super) fn is_active(&self) -> bool {
-        self.time_started.is_some()
-    }
+    pub(super) fn is_active(&self) -> bool { self.time_started.is_some() }
 }

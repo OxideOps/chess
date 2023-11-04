@@ -24,13 +24,9 @@ impl History {
         self.get_real_turn_mut().unwrap().status = status;
     }
 
-    pub(super) fn get_real_turn(&self) -> Option<&Turn> {
-        self.turns.last()
-    }
+    pub(super) fn get_real_turn(&self) -> Option<&Turn> { self.turns.last() }
 
-    pub(super) fn get_real_turn_mut(&mut self) -> Option<&mut Turn> {
-        self.turns.last_mut()
-    }
+    pub(super) fn get_real_turn_mut(&mut self) -> Option<&mut Turn> { self.turns.last_mut() }
 
     pub(super) fn get_current_move(&self) -> Option<Move> {
         if self.get_current_turn_index() == 0 {
@@ -48,9 +44,7 @@ impl History {
         }
     }
 
-    pub(super) fn get_current_turn_index(&self) -> usize {
-        self.current_turn_index
-    }
+    pub(super) fn get_current_turn_index(&self) -> usize { self.current_turn_index }
 
     pub(super) fn get_board_state(&self, turn: usize) -> &BoardState {
         if turn == 0 {
@@ -93,21 +87,15 @@ impl History {
         self.add_turn(Turn::new(next_state, mv, is_capture_move));
     }
 
-    pub(super) fn get_fifty_move_count(&self) -> u8 {
-        self.fifty_move_count / 2
-    }
+    pub(super) fn get_fifty_move_count(&self) -> u8 { self.fifty_move_count / 2 }
 
     pub(super) fn get_current_state(&self) -> &BoardState {
         self.get_board_state(self.current_turn_index)
     }
 
-    pub(super) fn get_real_state(&self) -> &BoardState {
-        self.get_board_state(self.turns.len())
-    }
+    pub(super) fn get_real_state(&self) -> &BoardState { self.get_board_state(self.turns.len()) }
 
-    pub(super) fn resume(&mut self) {
-        self.current_turn_index = self.turns.len()
-    }
+    pub(super) fn resume(&mut self) { self.current_turn_index = self.turns.len() }
 
     pub(super) fn previous_move(&mut self) {
         if self.current_turn_index > 0 {
@@ -121,17 +109,11 @@ impl History {
         }
     }
 
-    pub(super) fn go_to_start(&mut self) {
-        self.current_turn_index = 0
-    }
+    pub(super) fn go_to_start(&mut self) { self.current_turn_index = 0 }
 
-    pub(super) fn is_replaying(&self) -> bool {
-        self.current_turn_index != self.turns.len()
-    }
+    pub(super) fn is_replaying(&self) -> bool { self.current_turn_index != self.turns.len() }
 
-    pub(super) fn get_current_round(&self) -> usize {
-        (self.current_turn_index + 1) / 2
-    }
+    pub(super) fn get_current_round(&self) -> usize { (self.current_turn_index + 1) / 2 }
 }
 
 impl Default for History {

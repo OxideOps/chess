@@ -18,9 +18,7 @@ impl Default for ArrowData {
 }
 
 impl ArrowData {
-    pub(super) fn new(mv: Move, alpha: f64) -> Self {
-        Self { mv, alpha }
-    }
+    pub(super) fn new(mv: Move, alpha: f64) -> Self { Self { mv, alpha } }
 
     pub(super) fn with_move(mv: Move) -> Self {
         Self {
@@ -29,9 +27,7 @@ impl ArrowData {
         }
     }
 
-    pub(super) fn has_length(&self) -> bool {
-        self.mv.from != self.mv.to
-    }
+    pub(super) fn has_length(&self) -> bool { self.mv.from != self.mv.to }
 }
 
 #[derive(Default, Debug)]
@@ -48,9 +44,7 @@ impl Arrows {
         }
     }
 
-    pub(super) fn with_size(n: usize) -> Self {
-        Self::new(vec![Move::default(); n])
-    }
+    pub(super) fn with_size(n: usize) -> Self { Self::new(vec![Move::default(); n]) }
 
     pub(super) fn push(&mut self, arrow_data: ArrowData) {
         self.arrows.drain(self.showing..self.arrows.len());
@@ -79,11 +73,7 @@ impl Arrows {
         self.showing = 0;
     }
 
-    pub(super) fn set(&mut self, i: usize, arrow_data: ArrowData) {
-        self.arrows[i] = arrow_data;
-    }
+    pub(super) fn set(&mut self, i: usize, arrow_data: ArrowData) { self.arrows[i] = arrow_data; }
 
-    pub(super) fn is_empty(&self) -> bool {
-        self.arrows.is_empty()
-    }
+    pub(super) fn is_empty(&self) -> bool { self.arrows.is_empty() }
 }

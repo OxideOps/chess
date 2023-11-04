@@ -15,9 +15,7 @@ pub(super) enum CastlingRightsKind {
 pub(super) struct CastlingRights([bool; 4]);
 
 impl Default for CastlingRights {
-    fn default() -> Self {
-        Self([true, true, true, true])
-    }
+    fn default() -> Self { Self([true, true, true, true]) }
 }
 
 impl CastlingRights {

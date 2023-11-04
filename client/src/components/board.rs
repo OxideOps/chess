@@ -165,9 +165,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     })
 }
 
-fn get_board_image(theme: &str) -> String {
-    format!("images/boards/{theme}/{theme}.png")
-}
+fn get_board_image(theme: &str) -> String { format!("images/boards/{theme}/{theme}.png") }
 
 fn get_piece_image_file(theme: &str, piece: Piece) -> String {
     let piece_img = match piece {

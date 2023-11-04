@@ -29,51 +29,33 @@ pub struct Game {
 }
 
 impl Default for Game {
-    fn default() -> Self {
-        Self::builder().build()
-    }
+    fn default() -> Self { Self::builder().build() }
 }
 
 impl Game {
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
 
-    fn builder() -> GameBuilder {
-        GameBuilder::new()
-    }
+    fn builder() -> GameBuilder { GameBuilder::new() }
 
     pub fn with_start_time(start_time: Duration) -> Self {
         GameBuilder::new().start_time(start_time).build()
     }
 
-    fn with_state(state: BoardState) -> Self {
-        Self::builder().state(state).build()
-    }
+    fn with_state(state: BoardState) -> Self { Self::builder().state(state).build() }
 
-    pub fn is_replaying(&self) -> bool {
-        self.history.is_replaying()
-    }
+    pub fn is_replaying(&self) -> bool { self.history.is_replaying() }
 
-    pub fn is_in_check(&self) -> bool {
-        matches!(self.status, GameStatus::Check(..))
-    }
+    pub fn is_in_check(&self) -> bool { matches!(self.status, GameStatus::Check(..)) }
 
-    pub fn reset(&mut self) {
-        *self = Self::new()
-    }
+    pub fn reset(&mut self) { *self = Self::new() }
 
     pub fn get_piece(&self, position: &Position) -> Option<Piece> {
         self.get_current_state().get_piece(position)
     }
 
-    fn get_current_state(&self) -> &BoardState {
-        self.history.get_current_state()
-    }
+    fn get_current_state(&self) -> &BoardState { self.history.get_current_state() }
 
-    pub fn get_current_player(&self) -> Color {
-        self.get_current_state().player
-    }
+    pub fn get_current_player(&self) -> Color { self.get_current_state().player }
 
     fn is_piece_some(&self, at: &Position) -> ChessResult {
         self.get_current_state().is_piece_some(at)
@@ -107,21 +89,13 @@ impl Game {
         self.remove_self_checks();
     }
 
-    pub fn go_back_a_move(&mut self) {
-        self.navigate_history(|history| history.previous_move());
-    }
+    pub fn go_back_a_move(&mut self) { self.navigate_history(|history| history.previous_move()); }
 
-    pub fn go_forward_a_move(&mut self) {
-        self.navigate_history(|history| history.next_move());
-    }
+    pub fn go_forward_a_move(&mut self) { self.navigate_history(|history| history.next_move()); }
 
-    pub fn go_to_start(&mut self) {
-        self.navigate_history(|history| history.go_to_start());
-    }
+    pub fn go_to_start(&mut self) { self.navigate_history(|history| history.go_to_start()); }
 
-    pub fn resume(&mut self) {
-        self.navigate_history(|history| history.resume());
-    }
+    pub fn resume(&mut self) { self.navigate_history(|history| history.resume()); }
 
     pub fn move_piece(&mut self, from: Position, to: Position) -> ChessResult {
         if let Some(piece) = self.get_piece(&from) {
@@ -342,17 +316,11 @@ impl Game {
         }
     }
 
-    pub fn get_active_time(&self) -> Duration {
-        self.timer.get_active_time()
-    }
+    pub fn get_active_time(&self) -> Duration { self.timer.get_active_time() }
 
-    pub fn is_timer_active(&self) -> bool {
-        self.timer.is_active()
-    }
+    pub fn is_timer_active(&self) -> bool { self.timer.is_active() }
 
-    pub fn get_time(&self, player: Color) -> Duration {
-        self.timer.get_time(player)
-    }
+    pub fn get_time(&self, player: Color) -> Duration { self.timer.get_time(player) }
 
     pub fn get_pieces(&self) -> Vec<(Piece, Position)> {
         let mut pieces: Vec<(Piece, Position)> = vec![];
@@ -380,17 +348,11 @@ impl Game {
             .collect()
     }
 
-    pub fn get_current_round(&self) -> usize {
-        self.history.get_current_round()
-    }
+    pub fn get_current_round(&self) -> usize { self.history.get_current_round() }
 
-    pub(super) fn get_current_turn_index(&self) -> usize {
-        self.history.get_current_turn_index()
-    }
+    pub(super) fn get_current_turn_index(&self) -> usize { self.history.get_current_turn_index() }
 
-    pub fn get_real_player(&self) -> Color {
-        self.history.get_real_state().player
-    }
+    pub fn get_real_player(&self) -> Color { self.history.get_real_state().player }
 
     pub fn trigger_timeout(&mut self) {
         self.timer.stop();
@@ -431,9 +393,7 @@ impl Game {
         fen
     }
 
-    pub fn get_current_move(&self) -> Option<Move> {
-        self.history.get_current_move()
-    }
+    pub fn get_current_move(&self) -> Option<Move> { self.history.get_current_move() }
 
     pub fn get_highlighted_squares_info(&self) -> Vec<(Position, String)> {
         const MOVED_CLASS: &str = "moved-square";
@@ -495,9 +455,7 @@ impl Default for GameBuilder {
 }
 
 impl GameBuilder {
-    fn new() -> Self {
-        Self::default()
-    }
+    fn new() -> Self { Self::default() }
 
     fn build(self) -> Game {
         let mut game = Game {

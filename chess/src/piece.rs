@@ -13,9 +13,7 @@ pub enum Piece {
 }
 
 impl Piece {
-    pub(super) fn is_pawn(self) -> bool {
-        matches!(self, Piece::Pawn(..))
-    }
+    pub(super) fn is_pawn(self) -> bool { matches!(self, Piece::Pawn(..)) }
 
     pub(super) fn get_player(self) -> Color {
         match self {

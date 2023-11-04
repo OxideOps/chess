@@ -10,9 +10,7 @@ fn get_project_root() -> PathBuf {
     )
 }
 
-fn get_client_path() -> PathBuf {
-    get_project_root().join("client")
-}
+fn get_client_path() -> PathBuf { get_project_root().join("client") }
 
 pub fn get_tailwind_commands() -> Vec<CommandConfig> {
     let client = get_client_path();

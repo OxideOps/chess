@@ -11,13 +11,9 @@ pub struct Move {
 }
 
 impl Move {
-    pub fn new(from: Position, to: Position) -> Self {
-        Self { from, to }
-    }
+    pub fn new(from: Position, to: Position) -> Self { Self { from, to } }
 
-    pub fn get_positions(&self) -> [Position; 2] {
-        [self.from, self.to]
-    }
+    pub fn get_positions(&self) -> [Position; 2] { [self.from, self.to] }
 
     // creates move from the "long algebraic notation" that stockfish uses
     pub fn from_lan(lan: &str) -> Option<Self> {
@@ -33,9 +29,7 @@ impl Move {
         ))
     }
 
-    pub fn to_str(&self, piece: Piece) -> String {
-        format!("{}{}", piece, self.to)
-    }
+    pub fn to_str(&self, piece: Piece) -> String { format!("{}{}", piece, self.to) }
 }
 
 impl fmt::Display for Move {

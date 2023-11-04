@@ -24,9 +24,7 @@ impl Position {
     pub(super) const WHITE_KINGSIDE_ROOK: Position = Position::new(7, 0);
     pub(super) const WHITE_QUEENSIDE_ROOK: Position = Position::new(0, 0);
 
-    pub const fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
+    pub const fn new(x: usize, y: usize) -> Self { Self { x, y } }
 }
 
 impl fmt::Display for Position {

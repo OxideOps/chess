@@ -46,25 +46,15 @@ impl Displacement {
         }
     }
 
-    pub(super) fn get_queen_vectors() -> &'static [Self] {
-        &Self::QUEEN_VECTORS
-    }
+    pub(super) fn get_queen_vectors() -> &'static [Self] { &Self::QUEEN_VECTORS }
 
-    pub(super) fn get_king_vectors() -> &'static [Self] {
-        &Self::QUEEN_VECTORS
-    }
+    pub(super) fn get_king_vectors() -> &'static [Self] { &Self::QUEEN_VECTORS }
 
-    pub(super) fn get_rook_vectors() -> &'static [Self] {
-        &Self::QUEEN_VECTORS[0..4]
-    }
+    pub(super) fn get_rook_vectors() -> &'static [Self] { &Self::QUEEN_VECTORS[0..4] }
 
-    pub(super) fn get_bishop_vectors() -> &'static [Self] {
-        &Self::QUEEN_VECTORS[4..8]
-    }
+    pub(super) fn get_bishop_vectors() -> &'static [Self] { &Self::QUEEN_VECTORS[4..8] }
 
-    pub(super) fn get_knight_vectors() -> &'static [Self] {
-        &Self::KNIGHT_VECTORS
-    }
+    pub(super) fn get_knight_vectors() -> &'static [Self] { &Self::KNIGHT_VECTORS }
 }
 
 impl Mul<i8> for Displacement {
