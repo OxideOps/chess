@@ -188,24 +188,6 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
     format!("images/pieces/{theme}/{piece_img}.svg")
 }
 
-// We want the square a dragged piece is considered to be on to be based on the center of
-// the piece, not the location of the mouse. This requires offsetting based on the original
-// mouse down location
-fn get_dragged_piece_position(
-    props: &BoardProps,
-    mouse_down: &ClientPoint,
-    mouse_up: &ClientPoint,
-) -> Position {
-    let center = get_center(props, &to_position(props, mouse_down));
-    to_position(
-        props,
-        &ClientPoint::new(
-            center.x + mouse_up.x - mouse_down.x,
-            center.y + mouse_up.y - mouse_down.y,
-        ),
-    )
-}
-
 fn to_position(props: &BoardProps, point: &ClientPoint) -> Position {
     match props.perspective {
         Color::White => Position {
@@ -263,7 +245,7 @@ fn drop_piece(
     point: &ClientPoint,
 ) {
     let from = to_position(props, point);
-    let to = get_dragged_piece_position(props, point, &event.client_coordinates());
+    let to = to_position(props, &event.client_coordinates());
     let (current_player_kind, opponent_player_kind) = match hooks.game.read().get_current_player() {
         Color::White => (props.white_player_kind, props.black_player_kind),
         Color::Black => (props.black_player_kind, props.white_player_kind),
@@ -289,12 +271,24 @@ fn complete_arrow(hooks: &BoardHooks) {
     *hooks.drawing_arrow.write() = None;
 }
 
+async fn send_dragging_point(props: &BoardProps, event: &Event<MouseData>) {
+    DRAG_CHANNEL
+        .0
+        .send(ClientPoint::new(
+            event.client_coordinates().x - props.size as f64 / 16.0,
+            event.client_coordinates().y - props.size as f64 / 16.0,
+        ))
+        .await
+        .expect("Failed to send dragging point");
+}
+
 fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
-    let mouse_down = MouseClick::from(event);
+    let mouse_down = MouseClick::from(event.clone());
     if mouse_down.kind.contains(MouseButton::Primary) {
         hooks
             .selected_piece
             .set(Some(to_position(props, &mouse_down.point)));
+        block_on(send_dragging_point(props, &event));
         hooks.arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = to_position(props, &mouse_down.point);
@@ -320,11 +314,7 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
 fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
-            block_on(DRAG_CHANNEL.0.send(ClientPoint::new(
-                event.client_coordinates().x - mouse_down.point.x,
-                event.client_coordinates().y - mouse_down.point.y,
-            )))
-            .expect("Failed to send drag offset");
+            block_on(send_dragging_point(props, &event));
         } else if mouse_down.kind.contains(MouseButton::Secondary) {
             let pos = to_position(props, &event.client_coordinates());
             if hooks.drawing_arrow.read().unwrap().mv.to != pos {
