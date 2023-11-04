@@ -11,27 +11,33 @@ pub(crate) fn ThemeSelect(
     let piece_theme_list = get_theme_future(cx, ThemeType::Piece);
 
     cx.render(rsx! {
-        table {
-            tr {
-                td {
-                    label { "Board theme: " }
-                    select {
-                        class: "select",
-                        onchange: |event| board_theme.set(event.value.clone()),
-                        for theme in board_theme_list.value().into_iter().flatten() {
-                            rsx! { option { value: "{theme}", "{theme}" } }
+        div {
+            table {
+                tr {
+                    td {
+                        label { "Board theme: " }
+                    }
+                    td {
+                        select {
+                            class: "select",
+                            onchange: |event| board_theme.set(event.value.clone()),
+                            for theme in board_theme_list.value().into_iter().flatten() {
+                                rsx! { option { value: "{theme}", "{theme}" } }
+                            }
                         }
                     }
                 }
-            }
-            tr {
-                td {
-                    label { "Piece theme: " }
-                    select {
-                        class: "select",
-                        onchange: |event| piece_theme.set(event.value.clone()),
-                        for theme in piece_theme_list.value().into_iter().flatten() {
-                            rsx! { option { value: "{theme}", "{theme}" } }
+                tr {
+                    td {
+                        label { "Piece theme: " }
+                    }
+                    td {
+                        select {
+                            class: "select",
+                            onchange: |event| piece_theme.set(event.value.clone()),
+                            for theme in piece_theme_list.value().into_iter().flatten() {
+                                rsx! { option { value: "{theme}", "{theme}" } }
+                            }
                         }
                     }
                 }
