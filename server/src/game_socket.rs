@@ -7,7 +7,7 @@ use server_functions::*;
 
 pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
     ws.on_upgrade(move |socket| async move {
-        if let Some(connections) = GAMES.lock().await.get(&game_id) {
+        if let Some(connections) = GAMES.read().await.get(&game_id) {
             if let Some(index) = store_socket(socket, connections.clone()).await {
                 let other_index = (index + 1) % 2;
                 let sink = connections[other_index].0.clone();
@@ -23,23 +23,23 @@ pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
 }
 
 async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Option<usize> {
-    let index = if connections[0].0.lock().await.is_none() {
+    let index = if connections[0].0.read().await.is_none() {
         Some(0)
-    } else if connections[1].0.lock().await.is_none() {
+    } else if connections[1].0.read().await.is_none() {
         Some(1)
     } else {
         None
     };
     if let Some(index) = index {
         let (sink, stream) = socket.split();
-        *connections[index].0.lock().await = Some(sink);
-        *connections[index].1.lock().await = Some(stream);
+        *connections[index].0.write().await = Some(sink);
+        *connections[index].1.write().await = Some(stream);
     }
     index
 }
 
 async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
-    if let Some(write) = write.lock().await.as_mut() {
+    if let Some(write) = write.write().await.as_mut() {
         if let Err(err) = write.close().await {
             log::error!("Error closing socket: {err:?}");
         }
@@ -48,17 +48,17 @@ async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
     if *pending_game == Some(game_id) {
         *pending_game = None;
     }
-    GAMES.lock().await.remove(&game_id);
-    *write.lock().await = None;
-    *read.lock().await = None;
+    GAMES.write().await.remove(&game_id);
+    *write.write().await = None;
+    *read.write().await = None;
 }
 
 async fn game_exists(game_id: u32) -> bool {
-    GAMES.lock().await.contains_key(&game_id)
+    GAMES.read().await.contains_key(&game_id)
 }
 
 async fn forward_messages(game_id: u32, write: WriteStream, read: ReadStream) {
-    if let Some(read) = read.lock().await.as_mut() {
+    if let Some(read) = read.write().await.as_mut() {
         // forward messages
         while let Some(msg) = read.next().await {
             if !game_exists(game_id).await {
@@ -66,7 +66,7 @@ async fn forward_messages(game_id: u32, write: WriteStream, read: ReadStream) {
                 break;
             }
             if let Ok(msg) = msg {
-                if let Some(write) = write.lock().await.as_mut() {
+                if let Some(write) = write.write().await.as_mut() {
                     if let Err(err) = write.send(msg).await {
                         log::error!("Error forwarding message to other client: {err:?}");
                     }
