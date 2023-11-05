@@ -135,7 +135,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                                 class: "destination-square".into(),
                                 top_left: to_point(cx.props, &pos),
                                 board_size: cx.props.size,
-                                hovered: matches!(hooks.hovered_position.as_ref(), Some(hover_pos) if hover_pos == &pos),
+                                hovered: matches!(hooks.hovered_position.as_ref(), Some(hover_pos) if *hover_pos == pos),
                             }
                         }
                     })
