@@ -119,6 +119,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         class: class,
                         top_left: to_point(cx.props, &pos),
                         board_size: cx.props.size,
+                        hovered: false,
                     }
                 }
             }),
@@ -132,6 +133,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                                 class: "destination-square".into(),
                                 top_left: to_point(cx.props, &pos),
                                 board_size: cx.props.size,
+                                hovered: true,
                             }
                         }
                     })
