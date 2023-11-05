@@ -38,9 +38,9 @@ async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Opti
     index
 }
 
-async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
-    if let Some(write) = write.write().await.as_mut() {
-        if let Err(err) = write.close().await {
+async fn close_socket(game_id: u32, send: Send, recv: Recv) {
+    if let Some(send) = send.write().await.as_mut() {
+        if let Err(err) = send.close().await {
             log::error!("Error closing socket: {err:?}");
         }
     }
@@ -49,25 +49,25 @@ async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
         *pending_game = None;
     }
     GAMES.write().await.remove(&game_id);
-    *write.write().await = None;
-    *read.write().await = None;
+    *send.write().await = None;
+    *recv.write().await = None;
 }
 
 async fn game_exists(game_id: u32) -> bool {
     GAMES.read().await.contains_key(&game_id)
 }
 
-async fn forward_messages(game_id: u32, write: WriteStream, read: ReadStream) {
-    if let Some(read) = read.write().await.as_mut() {
+async fn forward_messages(game_id: u32, send: Send, recv: Recv) {
+    if let Some(recv) = recv.write().await.as_mut() {
         // forward messages
-        while let Some(msg) = read.next().await {
+        while let Some(msg) = recv.next().await {
             if !game_exists(game_id).await {
                 log::info!("Game has ended. Closing socket.");
                 break;
             }
             if let Ok(msg) = msg {
-                if let Some(write) = write.write().await.as_mut() {
-                    if let Err(err) = write.send(msg).await {
+                if let Some(send) = send.write().await.as_mut() {
+                    if let Err(err) = send.send(msg).await {
                         log::error!("Error forwarding message to other client: {err:?}");
                     }
                 } else {
@@ -82,5 +82,5 @@ async fn forward_messages(game_id: u32, write: WriteStream, read: ReadStream) {
         log::error!("Socket that we should have just created does not exist. If we get here there is a bug.");
     }
     // if we have been disconnected, clean up our connections
-    close_socket(game_id, write, read).await;
+    close_socket(game_id, send, recv).await;
 }
