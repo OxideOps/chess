@@ -9,7 +9,7 @@ pub(crate) fn BoardSquare(
     hovered: bool,
 ) -> Element {
     let border_style = if *hovered {
-        "border: 4px solid white;"
+        "border: 4px solid yellow;"
     } else {
         ""
     };

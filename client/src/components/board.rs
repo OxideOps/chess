@@ -56,6 +56,7 @@ pub(crate) struct BoardHooks<'a> {
     pub(crate) analysis_arrows: &'a UseLock<Arrows>,
     pub(crate) drawing_arrow: &'a UseRef<Option<ArrowData>>,
     pub(crate) stockfish_process: &'a UseAsyncLock<Option<Process>>,
+    pub(crate) hovered_position: &'a UseState<Option<Position>>,
 }
 
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
@@ -71,6 +72,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         analysis_arrows: use_lock(cx, Arrows::default),
         drawing_arrow: use_ref::<Option<ArrowData>>(cx, || None),
         stockfish_process: use_async_lock::<Option<Process>>(cx, || None),
+        hovered_position: use_state::<Option<Position>>(cx, || None),
     };
 
     use_effect(cx, &cx.props.analyze, |analyze| {
@@ -133,7 +135,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                                 class: "destination-square".into(),
                                 top_left: to_point(cx.props, &pos),
                                 board_size: cx.props.size,
-                                hovered: true,
+                                hovered: matches!(hooks.hovered_position.as_ref(), Some(hover_pos) if hover_pos == &pos),
                             }
                         }
                     })
@@ -310,18 +312,22 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
         }
         hooks.mouse_down_state.set(None);
         hooks.selected_piece.set(None);
+        hooks.hovered_position.set(None);
     }
 }
 
 fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
+    let pos = to_position(props, &event.client_coordinates());
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             block_on(send_dragging_point(props, &event));
-        } else if mouse_down.kind.contains(MouseButton::Secondary) {
-            let pos = to_position(props, &event.client_coordinates());
-            if hooks.drawing_arrow.read().unwrap().mv.to != pos {
-                hooks.drawing_arrow.write().as_mut().unwrap().mv.to = pos;
+            if hooks.hovered_position.is_none() || hooks.hovered_position.unwrap() != pos {
+                hooks.hovered_position.set(Some(pos));
             }
+        } else if mouse_down.kind.contains(MouseButton::Secondary)
+            && hooks.drawing_arrow.read().unwrap().mv.to != pos
+        {
+            hooks.drawing_arrow.write().as_mut().unwrap().mv.to = pos;
         }
     }
 }
