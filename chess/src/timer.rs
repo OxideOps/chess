@@ -2,6 +2,8 @@ use web_time::{Duration, Instant};
 
 use crate::color::Color;
 
+pub(super) const DEFAULT_DURATION: Duration = Duration::from_secs(3600);
+
 #[derive(Clone)]
 pub(super) struct Timer {
     white_time: Duration,
@@ -13,8 +15,8 @@ pub(super) struct Timer {
 impl Default for Timer {
     fn default() -> Self {
         Self {
-            white_time: Duration::from_secs(60),
-            black_time: Duration::from_secs(60),
+            white_time: DEFAULT_DURATION,
+            black_time: DEFAULT_DURATION,
             time_started: None,
             current_player: Color::White,
         }
