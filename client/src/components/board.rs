@@ -115,56 +115,48 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 height: "{cx.props.size}"
             }
             // highlight squares
-            hooks.game.read().get_highlighted_squares_info().into_iter().map(|(pos, class)| {
-                rsx! {
-                    BoardSquare {
-                        class: class,
-                        top_left: to_point(cx.props, &pos),
-                        board_size: cx.props.size,
-                        hovered: false,
-                    }
+            for (pos, class) in hooks.game.read().get_highlighted_squares_info() {
+                BoardSquare {
+                    class: class,
+                    top_left: to_point(cx.props, &pos),
+                    board_size: cx.props.size,
                 }
-            }),
+            },
             if (!hooks.game.read().is_replaying() || is_local_game(cx.props))
                 && let Some(pos) = &*hooks.selected_piece.read()
             {
                 rsx! {
-                    hooks.game.read().get_valid_destinations_for_piece(pos).into_iter().map(|pos| {
-                        rsx! {
-                            BoardSquare {
-                                class: "destination-square".into(),
-                                top_left: to_point(cx.props, &pos),
-                                board_size: cx.props.size,
-                                hovered: matches!(hooks.hovered_position.as_ref(), Some(hover_pos) if *hover_pos == pos),
-                            }
+                    for pos in hooks.game.read().get_valid_destinations_for_piece(pos) {
+                        BoardSquare {
+                            class: "destination-square".into(),
+                            top_left: to_point(cx.props, &pos),
+                            board_size: cx.props.size,
                         }
-                    })
+                    }
                 }
             }
             // pieces
-            hooks.game.read().get_pieces().into_iter().map(|(piece, pos)| {
-                rsx! {
-                    Piece {
-                        image: get_piece_image_file(&cx.props.piece_theme, piece),
-                        top_left_starting: to_point(cx.props, &pos),
-                        size: cx.props.size / 8,
-                        is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {
-                            mouse_down.kind.contains(MouseButton::Primary)
-                                && pos == to_position(cx.props, &mouse_down.point)
-                        }),
-                    }
+            for (piece, pos) in hooks.game.read().get_pieces() {
+                Piece {
+                    image: get_piece_image_file(&cx.props.piece_theme, piece),
+                    top_left_starting: to_point(cx.props, &pos),
+                    size: cx.props.size / 8,
+                    is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {
+                        mouse_down.kind.contains(MouseButton::Primary)
+                            && pos == to_position(cx.props, &mouse_down.point)
+                    }),
                 }
-            }),
+            },
             // arrows
-            hooks.arrows.read().get().into_iter()
+            for data in hooks.arrows.read().get().into_iter()
                 .chain(hooks.analysis_arrows.read().get().into_iter())
                 .chain(hooks.drawing_arrow.read().into_iter())
-                .map(|data| rsx! {
-                    Arrow {
-                        data: data,
-                        board_props: &cx.props,
-                    }
-                })
+            {
+                Arrow {
+                    data: data,
+                    board_props: &cx.props,
+                }
+            }
         }
     })
 }
