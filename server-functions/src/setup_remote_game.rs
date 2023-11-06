@@ -15,16 +15,16 @@ pub mod games {
     use axum::extract::ws::{Message, WebSocket};
     use futures::stream::{SplitSink, SplitStream};
     use once_cell::sync::Lazy;
-    use tokio::sync::RwLock;
+    use tokio::sync::{Mutex, RwLock};
 
-    pub type Send = Arc<RwLock<Option<SplitSink<WebSocket, Message>>>>;
-    pub type Recv = Arc<RwLock<Option<SplitStream<WebSocket>>>>;
-    pub type PlayerConnections = Arc<[(Send, Recv); 2]>;
+    pub type Send = Arc<Mutex<SplitSink<WebSocket, Message>>>;
+    pub type Recv = Arc<Mutex<SplitStream<WebSocket>>>;
+    pub type PlayerConnections = Arc<Mutex<Vec<(Send, Recv)>>>;
 
     pub static GAMES: Lazy<Arc<RwLock<HashMap<u32, PlayerConnections>>>> =
         Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));
-    pub static PENDING_GAME: Lazy<Arc<RwLock<Option<u32>>>> =
-        Lazy::new(|| Arc::new(RwLock::new(None)));
+    pub static PENDING_GAME: Lazy<Arc<Mutex<Option<u32>>>> =
+        Lazy::new(|| Arc::new(Mutex::new(None)));
 }
 
 #[server(SetupRemoteGame, "/api")]
@@ -33,7 +33,7 @@ pub async fn setup_remote_game() -> Result<RemoteGameInfo, ServerFnError> {
     use rand::distributions::{Distribution, Uniform};
 
     let mut games = GAMES.write().await;
-    let mut pending_game = PENDING_GAME.write().await;
+    let mut pending_game = PENDING_GAME.lock().await;
     if let Some(game_id) = *pending_game {
         *pending_game = None;
         return Ok(RemoteGameInfo {
