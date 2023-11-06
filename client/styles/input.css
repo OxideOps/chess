@@ -57,6 +57,10 @@ body {
     @apply absolute bg-green-700/40;
 }
 
+.border-hover-square {
+    @apply border-4 border-yellow-300/90;
+}
+
 td {
     @apply pr-4;
 }

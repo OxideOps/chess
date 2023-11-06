@@ -6,10 +6,12 @@ pub(crate) fn BoardSquare(
     class: String,
     top_left: ClientPoint,
     board_size: u32,
+    hovered: bool,
 ) -> Element {
+    let border_class = if *hovered { "border-hover-square" } else { "" };
     cx.render(rsx! {
         div {
-            class: "{class}",
+            class: "{class} {border_class}",
             style: "
                 left: {top_left.x}px;
                 top: {top_left.y}px;
