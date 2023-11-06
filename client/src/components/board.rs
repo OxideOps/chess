@@ -120,6 +120,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     class: class,
                     top_left: to_point(cx.props, &pos),
                     board_size: cx.props.size,
+                    hovered: false,
                 }
             },
             if (!hooks.game.read().is_replaying() || is_local_game(cx.props))
@@ -131,6 +132,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                             class: "destination-square".into(),
                             top_left: to_point(cx.props, &pos),
                             board_size: cx.props.size,
+                            hovered: matches!(hooks.hovered_position.get(), Some(hovered_pos) if *hovered_pos == pos),
                         }
                     }
                 }
