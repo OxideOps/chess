@@ -20,7 +20,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| board_theme.set(event.value.clone()),
                             for theme in board_theme_list.value().into_iter().flatten() {
-                                rsx! { option { value: "{theme}", "{theme}" } }
+                                option { value: "{theme}", "{theme}" }
                             }
                         }
                     }
@@ -32,7 +32,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| piece_theme.set(event.value.clone()),
                             for theme in piece_theme_list.value().into_iter().flatten() {
-                                rsx! { option { value: "{theme}", "{theme}" } }
+                                option { value: "{theme}", "{theme}" }
                             }
                         }
                     }
