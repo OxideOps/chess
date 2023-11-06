@@ -58,7 +58,7 @@ body {
 }
 
 .border-hover-square {
-    @apply border-4 border-yellow-500/80
+    @apply border-4 border-yellow-300/90;
 }
 
 td {
