@@ -27,7 +27,7 @@ fn get_default_perspective(
 pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || Eval::Centipawns(0));
     use_shared_state_provider(cx, || GameId(None));
-    use_shared_state_provider(cx, Game::default);
+    use_shared_state_provider(cx, Game::new);
 
     let white_player = use_lock(cx, || Player::with_color(Color::White));
     let black_player = use_lock(cx, || Player::with_color(Color::Black));

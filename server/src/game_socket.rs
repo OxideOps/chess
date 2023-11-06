@@ -27,7 +27,7 @@ pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
     })
 }
 
-async fn close_socket(game_id: u32, send: Send) {
+async fn close_socket(game_id: u32, send: WebSocketSender) {
     if let Err(err) = send.lock().await.close().await {
         log::error!("Error closing socket: {err:?}");
     }
@@ -42,7 +42,7 @@ async fn game_exists(game_id: u32) -> bool {
     GAMES.read().await.contains_key(&game_id)
 }
 
-async fn forward_messages(game_id: u32, send: Send, recv: Recv) {
+async fn forward_messages(game_id: u32, send: WebSocketSender, recv: WebSocketReceiver) {
     // forward messages
     while let Some(msg) = recv.lock().await.next().await {
         if !game_exists(game_id).await {

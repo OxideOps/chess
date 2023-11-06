@@ -17,9 +17,9 @@ pub mod games {
     use once_cell::sync::Lazy;
     use tokio::sync::{Mutex, RwLock};
 
-    pub type Send = Arc<Mutex<SplitSink<WebSocket, Message>>>;
-    pub type Recv = Arc<Mutex<SplitStream<WebSocket>>>;
-    pub type PlayerConnections = Arc<Mutex<Vec<(Send, Recv)>>>;
+    pub type WebSocketSender = Arc<Mutex<SplitSink<WebSocket, Message>>>;
+    pub type WebSocketReceiver = Arc<Mutex<SplitStream<WebSocket>>>;
+    pub type PlayerConnections = Arc<Mutex<Vec<(WebSocketSender, WebSocketReceiver)>>>;
 
     pub static GAMES: Lazy<Arc<RwLock<HashMap<u32, PlayerConnections>>>> =
         Lazy::new(|| Arc::new(RwLock::new(HashMap::new())));

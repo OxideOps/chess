@@ -115,12 +115,12 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 height: "{cx.props.size}"
             }
             // highlight squares
-            for (pos, class) in get_highlighted_squares_info(cx.props, &hooks).into_iter() {
+            for (pos, class) in get_highlighted_squares_info(cx.props, &hooks) {
                 BoardSquare {
                     class: class,
                     top_left: to_point(cx.props, &pos),
                     board_size: cx.props.size,
-                    hovered: matches!(hooks.hovered_position.get(), Some(hovered_pos) if *hovered_pos == pos),
+                    hovered: *hooks.hovered_position == Some(pos) && is_valid_destination(&hooks, pos),
                 }
             }
             // pieces
@@ -310,6 +310,12 @@ fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Eve
             hooks.drawing_arrow.write().as_mut().unwrap().mv.to = pos;
         }
     }
+}
+
+fn is_valid_destination(hooks: &BoardHooks, pos: Position) -> bool {
+    let from = hooks.selected_piece.read().unwrap();
+    let destinations = hooks.game.read().get_valid_destinations_for_piece(&from);
+    destinations.contains(&pos)
 }
 
 pub(crate) fn get_center(props: &BoardProps, pos: &Position) -> ClientPoint {
