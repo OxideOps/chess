@@ -8,20 +8,15 @@ pub(crate) fn BoardSquare(
     board_size: u32,
     hovered: bool,
 ) -> Element {
-    let border_style = if *hovered {
-        "border: 4px solid yellow;"
-    } else {
-        ""
-    };
+    let border_class = if *hovered { "border-square" } else { "" };
     cx.render(rsx! {
         div {
-            class: "{class}",
+            class: "{class} {border_class}",
             style: "
                 left: {top_left.x}px;
                 top: {top_left.y}px;
                 width: {board_size / 8}px;
                 height: {board_size / 8}px;
-                {border_style}
             "
         }
     })
