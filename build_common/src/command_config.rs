@@ -23,7 +23,9 @@ impl CommandConfig {
 
             assert!(
                 cmd.status()
-                    .expect("failed to execute {cmd_cfg.program:?}")
+                    .unwrap_or_else(|e| {
+                        panic!("failed to execute {:?}: {}", cmd_cfg.program, e)
+                    })
                     .success(),
                 "termination was not successful for {:?}",
                 cmd_cfg.program
