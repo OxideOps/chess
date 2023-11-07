@@ -115,26 +115,12 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 height: "{cx.props.size}"
             }
             // highlight squares
-            for (pos, class) in hooks.game.read().get_highlighted_squares_info() {
+            for (pos, class) in get_highlighted_squares_info(cx.props, &hooks) {
                 BoardSquare {
                     class: class,
                     top_left: to_point(cx.props, &pos),
                     board_size: cx.props.size,
-                    hovered: false,
-                }
-            },
-            if (!hooks.game.read().is_replaying() || is_local_game(cx.props))
-                && let Some(pos) = &*hooks.selected_piece.read()
-            {
-                rsx! {
-                    for pos in hooks.game.read().get_valid_destinations_for_piece(pos) {
-                        BoardSquare {
-                            class: "destination-square".into(),
-                            top_left: to_point(cx.props, &pos),
-                            board_size: cx.props.size,
-                            hovered: matches!(hooks.hovered_position.get(), Some(hovered_pos) if *hovered_pos == pos),
-                        }
-                    }
+                    hovered: *hooks.hovered_position == Some(pos) && is_valid_destination(&hooks, pos),
                 }
             }
             // pieces
@@ -326,6 +312,12 @@ fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Eve
     }
 }
 
+fn is_valid_destination(hooks: &BoardHooks, pos: Position) -> bool {
+    let from = hooks.selected_piece.read().unwrap();
+    let destinations = hooks.game.read().get_valid_destinations_for_piece(&from);
+    destinations.contains(&pos)
+}
+
 pub(crate) fn get_center(props: &BoardProps, pos: &Position) -> ClientPoint {
     let mut point = to_point(props, pos);
     point.x += props.size as f64 / 16.0;
@@ -335,4 +327,18 @@ pub(crate) fn get_center(props: &BoardProps, pos: &Position) -> ClientPoint {
 
 fn is_local_game(props: &BoardProps) -> bool {
     props.white_player_kind == PlayerKind::Local && props.black_player_kind == PlayerKind::Local
+}
+
+fn get_highlighted_squares_info(props: &BoardProps, hooks: &BoardHooks) -> Vec<(Position, String)> {
+    let game = hooks.game.read();
+    let mut info = game.get_highlighted_squares_info();
+    if (!game.is_replaying() || is_local_game(props))
+        && let Some(pos) = &*hooks.selected_piece.read() {
+            info.extend(
+                game.get_valid_destinations_for_piece(pos)
+                    .into_iter()
+                    .map(|pos| (pos, "destination-square".to_string())),
+            );
+    }
+    info
 }
