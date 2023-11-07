@@ -3,6 +3,9 @@ use dioxus::prelude::*;
 
 use super::{Board, EvalBar, InfoBar, Settings};
 
+const DEFAULT_BOARD_THEME: &str = "qootee";
+const DEFAULT_PIECE_THEME: &str = "maestro";
+
 #[component]
 pub(crate) fn Widget(
     cx: Scope,
@@ -12,8 +15,8 @@ pub(crate) fn Widget(
     analyze: UseState<bool>,
     height: u32,
 ) -> Element {
-    let board_theme = use_state(cx, || String::from("qootee"));
-    let piece_theme = use_state(cx, || String::from("maestro"));
+    let board_theme = use_state(cx, || DEFAULT_BOARD_THEME.to_string());
+    let piece_theme = use_state(cx, || DEFAULT_PIECE_THEME.to_string());
 
     cx.render(rsx! {
         div { class: "widget-container", style: "height: {height}px",
