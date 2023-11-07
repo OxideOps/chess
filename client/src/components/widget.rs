@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use chess::{color::Color, player::Player};
 use dioxus::prelude::*;
 
@@ -12,7 +10,6 @@ pub(crate) fn Widget(
     black_player: UseLock<Player>,
     perspective: Color,
     analyze: UseState<bool>,
-    start_time: Duration,
     height: u32,
 ) -> Element {
     let board_theme = use_state(cx, || String::from("qootee"));
@@ -32,7 +29,7 @@ pub(crate) fn Widget(
             if **analyze {
                 rsx! { EvalBar { perspective: *perspective } }
             },
-            InfoBar { start_time: *start_time },
+            InfoBar {},
             Settings {
                 board_theme: board_theme.to_owned(),
                 piece_theme: piece_theme.to_owned(),

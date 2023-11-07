@@ -1,18 +1,23 @@
-use axum::{
-    extract::{ws::WebSocket, WebSocketUpgrade},
-    response::Response,
-};
+use std::sync::Arc;
+
+use axum::{extract::WebSocketUpgrade, response::Response};
 use futures::{SinkExt, StreamExt};
 use server_functions::*;
+use tokio::sync::Mutex;
 
 pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
     ws.on_upgrade(move |socket| async move {
-        if let Some(connections) = GAMES.lock().await.get(&game_id) {
-            if let Some(index) = store_socket(socket, connections.clone()).await {
-                let other_index = (index + 1) % 2;
-                let sink = connections[other_index].0.clone();
-                let stream = connections[index].1.clone();
-                tokio::spawn(forward_messages(game_id, sink, stream));
+        if let Some(connections) = GAMES.read().await.get(&game_id) {
+            let mut connections = connections.lock().await;
+            if connections.len() < 2 {
+                let (send, recv) = socket.split();
+                connections.push((Arc::new(Mutex::new(send)), Arc::new(Mutex::new(recv))));
+                if connections.len() == 2 {
+                    let (send1, recv1) = connections[0].clone();
+                    let (send2, recv2) = connections[1].clone();
+                    tokio::spawn(forward_messages(game_id, send1, recv2));
+                    tokio::spawn(forward_messages(game_id, send2, recv1));
+                }
             } else {
                 log::warn!("Cannot connect client to socket. Already 2 clients.");
             }
@@ -22,65 +27,37 @@ pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
     })
 }
 
-async fn store_socket(socket: WebSocket, connections: PlayerConnections) -> Option<usize> {
-    let index = if connections[0].0.lock().await.is_none() {
-        Some(0)
-    } else if connections[1].0.lock().await.is_none() {
-        Some(1)
-    } else {
-        None
-    };
-    if let Some(index) = index {
-        let (sink, stream) = socket.split();
-        *connections[index].0.lock().await = Some(sink);
-        *connections[index].1.lock().await = Some(stream);
+async fn close_socket(game_id: u32, send: WebSocketSender) {
+    if let Err(err) = send.lock().await.close().await {
+        log::error!("Error closing socket: {err:?}");
     }
-    index
-}
-
-async fn close_socket(game_id: u32, write: WriteStream, read: ReadStream) {
-    if let Some(write) = write.lock().await.as_mut() {
-        if let Err(err) = write.close().await {
-            log::error!("Error closing socket: {err:?}");
-        }
-    }
-    let mut pending_game = PENDING_GAME.write().await;
+    let mut pending_game = PENDING_GAME.lock().await;
     if *pending_game == Some(game_id) {
         *pending_game = None;
     }
-    GAMES.lock().await.remove(&game_id);
-    *write.lock().await = None;
-    *read.lock().await = None;
+    GAMES.write().await.remove(&game_id);
 }
 
 async fn game_exists(game_id: u32) -> bool {
-    GAMES.lock().await.contains_key(&game_id)
+    GAMES.read().await.contains_key(&game_id)
 }
 
-async fn forward_messages(game_id: u32, write: WriteStream, read: ReadStream) {
-    if let Some(read) = read.lock().await.as_mut() {
-        // forward messages
-        while let Some(msg) = read.next().await {
-            if !game_exists(game_id).await {
-                log::info!("Game has ended. Closing socket.");
-                break;
-            }
-            if let Ok(msg) = msg {
-                if let Some(write) = write.lock().await.as_mut() {
-                    if let Err(err) = write.send(msg).await {
-                        log::error!("Error forwarding message to other client: {err:?}");
-                    }
-                } else {
-                    log::warn!("No other client socket to forward messages to!");
-                }
-            } else {
-                log::error!("Closing socket due to error from one of the clients: {msg:?}");
-                break;
-            }
+async fn forward_messages(game_id: u32, send: WebSocketSender, recv: WebSocketReceiver) {
+    // forward messages
+    while let Some(msg) = recv.lock().await.next().await {
+        if !game_exists(game_id).await {
+            log::info!("Game has ended. Closing socket.");
+            break;
         }
-    } else {
-        log::error!("Socket that we should have just created does not exist. If we get here there is a bug.");
+        if let Ok(msg) = msg {
+            if let Err(err) = send.lock().await.send(msg).await {
+                log::error!("Error forwarding message to other client: {err:?}");
+            }
+        } else {
+            log::error!("Closing socket due to error from one of the clients: {msg:?}");
+            break;
+        }
     }
     // if we have been disconnected, clean up our connections
-    close_socket(game_id, write, read).await;
+    close_socket(game_id, send).await;
 }

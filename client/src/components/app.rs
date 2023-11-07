@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use chess::{
     color::Color,
     game::Game,
@@ -12,7 +10,6 @@ use super::Widget;
 use crate::{shared_states::GameId, stockfish::Eval};
 
 const WIDGET_HEIGHT: u32 = 800;
-const START_TIME: Duration = Duration::from_secs(3600);
 
 fn get_default_perspective(
     white_player: &UseLock<Player>,
@@ -30,7 +27,7 @@ fn get_default_perspective(
 pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || Eval::Centipawns(0));
     use_shared_state_provider(cx, || GameId(None));
-    use_shared_state_provider(cx, || Game::with_start_time(START_TIME));
+    use_shared_state_provider(cx, Game::new);
 
     let white_player = use_lock(cx, || Player::with_color(Color::White));
     let black_player = use_lock(cx, || Player::with_color(Color::Black));
@@ -46,7 +43,6 @@ pub(crate) fn App(cx: Scope) -> Element {
             black_player: black_player.to_owned(),
             perspective: *perspective.get(),
             analyze: analyze.to_owned(),
-            start_time: START_TIME,
             height: WIDGET_HEIGHT
         }
         div {

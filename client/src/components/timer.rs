@@ -5,10 +5,12 @@ use chess::{color::Color, game::Game};
 use dioxus::prelude::*;
 
 #[component]
-pub(crate) fn Timer(cx: Scope, start_time: Duration) -> Element {
-    let white_time = use_state(cx, || display_time(*start_time));
-    let black_time = use_state(cx, || display_time(*start_time));
-    let player = use_shared_state::<Game>(cx)?.read().get_real_player();
+pub(crate) fn Timer(cx: Scope) -> Element {
+    let game = use_shared_state::<Game>(cx)?;
+    let initial_time = game.read().get_active_time();
+    let white_time = use_state(cx, || display_time(initial_time));
+    let black_time = use_state(cx, || display_time(initial_time));
+    let player = game.read().get_real_player();
 
     use_timer_future(cx, white_time, black_time);
 
@@ -30,11 +32,7 @@ fn display_time(time: Duration) -> String {
     }
 }
 
-fn use_timer_future(
-    cx: Scope<TimerProps>,
-    white_time: &UseState<String>,
-    black_time: &UseState<String>,
-) {
+fn use_timer_future(cx: Scope, white_time: &UseState<String>, black_time: &UseState<String>) {
     use_future(cx, use_shared_state::<Game>(cx).unwrap(), |game| {
         to_owned![white_time, black_time];
         async move {

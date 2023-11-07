@@ -14,7 +14,7 @@ use crate::{
     position::Position,
     result::{ChessError, ChessResult},
     round_info::RoundInfo,
-    timer::Timer,
+    timer::{Timer, DEFAULT_DURATION},
     turn::Turn,
 };
 
@@ -488,7 +488,7 @@ struct GameBuilder {
 impl Default for GameBuilder {
     fn default() -> Self {
         Self {
-            start_time: Duration::from_secs(60),
+            start_time: DEFAULT_DURATION,
             state: BoardState::default(),
         }
     }
