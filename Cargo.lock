@@ -1063,7 +1063,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -1076,7 +1076,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "bumpalo",
  "futures-channel",
@@ -1092,7 +1092,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "constcat",
  "dioxus-core",
@@ -1112,7 +1112,7 @@ checksum = "2ea539174bb236e0e7dc9c12b19b88eae3cb574dedbd0252a2d43ea7e6de13e2"
 [[package]]
 name = "dioxus-desktop"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "async-trait",
  "core-foundation",
@@ -1141,7 +1141,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "anymap",
  "async-trait",
@@ -1183,7 +1183,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "async-std",
  "dioxus-core",
@@ -1197,7 +1197,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -1210,7 +1210,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "async-channel 1.9.0",
  "async-trait",
@@ -1230,7 +1230,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "js-sys",
  "sledgehammer_bindgen",
@@ -1253,7 +1253,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "anyhow",
  "dioxus",
@@ -1275,7 +1275,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1286,7 +1286,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "dioxus-core",
  "proc-macro2",
@@ -1297,7 +1297,7 @@ dependencies = [
 [[package]]
 name = "dioxus-ssr"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "askama_escape",
  "dioxus-core",
@@ -1312,7 +1312,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "async-channel 1.9.0",
  "async-trait",
@@ -1336,7 +1336,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#8981e55d65d233e72255c955cbf324ea8f08ed62"
+source = "git+https://github.com/OxideOps/dioxus.git#a1e19c47a5b67f8c5c4550dbdf9c5a01a91c90f8"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -3725,9 +3725,9 @@ checksum = "836fa6a3e1e547f9a2c4040802ec865b5d85f4014efe00555d7090a3dcaa1090"
 
 [[package]]
 name = "serde"
-version = "1.0.191"
+version = "1.0.192"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a834c4821019838224821468552240d4d95d14e751986442c816572d39a080c9"
+checksum = "bca2a08484b285dcb282d0f67b26cadc0df8b19f8c12502c13d966bf9482f001"
 dependencies = [
  "serde_derive",
 ]
@@ -3755,9 +3755,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.191"
+version = "1.0.192"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46fa52d5646bce91b680189fe5b1c049d2ea38dabb4e2e7c8d00ca12cfbfbcfd"
+checksum = "d6c7207fbec9faa48073f3e3074cbe553af6ea512d7c21ba46e434e70ea9fbc1"
 dependencies = [
  "proc-macro2",
  "quote",
