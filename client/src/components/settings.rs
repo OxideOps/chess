@@ -1,5 +1,10 @@
 use common::theme::ThemeType;
+use confy;
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
+
+const APP_NAME: &str = "oxide-chess";
+const CONFIG_NAME: &str = "themes";
 
 #[component]
 pub(crate) fn Settings(
@@ -9,7 +14,6 @@ pub(crate) fn Settings(
 ) -> Element {
     let board_theme_list = get_theme_future(cx, ThemeType::Board);
     let piece_theme_list = get_theme_future(cx, ThemeType::Piece);
-
     cx.render(rsx! {
         div {
             table {
@@ -18,9 +22,16 @@ pub(crate) fn Settings(
                     td {
                         select {
                             class: "select",
-                            onchange: |event| board_theme.set(event.value.clone()),
+                            onchange: |event| {
+                                board_theme.set(event.value.clone());
+                                save_theme_to_config(ThemeType::Board, &event.value);
+                            },
                             for theme in board_theme_list.value().into_iter().flatten() {
-                                option { value: "{theme}", "{theme}" }
+                                option {
+                                    value: "{theme}",
+                                    selected: **board_theme == *theme,
+                                    "{theme}"
+                                }
                             }
                         }
                     }
@@ -30,9 +41,16 @@ pub(crate) fn Settings(
                     td {
                         select {
                             class: "select",
-                            onchange: |event| piece_theme.set(event.value.clone()),
+                            onchange: |event| {
+                                piece_theme.set(event.value.clone());
+                                save_theme_to_config(ThemeType::Piece, &event.value);
+                            },
                             for theme in piece_theme_list.value().into_iter().flatten() {
-                                option { value: "{theme}", "{theme}" }
+                                option {
+                                    value: "{theme}",
+                                    selected: **piece_theme == *theme,
+                                    "{theme}"
+                                }
                             }
                         }
                     }
@@ -40,6 +58,40 @@ pub(crate) fn Settings(
             }
         }
     })
+}
+#[derive(Serialize, Deserialize)]
+struct ThemeConfig {
+    board_theme: String,
+    piece_theme: String,
+}
+
+impl Default for ThemeConfig {
+    fn default() -> Self {
+        Self {
+            board_theme: "qootee".into(),
+            piece_theme: "maestro".into(),
+        }
+    }
+}
+
+pub fn load_theme_from_config(theme_type: ThemeType) -> String {
+    let cfg: ThemeConfig = confy::load(APP_NAME, CONFIG_NAME).unwrap_or_default();
+
+    match theme_type {
+        ThemeType::Board => cfg.board_theme,
+        ThemeType::Piece => cfg.piece_theme,
+    }
+}
+
+fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
+    let mut cfg: ThemeConfig = confy::load(APP_NAME, CONFIG_NAME).unwrap_or_default();
+
+    match theme_type {
+        ThemeType::Board => cfg.board_theme = theme_value.to_string(),
+        ThemeType::Piece => cfg.piece_theme = theme_value.to_string(),
+    }
+
+    confy::store(APP_NAME, CONFIG_NAME, cfg).expect("failed to store the theme configuration");
 }
 
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {

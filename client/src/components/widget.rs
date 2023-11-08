@@ -1,7 +1,11 @@
 use chess::{color::Color, player::Player};
+use common::theme::ThemeType;
 use dioxus::prelude::*;
 
-use super::{Board, EvalBar, InfoBar, Settings};
+use super::{
+    settings::{load_theme_from_config, Settings},
+    Board, EvalBar, InfoBar,
+};
 
 #[component]
 pub(crate) fn Widget(
@@ -12,8 +16,8 @@ pub(crate) fn Widget(
     analyze: UseState<bool>,
     height: u32,
 ) -> Element {
-    let board_theme = use_state(cx, || String::from("qootee"));
-    let piece_theme = use_state(cx, || String::from("maestro"));
+    let board_theme = use_state(cx, || load_theme_from_config(ThemeType::Board));
+    let piece_theme = use_state(cx, || load_theme_from_config(ThemeType::Piece));
 
     cx.render(rsx! {
         div { class: "widget-container", style: "height: {height}px",
