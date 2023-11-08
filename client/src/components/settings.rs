@@ -91,7 +91,7 @@ fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
         ThemeType::Piece => cfg.piece_theme = theme_value.to_string(),
     }
 
-    confy::store(APP_NAME, CONFIG_NAME, cfg).expect("failed to store the theme configuration");
+    let _ = confy::store(APP_NAME, CONFIG_NAME, cfg);
 }
 
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
