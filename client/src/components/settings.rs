@@ -24,6 +24,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| {
                                 board_theme.set(event.value.clone());
+                                #[cfg(not(target_arch = "wasm32"))]
                                 save_theme_to_config(ThemeType::Board, &event.value);
                             },
                             for theme in board_theme_list.value().into_iter().flatten() {
@@ -43,6 +44,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| {
                                 piece_theme.set(event.value.clone());
+                                #[cfg(not(target_arch = "wasm32"))]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {
@@ -83,6 +85,7 @@ pub fn load_theme_from_config(theme_type: ThemeType) -> String {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
     let mut cfg: ThemeConfig = confy::load(APP_NAME, CONFIG_NAME).unwrap_or_default();
 
@@ -91,7 +94,9 @@ fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
         ThemeType::Piece => cfg.piece_theme = theme_value.to_string(),
     }
 
-    let _ = confy::store(APP_NAME, CONFIG_NAME, cfg);
+    if let Err(e) = confy::store(APP_NAME, CONFIG_NAME, cfg) {
+        log::error!("could not store theme: {e}")
+    }
 }
 
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
