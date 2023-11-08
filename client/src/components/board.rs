@@ -98,7 +98,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     cx.render(rsx! {
         // div for widget
         div {
-            class: "relative z-0",
+            class: "board-container",
             style: "height: {cx.props.size}px; width: {cx.props.size}px;",
             autofocus: true,
             tabindex: 0,
