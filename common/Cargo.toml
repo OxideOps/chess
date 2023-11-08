@@ -9,4 +9,4 @@ edition = "2021"
 clap = { version = "4.4.7", features = ["derive"] }
 getrandom = { version = "0.2.10", features = ["js"] }
 log = "0.4.19"
-serde = { version = "1.0.191", features = ["derive"] }
+serde = { version = "1.0.192", features = ["derive"] }
