@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.4.7", features = ["derive"] }
-getrandom = { version = "0.2.10", features = ["js"] }
+getrandom = { version = "0.2.11", features = ["js"] }
 log = "0.4.19"
 serde = { version = "1.0.192", features = ["derive"] }
