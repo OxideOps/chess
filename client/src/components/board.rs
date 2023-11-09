@@ -241,7 +241,11 @@ fn drop_piece(
     {
         hooks.game.write().move_piece(from, to).ok();
         if opponent_player_kind == PlayerKind::Remote {
-            block_on(MOVE_CHANNEL.0.send(mv)).expect("Failed to send move!");
+            spawn(async move {
+                if let Err(e) = MOVE_CHANNEL.0.send(mv).await {
+                    log::error!("Failed to send move: {e}")
+                }
+            })
         }
     }
 }
