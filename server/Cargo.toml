@@ -18,7 +18,7 @@ futures = "0.3.29"
 hyper = "0.14.27"
 log = "0.4.19"
 server-functions = { path = "../server-functions", features = ["ssr"] }
-tokio = { version = "1.33.0", features = ["full"] }
+tokio = { version = "1.34.0", features = ["full"] }
 tokio-postgres = "0.7.10"
 tower = "0.4.13"
 tower-http = "0.4.3"
