@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cmp::max, sync::Arc};
 
 use async_std::{
     channel::{unbounded, Receiver, Sender},
@@ -148,8 +148,7 @@ pub async fn process_output(
 
 pub async fn init_stockfish(process: &mut Process) {
     log::info!("Starting Stockfish");
-    // Using all the cores on the system. Should we subtract 1-2 threads to give the UI some room?
-    let threads = get_num_cores();
+    let threads = max(1, get_num_cores() / 2);
     #[cfg(not(target_arch = "wasm32"))]
     // Use hash size around 50% of total ram in MB that is a multiple of 2048
     let hash = 2048 * (0.0005 * get_total_ram() as f64 / 2048.0).round() as usize;

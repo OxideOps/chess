@@ -36,8 +36,7 @@ async fn connect_to_socket(game_id: u32) -> anyhow::Result<(WriteStream, ReadStr
 
 async fn send_move(mv: &Move, socket: &mut WriteStream) -> anyhow::Result<()> {
     log::info!("Sending move {mv}");
-    socket.send(Text(serde_json::to_string(mv)?)).await?;
-    Ok(())
+    Ok(socket.send(Text(serde_json::to_string(mv)?)).await?)
 }
 
 async fn write_to_socket(rx: &Receiver<Move>, mut socket: WriteStream) {
