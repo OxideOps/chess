@@ -1,4 +1,4 @@
-use chess::{color::Color, player::Player};
+use chess::{Color, Player};
 use common::theme::ThemeType;
 use dioxus::prelude::*;
 

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_process::{Child, Command, Stdio};
 use async_std::{io::BufReader, prelude::*};
-use chess::game::Game;
+use chess::Game;
 use dioxus::prelude::*;
 
 use crate::{

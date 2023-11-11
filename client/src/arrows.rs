@@ -1,4 +1,4 @@
-use chess::moves::Move;
+use chess::Move;
 
 pub(super) const ALPHA: f64 = 0.75;
 

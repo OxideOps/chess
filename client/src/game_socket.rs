@@ -1,5 +1,5 @@
 use async_std::channel::Receiver;
-use chess::{game::Game, moves::Move};
+use chess::{Game, Move};
 use dioxus::prelude::*;
 use futures_util::{
     join,

@@ -1,4 +1,4 @@
-use chess::color::Color;
+use chess::Color;
 use dioxus_fullstack::prelude::*;
 use serde::{Deserialize, Serialize};
 
