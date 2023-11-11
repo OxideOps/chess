@@ -1,4 +1,4 @@
-use chess::game::Game;
+use chess::Game;
 use dioxus::prelude::*;
 
 #[component]

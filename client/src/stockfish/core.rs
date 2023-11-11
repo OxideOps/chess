@@ -4,7 +4,7 @@ use async_std::{
     channel::{unbounded, Receiver, Sender},
     sync::RwLock,
 };
-use chess::{color::Color, game::Game, moves::Move};
+use chess::{Color, Game, Move};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use regex::Regex;

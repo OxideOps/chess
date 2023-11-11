@@ -1,7 +1,5 @@
 use async_std::channel::{unbounded, Receiver, Sender};
-use chess::{
-    color::Color, game::Game, moves::Move, piece::Piece, player::PlayerKind, position::Position,
-};
+use chess::{Color, Game, Move, Piece, PlayerKind, Position};
 use dioxus::{
     html::{
         geometry::ClientPoint,
