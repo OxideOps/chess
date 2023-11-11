@@ -146,6 +146,10 @@ impl Game {
     }
 
     fn update_timer(&mut self) {
+        if self.status.is_game_over() {
+            self.timer.stop();
+            return;
+        }
         if !self.timer.is_active() {
             self.timer.start()
         }
@@ -474,10 +478,7 @@ impl Game {
     }
 
     pub fn game_over(&self) -> bool {
-        matches!(
-            self.status,
-            GameStatus::Checkmate(..) | GameStatus::Draw(..)
-        )
+        self.status.is_game_over()
     }
 }
 struct GameBuilder {

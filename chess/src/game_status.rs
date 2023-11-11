@@ -18,6 +18,10 @@ impl GameStatus {
             *self = status
         }
     }
+
+    pub(super) fn is_game_over(&self) -> bool {
+        matches!(self, GameStatus::Draw(..) | GameStatus::Checkmate(..))
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
