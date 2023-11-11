@@ -1,4 +1,4 @@
-use chess::color::Color;
+use chess::Color;
 use dioxus::prelude::*;
 
 use crate::{helpers::sigmoid, stockfish::Eval};

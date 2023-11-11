@@ -1,6 +1,6 @@
 use std::fmt;
 
-use chess::color::Color;
+use chess::Color;
 
 // How much differences in stockfish evaluation affect the alpha of the arrows
 const ALPHA_SENSITIVITY: f64 = 1.0 / 30.0;

@@ -1,5 +1,5 @@
 use async_std::channel::{unbounded, Receiver, Sender};
-use chess::game::Game;
+use chess::Game;
 use dioxus::prelude::*;
 use futures_util::TryFutureExt;
 use js_sys::{Function, Object};

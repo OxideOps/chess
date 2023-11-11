@@ -1,8 +1,4 @@
-use chess::{
-    color::Color,
-    game::Game,
-    player::{Player, PlayerKind},
-};
+use chess::{Color, Game, Player, PlayerKind};
 use dioxus::prelude::*;
 use server_functions::setup_remote_game;
 
