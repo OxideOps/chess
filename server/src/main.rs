@@ -9,6 +9,9 @@ use server::{database, game_socket::handler};
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 #[tokio::main]
 pub async fn main() -> hyper::Result<()> {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
