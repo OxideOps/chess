@@ -84,17 +84,15 @@ pub(crate) fn App(cx: Scope) -> Element {
                 onclick: |_| analyze.modify(|analyze| !*analyze),
                 if **analyze { "Stop analyzing" } else { "Analyze" }
             }
-            {
-                #[cfg(not(target_arch = "wasm32"))]
-                rsx! {
-                    button {
-                        class: "button",
-                        onclick: |_| {
-                            log::info!("Quitting game..");
-                            dioxus_desktop::use_window(cx).close()
-                        },
-                        "Quit"
-                    }
+            #[cfg(not(target_arch = "wasm32"))]
+            rsx! {
+                button {
+                    class: "button",
+                    onclick: |_| {
+                        log::info!("Quitting game..");
+                        dioxus_desktop::use_window(cx).close()
+                    },
+                    "Quit"
                 }
             }
         }
