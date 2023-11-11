@@ -146,6 +146,10 @@ impl Game {
     }
 
     fn update_timer(&mut self) {
+        if matches!(self.status, GameStatus::Checkmate(_)) {
+            self.timer.stop();
+            return;
+        }
         if !self.timer.is_active() {
             self.timer.start()
         }
