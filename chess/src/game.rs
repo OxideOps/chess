@@ -478,10 +478,7 @@ impl Game {
     }
 
     pub fn game_over(&self) -> bool {
-        matches!(
-            self.status,
-            GameStatus::Checkmate(..) | GameStatus::Draw(..)
-        )
+        self.status.is_game_over()
     }
 }
 struct GameBuilder {
