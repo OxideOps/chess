@@ -71,7 +71,7 @@ impl Default for ThemeConfig {
     fn default() -> Self {
         Self {
             board_theme: "qootee".into(),
-            piece_theme: "maestro".into(),
+            piece_theme: "merida".into(),
         }
     }
 }
