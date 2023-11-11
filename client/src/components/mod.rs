@@ -19,6 +19,5 @@ pub(super) use eval_bar::EvalBar;
 pub(super) use info_bar::InfoBar;
 pub(super) use piece::Piece;
 pub(super) use round_list::RoundList;
-pub(super) use settings::Settings;
 pub(super) use timer::Timer;
 pub(super) use widget::Widget;

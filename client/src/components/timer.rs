@@ -54,7 +54,6 @@ fn use_timer_future(cx: Scope, white_time: &UseState<String>, black_time: &UseSt
             } else {
                 white_time.set(display_time(game.read().get_time(Color::White)));
                 black_time.set(display_time(game.read().get_time(Color::Black)));
-                sleep(Duration::from_secs(u64::MAX)).await;
             }
         }
     });
