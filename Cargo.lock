@@ -666,9 +666,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.7"
+version = "4.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac495e00dcec98c83465d5ad66c5c4fabd652fd6686e7c6269b117e729a6f17b"
+checksum = "2275f18819641850fa26c89acc84d465c1bf91ce57bc2748b28c420473352f64"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -676,9 +676,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.7"
+version = "4.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c77ed9a32a62e6ca27175d00d29d05ca32e396ea1eb5fb01d8256b669cec7663"
+checksum = "07cdf1b148b25c1e1f7a42225e30a0d99a615cd4637eae7365548dd4529b95bc"
 dependencies = [
  "anstream",
  "anstyle",
@@ -721,6 +721,7 @@ dependencies = [
  "dioxus-desktop",
  "dioxus-fullstack",
  "dioxus-logger",
+ "dioxus-signals",
  "dioxus-web",
  "futures",
  "futures-util",
@@ -787,6 +788,17 @@ name = "colorchoice"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
+
+[[package]]
+name = "colored"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2674ec482fbc38012cf31e6c42ba0177b431a0cb6f15fe40efa5aab1bda516f6"
+dependencies = [
+ "is-terminal",
+ "lazy_static",
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "combine"
@@ -1076,7 +1088,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -1089,7 +1101,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "bumpalo",
  "futures-channel",
@@ -1105,7 +1117,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "constcat",
  "dioxus-core",
@@ -1125,7 +1137,7 @@ checksum = "2ea539174bb236e0e7dc9c12b19b88eae3cb574dedbd0252a2d43ea7e6de13e2"
 [[package]]
 name = "dioxus-desktop"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "async-trait",
  "core-foundation",
@@ -1154,7 +1166,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "anymap",
  "async-trait",
@@ -1196,7 +1208,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "async-std",
  "dioxus-core",
@@ -1210,7 +1222,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -1223,7 +1235,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "async-channel 1.9.0",
  "async-trait",
@@ -1243,7 +1255,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "js-sys",
  "sledgehammer_bindgen",
@@ -1266,7 +1278,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "anyhow",
  "dioxus",
@@ -1288,7 +1300,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1299,7 +1311,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "dioxus-core",
  "proc-macro2",
@@ -1308,9 +1320,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dioxus-signals"
+version = "0.0.0"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
+dependencies = [
+ "dioxus-core",
+ "generational-box",
+ "simple_logger",
+ "tracing",
+]
+
+[[package]]
 name = "dioxus-ssr"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "askama_escape",
  "dioxus-core",
@@ -1325,7 +1348,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "async-channel 1.9.0",
  "async-trait",
@@ -1349,7 +1372,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.4.2"
-source = "git+https://github.com/OxideOps/dioxus.git#f5374774834cb4a5bd9f1a01e04a41a3f6554a7d"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -1801,6 +1824,14 @@ dependencies = [
  "libc",
  "system-deps",
  "x11",
+]
+
+[[package]]
+name = "generational-box"
+version = "0.0.0"
+source = "git+https://github.com/OxideOps/dioxus.git#4dbbe871e7dcee223aeae50dfd57e1694e0390a0"
+dependencies = [
+ "bumpalo",
 ]
 
 [[package]]
@@ -2299,9 +2330,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd6effc99afb63425aff9b05836f029929e345a6148a14b7ecd5ab67af944482"
+checksum = "f95b9abcae896730d42b78e09c155ed4ddf82c07b4de772c64aee5b2d8b7c150"
 dependencies = [
  "bytes",
  "fnv",
@@ -2512,6 +2543,17 @@ name = "ipnet"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f518f335dce6725a761382244631d86cf0ccb2863413590b31338feb467f9c3"
+
+[[package]]
+name = "is-terminal"
+version = "0.4.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
+dependencies = [
+ "hermit-abi",
+ "rustix 0.38.21",
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "itoa"
@@ -2923,6 +2965,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "num_threads"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2819ce041d2ee131036f4fc9d6ae7ae125a3a40e97ba64d04fe799ad9dabbb44"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -4017,6 +4068,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
+name = "simple_logger"
+version = "4.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2230cd5c29b815c9b699fb610b49a5ed65588f3509d9f0108be3a885da629333"
+dependencies = [
+ "colored",
+ "log",
+ "time",
+ "windows-sys 0.42.0",
+]
+
+[[package]]
 name = "siphasher"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4378,10 +4441,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4a34ab300f2dee6e562c10a046fc05e358b29f9bf92277f30c3c8d82275f6f5"
 dependencies = [
  "deranged",
+ "itoa 1.0.9",
  "js-sys",
+ "libc",
+ "num_threads",
  "powerfmt",
  "serde",
  "time-core",
+ "time-macros",
 ]
 
 [[package]]
@@ -4389,6 +4456,15 @@ name = "time-core"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef927ca75afb808a4d64dd374f00a2adf8d0fcff8e7b184af886c3c87ec4a3f3"
+
+[[package]]
+name = "time-macros"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ad70d68dba9e1f8aceda7aa6711965dfec1cac869f311a51bd08b3a2ccbce20"
+dependencies = [
+ "time-core",
+]
 
 [[package]]
 name = "tinyvec"
@@ -5134,6 +5210,21 @@ name = "windows-metadata"
 version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee78911e3f4ce32c1ad9d3c7b0bd95389662ad8d8f1a3155688fed70bd96e2b6"
+
+[[package]]
+name = "windows-sys"
+version = "0.42.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a3e1820f08b8513f676f7ab6c1f99ff312fb97b553d30ff4dd86f9f15728aa7"
+dependencies = [
+ "windows_aarch64_gnullvm 0.42.2",
+ "windows_aarch64_msvc 0.42.2",
+ "windows_i686_gnu 0.42.2",
+ "windows_i686_msvc 0.42.2",
+ "windows_x86_64_gnu 0.42.2",
+ "windows_x86_64_gnullvm 0.42.2",
+ "windows_x86_64_msvc 0.42.2",
+]
 
 [[package]]
 name = "windows-sys"
