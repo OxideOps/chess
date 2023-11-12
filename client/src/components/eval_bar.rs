@@ -1,13 +1,14 @@
 use chess::Color;
 use dioxus::prelude::*;
 
-use crate::{helpers::sigmoid, stockfish::Eval};
+use crate::{helpers::sigmoid, shared_states::Perspective, stockfish::Eval};
 
 const EVAL_SENSITIVITY: f64 = 1.0 / 800.0;
 
 #[component]
-pub(crate) fn EvalBar(cx: Scope, perspective: Color) -> Element {
+pub(crate) fn EvalBar(cx: Scope) -> Element {
     let eval = *use_shared_state::<Eval>(cx)?.read();
+    let perspective = **use_shared_state::<Perspective>(cx)?.read();
     let winning_player = eval.get_winning_player();
     let percent = match eval {
         Eval::Centipawns(cp) => 100.0 * sigmoid(EVAL_SENSITIVITY * cp as f64),
@@ -17,7 +18,7 @@ pub(crate) fn EvalBar(cx: Scope, perspective: Color) -> Element {
         Color::White => "top",
         Color::Black => "bottom",
     };
-    let justify = if *perspective == winning_player {
+    let justify = if perspective == winning_player {
         "end"
     } else {
         "start"

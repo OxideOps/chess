@@ -1,13 +1,16 @@
-use dioxus::{html::geometry::ClientPoint, prelude::*};
+use chess::Position;
+use dioxus::prelude::*;
+
+use crate::{
+    components::board::to_point,
+    shared_states::{BoardSize, Perspective},
+};
 
 #[component]
-pub(crate) fn BoardSquare(
-    cx: Scope,
-    class: String,
-    top_left: ClientPoint,
-    board_size: u32,
-    hovered: bool,
-) -> Element {
+pub(crate) fn BoardSquare(cx: Scope, class: String, position: Position, hovered: bool) -> Element {
+    let board_size = **use_shared_state::<BoardSize>(cx)?.read();
+    let perspective = **use_shared_state::<Perspective>(cx)?.read();
+    let top_left = to_point(board_size, perspective, &position);
     let border_class = if *hovered { "border-hover-square" } else { "" };
     cx.render(rsx! {
         div {
