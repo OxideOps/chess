@@ -17,7 +17,6 @@ clap = { version = "4.4.7", features = ["derive"] }
 common = { path = "../common" }
 confy = "0.5.1"
 dioxus = { git = "https://github.com/OxideOps/dioxus.git" }
-dioxus-signals = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 futures = "0.3.29"
 futures-util = "0.3.28"

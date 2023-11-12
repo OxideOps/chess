@@ -10,7 +10,7 @@ use dioxus::{
     },
     prelude::*,
 };
-use dioxus_signals::{use_signal, Signal};
+use futures::executor::block_on;
 use once_cell::sync::Lazy;
 
 use crate::{
@@ -30,6 +30,8 @@ pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 
 // Channel for sending moves to `game_socket` to be sent to a remote player
 static MOVE_CHANNEL: Lazy<Channel<Move>> = Lazy::new(unbounded);
+// Channel for telling dragged pieces how far they have been dragged
+static DRAG_CHANNEL: Lazy<Channel<ClientPoint>> = Lazy::new(unbounded);
 
 #[derive(Props, PartialEq)]
 pub(crate) struct BoardProps {
@@ -53,10 +55,11 @@ pub(crate) struct BoardHooks<'a> {
     pub(crate) drawing_arrow: &'a UseRef<Option<ArrowData>>,
     pub(crate) stockfish_process: &'a UseAsyncLock<Option<Process>>,
     pub(crate) hovered_position: &'a UseState<Option<Position>>,
-    pub(crate) dragging_point: Signal<ClientPoint>,
 }
 
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
+    cx.provide_context(DRAG_CHANNEL.1.clone());
+
     // hooks
     let hooks = BoardHooks {
         eval: use_shared_state::<Eval>(cx).unwrap(),
@@ -68,7 +71,6 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         drawing_arrow: use_ref::<Option<ArrowData>>(cx, || None),
         stockfish_process: use_async_lock::<Option<Process>>(cx, || None),
         hovered_position: use_state::<Option<Position>>(cx, || None),
-        dragging_point: use_signal(cx, ClientPoint::default),
     };
 
     use_effect(cx, &cx.props.analyze, |analyze| {
@@ -129,7 +131,6 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                         mouse_down.kind.contains(MouseButton::Primary)
                             && pos == to_position(cx.props, &mouse_down.point)
                     }),
-                    dragging_point: hooks.dragging_point,
                 }
             },
             // arrows
@@ -256,11 +257,15 @@ fn complete_arrow(hooks: &BoardHooks) {
     *hooks.drawing_arrow.write() = None;
 }
 
-fn send_dragging_point(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
-    *hooks.dragging_point.write() = ClientPoint::new(
-        event.client_coordinates().x - props.size as f64 / 16.0,
-        event.client_coordinates().y - props.size as f64 / 16.0,
-    );
+async fn send_dragging_point(props: &BoardProps, event: &Event<MouseData>) {
+    DRAG_CHANNEL
+        .0
+        .send(ClientPoint::new(
+            event.client_coordinates().x - props.size as f64 / 16.0,
+            event.client_coordinates().y - props.size as f64 / 16.0,
+        ))
+        .await
+        .expect("Failed to send dragging point");
 }
 
 fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
@@ -269,7 +274,7 @@ fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks, event: Eve
         hooks
             .selected_piece
             .set(Some(to_position(props, &mouse_down.point)));
-        send_dragging_point(props, hooks, event);
+        block_on(send_dragging_point(props, &event));
         hooks.arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = to_position(props, &mouse_down.point);
@@ -297,7 +302,7 @@ fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Eve
     let pos = to_position(props, &event.client_coordinates());
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
-            send_dragging_point(props, hooks, event);
+            block_on(send_dragging_point(props, &event));
             if hooks.hovered_position.is_none() || hooks.hovered_position.unwrap() != pos {
                 hooks.hovered_position.set(Some(pos));
             }
