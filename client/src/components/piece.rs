@@ -1,16 +1,18 @@
 use async_std::channel::Receiver;
 use dioxus::{html::geometry::ClientPoint, prelude::*};
 
+use crate::shared_states::BoardSize;
+
 #[component]
 pub fn Piece(
     cx: Scope,
     image: String,
     top_left_starting: ClientPoint,
-    size: u32,
     is_dragging: bool,
 ) -> Element {
     let top_left = use_state(cx, || *top_left_starting);
     let drag_point_receiver = cx.consume_context::<Receiver<ClientPoint>>()?;
+    let size = **use_shared_state::<BoardSize>(cx)?.read() / 8;
     let z_index = cx.props.is_dragging as u32 + 1; // 🏌️
 
     use_future(

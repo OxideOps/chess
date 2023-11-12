@@ -3,7 +3,10 @@ use std::f64::consts::PI;
 use dioxus::{html::geometry::ClientPoint, prelude::*};
 
 use super::get_center;
-use crate::{arrows::ArrowData, components::board::BoardProps};
+use crate::{
+    arrows::ArrowData,
+    shared_states::{BoardSize, Perspective},
+};
 
 // the following are measured relative to the board size
 const HEAD: f64 = 1.0 / 30.0; // size of arrow head
@@ -19,17 +22,20 @@ fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
 }
 
 #[component]
-pub(crate) fn Arrow<'a>(cx: Scope, data: ArrowData, board_props: &'a BoardProps) -> Element {
+pub(crate) fn Arrow(cx: Scope, data: ArrowData) -> Element {
     if !data.has_length() {
         return None;
     }
 
-    let from = get_center(board_props, &data.mv.from);
-    let to = get_center(board_props, &data.mv.to);
+    let board_size = **use_shared_state::<BoardSize>(cx)?.read();
+    let perspective = **use_shared_state::<Perspective>(cx)?.read();
 
-    let h = HEAD * board_props.size as f64;
-    let w = WIDTH * board_props.size as f64;
-    let o = OFFSET * board_props.size as f64;
+    let from = get_center(board_size, perspective, &data.mv.from);
+    let to = get_center(board_size, perspective, &data.mv.to);
+
+    let h = HEAD * board_size as f64;
+    let w = WIDTH * board_size as f64;
+    let o = OFFSET * board_size as f64;
 
     let angle = get_angle_from_vertical(&from, &to);
     let sin = angle.sin();
@@ -60,8 +66,8 @@ pub(crate) fn Arrow<'a>(cx: Scope, data: ArrowData, board_props: &'a BoardProps)
         svg {
             class: "absolute pointer-events-none",
             style: "z-index: 3",
-            height: "{board_props.size}",
-            width: "{board_props.size}",
+            height: "{board_size}",
+            width: "{board_size}",
             polygon {
                 class: "absolute pointer-events-none",
                 points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",

@@ -18,7 +18,7 @@ use crate::{
     components::{Arrow, BoardSquare, Piece},
     game_socket::create_game_socket,
     mouse_click::MouseClick,
-    shared_states::GameId,
+    shared_states::{BoardSize, GameId, Perspective},
     stockfish::{
         core::{on_game_changed, toggle_stockfish},
         interface::Process,
@@ -37,8 +37,6 @@ static DRAG_CHANNEL: Lazy<Channel<ClientPoint>> = Lazy::new(unbounded);
 pub(crate) struct BoardProps {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
-    perspective: Color,
-    pub(crate) size: u32,
     analyze: UseState<bool>,
     board_theme: String,
     piece_theme: String,
@@ -55,6 +53,8 @@ pub(crate) struct BoardHooks<'a> {
     pub(crate) drawing_arrow: &'a UseRef<Option<ArrowData>>,
     pub(crate) stockfish_process: &'a UseAsyncLock<Option<Process>>,
     pub(crate) hovered_position: &'a UseState<Option<Position>>,
+    pub(crate) board_size: u32,
+    pub(crate) perspective: Color,
 }
 
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
@@ -62,8 +62,8 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
 
     // hooks
     let hooks = BoardHooks {
-        eval: use_shared_state::<Eval>(cx).unwrap(),
-        game: use_shared_state::<Game>(cx).unwrap(),
+        eval: use_shared_state::<Eval>(cx)?,
+        game: use_shared_state::<Game>(cx)?,
         mouse_down_state: use_state::<Option<MouseClick>>(cx, || None),
         selected_piece: use_ref::<Option<Position>>(cx, || None),
         arrows: use_ref(cx, Arrows::default),
@@ -71,6 +71,8 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         drawing_arrow: use_ref::<Option<ArrowData>>(cx, || None),
         stockfish_process: use_async_lock::<Option<Process>>(cx, || None),
         hovered_position: use_state::<Option<Position>>(cx, || None),
+        board_size: **use_shared_state::<BoardSize>(cx)?.read(),
+        perspective: **use_shared_state::<Perspective>(cx)?.read(),
     };
 
     use_effect(cx, &cx.props.analyze, |analyze| {
@@ -97,27 +99,26 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         // div for widget
         div {
             class: "board-container",
-            style: "height: {cx.props.size}px; width: {cx.props.size}px;",
+            style: "height: {hooks.board_size}px; width: {hooks.board_size}px;",
             autofocus: true,
             tabindex: 0,
             // event handlers
-            onmousedown: move |event| handle_on_mouse_down_event(cx.props, &hooks, event),
+            onmousedown: move |event| handle_on_mouse_down_event(&hooks, event),
             onmouseup: move |event| handle_on_mouse_up_event(cx.props, &hooks, event),
-            onmousemove: move |event| handle_on_mouse_move_event(cx.props, &hooks, event),
+            onmousemove: move |event| handle_on_mouse_move_event(&hooks, event),
             onkeydown: move |event| handle_on_key_down(cx, &hooks, event),
             // board
             img {
                 src: "{get_board_image(&cx.props.board_theme)}",
                 class: "images inset-0 z-0",
-                width: "{cx.props.size}",
-                height: "{cx.props.size}"
+                width: "{hooks.board_size}",
+                height: "{hooks.board_size}"
             }
             // highlight squares
             for (pos, class) in get_highlighted_squares_info(cx.props, &hooks) {
                 BoardSquare {
                     class: class,
-                    top_left: to_point(cx.props, &pos),
-                    board_size: cx.props.size,
+                    position: pos,
                     hovered: *hooks.hovered_position == Some(pos) && is_valid_destination(&hooks, pos),
                 }
             }
@@ -125,11 +126,10 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             for (piece, pos) in hooks.game.read().get_pieces() {
                 Piece {
                     image: get_piece_image_file(&cx.props.piece_theme, piece),
-                    top_left_starting: to_point(cx.props, &pos),
-                    size: cx.props.size / 8,
+                    top_left_starting: _to_point(&hooks, &pos),
                     is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {
                         mouse_down.kind.contains(MouseButton::Primary)
-                            && pos == to_position(cx.props, &mouse_down.point)
+                            && pos == _to_position(&hooks, &mouse_down.point)
                     }),
                 }
             },
@@ -138,10 +138,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                 .chain(hooks.analysis_arrows.read().get().into_iter())
                 .chain(hooks.drawing_arrow.read().into_iter())
             {
-                Arrow {
-                    data: data,
-                    board_props: &cx.props,
-                }
+                Arrow { data: data }
             }
         }
     })
@@ -170,28 +167,32 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
     format!("images/pieces/{theme}/{piece_img}.svg")
 }
 
-fn to_position(props: &BoardProps, point: &ClientPoint) -> Position {
-    match props.perspective {
+fn _to_position(hooks: &BoardHooks, point: &ClientPoint) -> Position {
+    match hooks.perspective {
         Color::White => Position {
-            x: (8.0 * point.x / props.size as f64).floor() as usize,
-            y: (8.0 * (1.0 - point.y / props.size as f64)).floor() as usize,
+            x: (8.0 * point.x / hooks.board_size as f64).floor() as usize,
+            y: (8.0 * (1.0 - point.y / hooks.board_size as f64)).floor() as usize,
         },
         Color::Black => Position {
-            x: (8.0 * (1.0 - point.x / props.size as f64)).floor() as usize,
-            y: (8.0 * point.y / props.size as f64).floor() as usize,
+            x: (8.0 * (1.0 - point.x / hooks.board_size as f64)).floor() as usize,
+            y: (8.0 * point.y / hooks.board_size as f64).floor() as usize,
         },
     }
 }
 
-pub(crate) fn to_point(props: &BoardProps, position: &Position) -> ClientPoint {
-    match props.perspective {
+fn _to_point(hooks: &BoardHooks, position: &Position) -> ClientPoint {
+    to_point(hooks.board_size, hooks.perspective, position)
+}
+
+pub(crate) fn to_point(board_size: u32, perspective: Color, position: &Position) -> ClientPoint {
+    match perspective {
         Color::White => ClientPoint::new(
-            props.size as f64 * position.x as f64 / 8.0,
-            props.size as f64 * (7.0 - position.y as f64) / 8.0,
+            board_size as f64 * position.x as f64 / 8.0,
+            board_size as f64 * (7.0 - position.y as f64) / 8.0,
         ),
         Color::Black => ClientPoint::new(
-            props.size as f64 * (7.0 - position.x as f64) / 8.0,
-            props.size as f64 * position.y as f64 / 8.0,
+            board_size as f64 * (7.0 - position.x as f64) / 8.0,
+            board_size as f64 * position.y as f64 / 8.0,
         ),
     }
 }
@@ -226,8 +227,8 @@ fn drop_piece(
     event: &Event<MouseData>,
     point: &ClientPoint,
 ) {
-    let from = to_position(props, point);
-    let to = to_position(props, &event.client_coordinates());
+    let from = _to_position(&hooks, point);
+    let to = _to_position(&hooks, &event.client_coordinates());
     let (current_player_kind, opponent_player_kind) = match hooks.game.read().get_current_player() {
         Color::White => (props.white_player_kind, props.black_player_kind),
         Color::Black => (props.black_player_kind, props.white_player_kind),
@@ -257,27 +258,27 @@ fn complete_arrow(hooks: &BoardHooks) {
     *hooks.drawing_arrow.write() = None;
 }
 
-async fn send_dragging_point(props: &BoardProps, event: &Event<MouseData>) {
+async fn send_dragging_point(hooks: &BoardHooks<'_>, event: Event<MouseData>) {
     DRAG_CHANNEL
         .0
         .send(ClientPoint::new(
-            event.client_coordinates().x - props.size as f64 / 16.0,
-            event.client_coordinates().y - props.size as f64 / 16.0,
+            event.client_coordinates().x - hooks.board_size as f64 / 16.0,
+            event.client_coordinates().y - hooks.board_size as f64 / 16.0,
         ))
         .await
         .expect("Failed to send dragging point");
 }
 
-fn handle_on_mouse_down_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
+fn handle_on_mouse_down_event(hooks: &BoardHooks, event: Event<MouseData>) {
     let mouse_down = MouseClick::from(event.clone());
     if mouse_down.kind.contains(MouseButton::Primary) {
         hooks
             .selected_piece
-            .set(Some(to_position(props, &mouse_down.point)));
-        block_on(send_dragging_point(props, &event));
+            .set(Some(_to_position(&hooks, &mouse_down.point)));
+        block_on(send_dragging_point(hooks, event));
         hooks.arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
-        let pos = to_position(props, &mouse_down.point);
+        let pos = _to_position(&hooks, &mouse_down.point);
         hooks
             .drawing_arrow
             .set(Some(ArrowData::with_move(Move::new(pos, pos))));
@@ -298,11 +299,11 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
     }
 }
 
-fn handle_on_mouse_move_event(props: &BoardProps, hooks: &BoardHooks, event: Event<MouseData>) {
-    let pos = to_position(props, &event.client_coordinates());
+fn handle_on_mouse_move_event(hooks: &BoardHooks, event: Event<MouseData>) {
+    let pos = _to_position(&hooks, &event.client_coordinates());
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
-            block_on(send_dragging_point(props, &event));
+            block_on(send_dragging_point(hooks, event));
             if hooks.hovered_position.is_none() || hooks.hovered_position.unwrap() != pos {
                 hooks.hovered_position.set(Some(pos));
             }
@@ -320,10 +321,10 @@ fn is_valid_destination(hooks: &BoardHooks, pos: Position) -> bool {
     destinations.contains(&pos)
 }
 
-pub(crate) fn get_center(props: &BoardProps, pos: &Position) -> ClientPoint {
-    let mut point = to_point(props, pos);
-    point.x += props.size as f64 / 16.0;
-    point.y += props.size as f64 / 16.0;
+pub(crate) fn get_center(board_size: u32, perspective: Color, pos: &Position) -> ClientPoint {
+    let mut point = to_point(board_size, perspective, pos);
+    point.x += board_size as f64 / 16.0;
+    point.y += board_size as f64 / 16.0;
     point
 }
 

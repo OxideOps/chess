@@ -3,7 +3,10 @@ use dioxus::prelude::*;
 use server_functions::setup_remote_game;
 
 use super::Widget;
-use crate::{shared_states::GameId, stockfish::Eval};
+use crate::{
+    shared_states::{BoardSize, GameId, Perspective},
+    stockfish::Eval,
+};
 
 const WIDGET_HEIGHT: u32 = 800;
 
@@ -24,10 +27,12 @@ pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || Eval::Centipawns(0));
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, Game::new);
+    use_shared_state_provider(cx, || BoardSize(WIDGET_HEIGHT));
+    use_shared_state_provider(cx, || Perspective(Color::White));
 
     let white_player = use_lock(cx, || Player::with_color(Color::White));
     let black_player = use_lock(cx, || Player::with_color(Color::Black));
-    let perspective = use_state(cx, || Color::White);
+    let perspective = use_shared_state::<Perspective>(cx)?;
     let game = use_shared_state::<Game>(cx)?;
     let game_id = use_shared_state::<GameId>(cx)?;
     let analyze = use_state(cx, || false);
@@ -37,9 +42,7 @@ pub(crate) fn App(cx: Scope) -> Element {
         Widget {
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),
-            perspective: *perspective.get(),
             analyze: analyze.to_owned(),
-            height: WIDGET_HEIGHT
         }
         div {
             class: "flex justify-center items-center",
@@ -59,7 +62,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                                     Color::Black => white_player.to_owned(),
                                 };
                                 player.write().kind = PlayerKind::Remote;
-                                perspective.set(get_default_perspective(&white_player, &black_player));
+                                **perspective.write() = get_default_perspective(&white_player, &black_player);
                                 analyze.set(false);
                             }
                             Err(err) => log::error!("Error starting remote game: {err:?}"),
@@ -70,7 +73,7 @@ pub(crate) fn App(cx: Scope) -> Element {
             }
             button {
                 class: "button",
-                onclick: |_| perspective.modify(|perspective| !*perspective),
+                onclick: |_| perspective.with_mut(|perspective| **perspective = !**perspective),
                 "Flip Board"
             }
             button {
