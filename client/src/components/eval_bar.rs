@@ -4,6 +4,7 @@ use dioxus::prelude::*;
 use crate::{helpers::sigmoid, stockfish::Eval};
 
 const EVAL_SENSITIVITY: f64 = 1.0 / 800.0;
+
 #[component]
 pub(crate) fn EvalBar(cx: Scope, perspective: Color) -> Element {
     let eval = *use_shared_state::<Eval>(cx)?.read();
