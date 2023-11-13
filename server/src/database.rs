@@ -1,10 +1,6 @@
 use tokio_postgres::NoTls;
 
 pub async fn connect() -> Result<tokio_postgres::Client, Box<dyn std::error::Error>> {
-    if dotenvy::dotenv().is_err() {
-        log::error!(".env file not found, continuing without loading")
-    }
-
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
 
