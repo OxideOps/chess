@@ -135,9 +135,12 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             },
             // arrows
             for data in hooks.arrows.read().get().into_iter()
-                .chain(hooks.analysis_arrows.read().get().into_iter())
                 .chain(hooks.drawing_arrow.read().into_iter())
             {
+                Arrow { data: data }
+            }
+            // analysis arrows
+            for data in hooks.analysis_arrows.read().get().into_iter() {
                 Arrow { data: data }
             }
         }
