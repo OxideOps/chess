@@ -13,6 +13,9 @@ use tower_http::services::ServeDir;
 pub async fn main() -> hyper::Result<()> {
     dioxus_logger::init(Args::parse().log_level).expect("Failed to initialize dioxus logger");
 
+    if dotenvy::dotenv().is_err() {
+        log::warn!(".env file not found, continuing without loading")
+    }
     // Initialize database connection
     let _db_client = database::connect()
         .await

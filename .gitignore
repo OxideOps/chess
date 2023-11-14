@@ -5,3 +5,4 @@ target
 dist
 client/styles/output.css
 client/node_modules
+.env
