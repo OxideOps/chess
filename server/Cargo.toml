@@ -14,6 +14,7 @@ common = { path = "../common" }
 dioxus = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git", features = ["axum"] }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
+dotenvy = "0.15.7"
 futures = "0.3.29"
 hyper = "0.14.27"
 log = "0.4.19"
