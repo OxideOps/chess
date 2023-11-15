@@ -65,6 +65,49 @@ impl BoardState {
         self.update(mv)
     }
 
+    fn is_square_white(i: usize, j: usize) -> bool {
+        (i + j) % 2 == 0
+    }
+
+    pub(super) fn is_insufficient_material(&self) -> bool {
+        let (
+            mut white_bishops,
+            mut black_bishops,
+            mut white_knights,
+            mut black_knights,
+            mut other_pieces,
+        ) = (0, 0, 0, 0, false);
+        let (mut white_square_bishops, mut black_square_bishops) = (0, 0);
+
+        for (i, piece) in self.board.iter_pieces().enumerate() {
+            match piece {
+                Piece::Bishop(Color::White) => {
+                    white_bishops += 1;
+                    if Self::is_square_white(i / 8, i % 8) {
+                        white_square_bishops += 1;
+                    }
+                }
+                Piece::Bishop(Color::Black) => {
+                    black_bishops += 1;
+                    if Self::is_square_white(i / 8, i % 8) {
+                        black_square_bishops += 1;
+                    }
+                }
+                Piece::Knight(Color::White) => white_knights += 1,
+                Piece::Knight(Color::Black) => black_knights += 1,
+                Piece::King(_) => (),
+                _ => other_pieces = true,
+            }
+        }
+
+        !other_pieces
+            && match (white_bishops, black_bishops, white_knights, black_knights) {
+                (0, 0, 0..=2, 0..=2) => true,
+                (0..=1, 0..=1, 0, 0) if white_square_bishops == black_square_bishops => true,
+                _ => false,
+            }
+    }
+
     pub(super) fn is_in_bounds(at: &Position) -> ChessResult {
         if at.x > 7 || at.y > 7 {
             Err(ChessError::OutOfBounds)
