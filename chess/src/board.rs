@@ -53,7 +53,7 @@ impl Board {
         self.0[from.y][from.x].take()
     }
 
-    pub(super) fn iter_pieces(&self) -> impl Iterator<Item = &Piece> {
-        self.0.iter().flatten().filter_map(|square| square.as_ref())
+    pub(super) fn iter(&self) -> Iter<[Square; BOARD_SIZE]> {
+        self.0.iter()
     }
 }

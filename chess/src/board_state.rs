@@ -79,24 +79,28 @@ impl BoardState {
         ) = (0, 0, 0, 0, false);
         let (mut white_square_bishops, mut black_square_bishops) = (0, 0);
 
-        for (i, piece) in self.board.iter_pieces().enumerate() {
-            match piece {
-                Piece::Bishop(Color::White) => {
-                    white_bishops += 1;
-                    if Self::is_square_white(i / 8, i % 8) {
-                        white_square_bishops += 1;
+        for (i, row) in self.board.iter().enumerate() {
+            for (j, piece) in row.iter().enumerate() {
+                if let Some(piece) = piece {
+                    match piece {
+                        Piece::Bishop(Color::White) => {
+                            white_bishops += 1;
+                            if Self::is_square_white(i, j) {
+                                white_square_bishops += 1;
+                            }
+                        }
+                        Piece::Bishop(Color::Black) => {
+                            black_bishops += 1;
+                            if !Self::is_square_white(i, j) {
+                                black_square_bishops += 1;
+                            }
+                        }
+                        Piece::Knight(Color::White) => white_knights += 1,
+                        Piece::Knight(Color::Black) => black_knights += 1,
+                        Piece::King(_) => (),
+                        _ => other_pieces = true,
                     }
                 }
-                Piece::Bishop(Color::Black) => {
-                    black_bishops += 1;
-                    if Self::is_square_white(i / 8, i % 8) {
-                        black_square_bishops += 1;
-                    }
-                }
-                Piece::Knight(Color::White) => white_knights += 1,
-                Piece::Knight(Color::Black) => black_knights += 1,
-                Piece::King(_) => (),
-                _ => other_pieces = true,
             }
         }
 
