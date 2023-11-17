@@ -63,7 +63,7 @@ impl BoardState {
                         black_minors += 1;
                         black_has_knight = true;
                     }
-                    Some(Piece::King(_)) | None => (),
+                    Some(Piece::King(..)) | None => (),
                     _ => return false,
                 }
             }
