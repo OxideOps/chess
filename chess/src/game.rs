@@ -167,7 +167,7 @@ impl Game {
             self.status.update(GameStatus::Draw(DrawKind::Repetition));
             return true;
         }
-        if self.history.get_real_state().is_insufficient_material() {
+        if self.history.get_real_state().has_insufficient_materials() {
             self.status
                 .update(GameStatus::Draw(DrawKind::InsufficientMaterial));
             return true;
