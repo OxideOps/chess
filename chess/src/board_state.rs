@@ -41,6 +41,8 @@ impl BoardState {
         let mut black_minors = 0;
         let mut white_bishop_square_color = None;
         let mut black_bishop_square_color = None;
+        let mut white_has_knight = false;
+        let mut black_has_knight = false;
 
         for (y, row) in self.board.get_rows().enumerate() {
             for (x, piece) in row.iter().enumerate() {
@@ -53,8 +55,14 @@ impl BoardState {
                         black_minors += 1;
                         black_bishop_square_color = Some((x + y) % 2);
                     }
-                    Some(Piece::Knight(Color::White)) => white_minors += 1,
-                    Some(Piece::Knight(Color::Black)) => black_minors += 1,
+                    Some(Piece::Knight(Color::White)) => {
+                        white_minors += 1;
+                        white_has_knight = true;
+                    }
+                    Some(Piece::Knight(Color::Black)) => {
+                        black_minors += 1;
+                        black_has_knight = true;
+                    }
                     Some(Piece::King(_)) | None => (),
                     _ => return false,
                 }
@@ -63,7 +71,16 @@ impl BoardState {
 
         match (white_minors, black_minors) {
             (0, 0) | (1, 0) | (0, 1) => true,
-            (1, 1) => white_bishop_square_color != black_bishop_square_color,
+            (1, 1) => {
+                // Check if both sides have bishops on opposite colors
+                if white_bishop_square_color != black_bishop_square_color {
+                    true
+                }
+                // Check if both sides have a knight
+                else {
+                    white_has_knight && black_has_knight
+                }
+            }
             _ => false,
         }
     }
