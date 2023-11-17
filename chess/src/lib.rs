@@ -8,13 +8,13 @@ mod game_status;
 mod history;
 mod moves;
 mod piece;
+mod piece_count;
 mod player;
 mod position;
 mod result;
 mod round_info;
 mod timer;
 mod turn;
-mod piece_count;
 
 pub use color::*;
 pub use game::*;
