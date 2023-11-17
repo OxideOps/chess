@@ -38,7 +38,7 @@ impl Default for BoardState {
 
 impl BoardState {
     pub(super) fn has_insufficient_material(&self) -> bool {
-        PieceCount::from_board(&self.board).is_draw()
+        PieceCount::is_draw(&self.board)
     }
 
     pub(super) fn get_piece(&self, at: &Position) -> Square {

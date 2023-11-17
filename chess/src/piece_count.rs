@@ -1,11 +1,10 @@
 use crate::{board::Board, Color, Piece};
 
 pub(super) struct PieceCount {
-    white_bishops: usize,
-    black_bishops: usize,
-    white_knights: usize,
-    black_knights: usize,
-    other_pieces: bool,
+    white_bishops: u8,
+    black_bishops: u8,
+    white_knights: u8,
+    black_knights: u8,
 }
 
 impl PieceCount {
@@ -15,12 +14,11 @@ impl PieceCount {
             black_bishops: 0,
             white_knights: 0,
             black_knights: 0,
-            other_pieces: false,
         }
     }
 
-    pub fn from_board(board: &Board) -> Self {
-        let mut count = PieceCount::new();
+    pub fn is_draw(board: &Board) -> bool {
+        let mut count = Self::new();
 
         for row in board.iter() {
             for piece in row.iter() {
@@ -30,29 +28,20 @@ impl PieceCount {
                     Some(Piece::Knight(Color::White)) => count.white_knights += 1,
                     Some(Piece::Knight(Color::Black)) => count.black_knights += 1,
                     Some(Piece::King(_)) => (),
-                    Some(_) => count.other_pieces = true,
+                    Some(_) => return false,
                     None => (),
                 }
             }
         }
 
-        count
-    }
-
-    pub fn is_draw(&self) -> bool {
-        if self.other_pieces {
-            return false;
-        }
-
-        match (
-            self.white_bishops,
-            self.black_bishops,
-            self.white_knights,
-            self.black_knights,
-        ) {
-            (0, 0, 0, 0) => true,
-            (0, 0, 1, 0) | (1, 0, 0, 0) | (0, 0, 0, 1) | (0, 1, 0, 0) => true,
-            _ => false,
-        }
+        matches!(
+            (
+                count.white_bishops,
+                count.black_bishops,
+                count.white_knights,
+                count.black_knights,
+            ),
+            (0, 0, 0, 0) | (0, 0, 1, 0) | (1, 0, 0, 0) | (0, 0, 0, 1) | (0, 1, 0, 0)
+        )
     }
 }
