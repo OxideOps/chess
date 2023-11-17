@@ -8,7 +8,6 @@ mod game_status;
 mod history;
 mod moves;
 mod piece;
-mod piece_count;
 mod player;
 mod position;
 mod result;

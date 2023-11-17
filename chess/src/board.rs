@@ -53,7 +53,7 @@ impl Board {
         self.0[from.y][from.x].take()
     }
 
-    pub(super) fn iter(&self) -> Iter<[Square; BOARD_SIZE]> {
+    pub(super) fn get_rows(&self) -> Iter<[Square; BOARD_SIZE]> {
         self.0.iter()
     }
 }
