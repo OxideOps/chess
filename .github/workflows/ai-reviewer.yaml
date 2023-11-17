@@ -1,15 +1,22 @@
-name: 'code-review'
-on: # rebuild any PRs and main branch changes
+name: AI Code Reviewer
+
+on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+permissions: write-all
 jobs:
-  code-review:
+  review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: gvasilei/AutoReviewer@0.4
-#        env:
-#          NODE_OPTIONS: '--experimental-fetch'
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: AI Code Reviewer
+        uses: OxideOps/ai-codereviewer@v2.6.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          exclude_files: '**/*.lock'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_MODEL: "gpt-4"
+          exclude: "**/*.lock"
