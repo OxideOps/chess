@@ -14,6 +14,7 @@ mod result;
 mod round_info;
 mod timer;
 mod turn;
+mod piece_count;
 
 pub use color::*;
 pub use game::*;

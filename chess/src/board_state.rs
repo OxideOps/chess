@@ -7,6 +7,7 @@ use crate::{
     displacement::Displacement,
     moves::Move,
     piece::Piece,
+    piece_count::PieceCount,
     position::Position,
     result::{ChessError, ChessResult},
 };
@@ -36,6 +37,10 @@ impl Default for BoardState {
 }
 
 impl BoardState {
+    pub(super) fn has_insufficient_materials(&self) -> bool {
+        PieceCount::from_board(&self.board).is_draw()
+    }
+
     pub(super) fn get_piece(&self, at: &Position) -> Square {
         self.board.get_piece(at)
     }
@@ -63,53 +68,6 @@ impl BoardState {
         }
 
         self.update(mv)
-    }
-
-    fn is_square_white(i: usize, j: usize) -> bool {
-        (i + j) % 2 == 0
-    }
-
-    pub(super) fn is_insufficient_material(&self) -> bool {
-        let (
-            mut white_bishops,
-            mut black_bishops,
-            mut white_knights,
-            mut black_knights,
-            mut other_pieces,
-        ) = (0, 0, 0, 0, false);
-        let (mut white_square_bishops, mut black_square_bishops) = (0, 0);
-
-        for (i, row) in self.board.iter().enumerate() {
-            for (j, piece) in row.iter().enumerate() {
-                if let Some(piece) = piece {
-                    match piece {
-                        Piece::Bishop(Color::White) => {
-                            white_bishops += 1;
-                            if Self::is_square_white(i, j) {
-                                white_square_bishops += 1;
-                            }
-                        }
-                        Piece::Bishop(Color::Black) => {
-                            black_bishops += 1;
-                            if !Self::is_square_white(i, j) {
-                                black_square_bishops += 1;
-                            }
-                        }
-                        Piece::Knight(Color::White) => white_knights += 1,
-                        Piece::Knight(Color::Black) => black_knights += 1,
-                        Piece::King(_) => (),
-                        _ => other_pieces = true,
-                    }
-                }
-            }
-        }
-
-        !other_pieces
-            && match (white_bishops, black_bishops, white_knights, black_knights) {
-                (0, 0, 0..=2, 0..=2) => true,
-                (0..=1, 0..=1, 0, 0) if white_square_bishops == black_square_bishops => true,
-                _ => false,
-            }
     }
 
     pub(super) fn is_in_bounds(at: &Position) -> ChessResult {
