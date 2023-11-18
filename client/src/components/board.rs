@@ -216,7 +216,7 @@ fn handle_on_key_down(cx: Scope<BoardProps>, hooks: &BoardHooks, event: Event<Ke
             #[cfg(feature = "desktop")]
             "q" if event.modifiers() == Modifiers::CONTROL => {
                 log::info!("Quitting game..");
-                // dioxus_desktop::use_window(cx).close();
+                dioxus_desktop::use_window(cx).close();
             }
             _ => log::debug!("{:?} key pressed", c),
         },
