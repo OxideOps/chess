@@ -102,7 +102,7 @@ fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
     #[cfg(feature = "desktop")]
     use common::theme::get_themes;
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(feature = "web")]
     use server_functions::get_themes;
 
     use_future(cx, (), |_| async {

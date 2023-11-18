@@ -1,9 +1,9 @@
 #[cfg(feature = "desktop")]
 pub(crate) use desktop::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web")]
 pub(crate) use web::*;
 
 #[cfg(feature = "desktop")]
 mod desktop;
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web")]
 mod web;

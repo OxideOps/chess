@@ -19,6 +19,6 @@ pub fn launch() {
         );
     }
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(feature = "web")]
     dioxus_web::launch(crate::components::App);
 }
