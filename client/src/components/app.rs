@@ -1,7 +1,7 @@
 use chess::{Color, Game, Player, PlayerKind};
 use dioxus::prelude::*;
-use server_functions::setup_remote_game;
 
+// use server_functions::setup_remote_game;
 use super::Widget;
 use crate::{
     shared_states::{BoardSize, GameId, Perspective},
@@ -47,30 +47,30 @@ pub(crate) fn App(cx: Scope) -> Element {
         div {
             class: "flex justify-center items-center",
             style: "width: {WIDGET_HEIGHT}px",
-            button {
-                class: "button",
-                onclick: |_| {
-                    to_owned![analyze, white_player, black_player, perspective, game, game_id];
-                    cx.spawn(async move {
-                        match setup_remote_game().await {
-                            Ok(info) => {
-                                log::info!("Setting up remote game: {info:?}");
-                                game.write().reset();
-                                **game_id.write() = Some(info.game_id);
-                                let player = match info.local_color {
-                                    Color::White => black_player.to_owned(),
-                                    Color::Black => white_player.to_owned(),
-                                };
-                                player.write().kind = PlayerKind::Remote;
-                                **perspective.write() = get_default_perspective(&white_player, &black_player);
-                                analyze.set(false);
-                            }
-                            Err(err) => log::error!("Error starting remote game: {err:?}"),
-                        }
-                    })
-                },
-                "Play Remote"
-            }
+            // button {
+            //     class: "button",
+            //     onclick: |_| {
+            //         to_owned![analyze, white_player, black_player, perspective, game, game_id];
+            //         cx.spawn(async move {
+            //             match setup_remote_game().await {
+            //                 Ok(info) => {
+            //                     log::info!("Setting up remote game: {info:?}");
+            //                     game.write().reset();
+            //                     **game_id.write() = Some(info.game_id);
+            //                     let player = match info.local_color {
+            //                         Color::White => black_player.to_owned(),
+            //                         Color::Black => white_player.to_owned(),
+            //                     };
+            //                     player.write().kind = PlayerKind::Remote;
+            //                     **perspective.write() = get_default_perspective(&white_player, &black_player);
+            //                     analyze.set(false);
+            //                 }
+            //                 Err(err) => log::error!("Error starting remote game: {err:?}"),
+            //             }
+            //         })
+            //     },
+            //     "Play Remote"
+            // }
             button {
                 class: "button",
                 onclick: |_| perspective.with_mut(|perspective| **perspective = !**perspective),
@@ -90,7 +90,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                         class: "button",
                         onclick: |_| {
                             log::info!("Quitting game..");
-                            dioxus_desktop::use_window(cx).close()
+                            // dioxus_desktop::use_window(cx).close()
                         },
                         "Quit"
                     }

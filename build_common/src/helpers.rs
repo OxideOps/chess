@@ -3,11 +3,10 @@ use std::{env, path::PathBuf};
 use crate::CommandConfig;
 
 fn get_project_root() -> PathBuf {
-    PathBuf::from(
-        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
-            .parent()
-            .unwrap(),
-    )
+    PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
+        .parent()
+        .unwrap()
+        .into()
 }
 
 fn get_client_path() -> PathBuf {
@@ -72,7 +71,7 @@ pub fn get_trunk_commands() -> Vec<CommandConfig> {
     }
 
     vec![CommandConfig {
-        program: PathBuf::from("trunk"),
+        program: "trunk".into(),
         args,
         dir: Some(get_project_root()),
         envs: vec![("CARGO_TARGET_DIR".into(), target_dir)],
