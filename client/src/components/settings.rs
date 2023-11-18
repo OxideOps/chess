@@ -24,7 +24,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| {
                                 board_theme.set(event.value.clone());
-                                #[cfg(feature="desktop")]
+                                #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Board, &event.value);
                             },
                             for theme in board_theme_list.value().into_iter().flatten() {
@@ -44,7 +44,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| {
                                 piece_theme.set(event.value.clone());
-                                #[cfg(feature="desktop")]
+                                #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {

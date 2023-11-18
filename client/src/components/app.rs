@@ -84,7 +84,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                 if **analyze { "Stop analyzing" } else { "Analyze" }
             }
             {
-                #[cfg(feature="desktop")]
+                #[cfg(feature = "desktop")]
                 rsx! {
                     button {
                         class: "button",
