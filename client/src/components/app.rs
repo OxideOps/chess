@@ -90,7 +90,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                         class: "button",
                         onclick: |_| {
                             log::info!("Quitting game..");
-                            // dioxus_desktop::use_window(cx).close()
+                            dioxus_desktop::use_window(cx).close()
                         },
                         "Quit"
                     }
