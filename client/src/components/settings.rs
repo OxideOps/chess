@@ -24,7 +24,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| {
                                 board_theme.set(event.value.clone());
-                                #[cfg(not(target_arch = "wasm32"))]
+                                #[cfg(feature="desktop")]
                                 save_theme_to_config(ThemeType::Board, &event.value);
                             },
                             for theme in board_theme_list.value().into_iter().flatten() {
@@ -44,7 +44,7 @@ pub(crate) fn Settings(
                             class: "select",
                             onchange: |event| {
                                 piece_theme.set(event.value.clone());
-                                #[cfg(not(target_arch = "wasm32"))]
+                                #[cfg(feature="desktop")]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {
@@ -85,7 +85,7 @@ pub fn load_theme_from_config(theme_type: ThemeType) -> String {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "desktop")]
 fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
     let mut cfg: ThemeConfig = confy::load(APP_NAME, CONFIG_NAME).unwrap_or_default();
 
@@ -100,7 +100,7 @@ fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
 }
 
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "desktop")]
     use common::theme::get_themes;
     #[cfg(target_arch = "wasm32")]
     use server_functions::get_themes;

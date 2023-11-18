@@ -1,5 +1,5 @@
 pub fn launch() {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "desktop")]
     {
         use dioxus_desktop::{Config, WindowBuilder};
         // use dioxus_fullstack::prelude::server_fn;

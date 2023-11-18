@@ -84,7 +84,7 @@ pub(crate) fn App(cx: Scope) -> Element {
                 if **analyze { "Stop analyzing" } else { "Analyze" }
             }
             {
-                #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(feature="desktop")]
                 rsx! {
                     button {
                         class: "button",

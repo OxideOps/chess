@@ -149,7 +149,7 @@ pub async fn process_output(
 pub async fn init_stockfish(process: &mut Process) {
     log::info!("Starting Stockfish");
     let threads = max(1, get_num_cores() / 2);
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "desktop")]
     // Use hash size around 50% of total ram in MB that is a multiple of 2048
     let hash = 2048 * (0.0005 * get_total_ram() as f64 / 2048.0).round() as usize;
     #[cfg(target_arch = "wasm32")]
