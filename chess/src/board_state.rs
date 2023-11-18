@@ -11,6 +11,8 @@ use crate::{
     result::{ChessError, ChessResult},
 };
 
+// Random Change 1
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 /// A struct encapsulating the state for the `Board`.
 pub(super) struct BoardState {
