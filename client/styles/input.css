@@ -26,11 +26,15 @@ body {
 }
 
 .widget-container {
-    @apply flex space-x-1;
+    @apply flex justify-center space-x-1;
 }
 
 .board-container {
     @apply relative z-0 outline-none shadow-none;
+}
+
+.board-buttons-container {
+    @apply flex justify-center items-center;
 }
 
 .eval-container {

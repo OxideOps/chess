@@ -18,7 +18,7 @@ use crate::{
     components::{Arrow, BoardSquare, Piece},
     game_socket::create_game_socket,
     mouse_click::MouseClick,
-    shared_states::{BoardSize, GameId, Perspective},
+    shared_states::{Analyze, BoardSize, GameId, Perspective},
     stockfish::{
         core::{on_game_changed, toggle_stockfish},
         interface::Process,
@@ -37,7 +37,6 @@ static DRAG_CHANNEL: Lazy<Channel<ElementPoint>> = Lazy::new(unbounded);
 pub(crate) struct BoardProps {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
-    analyze: UseState<bool>,
     board_theme: String,
     piece_theme: String,
 }
@@ -75,9 +74,9 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         perspective: **use_shared_state::<Perspective>(cx)?.read(),
     };
 
-    use_effect(cx, &cx.props.analyze, |analyze| {
+    use_effect(cx, use_shared_state::<Analyze>(cx).unwrap(), |analyze| {
         toggle_stockfish(
-            analyze,
+            **analyze.read(),
             hooks.stockfish_process.to_owned(),
             hooks.game.to_owned(),
             hooks.analysis_arrows.to_owned(),

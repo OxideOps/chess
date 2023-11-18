@@ -2,6 +2,7 @@
 mod app;
 mod arrow;
 mod board;
+mod board_buttons;
 mod board_square;
 mod eval_bar;
 mod info_bar;
@@ -14,6 +15,7 @@ mod widget;
 pub(super) use app::App;
 pub(super) use arrow::Arrow;
 pub(super) use board::{get_center, Board};
+pub(super) use board_buttons::BoardButtons;
 pub(super) use board_square::BoardSquare;
 pub(super) use eval_bar::EvalBar;
 pub(super) use info_bar::InfoBar;
