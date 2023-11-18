@@ -29,4 +29,5 @@ pub(super) enum DrawKind {
     FiftyMoveRule,
     Repetition,
     Stalemate,
+    InsufficientMaterial,
 }

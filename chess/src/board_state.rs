@@ -36,6 +36,49 @@ impl Default for BoardState {
 }
 
 impl BoardState {
+    pub(super) fn has_insufficient_material(&self) -> bool {
+        let mut white_minors = 0;
+        let mut black_minors = 0;
+        let mut white_bishop_square_color = None;
+        let mut black_bishop_square_color = None;
+        let mut white_has_knight = false;
+        let mut black_has_knight = false;
+
+        for (y, row) in self.board.get_rows().enumerate() {
+            for (x, piece) in row.iter().enumerate() {
+                match piece {
+                    Some(Piece::Bishop(Color::White)) => {
+                        white_minors += 1;
+                        white_bishop_square_color = Some((x + y) % 2);
+                    }
+                    Some(Piece::Bishop(Color::Black)) => {
+                        black_minors += 1;
+                        black_bishop_square_color = Some((x + y) % 2);
+                    }
+                    Some(Piece::Knight(Color::White)) => {
+                        white_minors += 1;
+                        white_has_knight = true;
+                    }
+                    Some(Piece::Knight(Color::Black)) => {
+                        black_minors += 1;
+                        black_has_knight = true;
+                    }
+                    Some(Piece::King(..)) | None => (),
+                    _ => return false,
+                }
+            }
+        }
+
+        match (white_minors, black_minors) {
+            (0, 0) | (1, 0) | (0, 1) => true,
+            (1, 1) => {
+                white_bishop_square_color.is_none()
+                    || white_bishop_square_color != black_bishop_square_color
+            }
+            _ => false,
+        }
+    }
+
     pub(super) fn get_piece(&self, at: &Position) -> Square {
         self.board.get_piece(at)
     }

@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use std::{hash::Hash, slice::Iter};
 
 use crate::{color::Color, piece::Piece, position::Position};
 
@@ -51,5 +51,9 @@ impl Board {
 
     pub(super) fn take_piece(&mut self, from: &Position) -> Square {
         self.0[from.y][from.x].take()
+    }
+
+    pub(super) fn get_rows(&self) -> Iter<[Square; BOARD_SIZE]> {
+        self.0.iter()
     }
 }
