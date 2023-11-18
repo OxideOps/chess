@@ -2,7 +2,7 @@ use async_std::channel::{unbounded, Receiver, Sender};
 use chess::{Color, Game, Move, Piece, PlayerKind, Position};
 use dioxus::{
     html::{
-        geometry::ClientPoint,
+        geometry::ElementPoint,
         input_data::{
             keyboard_types::{Key, Modifiers},
             MouseButton,
@@ -31,7 +31,7 @@ pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 // Channel for sending moves to `game_socket` to be sent to a remote player
 static MOVE_CHANNEL: Lazy<Channel<Move>> = Lazy::new(unbounded);
 // Channel for telling dragged pieces how far they have been dragged
-static DRAG_CHANNEL: Lazy<Channel<ClientPoint>> = Lazy::new(unbounded);
+static DRAG_CHANNEL: Lazy<Channel<ElementPoint>> = Lazy::new(unbounded);
 
 #[derive(Props, PartialEq)]
 pub(crate) struct BoardProps {
@@ -170,7 +170,7 @@ fn get_piece_image_file(theme: &str, piece: Piece) -> String {
     format!("images/pieces/{theme}/{piece_img}.svg")
 }
 
-fn _to_position(hooks: &BoardHooks, point: &ClientPoint) -> Position {
+fn _to_position(hooks: &BoardHooks, point: &ElementPoint) -> Position {
     match hooks.perspective {
         Color::White => Position {
             x: (8.0 * point.x / hooks.board_size as f64).floor() as usize,
@@ -183,17 +183,17 @@ fn _to_position(hooks: &BoardHooks, point: &ClientPoint) -> Position {
     }
 }
 
-fn _to_point(hooks: &BoardHooks, position: &Position) -> ClientPoint {
+fn _to_point(hooks: &BoardHooks, position: &Position) -> ElementPoint {
     to_point(hooks.board_size, hooks.perspective, position)
 }
 
-pub(crate) fn to_point(board_size: u32, perspective: Color, position: &Position) -> ClientPoint {
+pub(crate) fn to_point(board_size: u32, perspective: Color, position: &Position) -> ElementPoint {
     match perspective {
-        Color::White => ClientPoint::new(
+        Color::White => ElementPoint::new(
             board_size as f64 * position.x as f64 / 8.0,
             board_size as f64 * (7.0 - position.y as f64) / 8.0,
         ),
-        Color::Black => ClientPoint::new(
+        Color::Black => ElementPoint::new(
             board_size as f64 * (7.0 - position.x as f64) / 8.0,
             board_size as f64 * position.y as f64 / 8.0,
         ),
@@ -228,10 +228,10 @@ fn drop_piece(
     props: &BoardProps,
     hooks: &BoardHooks,
     event: &Event<MouseData>,
-    point: &ClientPoint,
+    point: &ElementPoint,
 ) {
     let from = _to_position(&hooks, point);
-    let to = _to_position(&hooks, &event.client_coordinates());
+    let to = _to_position(&hooks, &event.element_coordinates());
     let (current_player_kind, opponent_player_kind) = match hooks.game.read().get_current_player() {
         Color::White => (props.white_player_kind, props.black_player_kind),
         Color::Black => (props.black_player_kind, props.white_player_kind),
@@ -264,9 +264,9 @@ fn complete_arrow(hooks: &BoardHooks) {
 async fn send_dragging_point(hooks: &BoardHooks<'_>, event: Event<MouseData>) {
     DRAG_CHANNEL
         .0
-        .send(ClientPoint::new(
-            event.client_coordinates().x - hooks.board_size as f64 / 16.0,
-            event.client_coordinates().y - hooks.board_size as f64 / 16.0,
+        .send(ElementPoint::new(
+            event.element_coordinates().x - hooks.board_size as f64 / 16.0,
+            event.element_coordinates().y - hooks.board_size as f64 / 16.0,
         ))
         .await
         .expect("Failed to send dragging point");
@@ -303,7 +303,7 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
 }
 
 fn handle_on_mouse_move_event(hooks: &BoardHooks, event: Event<MouseData>) {
-    let pos = _to_position(&hooks, &event.client_coordinates());
+    let pos = _to_position(&hooks, &event.element_coordinates());
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             block_on(send_dragging_point(hooks, event));
@@ -324,7 +324,7 @@ fn is_valid_destination(hooks: &BoardHooks, pos: Position) -> bool {
     destinations.contains(&pos)
 }
 
-pub(crate) fn get_center(board_size: u32, perspective: Color, pos: &Position) -> ClientPoint {
+pub(crate) fn get_center(board_size: u32, perspective: Color, pos: &Position) -> ElementPoint {
     let mut point = to_point(board_size, perspective, pos);
     point.x += board_size as f64 / 16.0;
     point.y += board_size as f64 / 16.0;

@@ -46,32 +46,32 @@ body {
 }
 
 .images {
-    @apply absolute p-0 border-0 m-0;
+    @apply absolute p-0 border-0 m-0 pointer-events-none;
     -webkit-user-drag: none;
 }
 
 .moved-square {
-    @apply absolute bg-yellow-500/50;
+    @apply absolute bg-yellow-500/50 pointer-events-none;
 }
 
 .check-square {
-    @apply absolute bg-red-600/70;
+    @apply absolute bg-red-600/70 pointer-events-none;
 }
 
 .checkmate-square {
-    @apply absolute bg-black/70;
+    @apply absolute bg-black/70 pointer-events-none;
 }
 
 .transparent-square {
-    @apply absolute bg-transparent;
+    @apply absolute bg-transparent pointer-events-none;
 }
 
 .destination-square {
-    @apply absolute bg-green-700/40;
+    @apply absolute bg-green-700/40 pointer-events-none;
 }
 
 .border-hover-square {
-    @apply border-4 border-yellow-300/90;
+    @apply border-4 border-yellow-300/90 pointer-events-none;
 }
 
 td {
