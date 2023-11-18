@@ -27,8 +27,8 @@ pub(crate) fn Widget(
                 white_player_kind: white_player.read().kind,
                 black_player_kind: black_player.read().kind,
                 analyze: analyze.to_owned(),
-                board_theme: Default::default(),
-                piece_theme: Default::default(),
+                board_theme: "danya".into(),
+                piece_theme: "merida".into(),
             },
             if **analyze {
                 rsx! { EvalBar {} }
