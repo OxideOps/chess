@@ -41,8 +41,6 @@ impl BoardState {
         let mut black_minors = 0;
         let mut white_bishop_square_color = None;
         let mut black_bishop_square_color = None;
-        let mut white_has_knight = false;
-        let mut black_has_knight = false;
 
         for (y, row) in self.board.get_rows().enumerate() {
             for (x, piece) in row.iter().enumerate() {
@@ -57,11 +55,9 @@ impl BoardState {
                     }
                     Some(Piece::Knight(Color::White)) => {
                         white_minors += 1;
-                        white_has_knight = true;
                     }
                     Some(Piece::Knight(Color::Black)) => {
                         black_minors += 1;
-                        black_has_knight = true;
                     }
                     Some(Piece::King(..)) | None => (),
                     _ => return false,
