@@ -1,14 +1,13 @@
+use dioxus_fullstack::prelude::*;
 pub fn launch() {
+    let mut builder = LaunchBuilder::new(crate::components::App);
     #[cfg(feature = "desktop")]
     {
         use dioxus_desktop::{Config, WindowBuilder};
-        // use dioxus_fullstack::prelude::server_fn;
+        //server_fn::set_server_url("https://oxide-chess.fly.dev");
 
         log::info!("configuring desktop..");
-        // server_fn::set_server_url("https://oxide-chess.fly.dev");
-
-        dioxus_desktop::launch_cfg(
-            crate::components::App,
+        builder = builder.desktop_cfg(
             Config::new()
                 .with_window(
                     WindowBuilder::new()
@@ -18,7 +17,5 @@ pub fn launch() {
                 .with_disable_context_menu(true),
         );
     }
-
-    #[cfg(feature = "web")]
-    dioxus_web::launch(crate::components::App);
+    builder.launch()
 }
