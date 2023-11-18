@@ -72,14 +72,8 @@ impl BoardState {
         match (white_minors, black_minors) {
             (0, 0) | (1, 0) | (0, 1) => true,
             (1, 1) => {
-                // Check if both sides have bishops on opposite colors
-                if white_bishop_square_color != black_bishop_square_color {
-                    true
-                }
-                // Check if both sides have a knight
-                else {
-                    white_has_knight && black_has_knight
-                }
+                white_bishop_square_color.is_none()
+                    || white_bishop_square_color != black_bishop_square_color
             }
             _ => false,
         }
