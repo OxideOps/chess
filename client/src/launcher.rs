@@ -1,13 +1,11 @@
-use dioxus_fullstack::prelude::*;
 pub fn launch() {
-    let mut builder = LaunchBuilder::new(crate::components::App);
     #[cfg(feature = "desktop")]
     {
         use dioxus_desktop::{Config, WindowBuilder};
-        //server_fn::set_server_url("https://oxide-chess.fly.dev");
-
+        dioxus_fullstack::prelude::server_fn::set_server_url("https://oxide-chess.fly.dev");
         log::info!("configuring desktop..");
-        builder = builder.desktop_cfg(
+        dioxus_desktop::launch_cfg(
+            super::components::App,
             Config::new()
                 .with_window(
                     WindowBuilder::new()
@@ -15,7 +13,52 @@ pub fn launch() {
                         .with_maximized(true),
                 )
                 .with_disable_context_menu(true),
-        );
+        )
     }
-    builder.launch()
+
+    #[cfg(feature = "web")]
+    dioxus_web::launch(super::components::App);
+
+    #[cfg(feature = "server")]
+    {
+        use axum::{
+            extract::{Path, WebSocketUpgrade},
+            routing::get,
+            ServiceExt,
+        };
+        use common::args::*;
+        use dioxus_fullstack::prelude::*;
+        use tower::ServiceExt as OtherServiceExt;
+        use tower_http::services::ServeDir;
+        tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async move {
+                // dioxus_logger::init(Args::parse().log_level)
+                //     .expect("Failed to initialize dioxus logger");
+
+                log::info!("server launching");
+                let addr = "[::]:8080".parse().unwrap();
+                log::info!("listening on {}", addr);
+                axum::Server::bind(&addr)
+                    .serve(
+                        axum::Router::new()
+                            .nest_service("/", ServeDir::new("dist"))
+                            .nest_service("/images", ServeDir::new("images"))
+                            .map_response(|mut response| {
+                                response.headers_mut().insert(
+                                    "Cross-Origin-Opener-Policy",
+                                    "same-origin".parse().unwrap(),
+                                );
+                                response.headers_mut().insert(
+                                    "Cross-Origin-Embedder-Policy",
+                                    "require-corp".parse().unwrap(),
+                                );
+                                response
+                            })
+                            .into_make_service(),
+                    )
+                    .await
+                    .unwrap()
+            });
+    }
 }
