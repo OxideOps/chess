@@ -1,14 +1,14 @@
 pub fn launch() {
     #[cfg(feature = "desktop")]
     {
-        use dioxus_desktop::{Config, WindowBuilder};
-        server_fn::set_server_url("https://oxide-chess.fly.dev");
+        use dioxus_desktop as desktop;
+        server_fn::set_server_url("https://oxide-chess.fly.dev/");
         log::info!("configuring desktop..");
-        dioxus_desktop::launch_cfg(
+        desktop::launch_cfg(
             super::components::App,
-            Config::new()
+            desktop::Config::new()
                 .with_window(
-                    WindowBuilder::new()
+                    desktop::WindowBuilder::new()
                         .with_title("Oxide Chess")
                         .with_maximized(true),
                 )

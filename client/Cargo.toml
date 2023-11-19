@@ -20,7 +20,6 @@ common = { path = "../common" }
 confy = "0.5.1"
 dioxus = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-desktop = { git = "https://github.com/OxideOps/dioxus.git", optional = true }
-dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 dioxus-web = { git = "https://github.com/OxideOps/dioxus.git", optional = true }
 futures = "0.3.29"
