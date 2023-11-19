@@ -40,6 +40,7 @@ tower-http = { version = "0.4.4", optional = true }
 url = "2.4.0"
 wasm-bindgen = { version = "0.2.87", optional = true }
 wasm-bindgen-futures = { version = "0.4.38", optional = true }
+server_fn = { version = "0.5.2", features = ["default-tls"] }
 
 [features]
 desktop = ["async-process", "dioxus-desktop", "num_cpus", "sys-info"]

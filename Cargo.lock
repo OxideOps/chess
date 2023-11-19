@@ -732,6 +732,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "server_fn",
  "sys-info",
  "tokio",
  "tokio-tungstenite-wasm",
