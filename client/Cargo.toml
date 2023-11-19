@@ -20,6 +20,7 @@ common = { path = "../common" }
 confy = "0.5.1"
 dioxus = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-desktop = { git = "https://github.com/OxideOps/dioxus.git", optional = true }
+dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 dioxus-web = { git = "https://github.com/OxideOps/dioxus.git", optional = true }
 futures = "0.3.29"
@@ -39,9 +40,9 @@ tower-http = { version = "0.4.4", optional = true }
 url = "2.4.0"
 wasm-bindgen = { version = "0.2.87", optional = true }
 wasm-bindgen-futures = { version = "0.4.38", optional = true }
-server_fn = { version = "0.5.2", features = ["default-tls"] }
+dotenvy = "0.15.7"
 
 [features]
 desktop = ["async-process", "dioxus-desktop", "num_cpus", "sys-info"]
 web = ["dioxus-web", "js-sys", "wasm-bindgen", "wasm-bindgen-futures"]
-server = ["axum/ws", "tokio/full", "tower-http/fs", "tower"]
+server = ["tokio/full", "tower-http/fs", "tower", "dioxus-fullstack/axum", "axum"]
