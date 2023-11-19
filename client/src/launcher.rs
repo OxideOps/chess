@@ -33,9 +33,6 @@ pub fn launch() {
         tokio::runtime::Runtime::new()
             .unwrap()
             .block_on(async move {
-                // dioxus_logger::init(Args::parse().log_level)
-                //     .expect("Failed to initialize dioxus logger");
-
                 log::info!("server launching");
                 let addr = "[::]:8080".parse().unwrap();
                 log::info!("listening on {}", addr);
