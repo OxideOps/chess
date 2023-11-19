@@ -3,9 +3,7 @@ resolver = "2"
 members = [
     "auto-deref",
     "client",
-    "server",
     "chess",
     "common",
     "build_common",
-    "server-functions",
 ]
