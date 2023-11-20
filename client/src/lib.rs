@@ -1,15 +1,11 @@
 #![feature(let_chains)]
 #![feature(stmt_expr_attributes)]
-mod arrows;
 #[cfg(not(feature = "server"))]
-mod components;
-mod game_socket;
-mod helpers;
-mod launcher;
-mod mouse_click;
-mod shared_states;
-#[cfg(not(feature = "server"))]
-mod stockfish;
-mod system_info;
+mod client;
+#[cfg(feature = "server")]
+mod server;
 
-pub use launcher::launch;
+#[cfg(not(feature = "server"))]
+pub use client::launch;
+#[cfg(feature = "server")]
+pub use server::launch;

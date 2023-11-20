@@ -2,13 +2,13 @@ use chess::Player;
 use common::theme::ThemeType;
 use dioxus::prelude::*;
 
+use super::super::shared_states::BoardSize;
 use super::{
     // settings::{load_theme_from_config, Settings},
     Board,
     EvalBar,
     InfoBar,
 };
-use crate::shared_states::BoardSize;
 
 #[component]
 pub(crate) fn Widget(

@@ -1,7 +1,7 @@
 use chess::Position;
 use dioxus::prelude::*;
 
-use crate::{
+use super::super::{
     components::board::to_point,
     shared_states::{BoardSize, Perspective},
 };

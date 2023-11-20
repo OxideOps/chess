@@ -4,7 +4,7 @@ use async_std::{io::BufReader, prelude::*};
 use chess::Game;
 use dioxus::prelude::*;
 
-use crate::{
+use super::super::super::{
     arrows::Arrows,
     stockfish::{
         core::{process_output, MOVES},

@@ -9,7 +9,7 @@ use dioxus::prelude::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{
+use super::super::{
     arrows::{ArrowData, Arrows, ALPHA},
     helpers::{inv_sigmoid, sigmoid},
     stockfish::{

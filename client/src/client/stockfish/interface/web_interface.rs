@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 
-use crate::{
+use super::super::super::{
     arrows::Arrows,
     stockfish::{
         core::{process_output, MOVES},

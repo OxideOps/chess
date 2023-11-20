@@ -2,10 +2,12 @@ use std::f64::consts::PI;
 
 use dioxus::{html::geometry::ClientPoint, prelude::*};
 
-use super::get_center;
-use crate::{
-    arrows::ArrowData,
-    shared_states::{BoardSize, Perspective},
+use super::{
+    super::{
+        arrows::ArrowData,
+        shared_states::{BoardSize, Perspective},
+    },
+    get_center,
 };
 
 // the following are measured relative to the board size

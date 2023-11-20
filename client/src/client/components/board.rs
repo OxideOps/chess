@@ -13,7 +13,7 @@ use dioxus::{
 use futures::executor::block_on;
 use once_cell::sync::Lazy;
 
-use crate::{
+use super::super::{
     arrows::{ArrowData, Arrows},
     components::{Arrow, BoardSquare, Piece},
     game_socket::create_game_socket,

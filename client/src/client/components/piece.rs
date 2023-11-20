@@ -1,7 +1,7 @@
 use async_std::channel::Receiver;
 use dioxus::{html::geometry::ClientPoint, prelude::*};
 
-use crate::shared_states::BoardSize;
+use super::super::shared_states::BoardSize;
 
 #[component]
 pub fn Piece(

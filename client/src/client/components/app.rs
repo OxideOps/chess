@@ -1,15 +1,13 @@
 use chess::{Color, Game, Player, PlayerKind};
 use dioxus::prelude::*;
 
-// use server_functions::setup_remote_game;
-use super::Widget;
-use crate::{
+use super::super::{
     shared_states::{BoardSize, GameId, Perspective},
     stockfish::Eval,
 };
-
+// use server_functions::setup_remote_game;
+use super::Widget;
 const WIDGET_HEIGHT: u32 = 800;
-
 fn get_default_perspective(
     white_player: &UseLock<Player>,
     black_player: &UseLock<Player>,
@@ -38,7 +36,7 @@ pub(crate) fn App(cx: Scope) -> Element {
     let analyze = use_state(cx, || false);
 
     cx.render(rsx! {
-        style { include_str!("../../styles/output.css") }
+        style { include_str!("../../../styles/output.css") }
         Widget {
             white_player: white_player.to_owned(),
             black_player: black_player.to_owned(),

@@ -1,7 +1,7 @@
 use chess::Color;
 use dioxus::prelude::*;
 
-use crate::{helpers::sigmoid, shared_states::Perspective, stockfish::Eval};
+use super::super::{helpers::sigmoid, shared_states::Perspective, stockfish::Eval};
 
 const EVAL_SENSITIVITY: f64 = 1.0 / 800.0;
 
