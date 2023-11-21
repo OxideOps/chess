@@ -16,7 +16,7 @@ dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git", features = 
 dioxus-logger = { version = "0.4.1", features = ["timestamps"] }
 dotenvy = "0.15.7"
 futures = "0.3.29"
-hyper = "0.14.27"
+hyper = "1.0.1"
 log = "0.4.19"
 server-functions = { path = "../server-functions", features = ["ssr"] }
 tokio = { version = "1.33.0", features = ["full"] }
