@@ -2,6 +2,9 @@ use auto_deref::AutoDeref;
 use chess::Color;
 
 #[derive(AutoDeref)]
+pub(super) struct Analyze(pub(super) bool);
+
+#[derive(AutoDeref)]
 pub(super) struct BoardSize(pub(super) u32);
 
 #[derive(AutoDeref)]
