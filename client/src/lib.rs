@@ -2,7 +2,6 @@
 #![feature(stmt_expr_attributes)]
 #[cfg(not(feature = "server"))]
 mod client;
-#[cfg(feature = "server")]
 mod server;
 
 #[cfg(not(feature = "server"))]

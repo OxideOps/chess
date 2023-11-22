@@ -41,6 +41,7 @@ url = "2.4.0"
 wasm-bindgen = { version = "0.2.87", optional = true }
 wasm-bindgen-futures = { version = "0.4.38", optional = true }
 dotenvy = "0.15.7"
+rand = "0.8.5"
 
 [features]
 desktop = ["async-process", "dioxus-desktop", "num_cpus", "sys-info"]
