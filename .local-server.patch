@@ -11,10 +11,10 @@ index f3704bf..b6e2f69 100644
  # Whether to include hash values in the output file names.
  filehash = true
  
-diff --git a/client/src/game_socket.rs b/client/src/game_socket.rs
-index 1aa6f42..167027c 100644
---- a/client/src/game_socket.rs
-+++ b/client/src/game_socket.rs
+diff --git a/client/src/client/game_socket.rs b/client/src/client/game_socket.rs
+index b85c73d..cedff0e 100644
+--- a/client/src/client/game_socket.rs
++++ b/client/src/client/game_socket.rs
 @@ -30,7 +30,7 @@ pub(super) async fn create_game_socket(
  }
  
@@ -24,16 +24,16 @@ index 1aa6f42..167027c 100644
      Ok(connect(Url::parse(&url)?).await?.split())
  }
  
-diff --git a/client/src/launcher.rs b/client/src/launcher.rs
-index d69f7a2..61cb989 100644
---- a/client/src/launcher.rs
-+++ b/client/src/launcher.rs
-@@ -5,7 +5,7 @@ pub fn launch() {
+diff --git a/client/src/client/mod.rs b/client/src/client/mod.rs
+index 621c6a4..59875a9 100644
+--- a/client/src/client/mod.rs
++++ b/client/src/client/mod.rs
+@@ -13,7 +13,7 @@ pub fn launch() {
+         use dioxus_desktop as desktop;
          use dioxus_fullstack::prelude::server_fn;
  
-         log::info!("configuring desktop..");
--        server_fn::set_server_url("https://oxide-chess.fly.dev");
+-        server_fn::set_server_url("https://oxide-chess.fly.dev/");
 +        server_fn::set_server_url("http://localhost:8080");
- 
-         dioxus_desktop::launch_cfg(
-             crate::components::App,
+         log::info!("configuring desktop..");
+         desktop::launch_cfg(
+             components::App,
