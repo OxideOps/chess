@@ -1,10 +1,10 @@
 #![feature(let_chains)]
 #![feature(stmt_expr_attributes)]
-#[cfg(not(feature = "server"))]
+#[cfg(not(feature = "ssr"))]
 mod client;
 mod server;
 
-#[cfg(not(feature = "server"))]
+#[cfg(not(feature = "ssr"))]
 pub use client::launch;
-#[cfg(feature = "server")]
+#[cfg(feature = "ssr")]
 pub use server::launch;

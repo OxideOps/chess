@@ -1,4 +1,4 @@
-#[cfg(feature = "server")]
+#[cfg(feature = "ssr")]
 pub mod games;
 mod get_themes;
 mod setup_remote_game;

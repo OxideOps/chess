@@ -46,4 +46,4 @@ rand = "0.8.5"
 [features]
 desktop = ["async-process", "dioxus-desktop", "num_cpus", "sys-info"]
 web = ["dioxus-web", "js-sys", "wasm-bindgen", "wasm-bindgen-futures"]
-server = ["tokio/full", "tower-http/fs", "tower", "dioxus-fullstack/axum", "axum"]
+ssr = ["tokio/full", "tower-http/fs", "tower", "dioxus-fullstack/axum", "axum"]
