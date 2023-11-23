@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use dioxus::{html::geometry::ClientPoint, prelude::*};
+use dioxus::{html::geometry::ElementPoint, prelude::*};
 
 use super::{
     super::{
@@ -19,7 +19,7 @@ fn get_color(alpha: f64) -> String {
     format!("rgba(27, 135, 185, {})", alpha)
 }
 
-fn get_angle_from_vertical(from: &ClientPoint, to: &ClientPoint) -> f64 {
+fn get_angle_from_vertical(from: &ElementPoint, to: &ElementPoint) -> f64 {
     (to.y - from.y).atan2(to.x - from.x) + PI / 2.0
 }
 

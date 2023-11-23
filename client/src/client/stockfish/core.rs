@@ -68,13 +68,13 @@ async fn go(process: &mut Process) {
 }
 
 pub async fn toggle_stockfish(
-    analyze: UseState<bool>,
+    analyze: bool,
     stockfish_process: UseAsyncLock<Option<Process>>,
     game: UseSharedState<Game>,
     arrows: UseLock<Arrows>,
     eval_hook: UseSharedState<Eval>,
 ) {
-    if *analyze {
+    if analyze {
         match run_stockfish().await {
             Ok(mut process) => {
                 init_stockfish(&mut process).await;
