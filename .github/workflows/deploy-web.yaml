@@ -19,7 +19,7 @@ jobs:
         with:
           submodules: true
       - name: Build Server
-        run: cargo build -p server --release
+        run: cargo build --features ssr --release
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy
         env:

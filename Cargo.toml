@@ -2,10 +2,9 @@
 resolver = "2"
 members = [
     "auto-deref",
-    "client",
-    "server",
+    "app",
     "chess",
     "common",
     "build_common",
-    "server-functions",
 ]
+default-members = ["app"]

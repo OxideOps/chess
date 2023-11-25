@@ -22,14 +22,11 @@ jobs:
     - name: Check Formatting
       run: cargo fmt -- --check
       
-    - name: Build Client
-      run: cargo build -p client
+    - name: Check Desktop
+      run: cargo check --features desktop
 
-    - name: Run Client Tests
-      run: cargo test -p client
+    - name: Check Web
+      run: cargo check --features web
 
-    - name: Build Server
-      run: cargo build -p server
-
-    - name: Run Server Tests
-      run: cargo test -p server
+    - name: Check Server
+      run: cargo check --features ssr

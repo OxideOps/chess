@@ -10,23 +10,23 @@ fn get_project_root() -> PathBuf {
     )
 }
 
-fn get_client_path() -> PathBuf {
-    get_project_root().join("client")
+fn get_app_path() -> PathBuf {
+    get_project_root().join("app")
 }
 
 pub fn get_tailwind_commands() -> Vec<CommandConfig> {
-    let client = get_client_path();
+    let app_path = get_app_path();
     let tailwindcss_name = if cfg!(windows) {
         "tailwindcss.cmd"
     } else {
         "tailwindcss"
     };
-    let tailwindcss_path = client.join("node_modules/.bin").join(tailwindcss_name);
+    let tailwindcss_path = app_path.join("node_modules/.bin").join(tailwindcss_name);
     let mut commands = if !tailwindcss_path.exists() {
         vec![CommandConfig {
             program: "npm".into(),
             args: vec!["install".into()],
-            dir: Some(client.clone()),
+            dir: Some(app_path.clone()),
             ..Default::default()
         }]
     } else {
@@ -37,11 +37,11 @@ pub fn get_tailwind_commands() -> Vec<CommandConfig> {
         program: tailwindcss_path,
         args: vec![
             "-i".into(),
-            client.join("styles/input.css").to_string_lossy().into(),
+            app_path.join("styles/input.css").to_string_lossy().into(),
             "-o".into(),
-            client.join("styles/output.css").to_string_lossy().into(),
+            app_path.join("styles/output.css").to_string_lossy().into(),
         ],
-        dir: Some(client),
+        dir: Some(app_path),
         ..Default::default()
     });
 
@@ -51,7 +51,7 @@ pub fn get_tailwind_commands() -> Vec<CommandConfig> {
 pub fn get_stockfish_commands(wasm: bool) -> Vec<CommandConfig> {
     if cfg!(unix) {
         vec![CommandConfig {
-            program: get_client_path().join("build-stockfish.sh"),
+            program: get_app_path().join("build-stockfish.sh"),
             args: if wasm { vec!["--wasm".into()] } else { vec![] },
             ..Default::default()
         }]
@@ -66,7 +66,9 @@ pub fn get_trunk_commands() -> Vec<CommandConfig> {
         "{}/wasm",
         env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".into())
     );
-    let mut args = vec!["build".into()];
+
+    let mut args = vec!["build".into(), "--features".into(), "web".into()];
+
     if env::var("PROFILE") == Ok("release".into()) {
         args.push("--release".into());
     }
