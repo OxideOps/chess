@@ -14,8 +14,8 @@ fn main() {
 
     let mut commands = get_tailwind_commands();
     if env::var("CARGO_FEATURE_SSR").is_ok() {
-        commands.extend(get_trunk_commands());
         commands.extend(get_stockfish_commands(true));
+        commands.extend(get_trunk_commands());
     } else {
         commands.extend(get_stockfish_commands(false));
     }
