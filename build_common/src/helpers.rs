@@ -67,6 +67,8 @@ pub fn get_trunk_commands() -> Vec<CommandConfig> {
         env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".into())
     );
     let mut args = vec!["build".into()];
+    args.push("--features".into());
+    args.push("web".into());
     if env::var("PROFILE") == Ok("release".into()) {
         args.push("--release".into());
     }
