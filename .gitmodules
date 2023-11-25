@@ -1,0 +1,6 @@
+[submodule "app/Stockfish"]
+	path = app/Stockfish
+	url = https://github.com/OxideOps/Stockfish.git
+[submodule "app/emsdk"]
+	path = app/emsdk
+	url = https://github.com/emscripten-core/emsdk.git
