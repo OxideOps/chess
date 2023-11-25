@@ -55,7 +55,7 @@ pub(crate) fn BoardButtons(
                 if **analyze.read() { "Stop analyzing" } else { "Analyze" }
             }
             {
-                #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(feature = "desktop")]
                 rsx! {
                     button {
                         class: "button",
