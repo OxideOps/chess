@@ -66,12 +66,11 @@ pub(crate) fn Arrow(cx: Scope, data: ArrowData) -> Element {
 
     cx.render(rsx! {
         svg {
-            class: "absolute pointer-events-none",
+            class: "arrow",
             style: "z-index: 3",
             height: "{board_size}",
             width: "{board_size}",
             polygon {
-                class: "absolute pointer-events-none",
                 points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
                 fill: "{get_color(data.alpha)}"
             }

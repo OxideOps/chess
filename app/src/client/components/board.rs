@@ -109,7 +109,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             // board
             img {
                 src: "{get_board_image(&cx.props.board_theme)}",
-                class: "images inset-0 z-0",
+                class: "board",
                 width: "{hooks.board_size}",
                 height: "{hooks.board_size}"
             }
