@@ -5,9 +5,6 @@ use build_common::{
 };
 
 fn main() {
-    println!("cargo:rerun-if-changed=../app/styles");
-    println!("cargo:rerun-if-changed=../app/Stockfish");
-
     if env::var("TARGET").map_or(false, |target| target.contains("wasm32")) {
         return;
     }
