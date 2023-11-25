@@ -3,6 +3,6 @@ target
 .idea
 .run
 dist
-client/styles/output.css
-client/node_modules
+app/styles/output.css
+app/node_modules
 .env

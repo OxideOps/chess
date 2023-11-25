@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "auto-deref",
-    "client",
+    "app",
     "chess",
     "common",
     "build_common",

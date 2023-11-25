@@ -20,10 +20,10 @@ pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
                     tokio::spawn(forward_messages(game_id, send2, recv1));
                 }
             } else {
-                log::warn!("Cannot connect client to socket. Already 2 clients.");
+                log::warn!("Cannot connect app to socket. Already 2 clients.");
             }
         } else {
-            log::warn!("Cannot connect client to socket. Game id does not exist.");
+            log::warn!("Cannot connect app to socket. Game id does not exist.");
         }
     })
 }
@@ -52,7 +52,7 @@ async fn forward_messages(game_id: u32, send: WebSocketSender, recv: WebSocketRe
         }
         if let Ok(msg) = msg {
             if let Err(err) = send.lock().await.send(msg).await {
-                log::error!("Error forwarding message to other client: {err:?}");
+                log::error!("Error forwarding message to other app: {err:?}");
             }
         } else {
             log::error!("Closing socket due to error from one of the clients: {msg:?}");

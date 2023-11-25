@@ -13,8 +13,8 @@ index f3704bf..b6e2f69 100644
  
 diff --git a/client/src/client/game_socket.rs b/client/src/client/game_socket.rs
 index b85c73d..cedff0e 100644
---- a/client/src/client/game_socket.rs
-+++ b/client/src/client/game_socket.rs
+--- a/app/src/client/game_socket.rs
++++ b/app/src/client/game_socket.rs
 @@ -30,7 +30,7 @@ pub(super) async fn create_game_socket(
  }
  
@@ -26,8 +26,8 @@ index b85c73d..cedff0e 100644
  
 diff --git a/client/src/client/mod.rs b/client/src/client/mod.rs
 index 621c6a4..59875a9 100644
---- a/client/src/client/mod.rs
-+++ b/client/src/client/mod.rs
+--- a/app/src/client/mod.rs
++++ b/app/src/client/mod.rs
 @@ -13,7 +13,7 @@ pub fn launch() {
          use dioxus_desktop as desktop;
          use dioxus_fullstack::prelude::server_fn;

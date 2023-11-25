@@ -13,7 +13,7 @@ pub fn launch() {
         use dioxus_desktop as desktop;
         use dioxus_fullstack::prelude::server_fn;
 
-        server_fn::set_server_url("http://localhost:8080");
+        server_fn::set_server_url("https://oxide-chess.fly.dev/");
         log::info!("configuring desktop..");
         desktop::launch_cfg(
             components::App,

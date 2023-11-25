@@ -25,7 +25,7 @@ pub(crate) async fn send_command(process: &mut Process, command: &str) {
 }
 
 pub(crate) async fn run_stockfish() -> Result<Process> {
-    let mut cmd = Command::new("client/Stockfish/src/stockfish");
+    let mut cmd = Command::new("app/Stockfish/src/stockfish");
     cmd.stdout(Stdio::piped())
         .stdin(Stdio::piped())
         .kill_on_drop(true);
