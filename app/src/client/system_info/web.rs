@@ -3,7 +3,7 @@ pub(crate) fn get_num_cores() -> usize {
     js_result.as_f64().unwrap_or(1.0) as usize
 }
 
-#[cfg(feature = "desktop")]
+#[allow(dead_code)]
 pub(crate) fn get_total_ram() -> usize {
     let js_result = js_sys::eval("window.navigator.deviceMemory").unwrap();
     js_result.as_f64().map_or(0, |gb| (1000000.0 * gb) as usize)
