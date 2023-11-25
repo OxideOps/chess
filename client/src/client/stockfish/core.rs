@@ -16,7 +16,7 @@ use super::super::{
         interface::{run_stockfish, send_command, update_analysis_arrows, Process},
         Eval,
     },
-    system_info::{get_num_cores, get_total_ram},
+    system_info::*,
 };
 
 type Channel = (Sender<()>, Receiver<()>);

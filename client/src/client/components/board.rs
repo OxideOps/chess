@@ -200,6 +200,8 @@ pub(crate) fn to_point(board_size: u32, perspective: Color, position: &Position)
 }
 
 fn handle_on_key_down(cx: Scope<BoardProps>, hooks: &BoardHooks, event: Event<KeyboardData>) {
+    #[cfg(not(feature = "desktop"))]
+    let _ = &cx;
     match event.key() {
         Key::ArrowLeft => hooks.game.write().go_back_a_move(),
         Key::ArrowRight => hooks.game.write().go_forward_a_move(),
