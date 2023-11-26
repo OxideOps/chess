@@ -4,7 +4,6 @@ use axum::{
     ServiceExt,
 };
 use dioxus_fullstack::prelude::*;
-use futures::executor;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
@@ -21,7 +20,9 @@ pub fn launch() {
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(async move {
-            executor::block_on(database::connection::run_migrations()).unwrap();
+            database::connection::init_db_pool().await.unwrap();
+            database::connection::run_migrations().await.unwrap();
+
             log::info!("listening on {}", ADDR);
             axum::Server::bind(&ADDR.parse().unwrap())
                 .serve(
