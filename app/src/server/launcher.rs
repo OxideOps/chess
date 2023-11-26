@@ -1,5 +1,3 @@
-use std::future::join;
-
 use axum::{
     extract::{Path, WebSocketUpgrade},
     routing::get,
@@ -58,6 +56,6 @@ pub fn launch() {
                     .unwrap()
             };
 
-            join!(db_task, server_task).await
+            tokio::join!(db_task, server_task);
         });
 }
