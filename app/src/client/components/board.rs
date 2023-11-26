@@ -98,7 +98,8 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         // div for widget
         div {
             class: "board-container",
-            style: "height: {hooks.board_size}px; width: {hooks.board_size}px;",
+            // style: "height: {hooks.board_size}px; width: {hooks.board_size}px;",
+            // style: "height: 100vh; max-height: 100vh;",
             autofocus: true,
             tabindex: 0,
             // event handlers
@@ -106,12 +107,16 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             onmouseup: move |event| handle_on_mouse_up_event(cx.props, &hooks, event),
             onmousemove: move |event| handle_on_mouse_move_event(&hooks, event),
             onkeydown: move |event| handle_on_key_down(cx, &hooks, event),
+            onmounted: |event| async move {
+                let size = event.get_client_rect().await.unwrap().size;
+                println!("width: {}, height: {}", size.width, size.height);
+            },
             // board
             img {
                 src: "{get_board_image(&cx.props.board_theme)}",
                 class: "board",
-                width: "{hooks.board_size}",
-                height: "{hooks.board_size}"
+                // width: "{hooks.board_size}",
+                // height: "{hooks.board_size}"
             }
             // highlight squares
             for (pos, class) in get_highlighted_squares_info(cx.props, &hooks) {

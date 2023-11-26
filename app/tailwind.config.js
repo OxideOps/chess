@@ -2,6 +2,7 @@
 import path from "path";
 
 const ROOT_PATH = path.resolve(__dirname);
+
 export const content = [
   `${ROOT_PATH}/styles/*.css`
 ];

@@ -21,8 +21,8 @@ pub(crate) fn Widget(cx: Scope) -> Element {
     let black_player = use_lock(cx, || Player::with_color(Color::Black));
 
     cx.render(rsx! {
-        div { class: "widget-container", style: "height: {board_size}px",
-            div {
+        div { class: "widget-container", // style: "height: {board_size}px",
+            div { class: "board-flex-box",
                 Board {
                     white_player_kind: white_player.read().kind,
                     black_player_kind: black_player.read().kind,

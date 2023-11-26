@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "app",
   "version": "1.0.0",
   "description": "",
   "main": "tailwind.config.js",
@@ -7,6 +7,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "tailwindcss": "^3.3.3"
+    "tailwindcss": "^3.3.5"
   }
 }
