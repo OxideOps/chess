@@ -1,13 +1,16 @@
+use std::fmt::format;
+
 use axum::{
     extract::{Path, WebSocketUpgrade},
     routing::get,
     ServiceExt,
 };
 use dioxus_fullstack::prelude::*;
+use futures::executor;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
-use super::game_socket::handler;
+use super::{database, game_socket::handler};
 
 pub fn launch() {
     const ADDR: &str = "[::]:8080";
@@ -20,6 +23,7 @@ pub fn launch() {
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(async move {
+            executor::block_on(database::connection::run_migrations()).unwrap();
             log::info!("listening on {}", ADDR);
             axum::Server::bind(&ADDR.parse().unwrap())
                 .serve(
