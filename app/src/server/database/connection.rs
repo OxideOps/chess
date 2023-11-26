@@ -1,9 +1,11 @@
 use std::env;
 
-use sqlx::{postgres::PgPoolOptions, Error};
+use sqlx::{migrate::Migrator, postgres::PgPoolOptions, Error};
+
+static MIGRATOR: Migrator = sqlx::migrate!();
 
 pub async fn run_migrations() -> Result<(), Error> {
-    sqlx::migrate!()
+    MIGRATOR
         .run(
             &PgPoolOptions::new()
                 .max_connections(5)
