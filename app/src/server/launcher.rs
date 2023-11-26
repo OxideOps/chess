@@ -7,7 +7,7 @@ use dioxus_fullstack::prelude::*;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
-use super::game_socket::handler;
+use super::{database, game_socket::handler};
 
 pub fn launch() {
     const ADDR: &str = "[::]:8080";
@@ -21,6 +21,10 @@ pub fn launch() {
         .unwrap()
         .block_on(async move {
             log::info!("listening on {}", ADDR);
+
+            futures::executor::block_on(database::connection::connect())
+                .expect("Could not connect to database");
+
             axum::Server::bind(&ADDR.parse().unwrap())
                 .serve(
                     axum::Router::new()
