@@ -20,42 +20,37 @@ pub fn launch() {
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(async move {
-            let db_task = async {
-                database::connection::init_db_pool().await.unwrap();
-                database::connection::run_migrations().await.unwrap();
-            };
+            log::info!("connecting to database");
+            database::connection::init_db_pool().await.unwrap();
+            database::connection::run_migrations().await.unwrap();
 
-            let server_task = async {
-                log::info!("listening on {}", ADDR);
-                axum::Server::bind(&ADDR.parse().unwrap())
-                    .serve(
-                        axum::Router::new()
-                            .nest_service("/", ServeDir::new("dist"))
-                            .nest_service("/images", ServeDir::new("images"))
-                            .register_server_fns("/api")
-                            .route(
-                                "/game/:game_id",
-                                get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| {
-                                    handler(game_id, ws)
-                                }),
-                            )
-                            .map_response(|mut response| {
-                                response.headers_mut().insert(
-                                    "Cross-Origin-Opener-Policy",
-                                    "same-origin".parse().unwrap(),
-                                );
-                                response.headers_mut().insert(
-                                    "Cross-Origin-Embedder-Policy",
-                                    "require-corp".parse().unwrap(),
-                                );
-                                response
-                            })
-                            .into_make_service(),
-                    )
-                    .await
-                    .unwrap()
-            };
-
-            tokio::join!(db_task, server_task);
+            log::info!("listening on {}", ADDR);
+            axum::Server::bind(&ADDR.parse().unwrap())
+                .serve(
+                    axum::Router::new()
+                        .nest_service("/", ServeDir::new("dist"))
+                        .nest_service("/images", ServeDir::new("images"))
+                        .register_server_fns("/api")
+                        .route(
+                            "/game/:game_id",
+                            get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| {
+                                handler(game_id, ws)
+                            }),
+                        )
+                        .map_response(|mut response| {
+                            response.headers_mut().insert(
+                                "Cross-Origin-Opener-Policy",
+                                "same-origin".parse().unwrap(),
+                            );
+                            response.headers_mut().insert(
+                                "Cross-Origin-Embedder-Policy",
+                                "require-corp".parse().unwrap(),
+                            );
+                            response
+                        })
+                        .into_make_service(),
+                )
+                .await
+                .unwrap()
         });
 }
