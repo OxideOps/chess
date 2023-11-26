@@ -7,7 +7,7 @@ use dioxus_fullstack::prelude::*;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
-use super::game_socket::handler;
+use super::{database, game_socket::handler};
 
 pub fn launch() {
     const ADDR: &str = "[::]:8080";
@@ -20,6 +20,10 @@ pub fn launch() {
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(async move {
+            log::info!("connecting to database");
+            database::connection::init_db_pool().await.unwrap();
+            database::connection::run_migrations().await.unwrap();
+
             log::info!("listening on {}", ADDR);
             axum::Server::bind(&ADDR.parse().unwrap())
                 .serve(
