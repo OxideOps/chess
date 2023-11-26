@@ -19,6 +19,6 @@ pub async fn init_db_pool() -> Result<(), Error> {
             .await
             .unwrap(),
     ))
-    .expect("Failed to initialize database pool");
+    .expect("database pool must be empty on initialization");
     Ok(())
 }
