@@ -4,4 +4,5 @@ WORKDIR /app
 COPY ./dist ./dist
 COPY ./images ./images
 COPY ./target/release ./target/release
+COPY ./app/migrations ./migrations
 ENTRYPOINT ["./target/release/app"]
