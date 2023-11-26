@@ -20,12 +20,11 @@ pub fn launch() {
     tokio::runtime::Runtime::new()
         .unwrap()
         .block_on(async move {
-            log::info!("listening on {}", ADDR);
-
             futures::executor::block_on(database::connection::connect())
                 .expect("Could not connect to database");
             log::info!("connected to database");
 
+            log::info!("listening on {}", ADDR);
             axum::Server::bind(&ADDR.parse().unwrap())
                 .serve(
                     axum::Router::new()
