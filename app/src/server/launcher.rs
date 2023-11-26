@@ -24,6 +24,7 @@ pub fn launch() {
 
             futures::executor::block_on(database::connection::connect())
                 .expect("Could not connect to database");
+            log::info!("connected to database");
 
             axum::Server::bind(&ADDR.parse().unwrap())
                 .serve(
