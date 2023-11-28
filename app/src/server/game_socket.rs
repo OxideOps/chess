@@ -13,9 +13,13 @@ pub async fn handler(game_id: u32, ws: WebSocketUpgrade) -> Response {
             if connections.len() < 2 {
                 let (send, recv) = socket.split();
                 connections.push((Arc::new(Mutex::new(send)), Arc::new(Mutex::new(recv))));
+                log::info!("A player has connected to game {}", game_id);
+
                 if connections.len() == 2 {
                     let (send1, recv1) = connections[0].clone();
                     let (send2, recv2) = connections[1].clone();
+
+                    log::info!("Two players paired up in game {}", game_id);
                     tokio::spawn(forward_messages(game_id, send1, recv2));
                     tokio::spawn(forward_messages(game_id, send2, recv1));
                 }
