@@ -33,7 +33,7 @@ This project is a complete chess platform, allowing users to play chess games, a
 ## Building and Running
 The main package in this repository is `app`, configured to be the default for the workspace. This means you do not need to specify the package when building and running from the root.
 
-Currently, the platforms we support are `desktop`, `web`, and `server`, which can be compiled conditionally with features:
+Currently, the platforms we support are `desktop`, `web`, and `ssr` (server), which can be compiled conditionally with features:
 ```bash
 cargo {build, run} --features <platform>
 ```
