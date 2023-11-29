@@ -31,9 +31,11 @@ This project is a complete chess platform, allowing users to play chess games, a
     ```
 
 ## Building and Running
-There are two binary packages that can be compiled and ran: `client` and `server`. Execute `cargo [build | run]` with the `-p` (package) flag, followed by the package:
+The main package in this repository is `app`, configured to be the default for the workspace. This means you do not need to specify the package when building and running from the root.
+
+Currently, the platforms we support are `desktop`, `web`, and `ssr` (server), which can be compiled conditionally with features:
 ```bash
-cargo [build | run] -p [app | server]
+cargo {build, run} --features <platform>
 ```
 
 Note that there is a `build.rs` file in each package, called a [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html), that causes Cargo to compile that script and execute it just before building the package.
