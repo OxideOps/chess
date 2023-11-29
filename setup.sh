@@ -106,7 +106,7 @@ main() {
     if ! $DOCKER_MODE; then
         update_submodules
         setup_environment_variable
-        echo "Setup completed! Run 'cargo run -p client' to launch the client"
+        echo "Setup completed! 'cargo {build, run} --features {desktop, web, ssr}'"
     fi
 }
 
