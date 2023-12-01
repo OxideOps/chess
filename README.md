@@ -43,23 +43,24 @@ Note that there is a `build.rs` file in each package, called a [build script](ht
 ### Client
 The `client` contains the following code:
 
-- User interface, using the ergonomic [Dioxus](https://github.com/DioxusLabs/dioxus) framework for building cross-platform interfaces in Rust;
-- Core chess logic, contained in the `chess` library;
-- [Stockfish](https://github.com/OxideOps/Stockfish.git) submodule for running Stockfish natively in `C++`;
-- [emsdk](https://github.com/emscripten-core/emsdk.git) submodule for compiling web assembly from Stockfish when we build the `server`;
+- User interface, using the ergonomic [Dioxus](https://github.com/DioxusLabs/dioxus) framework for building cross-platform interfaces in Rust.
+- Core chess logic, contained in the `chess` library.
+- [Stockfish](https://github.com/OxideOps/Stockfish.git) submodule for running Stockfish natively in `C++`.
+- [emsdk](https://github.com/emscripten-core/emsdk.git) submodule for compiling web assembly from Stockfish when we build the `server`.
 - [Tailwind](https://tailwindcss.com/) to make CSS a breeze.
 - [Trunk](https://github.com/thedodd/trunk) to compile our program into web assembly.
 
 ### Server
 The `server` contains the following code:
 
-- Runs using the rust framework [Axum](https://github.com/tokio-rs/axum).
+- [Axum](https://github.com/tokio-rs/axum) for the web framework.
+- [Sqlx](https://github.com/launchbadge/sqlx) for compile time database management.
 - Serves compiled WASM to the web client.  
 - Uses web sockets to manage remote games between 2 clients.
 
 ## Database
 ### Mac OS
-### Install PostgreSQL
+### Install Postgresql
 ```bash
 brew install postgresql
 ```
@@ -116,5 +117,5 @@ Replace `username`, `password`, and `dbname` with your PostgreSQL username, pass
 
 ### Run the server
 ```bash
-cargo run -p server
+cargo run --features ssr
 ```
