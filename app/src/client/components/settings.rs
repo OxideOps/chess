@@ -1,6 +1,7 @@
-use common::theme::ThemeType;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
+
+use crate::common::theme::ThemeType;
 
 const APP_NAME: &str = "oxide-chess";
 const CONFIG_NAME: &str = "themes";
@@ -100,8 +101,7 @@ fn save_theme_to_config(theme_type: ThemeType, theme_value: &str) {
 
 fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<String>> {
     #[cfg(feature = "desktop")]
-    use common::theme::get_themes;
-
+    use crate::common::theme::get_themes;
     #[cfg(feature = "web")]
     use crate::server::server_functions::get_themes;
 

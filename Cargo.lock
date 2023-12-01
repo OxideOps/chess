@@ -131,10 +131,8 @@ dependencies = [
  "async-std",
  "auto-deref",
  "axum",
- "build_common",
  "chess",
  "clap",
- "common",
  "confy",
  "dioxus",
  "dioxus-desktop",
@@ -144,6 +142,7 @@ dependencies = [
  "dotenvy",
  "futures",
  "futures-util",
+ "getrandom 0.2.11",
  "js-sys",
  "log",
  "num_cpus",
@@ -600,10 +599,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "build_common"
-version = "0.1.0"
-
-[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -827,16 +822,6 @@ checksum = "35ed6e9d84f0b51a7f52daf1c7d71dd136fd7a3f41a8462b8cdb8c78d920fad4"
 dependencies = [
  "bytes",
  "memchr",
-]
-
-[[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "clap",
- "getrandom 0.2.11",
- "log",
- "serde",
 ]
 
 [[package]]

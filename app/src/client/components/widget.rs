@@ -1,5 +1,4 @@
 use chess::{Color, Player, PlayerKind};
-use common::theme::ThemeType;
 use dioxus::prelude::*;
 
 use super::{
@@ -10,6 +9,7 @@ use super::{
     settings::{load_theme_from_config, Settings},
     Board, EvalBar, InfoBar,
 };
+use crate::common::theme::ThemeType;
 
 #[component]
 pub(crate) fn Widget(cx: Scope) -> Element {
