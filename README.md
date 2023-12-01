@@ -47,7 +47,7 @@ The `client` contains the following code:
 - Core chess logic, contained in the `chess` library;
 - [Stockfish](https://github.com/OxideOps/Stockfish.git) submodule for running Stockfish natively in `C++`;
 - [emsdk](https://github.com/emscripten-core/emsdk.git) submodule for compiling web assembly from Stockfish when we build the `server`;
-- [Tailwind](https://tailwindcss.com/) to make CSS a breeze.
+- [Tailwind](https://tailwindcss.com/) to make CSS a breeze;
 - [Trunk](https://github.com/thedodd/trunk) to compile our program into web assembly.
 
 ### Server
@@ -59,7 +59,7 @@ The `server` contains the following code:
 
 ## Database
 ### Mac OS
-### Install PostgreSQL
+### Install Postgresql
 ```bash
 brew install postgresql
 ```
@@ -116,5 +116,5 @@ Replace `username`, `password`, and `dbname` with your PostgreSQL username, pass
 
 ### Run the server
 ```bash
-cargo run -p server
+cargo run --features ssr
 ```
