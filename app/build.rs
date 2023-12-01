@@ -1,8 +1,8 @@
+mod build_utils;
+
 use std::env;
 
-use build_common::{
-    get_stockfish_commands, get_tailwind_commands, get_trunk_commands, CommandConfig,
-};
+use build_utils::*;
 
 fn main() {
     if env::var("TARGET").map_or(false, |target| target.contains("wasm32")) {

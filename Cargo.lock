@@ -131,7 +131,6 @@ dependencies = [
  "async-std",
  "auto-deref",
  "axum",
- "build_common",
  "chess",
  "clap",
  "common",
