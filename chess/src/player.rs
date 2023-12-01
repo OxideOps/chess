@@ -8,6 +8,12 @@ pub enum PlayerKind {
     Bot,
 }
 
+impl PlayerKind {
+    pub fn is_local_game(white_player_kind: Self, black_player_kind: Self) -> bool {
+        white_player_kind == Self::Local && black_player_kind == Self::Local
+    }
+}
+
 #[derive(Default, PartialEq, Clone)]
 pub struct Player {
     pub kind: PlayerKind,
