@@ -333,7 +333,7 @@ pub(crate) fn get_center(board_size: u32, perspective: Color, pos: &Position) ->
 }
 
 fn is_local_game(props: &BoardProps) -> bool {
-    props.white_player_kind == PlayerKind::Local && props.black_player_kind == PlayerKind::Local
+    PlayerKind::is_local_game(props.white_player_kind, props.black_player_kind)
 }
 
 fn get_highlighted_squares_info(props: &BoardProps, hooks: &BoardHooks) -> Vec<(Position, String)> {
