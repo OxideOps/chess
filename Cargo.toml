@@ -5,6 +5,5 @@ members = [
     "app",
     "chess",
     "common",
-    "build_common",
 ]
 default-members = ["app"]
