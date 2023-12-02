@@ -1,6 +1,7 @@
 use std::f64::consts::PI;
 
 use dioxus::{html::geometry::ElementPoint, prelude::*};
+use palette::LinSrgba;
 
 use super::{
     super::{
@@ -15,8 +16,18 @@ const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
 
-fn get_color(alpha: f64) -> String {
-    format!("rgba(27, 135, 185, {})", alpha)
+fn to_u8(pixel: f64) -> u8 {
+    (255.0 * pixel).round() as u8
+}
+
+fn get_color(color: LinSrgba<f64>) -> String {
+    format!(
+        "rgba({}, {}, {}, {})",
+        to_u8(color.red),
+        to_u8(color.green),
+        to_u8(color.blue),
+        color.alpha
+    )
 }
 
 fn get_angle_from_vertical(from: &ElementPoint, to: &ElementPoint) -> f64 {
@@ -72,7 +83,7 @@ pub(crate) fn Arrow(cx: Scope, data: ArrowData) -> Element {
             width: "{board_size}",
             polygon {
                 points: "{x0},{y0}, {x1},{y1} {x2},{y2} {x3},{y3} {x4},{y4} {x5},{y5} {x6},{y6}",
-                fill: "{get_color(data.alpha)}"
+                fill: "{get_color(data.color)}"
             }
         }
     })

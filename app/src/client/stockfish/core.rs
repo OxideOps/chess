@@ -7,6 +7,7 @@ use async_std::{
 use chess::{Color, Game, Move};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
+use palette::LinSrgba;
 use regex::Regex;
 
 use super::super::{
@@ -18,6 +19,7 @@ use super::super::{
     },
     system_info::*,
 };
+use crate::client::arrows::ANALYSIS_COLOR;
 
 type Channel = (Sender<()>, Receiver<()>);
 
@@ -137,7 +139,10 @@ pub async fn process_output(
                 i,
                 ArrowData::new(
                     Move::from_lan(move_str).unwrap(),
-                    score_to_alpha(score, scores),
+                    LinSrgba {
+                        color: *ANALYSIS_COLOR,
+                        alpha: score_to_alpha(score, scores),
+                    },
                 ),
             );
         }

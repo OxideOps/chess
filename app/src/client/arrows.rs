@@ -1,31 +1,49 @@
 use chess::Move;
+use once_cell::sync::Lazy;
+use palette::{LinSrgb, LinSrgba};
 
 pub(super) const ALPHA: f64 = 0.75;
+pub(super) const ANALYSIS_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
+    red: 0.11,
+    green: 0.53,
+    blue: 0.73,
+    ..Default::default()
+});
+pub(super) const USER_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
+    red: 0.99,
+    green: 0.62,
+    blue: 0.01,
+    ..Default::default()
+});
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct ArrowData {
     pub(crate) mv: Move,
-    pub(crate) alpha: f64,
-}
-
-impl Default for ArrowData {
-    fn default() -> Self {
-        Self {
-            mv: Move::default(),
-            alpha: ALPHA,
-        }
-    }
+    pub(crate) color: LinSrgba<f64>,
 }
 
 impl ArrowData {
-    pub(super) fn new(mv: Move, alpha: f64) -> Self {
-        Self { mv, alpha }
+    pub(super) fn new(mv: Move, color: LinSrgba<f64>) -> Self {
+        Self { mv, color }
     }
 
-    pub(super) fn with_move(mv: Move) -> Self {
+    pub(super) fn analysis_arrow(mv: Move) -> Self {
         Self {
             mv,
-            ..Self::default()
+            color: LinSrgba {
+                color: *ANALYSIS_COLOR,
+                alpha: ALPHA,
+            },
+        }
+    }
+
+    pub(super) fn user_arrow(mv: Move) -> Self {
+        Self {
+            mv,
+            color: LinSrgba {
+                color: *USER_COLOR,
+                alpha: ALPHA,
+            },
         }
     }
 
@@ -44,7 +62,7 @@ impl Arrows {
     pub(super) fn new(moves: Vec<Move>) -> Self {
         Self {
             showing: moves.len(),
-            arrows: moves.into_iter().map(ArrowData::with_move).collect(),
+            arrows: moves.into_iter().map(ArrowData::analysis_arrow).collect(),
         }
     }
 
