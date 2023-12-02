@@ -7,9 +7,7 @@ static MIGRATOR: Migrator = sqlx::migrate!();
 static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 
 async fn run_migrations() -> Result<(), Error> {
-    MIGRATOR.run(&*POOL.get().unwrap()).await?;
-
-    Ok(())
+    Ok(MIGRATOR.run(POOL.get().unwrap()).await?)
 }
 
 async fn init_db_pool() -> Result<(), Error> {
@@ -17,8 +15,7 @@ async fn init_db_pool() -> Result<(), Error> {
         PoolOptions::<Postgres>::new()
             .max_connections(5)
             .connect(&env::var("DATABASE_URL").expect("DATABASE_URL must be set"))
-            .await
-            .unwrap(),
+            .await?,
     )
     .expect("database pool must be empty on initialization");
 
@@ -27,7 +24,5 @@ async fn init_db_pool() -> Result<(), Error> {
 
 pub async fn connect() -> Result<(), Error> {
     init_db_pool().await?;
-    run_migrations().await?;
-
-    Ok(())
+    run_migrations().await
 }
