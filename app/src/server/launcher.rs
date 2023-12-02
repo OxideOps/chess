@@ -7,7 +7,7 @@ use dioxus_fullstack::prelude::*;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
-use super::{database, game_socket::handler};
+use super::{database, game_socket};
 
 pub fn launch() {
     if dotenvy::dotenv().is_err() {
@@ -25,8 +25,7 @@ async fn setup_and_serve() {
     const ADDR: &str = "[::]:8080";
 
     log::info!("connecting to database");
-    database::init_db_pool().await.unwrap();
-    database::run_migrations().await.unwrap();
+    database::connect().await.unwrap();
 
     log::info!("listening on {}", ADDR);
     axum::Server::bind(&ADDR.parse().unwrap())
@@ -37,7 +36,9 @@ async fn setup_and_serve() {
                 .register_server_fns("/api")
                 .route(
                     "/game/:game_id",
-                    get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| handler(game_id, ws)),
+                    get(move |Path::<u32>(game_id), ws: WebSocketUpgrade| {
+                        game_socket::handler(game_id, ws)
+                    }),
                 )
                 .map_response(|mut response| {
                     response
