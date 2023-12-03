@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 
 use crate::{
     client::shared_states::{Analyze, BoardSize, GameId, Perspective},
-    server::server_functions::setup_remote_game,
+    server::server_functions::{accounts, setup_remote_game},
 };
 
 #[component]
@@ -66,6 +66,18 @@ pub(crate) fn BoardButtons(
                         "Quit"
                     }
                 }
+            }
+            button { class: "button",
+                onclick: |_| {
+                    cx.spawn(async {
+                        const USERNAME: &str = "Dillon Roller";
+                        const PASSWORD: &str = "password";
+
+                        accounts::create_account(USERNAME.into(), PASSWORD.into()).await.unwrap();
+                        assert!(accounts::verify_account(USERNAME.into(), PASSWORD.into()).await.unwrap())
+                    })
+                },
+                "Test account"
             }
         }
     })

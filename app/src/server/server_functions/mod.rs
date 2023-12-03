@@ -1,4 +1,4 @@
-mod accounts;
+pub(crate) mod accounts;
 #[cfg(feature = "ssr")]
 pub mod games;
 mod get_themes;
