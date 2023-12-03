@@ -1,31 +1,32 @@
 use chess::Move;
+use palette::{LinSrgb, LinSrgba, WithAlpha};
 
 pub(super) const ALPHA: f64 = 0.75;
+pub(super) const ANALYSIS_COLOR: LinSrgb<f64> = LinSrgb::new(0.11, 0.53, 0.73);
+pub(super) const USER_COLOR: LinSrgb<f64> = LinSrgb::new(0.99, 0.62, 0.01);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct ArrowData {
     pub(crate) mv: Move,
-    pub(crate) alpha: f64,
-}
-
-impl Default for ArrowData {
-    fn default() -> Self {
-        Self {
-            mv: Move::default(),
-            alpha: ALPHA,
-        }
-    }
+    pub(crate) color: LinSrgba<f64>,
 }
 
 impl ArrowData {
-    pub(super) fn new(mv: Move, alpha: f64) -> Self {
-        Self { mv, alpha }
+    pub(super) fn new(mv: Move, color: LinSrgba<f64>) -> Self {
+        Self { mv, color }
     }
 
-    pub(super) fn with_move(mv: Move) -> Self {
+    pub(super) fn analysis_arrow(mv: Move) -> Self {
         Self {
             mv,
-            ..Self::default()
+            color: ANALYSIS_COLOR.with_alpha(ALPHA),
+        }
+    }
+
+    pub(super) fn user_arrow(mv: Move) -> Self {
+        Self {
+            mv,
+            color: USER_COLOR.with_alpha(ALPHA),
         }
     }
 
@@ -44,7 +45,7 @@ impl Arrows {
     pub(super) fn new(moves: Vec<Move>) -> Self {
         Self {
             showing: moves.len(),
-            arrows: moves.into_iter().map(ArrowData::with_move).collect(),
+            arrows: moves.into_iter().map(ArrowData::analysis_arrow).collect(),
         }
     }
 
