@@ -285,7 +285,7 @@ fn handle_on_mouse_down_event(hooks: &BoardHooks, event: Event<MouseData>) {
         let pos = _to_position(hooks, &mouse_down.point);
         hooks
             .drawing_arrow
-            .set(Some(ArrowData::with_move(Move::new(pos, pos))));
+            .set(Some(ArrowData::user_arrow(Move::new(pos, pos))));
     }
     hooks.mouse_down_state.set(Some(mouse_down));
 }

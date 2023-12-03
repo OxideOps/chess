@@ -63,6 +63,6 @@ pub(crate) async fn update_analysis_arrows(
 ) {
     let mut scores = vec![f64::NEG_INFINITY; MOVES];
     while let Ok(output) = CHANNEL.1.recv().await {
-        process_output(&output, &mut scores, &arrows, eval_hook, game).await;
+        process_output(&output, &mut scores, arrows, eval_hook, game).await;
     }
 }

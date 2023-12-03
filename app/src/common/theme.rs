@@ -1,5 +1,3 @@
-use std::{fs, io};
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -8,14 +6,15 @@ pub enum ThemeType {
     Piece,
 }
 
-pub async fn get_themes(theme_type: ThemeType) -> io::Result<Vec<String>> {
+#[cfg(not(feature = "web"))]
+pub async fn get_themes(theme_type: ThemeType) -> std::io::Result<Vec<String>> {
     let mut themes = Vec::new();
     let dir_path = match theme_type {
         ThemeType::Board => "images/boards/",
         ThemeType::Piece => "images/pieces/",
     };
 
-    for entry in fs::read_dir(dir_path)? {
+    for entry in std::fs::read_dir(dir_path)? {
         let path = entry?.path();
 
         if path.is_dir() {
