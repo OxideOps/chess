@@ -1,3 +1,4 @@
+mod accounts;
 #[cfg(feature = "ssr")]
 pub mod games;
 mod get_themes;
