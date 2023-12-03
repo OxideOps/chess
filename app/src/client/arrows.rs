@@ -3,13 +3,13 @@ use once_cell::sync::Lazy;
 use palette::{LinSrgb, LinSrgba};
 
 pub(super) const ALPHA: f64 = 0.75;
-pub(super) const ANALYSIS_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
+pub(super) static ANALYSIS_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
     red: 0.11,
     green: 0.53,
     blue: 0.73,
     ..Default::default()
 });
-pub(super) const USER_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
+pub(super) static USER_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
     red: 0.99,
     green: 0.62,
     blue: 0.01,
