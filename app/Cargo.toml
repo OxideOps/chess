@@ -40,6 +40,7 @@ wasm-bindgen-futures = { version = "0.4.39", optional = true }
 dotenvy = "0.15.7"
 rand = "0.8.5"
 palette = {  version = "0.7.3", optional = true }
+bcrypt = "0.15.0"
 
 [features]
 desktop = ["async-process", "async-std", "auto-deref", "dioxus-desktop", "num_cpus", "palette", "sys-info"]
