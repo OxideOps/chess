@@ -231,8 +231,8 @@ fn drop_piece(
     event: &Event<MouseData>,
     point: &ElementPoint,
 ) {
-    let from = _to_position(&hooks, point);
-    let to = _to_position(&hooks, &event.element_coordinates());
+    let from = _to_position(hooks, point);
+    let to = _to_position(hooks, &event.element_coordinates());
     let (current_player_kind, opponent_player_kind) = match hooks.game.read().get_current_player() {
         Color::White => (props.white_player_kind, props.black_player_kind),
         Color::Black => (props.black_player_kind, props.white_player_kind),
@@ -278,11 +278,11 @@ fn handle_on_mouse_down_event(hooks: &BoardHooks, event: Event<MouseData>) {
     if mouse_down.kind.contains(MouseButton::Primary) {
         hooks
             .selected_piece
-            .set(Some(_to_position(&hooks, &mouse_down.point)));
+            .set(Some(_to_position(hooks, &mouse_down.point)));
         block_on(send_dragging_point(hooks, event));
         hooks.arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
-        let pos = _to_position(&hooks, &mouse_down.point);
+        let pos = _to_position(hooks, &mouse_down.point);
         hooks
             .drawing_arrow
             .set(Some(ArrowData::with_move(Move::new(pos, pos))));
@@ -304,7 +304,7 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
 }
 
 fn handle_on_mouse_move_event(hooks: &BoardHooks, event: Event<MouseData>) {
-    let pos = _to_position(&hooks, &event.element_coordinates());
+    let pos = _to_position(hooks, &event.element_coordinates());
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             block_on(send_dragging_point(hooks, event));
