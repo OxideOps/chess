@@ -9,12 +9,15 @@ fn main() {
         return;
     }
 
+    #[cfg(feature = "ssr")]
+    migration::run();
+
     let mut commands = get_tailwind_commands();
-    if env::var("CARGO_FEATURE_SSR").is_ok() {
+    if cfg!(feature = "ssr") {
         commands.extend(get_stockfish_commands(true));
         commands.extend(get_trunk_commands());
     } else {
         commands.extend(get_stockfish_commands(false));
     }
-    CommandConfig::run_build_commands(&commands)
+    CommandConfig::run_build_commands(&commands);
 }

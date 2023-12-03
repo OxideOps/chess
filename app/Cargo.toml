@@ -42,6 +42,10 @@ rand = "0.8.5"
 palette = {  version = "0.7.3", optional = true }
 bcrypt = "0.15.0"
 
+[build-dependencies]
+tokio = "1.34.0"
+sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "migrate"] }
+
 [features]
 desktop = ["async-process", "async-std", "auto-deref", "dioxus-desktop", "num_cpus", "palette", "sys-info"]
 web = ["async-std", "auto-deref", "dioxus-web", "js-sys", "palette", "wasm-bindgen", "wasm-bindgen-futures"]
