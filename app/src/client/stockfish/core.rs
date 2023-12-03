@@ -7,7 +7,7 @@ use async_std::{
 use chess::{Color, Game, Move};
 use dioxus::prelude::*;
 use once_cell::sync::Lazy;
-use palette::LinSrgba;
+use palette::WithAlpha;
 use regex::Regex;
 
 use super::super::{
@@ -139,10 +139,7 @@ pub async fn process_output(
                 i,
                 ArrowData::new(
                     Move::from_lan(move_str).unwrap(),
-                    LinSrgba {
-                        color: *ANALYSIS_COLOR,
-                        alpha: score_to_alpha(score, scores),
-                    },
+                    ANALYSIS_COLOR.with_alpha(score_to_alpha(score, scores)),
                 ),
             );
         }

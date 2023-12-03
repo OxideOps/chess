@@ -16,17 +16,11 @@ const HEAD: f64 = 1.0 / 30.0; // size of arrow head
 const WIDTH: f64 = 1.0 / 80.0; // width of arrow body
 const OFFSET: f64 = 1.0 / 20.0; // how far away from the middle of the starting square
 
-fn to_u8(pixel: f64) -> u8 {
-    (255.0 * pixel).round() as u8
-}
-
 fn get_color(color: LinSrgba<f64>) -> String {
+    let color_u8: LinSrgba<u8> = color.into_format();
     format!(
         "rgba({}, {}, {}, {})",
-        to_u8(color.red),
-        to_u8(color.green),
-        to_u8(color.blue),
-        color.alpha
+        color_u8.red, color_u8.green, color_u8.blue, color.alpha
     )
 }
 

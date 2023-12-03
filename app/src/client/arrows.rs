@@ -1,20 +1,9 @@
 use chess::Move;
-use once_cell::sync::Lazy;
-use palette::{LinSrgb, LinSrgba};
+use palette::{LinSrgb, LinSrgba, WithAlpha};
 
 pub(super) const ALPHA: f64 = 0.75;
-pub(super) static ANALYSIS_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
-    red: 0.11,
-    green: 0.53,
-    blue: 0.73,
-    ..Default::default()
-});
-pub(super) static USER_COLOR: Lazy<LinSrgb<f64>> = Lazy::new(|| LinSrgb {
-    red: 0.99,
-    green: 0.62,
-    blue: 0.01,
-    ..Default::default()
-});
+pub(super) const ANALYSIS_COLOR: LinSrgb<f64> = LinSrgb::new(0.11, 0.53, 0.73);
+pub(super) const USER_COLOR: LinSrgb<f64> = LinSrgb::new(0.99, 0.62, 0.01);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct ArrowData {
@@ -30,20 +19,14 @@ impl ArrowData {
     pub(super) fn analysis_arrow(mv: Move) -> Self {
         Self {
             mv,
-            color: LinSrgba {
-                color: *ANALYSIS_COLOR,
-                alpha: ALPHA,
-            },
+            color: ANALYSIS_COLOR.with_alpha(ALPHA),
         }
     }
 
     pub(super) fn user_arrow(mv: Move) -> Self {
         Self {
             mv,
-            color: LinSrgba {
-                color: *USER_COLOR,
-                alpha: ALPHA,
-            },
+            color: USER_COLOR.with_alpha(ALPHA),
         }
     }
 
