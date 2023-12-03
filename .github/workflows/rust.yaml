@@ -23,10 +23,10 @@ jobs:
       run: cargo fmt -- --check
       
     - name: Check Desktop
-      run: cargo clippy --features desktop
+      run: cargo clippy -F desktop -- -D warnings
 
     - name: Check Web
-      run: cargo clippy --features web
+      run: cargo clippy -F web -- -D warnings
 
     - name: Check Server
-      run: cargo clippy --features ssr
+      run: cargo clippy -F ssr -- -D warnings
