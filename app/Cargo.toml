@@ -45,6 +45,7 @@ bcrypt = "0.15.0"
 [build-dependencies]
 tokio = "1.34.0"
 sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "migrate"] }
+dotenvy = "0.15.7"
 
 [features]
 desktop = ["async-process", "async-std", "auto-deref", "dioxus-desktop", "num_cpus", "palette", "sys-info"]
