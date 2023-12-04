@@ -1,7 +1,7 @@
 use std::env;
 
 use once_cell::sync::OnceCell;
-use sqlx::{pool::PoolOptions, Error, Pool, Postgres};
+use sqlx::{Error, PgPool, Pool, Postgres};
 
 pub static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 
@@ -11,7 +11,7 @@ async fn run_migrations() -> Result<(), Error> {
 
 async fn init_db_pool() -> Result<(), Error> {
     POOL.set(
-        PoolOptions::<Postgres>::new()
+        PgPool::new()
             .max_connections(5)
             .connect(&env::var("DATABASE_URL").expect("DATABASE_URL must be set"))
             .await?,
