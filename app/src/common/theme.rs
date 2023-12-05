@@ -17,6 +17,7 @@ impl std::fmt::Display for ThemeType {
 }
 
 impl ThemeType {
+    #[cfg(feature = "web")]
     pub fn default_theme(&self) -> String {
         match self {
             Self::Board => "qootee".to_string(),
