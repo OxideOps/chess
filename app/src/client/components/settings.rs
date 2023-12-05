@@ -51,7 +51,7 @@ pub(crate) fn Settings(
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
                                 #[cfg(feature = "web")]
-                                wasm_cookies::set(&ThemeType::Board.to_string(), &event.value, &CookieOptions::default());
+                                wasm_cookies::set(&ThemeType::Piece.to_string(), &event.value, &CookieOptions::default());
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {
                                 option {
