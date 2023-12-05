@@ -11,7 +11,7 @@ async-process = { version = "2.0.1", optional = true }
 axum = { version = "0.6.19", optional = true }
 auto-deref = { path = "../auto-deref", optional = true }
 chess = { path = "../chess" }
-clap = { version = "4.4.10", features = ["derive"] }
+clap = { version = "4.4.11", features = ["derive"] }
 confy = {  version = "0.5.1" }
 dioxus = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-desktop = { git = "https://github.com/OxideOps/dioxus.git", optional = true }
