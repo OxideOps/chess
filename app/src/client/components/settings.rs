@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::client::storage;
 use crate::common::theme::ThemeType;
 
+#[cfg(feature = "desktop")]
 const APP_NAME: &str = "oxide-chess";
+#[cfg(feature = "desktop")]
 const CONFIG_NAME: &str = "themes";
 
 #[component]
