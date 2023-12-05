@@ -6,6 +6,26 @@ pub enum ThemeType {
     Piece,
 }
 
+impl std::fmt::Display for ThemeType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::Board => "board_theme",
+            Self::Piece => "piece_theme",
+        };
+        write!(f, "{str}")
+    }
+}
+
+impl ThemeType {
+    #[cfg(feature = "web")]
+    pub fn default_theme(&self) -> String {
+        match self {
+            Self::Board => "qootee".to_string(),
+            Self::Piece => "merida".to_string(),
+        }
+    }
+}
+
 #[cfg(not(feature = "web"))]
 pub async fn get_themes(theme_type: ThemeType) -> std::io::Result<Vec<String>> {
     let mut themes = Vec::new();
