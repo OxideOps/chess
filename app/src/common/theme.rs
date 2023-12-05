@@ -1,9 +1,26 @@
+use dioxus::html::KeyCode::P;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ThemeType {
     Board,
     Piece,
+}
+
+impl ThemeType {
+    pub(crate) fn default_theme(&self) -> String {
+        match self {
+            ThemeType::Board => "qootee".into(),
+            ThemeType::Piece => "merida".into(),
+        }
+    }
+
+    pub(crate) fn to_string(&self) -> String {
+        match self {
+            ThemeType::Board => "board_theme".into(),
+            ThemeType::Piece => "piece_theme".into(),
+        }
+    }
 }
 
 #[cfg(not(feature = "web"))]

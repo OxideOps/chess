@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "web")]
+use wasm_cookies::{self, CookieOptions};
 
 use crate::common::theme::ThemeType;
 
@@ -26,6 +28,8 @@ pub(crate) fn Settings(
                                 board_theme.set(event.value.clone());
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Board, &event.value);
+                                #[cfg(feature = "web")]
+                                wasm_cookies::set(&ThemeType::Board.to_string(), &event.value, &CookieOptions::default());
                             },
                             for theme in board_theme_list.value().into_iter().flatten() {
                                 option {
@@ -46,6 +50,8 @@ pub(crate) fn Settings(
                                 piece_theme.set(event.value.clone());
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
+                                #[cfg(feature = "web")]
+                                wasm_cookies::set(&ThemeType::Board.to_string(), &event.value, &CookieOptions::default());
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {
                                 option {
@@ -76,7 +82,19 @@ impl Default for ThemeConfig {
     }
 }
 
-pub fn load_theme_from_config(theme_type: ThemeType) -> String {
+#[cfg(feature = "web")]
+pub fn load_theme(theme_type: ThemeType) -> String {
+    if let Some(result) = wasm_cookies::get(&theme_type.to_string()) {
+        if let Ok(theme) = result {
+            return theme;
+        }
+    }
+
+    theme_type.default_theme()
+}
+
+#[cfg(feature = "desktop")]
+pub fn load_theme(theme_type: ThemeType) -> String {
     let cfg: ThemeConfig = confy::load(APP_NAME, CONFIG_NAME).unwrap_or_default();
 
     match theme_type {

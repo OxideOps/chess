@@ -40,10 +40,11 @@ wasm-bindgen-futures = { version = "0.4.39", optional = true }
 dotenvy = "0.15.7"
 rand = "0.8.5"
 palette = {  version = "0.7.3", optional = true }
+wasm-cookies = { version = "0.2.1", optional = true }
 
 [features]
 desktop = ["async-process", "async-std", "auto-deref", "dioxus-desktop", "num_cpus", "palette", "sys-info"]
-web = ["async-std", "auto-deref", "dioxus-web", "js-sys", "palette", "wasm-bindgen", "wasm-bindgen-futures"]
+web = ["async-std", "auto-deref", "dioxus-web", "js-sys", "palette", "wasm-bindgen", "wasm-bindgen-futures", "wasm-cookies"]
 ssr = [
     "tokio/full", "tower-http/fs", "tower",
     "dioxus-fullstack/axum", "axum",
