@@ -5,6 +5,8 @@ mod helpers;
 mod mouse_click;
 pub mod shared_states;
 mod stockfish;
+#[cfg(feature = "web")]
+mod storage;
 mod system_info;
 
 pub fn launch() {
