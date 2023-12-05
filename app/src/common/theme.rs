@@ -1,9 +1,30 @@
+use std::fmt::Formatter;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ThemeType {
     Board,
     Piece,
+}
+
+impl std::fmt::Display for ThemeType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::Board => "board_theme",
+            Self::Piece => "piece_theme",
+        };
+        write!(f, "{str}")
+    }
+}
+
+impl ThemeType {
+    pub fn default_theme(&self) -> String {
+        match self {
+            Self::Board => "qootee".to_string(),
+            Self::Piece => "merida".to_string(),
+        }
+    }
 }
 
 #[cfg(not(feature = "web"))]

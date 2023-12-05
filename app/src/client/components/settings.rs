@@ -1,6 +1,8 @@
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "web")]
+use crate::client::storage;
 use crate::common::theme::ThemeType;
 
 const APP_NAME: &str = "oxide-chess";
@@ -26,6 +28,8 @@ pub(crate) fn Settings(
                                 board_theme.set(event.value.clone());
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Board, &event.value);
+                                #[cfg(feature = "web")]
+                                storage::set_item(&ThemeType::Board.to_string(), &event.value);
                             },
                             for theme in board_theme_list.value().into_iter().flatten() {
                                 option {
@@ -46,6 +50,8 @@ pub(crate) fn Settings(
                                 piece_theme.set(event.value.clone());
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
+                                #[cfg(feature = "web")]
+                                storage::set_item(&ThemeType::Piece.to_string(), &event.value);
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {
                                 option {
@@ -76,13 +82,19 @@ impl Default for ThemeConfig {
     }
 }
 
-pub fn load_theme_from_config(theme_type: ThemeType) -> String {
+#[cfg(feature = "desktop")]
+pub fn load_theme(theme_type: ThemeType) -> String {
     let cfg: ThemeConfig = confy::load(APP_NAME, CONFIG_NAME).unwrap_or_default();
 
     match theme_type {
         ThemeType::Board => cfg.board_theme,
         ThemeType::Piece => cfg.piece_theme,
     }
+}
+
+#[cfg(feature = "web")]
+pub fn load_theme(theme_type: ThemeType) -> String {
+    storage::get_item(&theme_type.to_string()).unwrap_or_else(|| theme_type.default_theme())
 }
 
 #[cfg(feature = "desktop")]

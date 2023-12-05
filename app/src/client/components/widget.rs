@@ -6,15 +6,15 @@ use super::{
         components::BoardButtons,
         shared_states::{Analyze, BoardSize},
     },
-    settings::{load_theme_from_config, Settings},
+    settings::{load_theme, Settings},
     Board, EvalBar, InfoBar,
 };
 use crate::common::theme::ThemeType;
 
 #[component]
 pub(crate) fn Widget(cx: Scope) -> Element {
-    let board_theme = use_state(cx, || load_theme_from_config(ThemeType::Board));
-    let piece_theme = use_state(cx, || load_theme_from_config(ThemeType::Piece));
+    let board_theme = use_state(cx, || load_theme(ThemeType::Board));
+    let piece_theme = use_state(cx, || load_theme(ThemeType::Piece));
     let analyze = **use_shared_state::<Analyze>(cx)?.read();
     let board_size = **use_shared_state::<BoardSize>(cx)?.read();
     let white_player = use_lock(cx, || Player::with_color(Color::White));
