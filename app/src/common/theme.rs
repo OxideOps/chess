@@ -1,5 +1,3 @@
-use std::fmt::Formatter;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -9,7 +7,7 @@ pub enum ThemeType {
 }
 
 impl std::fmt::Display for ThemeType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
             Self::Board => "board_theme",
             Self::Piece => "piece_theme",
