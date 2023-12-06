@@ -54,6 +54,7 @@ pub(crate) struct BoardHooks<'a> {
     pub(crate) hovered_position: &'a UseState<Option<Position>>,
     pub(crate) board_size: u32,
     pub(crate) perspective: Color,
+    pub(crate) selected_squares: &'a UseRef<Vec<Position>>,
 }
 
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
@@ -72,6 +73,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         hovered_position: use_state::<Option<Position>>(cx, || None),
         board_size: **use_shared_state::<BoardSize>(cx)?.read(),
         perspective: **use_shared_state::<Perspective>(cx)?.read(),
+        selected_squares: use_ref::<Vec<Position>>(cx, Vec::new),
     };
 
     use_effect(cx, use_shared_state::<Analyze>(cx).unwrap(), |analyze| {
@@ -119,6 +121,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     class: class,
                     position: pos,
                     hovered: *hooks.hovered_position == Some(pos) && is_valid_destination(&hooks, pos),
+                    selected: hooks.selected_squares.read().contains(&pos)
                 }
             }
             // pieces
