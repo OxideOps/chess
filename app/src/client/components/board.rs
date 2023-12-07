@@ -225,6 +225,15 @@ fn handle_on_key_down(cx: Scope<BoardProps>, hooks: &BoardHooks, event: Event<Ke
     };
 }
 
+fn can_move(props: &BoardProps, hooks: &BoardHooks) -> bool {
+    let (current_player_kind, opponent_player_kind) = match hooks.game.read().get_current_player() {
+        Color::White => (props.white_player_kind, props.black_player_kind),
+        Color::Black => (props.black_player_kind, props.white_player_kind),
+    };
+    current_player_kind == PlayerKind::Local
+        && (!hooks.game.read().is_replaying() || opponent_player_kind == PlayerKind::Local)
+}
+
 fn drop_piece(
     props: &BoardProps,
     hooks: &BoardHooks,
@@ -233,15 +242,12 @@ fn drop_piece(
 ) {
     let from = _to_position(hooks, point);
     let to = _to_position(hooks, &event.element_coordinates());
-    let (current_player_kind, opponent_player_kind) = match hooks.game.read().get_current_player() {
-        Color::White => (props.white_player_kind, props.black_player_kind),
-        Color::Black => (props.black_player_kind, props.white_player_kind),
+    let opponent_player_kind = match hooks.game.read().get_current_player() {
+        Color::White => props.black_player_kind,
+        Color::Black => props.white_player_kind,
     };
     let mv = Move::new(from, to);
-    if current_player_kind == PlayerKind::Local
-        && (!hooks.game.read().is_replaying() || opponent_player_kind == PlayerKind::Local)
-        && hooks.game.read().is_move_valid(&mv).is_ok()
-    {
+    if can_move(props, hooks) && hooks.game.read().is_move_valid(&mv).is_ok() {
         hooks.game.write().move_piece(from, to).ok();
         if opponent_player_kind == PlayerKind::Remote {
             spawn(async move {
@@ -332,14 +338,10 @@ pub(crate) fn get_center(board_size: u32, perspective: Color, pos: &Position) ->
     point
 }
 
-fn is_local_game(props: &BoardProps) -> bool {
-    PlayerKind::is_local_game(props.white_player_kind, props.black_player_kind)
-}
-
 fn get_highlighted_squares_info(props: &BoardProps, hooks: &BoardHooks) -> Vec<(Position, String)> {
     let game = hooks.game.read();
     let mut info = game.get_highlighted_squares_info();
-    if (!game.is_replaying() || is_local_game(props))
+    if can_move(props, hooks)
         && let Some(pos) = &*hooks.selected_piece.read()
     {
         info.extend(
