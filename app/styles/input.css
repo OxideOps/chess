@@ -86,6 +86,10 @@ body {
     @apply border-4 border-yellow-300/90 pointer-events-none ;
 }
 
+.selected-square {
+    @apply absolute bg-red-400 pointer-events-none ;
+}
+
 td {
     @apply pr-4 ;
 }
