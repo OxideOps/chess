@@ -12,6 +12,8 @@ use super::{
 const WIDGET_HEIGHT: u32 = 800;
 
 pub(crate) fn App(cx: Scope) -> Element {
+    log::info!("app launched");
+
     use_shared_state_provider(cx, || Eval::Centipawns(0));
     use_shared_state_provider(cx, || GameId(None));
     use_shared_state_provider(cx, Game::new);
