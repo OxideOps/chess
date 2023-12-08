@@ -121,7 +121,6 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
                     class: class,
                     position: pos,
                     hovered: *hooks.hovered_position == Some(pos) && is_valid_destination(&hooks, pos),
-                    selected: hooks.selected_squares.read().contains(&pos)
                 }
             }
             // pieces
@@ -368,5 +367,12 @@ fn get_highlighted_squares_info(props: &BoardProps, hooks: &BoardHooks) -> Vec<(
                 .map(|pos| (pos, "destination-square".to_string())),
         );
     }
+    info.extend(
+        hooks
+            .selected_squares
+            .read()
+            .iter()
+            .map(|&pos| (pos, "selected-square".to_string())),
+    );
     info
 }
