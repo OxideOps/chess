@@ -298,7 +298,22 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
         if mouse_down.kind.contains(MouseButton::Primary) {
             drop_piece(props, hooks, &event, &mouse_down.point);
         } else if mouse_down.kind.contains(MouseButton::Secondary) {
-            complete_arrow(hooks);
+            let from = _to_position(hooks, &mouse_down.point);
+            let to = _to_position(hooks, &event.element_coordinates());
+            if from == to {
+                if let Some(index) = hooks
+                    .selected_squares
+                    .read()
+                    .iter()
+                    .position(|&pos| pos == from)
+                {
+                    hooks.selected_squares.write().remove(index);
+                } else {
+                    hooks.selected_squares.write().push(from)
+                }
+            } else {
+                complete_arrow(hooks);
+            }
         }
         hooks.mouse_down_state.set(None);
         hooks.selected_piece.set(None);
