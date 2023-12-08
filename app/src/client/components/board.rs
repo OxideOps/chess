@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use async_std::channel::{unbounded, Receiver, Sender};
 use chess::{Color, Game, Move, Piece, PlayerKind, Position};
 use dioxus::{
@@ -54,6 +56,7 @@ pub(crate) struct BoardHooks<'a> {
     pub(crate) hovered_position: &'a UseState<Option<Position>>,
     pub(crate) board_size: u32,
     pub(crate) perspective: Color,
+    pub(crate) selected_squares: &'a UseRef<HashSet<Position>>,
 }
 
 pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
@@ -72,6 +75,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
         hovered_position: use_state::<Option<Position>>(cx, || None),
         board_size: **use_shared_state::<BoardSize>(cx)?.read(),
         perspective: **use_shared_state::<Perspective>(cx)?.read(),
+        selected_squares: use_ref::<HashSet<Position>>(cx, HashSet::new),
     };
 
     use_effect(cx, use_shared_state::<Analyze>(cx).unwrap(), |analyze| {
@@ -286,7 +290,6 @@ fn handle_on_mouse_down_event(hooks: &BoardHooks, event: Event<MouseData>) {
             .selected_piece
             .set(Some(_to_position(hooks, &mouse_down.point)));
         block_on(send_dragging_point(hooks, event));
-        hooks.arrows.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = _to_position(hooks, &mouse_down.point);
         hooks
@@ -300,8 +303,21 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
     if let Some(mouse_down) = hooks.mouse_down_state.get() {
         if mouse_down.kind.contains(MouseButton::Primary) {
             drop_piece(props, hooks, &event, &mouse_down.point);
+            hooks.arrows.write().clear();
+            hooks.selected_squares.write().clear();
         } else if mouse_down.kind.contains(MouseButton::Secondary) {
-            complete_arrow(hooks);
+            let from = _to_position(hooks, &mouse_down.point);
+            let to = _to_position(hooks, &event.element_coordinates());
+            if from == to {
+                let pos_opt = hooks.selected_squares.read().get(&from).cloned();
+                if let Some(pos) = pos_opt {
+                    hooks.selected_squares.write().remove(&pos);
+                } else {
+                    hooks.selected_squares.write().insert(from);
+                }
+            } else {
+                complete_arrow(hooks);
+            }
         }
         hooks.mouse_down_state.set(None);
         hooks.selected_piece.set(None);
@@ -350,5 +366,12 @@ fn get_highlighted_squares_info(props: &BoardProps, hooks: &BoardHooks) -> Vec<(
                 .map(|pos| (pos, "destination-square".to_string())),
         );
     }
+    info.extend(
+        hooks
+            .selected_squares
+            .read()
+            .iter()
+            .map(|&pos| (pos, "selected-square".to_string())),
+    );
     info
 }
