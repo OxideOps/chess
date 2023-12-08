@@ -21,7 +21,7 @@ pub(crate) fn BoardSquare(
     let selected_class = if *selected { "selected-square" } else { "" };
     cx.render(rsx! {
         div {
-            class: "{class} {border_class}",
+            class: "{class} {border_class} {selected_class}",
             style: "
                 left: {top_left.x}px;
                 top: {top_left.y}px;
