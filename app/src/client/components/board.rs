@@ -289,6 +289,7 @@ fn handle_on_mouse_down_event(hooks: &BoardHooks, event: Event<MouseData>) {
             .set(Some(_to_position(hooks, &mouse_down.point)));
         block_on(send_dragging_point(hooks, event));
         hooks.arrows.write().clear();
+        hooks.selected_squares.write().clear();
     } else if mouse_down.kind.contains(MouseButton::Secondary) {
         let pos = _to_position(hooks, &mouse_down.point);
         hooks
@@ -306,12 +307,12 @@ fn handle_on_mouse_up_event(props: &BoardProps, hooks: &BoardHooks, event: Event
             let from = _to_position(hooks, &mouse_down.point);
             let to = _to_position(hooks, &event.element_coordinates());
             if from == to {
-                if let Some(index) = hooks
+                let index_opt = hooks
                     .selected_squares
                     .read()
                     .iter()
-                    .position(|&pos| pos == from)
-                {
+                    .position(|&pos| pos == from);
+                if let Some(index) = index_opt {
                     hooks.selected_squares.write().remove(index);
                 } else {
                     hooks.selected_squares.write().push(from)
