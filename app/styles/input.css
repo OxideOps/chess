@@ -63,7 +63,11 @@ body {
 }
 
 .board-square {
-    @apply absolute pointer-events-none px-1 text-black text-sm ;
+    @apply absolute box-border pointer-events-none px-1 text-transparent ;
+}
+
+.text-square {
+    @apply text-black text-sm ;
 }
 
 .moved-square {
@@ -87,7 +91,7 @@ body {
 }
 
 .border-hover-square {
-    @apply border-4 border-yellow-300/90 ;
+    @apply border-4 border-yellow-300/90 p-0 ;
 }
 
 .selected-square {
