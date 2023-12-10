@@ -373,5 +373,6 @@ fn get_highlighted_squares_info(props: &BoardProps, hooks: &BoardHooks) -> Vec<(
             .iter()
             .map(|&pos| (pos, "selected-square".to_string())),
     );
+    info.extend((0..8).flat_map(|x| (0..8).map(move |y| (Position::new(x, y), "".into()))));
     info
 }

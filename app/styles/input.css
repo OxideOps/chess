@@ -62,32 +62,36 @@ body {
     -webkit-user-drag: none;
 }
 
+.board-square {
+    @apply absolute pointer-events-none px-1 text-black text-sm ;
+}
+
 .moved-square {
-    @apply absolute bg-yellow-500/50 pointer-events-none ;
+    @apply bg-yellow-500/50 ;
 }
 
 .check-square {
-    @apply absolute bg-red-600/70 pointer-events-none ;
+    @apply bg-red-600/70 ;
 }
 
 .checkmate-square {
-    @apply absolute bg-black/70 pointer-events-none ;
+    @apply bg-black/70 ;
 }
 
 .transparent-square {
-    @apply absolute bg-transparent pointer-events-none ;
+    @apply bg-transparent ;
 }
 
 .destination-square {
-    @apply absolute bg-green-700/40 pointer-events-none ;
+    @apply bg-green-700/40 ;
 }
 
 .border-hover-square {
-    @apply border-4 border-yellow-300/90 pointer-events-none ;
+    @apply border-4 border-yellow-300/90 ;
 }
 
 .selected-square {
-    @apply absolute bg-red-400 pointer-events-none ;
+    @apply bg-red-400 ;
 }
 
 td {
