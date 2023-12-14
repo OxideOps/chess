@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 
 use crate::{
     client::shared_states::{Analyze, BoardSize, GameId, Perspective},
-    server::server_functions::{accounts, setup_remote_game},
+    server::server_functions::setup_remote_game,
 };
 
 #[component]
