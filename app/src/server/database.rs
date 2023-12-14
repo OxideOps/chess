@@ -1,13 +1,12 @@
 use std::env;
 
 use once_cell::sync::OnceCell;
-use sqlx::{migrate::Migrator, pool::PoolOptions, Error, Pool, Postgres};
+use sqlx::{pool::PoolOptions, Error, Pool, Postgres};
 
-static MIGRATOR: Migrator = sqlx::migrate!();
-static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
+pub static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 
 async fn run_migrations() -> Result<(), Error> {
-    Ok(MIGRATOR.run(POOL.get().unwrap()).await?)
+    Ok(sqlx::migrate!().run(POOL.get().unwrap()).await?)
 }
 
 async fn init_db_pool() -> Result<(), Error> {
