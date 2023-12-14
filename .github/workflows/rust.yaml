@@ -30,5 +30,5 @@ jobs:
 
     - name: Check Server
       env:
-        DATABASE_URL: "postgres://oxide_chess:ewKHyheqSvChfYy@[2a09:8280:1::42:b939]:5432/oxide_chess?sslmode=disable"
+        DATABASE_URL: "postgres://oxide_chess:ewKHyheqSvChfYy@137.66.8.197:5432/oxide_chess?sslmode=disable"
       run: cargo clippy -F ssr -- -D warnings
