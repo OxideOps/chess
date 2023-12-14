@@ -67,18 +67,6 @@ pub(crate) fn BoardButtons(
                     }
                 }
             }
-            button { class: "button",
-                onclick: |_| {
-                    cx.spawn(async {
-                        const USERNAME: &str = "Dillon Roller";
-                        const PASSWORD: &str = "password";
-
-                        accounts::create_account(USERNAME.into(), PASSWORD.into()).await.unwrap();
-                        assert!(accounts::verify_account(USERNAME.into(), PASSWORD.into()).await.unwrap())
-                    })
-                },
-                "Test account"
-            }
         }
     })
 }
