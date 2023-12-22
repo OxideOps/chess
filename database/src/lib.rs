@@ -5,11 +5,13 @@ use sqlx::{pool::PoolOptions, Error, Pool, Postgres};
 
 pub static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 
-async fn run_migrations() -> Result<(), Error> {
+pub async fn run_migrations() -> Result<(), Error> {
     Ok(sqlx::migrate!().run(POOL.get().unwrap()).await?)
 }
 
 async fn init_db_pool() -> Result<(), Error> {
+    dotenvy::dotenv().ok();
+
     POOL.set(
         PoolOptions::<Postgres>::new()
             .max_connections(5)
@@ -22,8 +24,7 @@ async fn init_db_pool() -> Result<(), Error> {
 }
 
 pub async fn connect() -> Result<(), Error> {
-    init_db_pool().await?;
-    run_migrations().await
+    init_db_pool().await
 }
 
 pub async fn create_account(username: &str, password: &str) -> Result<(), Error> {

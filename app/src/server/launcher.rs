@@ -3,7 +3,6 @@ use axum::{
     routing::get,
     ServiceExt,
 };
-use database;
 use dioxus_fullstack::prelude::*;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
