@@ -9,8 +9,6 @@ fn main() {
         return;
     }
     dotenvy::dotenv().ok();
-    #[cfg(feature = "ssr")]
-    migration::run();
 
     let mut commands = get_tailwind_commands();
     if cfg!(feature = "ssr") {

@@ -3,11 +3,12 @@ use axum::{
     routing::get,
     ServiceExt,
 };
+use database;
 use dioxus_fullstack::prelude::*;
 use tower::ServiceExt as OtherServiceExt;
 use tower_http::services::ServeDir;
 
-use super::{database, game_socket};
+use super::game_socket;
 
 pub fn launch() {
     if dotenvy::dotenv().is_err() {

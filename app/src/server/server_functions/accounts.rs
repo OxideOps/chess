@@ -2,7 +2,9 @@ use dioxus_fullstack::prelude::*;
 
 #[server(CreateAccount, "/api")]
 pub async fn create_account(username: String, password: String) -> Result<(), ServerFnError> {
-    use crate::server::{auth, database};
+    use database;
+
+    use crate::server::auth;
 
     let hashed_password = auth::hash_password(&password).unwrap();
     sqlx::query!(

@@ -1,8 +1,6 @@
 #[cfg(feature = "ssr")]
 mod auth;
 #[cfg(feature = "ssr")]
-mod database;
-#[cfg(feature = "ssr")]
 mod game_socket;
 #[cfg(feature = "ssr")]
 mod launcher;
