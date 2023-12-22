@@ -25,3 +25,26 @@ pub async fn connect() -> Result<(), Error> {
     init_db_pool().await?;
     run_migrations().await
 }
+
+pub async fn create_account(username: &str, password: &str) -> Result<(), Error> {
+    sqlx::query!(
+        "INSERT INTO accounts (username, password) VALUES ($1, $2)",
+        username,
+        password,
+    )
+    .execute(POOL.get().unwrap())
+    .await?;
+
+    Ok(())
+}
+
+pub async fn fetch_password(username: &str) -> Result<String, Error> {
+    let record = sqlx::query!(
+        "SELECT password FROM accounts WHERE username = $1",
+        username
+    )
+    .fetch_one(POOL.get().unwrap())
+    .await?;
+
+    Ok(record.password)
+}
