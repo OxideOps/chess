@@ -17,8 +17,6 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v3
@@ -30,6 +28,8 @@ jobs:
 
       - name: Run Migration
         run: cargo run -p database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
