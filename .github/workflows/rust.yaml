@@ -7,13 +7,13 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/oxideops/oxide-chess:main
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -21,7 +21,7 @@ jobs:
 
     - name: Check Formatting
       run: cargo fmt -- --check
-      
+
     - name: Check Desktop
       run: cargo clippy -F desktop -- -D warnings
 
@@ -29,6 +29,7 @@ jobs:
       run: cargo clippy -F web -- -D warnings
 
     - name: Check Server
-      env:
-        DATABASE_URL: "postgres://oxide_chess:ewKHyheqSvChfYy@137.66.8.197:5432/oxide_chess?sslmode=disable"
       run: cargo clippy -F ssr -- -D warnings
+
+    - name: Check Database
+      run: cargo clippy -p database -- -D warnings
