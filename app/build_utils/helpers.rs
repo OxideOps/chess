@@ -47,11 +47,10 @@ pub fn get_tailwind_commands() -> Vec<CommandConfig> {
     commands
 }
 
-pub fn get_stockfish_commands(wasm: bool) -> Vec<CommandConfig> {
+pub fn get_stockfish_commands() -> Vec<CommandConfig> {
     if cfg!(unix) {
         vec![CommandConfig {
             program: get_app_path().join("build-stockfish.sh"),
-            args: if wasm { vec!["--wasm".into()] } else { vec![] },
             ..Default::default()
         }]
     } else {

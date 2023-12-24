@@ -11,10 +11,9 @@ fn main() {
 
     let mut commands = get_tailwind_commands();
     if cfg!(feature = "ssr") {
-        commands.extend(get_stockfish_commands(true));
         commands.extend(get_trunk_commands());
     } else {
-        commands.extend(get_stockfish_commands(false));
+        commands.extend(get_stockfish_commands());
     }
     CommandConfig::run_build_commands(&commands);
 }
