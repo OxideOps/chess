@@ -12,7 +12,8 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -28,11 +29,7 @@ jobs:
       run: cargo clippy -F web -- -D warnings
 
     - name: Check Server
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
       run: cargo clippy -F ssr -- -D warnings
 
     - name: Check Database
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
       run: cargo clippy -p database -- -D warnings
