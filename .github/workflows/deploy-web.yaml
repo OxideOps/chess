@@ -1,11 +1,14 @@
 name: Build and Deploy
+
 on:
   workflow_dispatch:
   push:
     branches: [main]
+
 permissions:
   contents: write
   packages: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -14,13 +17,23 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
+
       - name: Build Server
         run: cargo build --features ssr --release
+
+      - name: Run Migration
+        run: cargo run -p database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy
+
+      - name: Deploy Application
+        run: flyctl deploy
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -8,9 +8,6 @@ fn main() {
     if env::var("TARGET").map_or(false, |target| target.contains("wasm32")) {
         return;
     }
-    dotenvy::dotenv().ok();
-    #[cfg(feature = "ssr")]
-    migration::run();
 
     let mut commands = get_tailwind_commands();
     if cfg!(feature = "ssr") {

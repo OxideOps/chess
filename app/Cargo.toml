@@ -13,6 +13,7 @@ auto-deref = { path = "../auto-deref", optional = true }
 chess = { path = "../chess" }
 clap = { version = "4.4.11", features = ["derive"] }
 confy = {  version = "0.5.1" }
+database = { path = "../database" , optional = true }
 dioxus = { git = "https://github.com/OxideOps/dioxus.git" }
 dioxus-desktop = { git = "https://github.com/OxideOps/dioxus.git", optional = true }
 dioxus-fullstack = { git = "https://github.com/OxideOps/dioxus.git" }
@@ -43,17 +44,11 @@ palette = {  version = "0.7.3", optional = true }
 bcrypt = "0.15.0"
 web-sys = "0.3.66"
 
-[build-dependencies]
-tokio = "1.34.0"
-sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "migrate"] }
-dotenvy = "0.15.7"
-
-
 [features]
 desktop = ["async-process", "async-std", "auto-deref", "dioxus-desktop", "num_cpus", "palette", "sys-info"]
 web = ["async-std", "auto-deref", "dioxus-web", "js-sys", "palette", "wasm-bindgen", "wasm-bindgen-futures", "web-sys/Storage"]
 ssr = [
     "tokio/full", "tower-http/fs", "tower",
     "dioxus-fullstack/axum", "axum",
-    "sqlx/postgres", "sqlx/runtime-tokio-rustls", "sqlx/migrate"
+    "database"
 ]

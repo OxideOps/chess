@@ -4,5 +4,6 @@ members = [
     "auto-deref",
     "app",
     "chess",
+    "database",
 ]
 default-members = ["app"]
