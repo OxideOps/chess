@@ -140,6 +140,7 @@ dependencies = [
  "dioxus-desktop",
  "dioxus-fullstack",
  "dioxus-logger",
+ "dioxus-router",
  "dioxus-web",
  "dotenvy",
  "futures",

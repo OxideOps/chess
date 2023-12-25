@@ -1,11 +1,13 @@
 use chess::{Color, Game};
 use dioxus::prelude::*;
+use dioxus_router::prelude::*;
 
 use super::{
     super::{
         shared_states::{Analyze, BoardSize, GameId, Perspective},
         stockfish::Eval,
     },
+    router::Route,
     Widget,
 };
 
@@ -23,6 +25,6 @@ pub(crate) fn App(cx: Scope) -> Element {
 
     cx.render(rsx! {
         style { include_str!("../../../styles/output.css") }
-        Widget {}
+        Router::<Route> {}
     })
 }
