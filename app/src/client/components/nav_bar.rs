@@ -28,6 +28,13 @@ pub(crate) fn NavBar(cx: Scope) -> Element {
                     li {
                         Link {
                             class: "nav-link",
+                            to: Route::Puzzles {},
+                            "Puzzles"
+                        }
+                    }
+                    li {
+                        Link {
+                            class: "nav-link",
                             to: Route::About {},
                             "About"
                         }
