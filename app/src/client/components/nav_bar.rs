@@ -1,10 +1,10 @@
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
-use super::router::Route;
+use crate::client::router::Route;
 
 #[component]
-pub(super) fn NavBar(cx: Scope) -> Element {
+pub(crate) fn NavBar(cx: Scope) -> Element {
     render! {
         nav {
             div {
@@ -36,5 +36,34 @@ pub(super) fn NavBar(cx: Scope) -> Element {
             }
         }
         Outlet::<Route> {}
+    }
+}
+
+#[component]
+pub(crate) fn Home(cx: Scope) -> Element {
+    render! {
+        h1 { "Home Page" }
+    }
+}
+
+#[component]
+pub(crate) fn About(cx: Scope) -> Element {
+    render! {
+        h1 { "About Page" }
+    }
+}
+
+#[component]
+pub(crate) fn Puzzles(cx: Scope) -> Element {
+    render! {
+        h1 { "Puzzles Page" }
+    }
+}
+
+#[component]
+pub(crate) fn PageNotFound(cx: Scope, route: Vec<String>) -> Element {
+    render! {
+        h1 { "Page not found" }
+        p { "The page you requested doesn't exist: {route:?}." }
     }
 }

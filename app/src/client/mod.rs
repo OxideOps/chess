@@ -8,6 +8,7 @@ mod stockfish;
 #[cfg(feature = "web")]
 mod storage;
 mod system_info;
+mod router;
 
 pub fn launch() {
     #[cfg(feature = "desktop")]

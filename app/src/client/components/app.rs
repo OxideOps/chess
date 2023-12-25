@@ -2,12 +2,10 @@ use chess::{Color, Game};
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
-use super::{
-    super::{
-        shared_states::{Analyze, BoardSize, GameId, Perspective},
-        stockfish::Eval,
-    },
+use super::super::{
     router::Route,
+    shared_states::{Analyze, BoardSize, GameId, Perspective},
+    stockfish::Eval,
 };
 
 const WIDGET_HEIGHT: u32 = 800;
