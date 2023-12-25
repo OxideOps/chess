@@ -8,7 +8,6 @@ use super::{
         stockfish::Eval,
     },
     router::Route,
-    Widget,
 };
 
 const WIDGET_HEIGHT: u32 = 800;
