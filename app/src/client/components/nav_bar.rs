@@ -7,9 +7,32 @@ use super::router::Route;
 pub(super) fn NavBar(cx: Scope) -> Element {
     render! {
         nav {
-            ul {
-                li { Link { to: Route::Home {}, "Home" } }
-                li { Link { to: Route::Widget {}, "Game" } }
+            div {
+                class: "nav-bar",
+                ul {
+                    class: "flex",
+                    li {
+                        Link {
+                            class: "nav-link",
+                            to: Route::Home {},
+                            "Home"
+                        }
+                    }
+                    li {
+                        Link {
+                            class: "nav-link",
+                            to: Route::Widget {},
+                            "Game"
+                        }
+                    }
+                    li {
+                        Link {
+                            class: "nav-link",
+                            to: Route::About {},
+                            "About"
+                        }
+                    }
+                }
             }
         }
         Outlet::<Route> {}
