@@ -37,6 +37,14 @@ body {
     @apply flex justify-center space-x-1 ;
 }
 
+.nav-bar {
+    @apply bg-gray-800 text-white p-4 flex justify-between items-center ;
+}
+
+.nav-link {
+    @apply text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:bg-gray-700 ;
+}
+
 .board-container {
     @apply relative z-0 outline-none shadow-none ;
 }

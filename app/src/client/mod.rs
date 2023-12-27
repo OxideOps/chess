@@ -3,6 +3,7 @@ mod components;
 mod game_socket;
 mod helpers;
 mod mouse_click;
+mod router;
 pub mod shared_states;
 mod stockfish;
 #[cfg(feature = "web")]

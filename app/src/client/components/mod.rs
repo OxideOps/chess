@@ -6,6 +6,7 @@ mod board_buttons;
 mod board_square;
 mod eval_bar;
 mod info_bar;
+pub(super) mod nav_bar;
 mod piece;
 mod round_list;
 mod settings;
