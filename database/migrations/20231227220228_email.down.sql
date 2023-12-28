@@ -1,1 +1,1 @@
-ALTER TABLE account DROP COLUMN email;
+ALTER TABLE accounts DROP COLUMN email;
