@@ -18,6 +18,13 @@ pub(crate) fn NavBar(cx: Scope) -> Element {
                             "Game"
                         }
                     }
+                    li {
+                        Link {
+                            class: "nav-link",
+                            to: Route::Settings {},
+                            "Settings"
+                        }
+                    }
                 }
             }
         }

@@ -27,6 +27,7 @@ use super::super::{
         Eval,
     },
 };
+use crate::client::shared_states::Settings;
 
 pub(crate) type Channel<T> = (Sender<T>, Receiver<T>);
 
@@ -39,14 +40,13 @@ static DRAG_CHANNEL: Lazy<Channel<ElementPoint>> = Lazy::new(unbounded);
 pub(crate) struct BoardProps {
     white_player_kind: PlayerKind,
     black_player_kind: PlayerKind,
-    board_theme: String,
-    piece_theme: String,
 }
 
 #[derive(Clone, Copy)]
 pub(crate) struct BoardHooks<'a> {
     pub(crate) eval: &'a UseSharedState<Eval>,
     pub(crate) game: &'a UseSharedState<Game>,
+    pub(crate) settings: &'a UseSharedState<Settings>,
     pub(crate) mouse_down_state: &'a UseState<Option<MouseClick>>,
     pub(crate) selected_piece: &'a UseRef<Option<Position>>,
     pub(crate) arrows: &'a UseRef<Arrows>,
@@ -66,6 +66,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
     let hooks = BoardHooks {
         eval: use_shared_state::<Eval>(cx)?,
         game: use_shared_state::<Game>(cx)?,
+        settings: use_shared_state::<Settings>(cx)?,
         mouse_down_state: use_state::<Option<MouseClick>>(cx, || None),
         selected_piece: use_ref::<Option<Position>>(cx, || None),
         arrows: use_ref(cx, Arrows::default),
@@ -112,7 +113,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             onkeydown: move |event| handle_on_key_down(cx, &hooks, event),
             // board
             img {
-                src: "{get_board_image(&cx.props.board_theme)}",
+                src: "{get_board_image(&hooks.settings.read().board_theme)}",
                 class: "board",
                 width: "{hooks.board_size}",
                 height: "{hooks.board_size}"
@@ -128,7 +129,7 @@ pub(crate) fn Board(cx: Scope<BoardProps>) -> Element {
             // pieces
             for (piece, pos) in hooks.game.read().get_pieces() {
                 Piece {
-                    image: get_piece_image_file(&cx.props.piece_theme, piece),
+                    image: get_piece_image_file(&hooks.settings.read().piece_theme, piece),
                     top_left_starting: _to_point(&hooks, &pos),
                     is_dragging: hooks.mouse_down_state.as_ref().map_or(false, |mouse_down| {
                         mouse_down.kind.contains(MouseButton::Primary)

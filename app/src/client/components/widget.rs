@@ -6,15 +6,11 @@ use super::{
         components::BoardButtons,
         shared_states::{Analyze, BoardSize},
     },
-    settings::{self, Settings},
     Board, EvalBar, InfoBar,
 };
-use crate::common::theme::ThemeType;
 
 #[component]
 pub(crate) fn Widget(cx: Scope) -> Element {
-    let board_theme = use_state(cx, || settings::load_theme(ThemeType::Board));
-    let piece_theme = use_state(cx, || settings::load_theme(ThemeType::Piece));
     let analyze = **use_shared_state::<Analyze>(cx)?.read();
     let board_size = **use_shared_state::<BoardSize>(cx)?.read();
     let white_player = use_lock(cx, || Player::with_color(Color::White));
@@ -28,8 +24,6 @@ pub(crate) fn Widget(cx: Scope) -> Element {
                 Board {
                     white_player_kind: white_player_kind,
                     black_player_kind: black_player_kind,
-                    board_theme: board_theme.to_string(),
-                    piece_theme: piece_theme.to_string(),
                 }
                 BoardButtons {
                     white_player: white_player.to_owned(),
@@ -41,10 +35,6 @@ pub(crate) fn Widget(cx: Scope) -> Element {
             },
             InfoBar {
                 is_local_game: PlayerKind::is_local_game(white_player_kind, black_player_kind)
-            },
-            Settings {
-                board_theme: board_theme.to_owned(),
-                piece_theme: piece_theme.to_owned(),
             },
         }
     })
