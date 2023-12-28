@@ -4,7 +4,7 @@ use dioxus_router::prelude::*;
 
 use super::super::{
     router::Route,
-    shared_states::{Analyze, BoardSize, GameId, Perspective},
+    shared_states::{Analyze, BoardSize, GameId, Perspective, Settings},
     stockfish::Eval,
 };
 
@@ -19,6 +19,7 @@ pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || BoardSize(WIDGET_HEIGHT));
     use_shared_state_provider(cx, || Perspective(Color::White));
     use_shared_state_provider(cx, || Analyze(false));
+    use_shared_state_provider(cx, Settings::new);
 
     cx.render(rsx! {
         style { include_str!("../../../styles/output.css") }
