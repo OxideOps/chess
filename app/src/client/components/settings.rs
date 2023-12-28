@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "web")]
 use crate::client::storage;
-use crate::common::theme::ThemeType;
+use crate::{client::shared_states, common::theme::ThemeType};
 
 #[cfg(feature = "desktop")]
 const APP_NAME: &str = "oxide-chess";
@@ -11,11 +11,8 @@ const APP_NAME: &str = "oxide-chess";
 const CONFIG_NAME: &str = "themes";
 
 #[component]
-pub(crate) fn Settings(
-    cx: Scope,
-    board_theme: UseState<String>,
-    piece_theme: UseState<String>,
-) -> Element {
+pub(crate) fn Settings(cx: Scope) -> Element {
+    let settings = use_shared_state::<shared_states::Settings>(cx)?;
     let board_theme_list = get_theme_future(cx, ThemeType::Board);
     let piece_theme_list = get_theme_future(cx, ThemeType::Piece);
     cx.render(rsx! {
@@ -27,7 +24,7 @@ pub(crate) fn Settings(
                         select {
                             class: "select",
                             onchange: |event| {
-                                board_theme.set(event.value.clone());
+                                settings.write().board_theme = event.value.clone();
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Board, &event.value);
                                 #[cfg(feature = "web")]
@@ -36,7 +33,7 @@ pub(crate) fn Settings(
                             for theme in board_theme_list.value().into_iter().flatten() {
                                 option {
                                     value: "{theme}",
-                                    selected: **board_theme == *theme,
+                                    selected: settings.read().board_theme == *theme,
                                     "{theme}"
                                 }
                             }
@@ -49,7 +46,7 @@ pub(crate) fn Settings(
                         select {
                             class: "select",
                             onchange: |event| {
-                                piece_theme.set(event.value.clone());
+                                settings.write().piece_theme = event.value.clone();
                                 #[cfg(feature = "desktop")]
                                 save_theme_to_config(ThemeType::Piece, &event.value);
                                 #[cfg(feature = "web")]
@@ -58,7 +55,7 @@ pub(crate) fn Settings(
                             for theme in piece_theme_list.value().into_iter().flatten() {
                                 option {
                                     value: "{theme}",
-                                    selected: **piece_theme == *theme,
+                                    selected: settings.read().piece_theme == *theme,
                                     "{theme}"
                                 }
                             }
