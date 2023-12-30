@@ -7,7 +7,7 @@ pub(crate) fn SignUp(cx: Scope) -> Element {
     let email = use_state(cx, String::new);
 
     cx.render(rsx! {
-form {
+        form {
             class: "max-w-md mx-auto mt-10 bg-white p-8 border border-gray-300 rounded-lg shadow-sm",
             onsubmit: move |_e| {
                 log::info!("info");
