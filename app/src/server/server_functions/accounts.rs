@@ -19,3 +19,10 @@ pub async fn verify_account(username: String, password: String) -> Result<bool, 
 
     Ok(auth::verify_password(&password, &hashed_password)?)
 }
+
+#[server(ValidateEmail, "/api")]
+pub async fn check_email_exists_then_verify(email: String) -> Result<bool, ServerFnError> {
+    let email_info = check_if_email_exists::check_email(email.into()).await;
+
+    Ok(email_info.is_reachable)
+}
