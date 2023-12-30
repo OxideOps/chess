@@ -25,4 +25,5 @@ pub async fn check_email_exists_then_verify(email: String) -> Result<bool, Serve
     let email_info = check_if_email_exists::check_email(email.into()).await;
 
     Ok(email_info.is_reachable)
+    // then verify
 }
