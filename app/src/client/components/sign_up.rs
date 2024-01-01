@@ -1,7 +1,5 @@
 use dioxus::prelude::*;
 
-use crate::server::server_functions::accounts::check_email_exists_then_verify;
-
 #[component]
 pub(crate) fn SignUp(cx: Scope) -> Element {
     let username = use_state(cx, String::new);
@@ -14,7 +12,12 @@ pub(crate) fn SignUp(cx: Scope) -> Element {
             onsubmit: |_| {
                 to_owned![email];
                 cx.spawn(async move {
-                    assert!(check_email_exists_then_verify(email.to_string()).await.unwrap());
+                    if !mailchecker::is_valid(&email.to_string()) {
+                        log::error!("email is invalid: {email:?}");
+                    }
+                    else {
+                        log::info!("email: {email:?}");
+                    }
                 })
             },
             div {

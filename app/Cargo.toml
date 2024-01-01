@@ -44,7 +44,7 @@ palette = {  version = "0.7.3", optional = true }
 bcrypt = "0.15.0"
 web-sys = "0.3.66"
 dioxus-router = { git = "https://github.com/OxideOps/dioxus.git" }
-check-if-email-exists = "0.9.1"
+mailchecker = "6.0.1"
 
 [features]
 desktop = ["async-process", "async-std", "auto-deref", "dioxus-desktop", "num_cpus", "palette", "sys-info"]
