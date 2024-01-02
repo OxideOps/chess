@@ -6,14 +6,15 @@ pub async fn create_account(
     password: String,
     email: String,
 ) -> Result<(), ServerFnError> {
-    use crate::server::auth;
+    use crate::server::{auth, mailer};
 
     let hashed_password = auth::hash_password(&password).unwrap();
 
-    database::create_account(&username, &hashed_password, &email).await?;
+    let account_id = database::create_account(&username, &hashed_password, &email).await?;
 
-    // create token, get token from db (automatically created), send token to user, get token from user, validate token is correct from db
+    let token = database::create_email_verification_token(account_id).await?;
 
+    //mailer::send_verification_email(&email, &token).await;
     Ok(())
 }
 

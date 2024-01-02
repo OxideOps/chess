@@ -2,6 +2,7 @@ use std::env;
 
 use once_cell::sync::OnceCell;
 use sqlx::{pool::PoolOptions, Error, Pool, Postgres};
+use uuid::Uuid;
 
 pub static POOL: OnceCell<Pool<Postgres>> = OnceCell::new();
 
@@ -43,6 +44,40 @@ pub async fn create_account(username: &str, password: &str, email: &str) -> Resu
             .await?
             .id,
     )
+}
+
+pub async fn create_email_verification_token(account_id: i32) -> Result<Uuid, Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO email_verification_tokens 
+            (account_id, expires_at) 
+        VALUES 
+            ($1, CURRENT_TIMESTAMP + INTERVAL '24 hours')
+        "#,
+        account_id,
+    )
+    .execute(POOL.get().unwrap())
+    .await?;
+
+    // Retrieve the generated token from the database.
+    let row = sqlx::query!(
+        r#"
+        SELECT 
+            token 
+        FROM 
+            email_verification_tokens 
+        WHERE 
+            account_id = $1 
+        ORDER BY 
+            created_at DESC 
+        LIMIT 1
+        "#,
+        account_id
+    )
+    .fetch_one(POOL.get().unwrap())
+    .await?;
+
+    Ok(row.token)
 }
 
 pub async fn fetch_password(username: &str) -> Result<String, Error> {
