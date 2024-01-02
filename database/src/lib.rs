@@ -27,11 +27,12 @@ pub async fn connect() -> Result<(), Error> {
     init_db_pool().await
 }
 
-pub async fn create_account(username: &str, password: &str) -> Result<(), Error> {
+pub async fn create_account(username: &str, password: &str, email: &str) -> Result<(), Error> {
     sqlx::query!(
-        "INSERT INTO accounts (username, password) VALUES ($1, $2)",
+        "INSERT INTO accounts (username, password, email) VALUES ($1, $2, $3)",
         username,
         password,
+        email,
     )
     .execute(POOL.get().unwrap())
     .await?;
