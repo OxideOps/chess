@@ -16,11 +16,7 @@ pub async fn create_account(
 }
 
 #[server(VerifyAccount, "/api")]
-pub async fn verify_account(
-    username: String,
-    password: String,
-    email: String,
-) -> Result<bool, ServerFnError> {
+pub async fn verify_account(username: String, password: String) -> Result<bool, ServerFnError> {
     use crate::server::auth;
 
     let hashed_password = database::fetch_password(&username).await?;
