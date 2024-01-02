@@ -12,7 +12,7 @@ pub(crate) fn SignUp(cx: Scope) -> Element {
             onsubmit: |_| {
                 to_owned![email];
                 cx.spawn(async move {
-                    if !mailchecker::is_valid(&email.to_string()) {
+                    if !mailchecker::is_valid(&email) {
                         log::error!("email is invalid: {email:?}");
                     }
                     else {
