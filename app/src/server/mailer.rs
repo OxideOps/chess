@@ -3,6 +3,7 @@ use lettre::{
     AsyncTransport, Message, Tokio1Executor,
 };
 
+#[allow(unused)]
 pub async fn send_verification_email() {
     let email = Message::builder()
         .from("NoBody <nobody@domain.tld>".parse().unwrap())
