@@ -27,7 +27,7 @@ pub async fn connect() -> Result<(), Error> {
     init_db_pool().await
 }
 
-pub async fn create_account(username: &str, password: &str, email: &str) -> Result<(), Error> {
+pub async fn create_account(username: &str, password: &str, email: &str) -> Result<i32, Error> {
     sqlx::query!(
         "INSERT INTO accounts (username, password, email) VALUES ($1, $2, $3)",
         username,
@@ -37,16 +37,20 @@ pub async fn create_account(username: &str, password: &str, email: &str) -> Resu
     .execute(POOL.get().unwrap())
     .await?;
 
-    Ok(())
+    Ok(
+        sqlx::query!("SELECT id FROM accounts WHERE username = $1", username)
+            .fetch_one(POOL.get().unwrap())
+            .await?
+            .id,
+    )
 }
 
 pub async fn fetch_password(username: &str) -> Result<String, Error> {
-    let record = sqlx::query!(
+    Ok(sqlx::query!(
         "SELECT password FROM accounts WHERE username = $1",
         username
     )
     .fetch_one(POOL.get().unwrap())
-    .await?;
-
-    Ok(record.password)
+    .await?
+    .password)
 }
