@@ -18,6 +18,7 @@ pub(crate) fn SignUp(cx: Scope) -> Element {
                         log::error!("email is invalid: {email:?}");
                     } else {
                         log::info!("email: {email:?}");
+
                         accounts::create_account(
                             username.to_string(),
                             password.to_string(),
@@ -25,6 +26,8 @@ pub(crate) fn SignUp(cx: Scope) -> Element {
                         )
                         .await
                         .unwrap();
+
+                        // UI for validation field
                     }
                 })
             },
