@@ -12,6 +12,8 @@ pub async fn create_account(
 
     database::create_account(&username, &hashed_password, &email).await?;
 
+    // create token, get token from db (automatically created), send token to user, get token from user, validate token is correct from db
+
     Ok(())
 }
 
