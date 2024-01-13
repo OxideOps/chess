@@ -7,7 +7,7 @@ pub(crate) fn RoundList(cx: Scope) -> Element {
     let current_round = game.get_current_round();
 
     cx.render(rsx! {
-        p { "Rounds:" }
+        p { "Moves:" }
         div { class: "rounds-container",
             table { class: "place-content-center",
                 for (i, info) in game.get_rounds_info().into_iter().enumerate() {
