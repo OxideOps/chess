@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 log = "0.4.19"
-serde = { version = "1.0.192", features = ["derive"] }
-thiserror = "1.0.53"
-web-time = "0.2.4"
+serde = { version = "1.0.195", features = ["derive"] }
+thiserror = "1.0.56"
+web-time = "1.0.0"
