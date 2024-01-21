@@ -22,7 +22,7 @@ pub(crate) fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, Settings::new);
 
     cx.render(rsx! {
-        style { include_str!("../../../styles/output.css") }
+        style { {include_str!("../../../styles/output.css")} }
         Router::<Route> {}
     })
 }

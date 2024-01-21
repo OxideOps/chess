@@ -31,7 +31,7 @@ pub(crate) fn Widget(cx: Scope) -> Element {
                 }
             }
             if analyze {
-                rsx! { EvalBar {} }
+                EvalBar {}
             },
             InfoBar {
                 is_local_game: PlayerKind::is_local_game(white_player_kind, black_player_kind)
