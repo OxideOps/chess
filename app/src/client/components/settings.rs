@@ -24,11 +24,11 @@ pub(crate) fn Settings(cx: Scope) -> Element {
                         select {
                             class: "select",
                             onchange: |event| {
-                                settings.write().board_theme = event.value.clone();
+                                settings.write().board_theme = event.value().clone();
                                 #[cfg(feature = "desktop")]
-                                save_theme_to_config(ThemeType::Board, &event.value);
+                                save_theme_to_config(ThemeType::Board, &event.value());
                                 #[cfg(feature = "web")]
-                                storage::set_item(&ThemeType::Board.to_string(), &event.value);
+                                storage::set_item(&ThemeType::Board.to_string(), &event.value());
                             },
                             for theme in board_theme_list.value().into_iter().flatten() {
                                 option {
@@ -46,11 +46,11 @@ pub(crate) fn Settings(cx: Scope) -> Element {
                         select {
                             class: "select",
                             onchange: |event| {
-                                settings.write().piece_theme = event.value.clone();
+                                settings.write().piece_theme = event.value().clone();
                                 #[cfg(feature = "desktop")]
-                                save_theme_to_config(ThemeType::Piece, &event.value);
+                                save_theme_to_config(ThemeType::Piece, &event.value());
                                 #[cfg(feature = "web")]
-                                storage::set_item(&ThemeType::Piece.to_string(), &event.value);
+                                storage::set_item(&ThemeType::Piece.to_string(), &event.value());
                             },
                             for theme in piece_theme_list.value().into_iter().flatten() {
                                 option {
@@ -117,12 +117,9 @@ fn get_theme_future(cx: &ScopeState, theme_type: ThemeType) -> &UseFuture<Vec<St
     use crate::server::server_functions::get_themes;
 
     use_future(cx, (), |_| async {
-        match get_themes(theme_type).await {
-            Ok(themes) => themes,
-            Err(e) => {
-                log::error!("Failed to get themes: {:?}", e);
-                Vec::new()
-            }
-        }
+        get_themes(theme_type).await.unwrap_or_else(|e| {
+            log::error!("Failed to get themes: {:?}", e);
+            Vec::new()
+        })
     })
 }
