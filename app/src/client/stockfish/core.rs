@@ -23,7 +23,7 @@ use crate::client::arrows::ANALYSIS_COLOR;
 
 type Channel = (Sender<()>, Receiver<()>);
 
-pub const MOVES: usize = 5;
+pub const MOVES: usize = 3;
 pub const DEPTH: usize = 30;
 
 static READY_CHANNEL: Lazy<Channel> = Lazy::new(unbounded::<()>);

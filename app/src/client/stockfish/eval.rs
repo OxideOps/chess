@@ -3,7 +3,7 @@ use std::fmt;
 use chess::Color;
 
 // How much differences in stockfish evaluation affect the alpha of the arrows
-const ALPHA_SENSITIVITY: f64 = 1.0 / 30.0;
+const ALPHA_SENSITIVITY: f64 = 1.0 / 20.0;
 // How much a mate in 1 is worth in centipawns
 const MATE_IN_1_EVAL: f64 = 100000.0;
 // How much (in centipawns) getting a mate 1 move sooner is worth
