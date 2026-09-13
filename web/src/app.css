@@ -1,0 +1,44 @@
+/* Shared palette and base styles. Same variables as crates/app/assets/main.css
+   so components port over unchanged. */
+:root {
+	--bg: #161512;
+	--panel: #262421;
+	--panel-border: #3a3733;
+	--text: #e8e6e3;
+	--text-muted: #9f9a93;
+	--accent: #629924;
+	--square-light: #f0d9b5;
+	--square-dark: #b58863;
+	--highlight-last-move: rgba(155, 199, 0, 0.41);
+	--highlight-selected: rgba(20, 85, 30, 0.5);
+	--highlight-destination: rgba(0, 0, 0, 0.22);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		sans-serif;
+}
+
+main {
+	padding: 1.25rem;
+}
+
+.placeholder {
+	max-width: 40rem;
+}
+
+.placeholder code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.9em;
+}
