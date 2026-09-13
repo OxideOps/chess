@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GameStore, Promotion } from '$lib/chess/game.svelte';
+	import type { PlayResult } from '$lib/chess/wasm';
 	import { centre, isLight, squaresInDrawOrder } from '$lib/chess/squares';
 	import type { PieceOnSquare } from '$lib/generated/PieceOnSquare';
 	import type { Side } from '$lib/generated/Side';
@@ -20,15 +21,30 @@
 		orientation?: Side;
 		analysis?: boolean;
 		arrows?: { from: string; to: string }[];
+		/** Only pieces of this side can be picked up; default both (local play). */
+		playAs?: Side | 'both';
+		/** Where moves go instead of straight into `game` (online play). */
+		onmove?: (from: string, to: string, promotion?: Promotion) => PlayResult;
 	}
-	let { game, orientation = 'white', analysis = false, arrows = [] }: Props = $props();
+	let {
+		game,
+		orientation = 'white',
+		analysis = false,
+		arrows = [],
+		playAs = 'both',
+		onmove
+	}: Props = $props();
 
 	let selected: string | null = $state(null);
 	// A move that needs a promotion piece before it can be played.
 	let promotion: { from: string; to: string } | null = $state(null);
 
 	const view = $derived(game.view);
-	const interactive = $derived(!view.gameOver && (analysis || !view.viewingHistory));
+	const interactive = $derived(
+		!view.gameOver &&
+			(analysis || !view.viewingHistory) &&
+			(playAs === 'both' || playAs === view.turn)
+	);
 	const selectedSquare = $derived(interactive ? selected : null);
 	const pieceAt = $derived(new Map<string, PieceOnSquare>(view.pieces.map((p) => [p.square, p])));
 	const destinations = $derived.by(() => {
@@ -66,7 +82,8 @@
 		})
 	);
 
-	function play(from: string, to: string, promo?: Promotion) {
+	function play(from: string, to: string, promo?: Promotion): PlayResult {
+		if (onmove) return onmove(from, to, promo);
 		return analysis ? game.playHere(from, to, promo) : game.play(from, to, promo);
 	}
 

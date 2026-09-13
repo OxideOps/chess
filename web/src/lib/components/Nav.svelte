@@ -4,6 +4,7 @@
 
 	const links = [
 		{ href: resolve('/'), label: 'Play' },
+		{ href: resolve('/online'), label: 'Online' },
 		{ href: resolve('/analysis'), label: 'Analysis' }
 	] as const;
 </script>

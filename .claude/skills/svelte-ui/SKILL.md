@@ -14,8 +14,14 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   `GameView` snapshot; `squares.ts` is board geometry; `status.ts` renders the status line.
 - `src/lib/engine/` — `worker.ts` (Stockfish in a Web Worker) and `analysis.svelte.ts`
   (`Analyser`: request a FEN, read `lines`; injectable engine for tests).
-- `src/lib/components/` — `Board`, `PromotionPicker`, `EvalBar`, `EnginePanel`,
-  `ImportPanel`, `MoveList`, `Controls`, `Nav`. Each has its own scoped `<style>`; shared
+- `src/lib/online/` — `client.svelte.ts` (`OnlineGame`: the server's game mirrored on the
+  client over the WebSocket; injectable socket and clock for tests), `clock.ts` (formatting,
+  time controls), `invites.ts` (the opponent's token in sessionStorage). Moves are applied
+  locally first (same rules as the server) and sent; a `Rejected` or a gap in plies closes
+  the socket, and the reconnect's `Sync` puts things right.
+- `src/lib/components/` — `Board` (props `playAs` and `onmove` for online play),
+  `PromotionPicker`, `EvalBar`, `EnginePanel`, `ImportPanel`, `MoveList`, `Controls`,
+  `Clock`, `Nav`. Each has its own scoped `<style>`; shared
   layout classes (`.sidebar`, `.status`) and the colour variables are in `src/app.css`.
 - `src/lib/generated/` — TypeScript types generated from Rust by ts-rs. Never edit; run
   `corepack pnpm gen:types` after changing Rust types and commit the output.
@@ -36,7 +42,11 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   suppressions are needed. Don't add `svelte-ignore` comments; fix the markup.
 - Tests: `*.svelte.spec.ts` run in real Chromium (Vitest browser mode) and may use the WASM
   after `await initChess()`; `*.spec.ts` run in Node (pure TS only); `e2e/*.e2e.ts` run
-  Playwright against the production build, including the real engine.
+  Playwright against the production build served by the Rust server (`cargo run -p server`
+  in `playwright.config.ts`), so they cover the engine, the API and the game sockets.
+- Dynamic routes (`/game/[id]`) set `prerender = false`; the server and the fallback shell
+  handle them. `ts-rs` maps `u64` to `bigint`: annotate millisecond fields with
+  `#[ts(type = "number")]`.
 
 ## Gotchas that already cost a cycle
 
