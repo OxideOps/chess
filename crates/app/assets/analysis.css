@@ -1,0 +1,162 @@
+.analysis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.board-with-bar {
+    display: flex;
+    gap: 0.6rem;
+    align-items: stretch;
+}
+
+/* ---- eval bar ---- */
+
+.eval-bar {
+    position: relative;
+    width: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: #403d39;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.eval-bar.flipped { justify-content: flex-start; }
+
+.eval-bar .white {
+    width: 100%;
+    background: #f0f0f0;
+    transition: height 0.4s ease;
+}
+
+.eval-bar .label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    padding: 4px 0;
+}
+
+/* The label sits at the winning side's end of the bar. */
+.eval-bar .label.for-white { bottom: 0; color: #403d39; }
+.eval-bar .label.for-black { top: 0; color: #f0f0f0; }
+.eval-bar.flipped .label.for-white { top: 0; bottom: auto; }
+.eval-bar.flipped .label.for-black { bottom: 0; top: auto; }
+
+/* ---- engine panel ---- */
+
+.engine {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.engine header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.8rem;
+}
+
+.engine header label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.engine header input { accent-color: var(--accent); }
+.engine .summary { color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
+
+.engine .lines {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--panel-border);
+}
+
+.engine .lines li + li { border-top: 1px solid var(--panel-border); }
+
+.engine .lines button {
+    display: flex;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.4rem 0.8rem;
+    border: none;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.engine .lines button:hover { background: rgba(255, 255, 255, 0.06); }
+
+.engine .score {
+    flex: 0 0 3.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.engine .moves {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ---- import / export ---- */
+
+.import {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.import form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.import .row { display: flex; gap: 0.4rem; }
+.import .row input { flex: 1; min-width: 0; }
+
+.import input,
+.import textarea {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem;
+    resize: vertical;
+}
+
+.import button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.import button:hover { border-color: var(--text-muted); }
+.import .error { margin: 0; color: #e06c75; }

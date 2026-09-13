@@ -1,14 +1,18 @@
 # Chess (v2)
 
-A chess site for learning and playing, built in Rust. Web first (Dioxus → WASM), desktop and
-mobile later from the same UI code. Successor to the archived `OxideOps/chess-v1`.
+A chess site for learning and playing, built in Rust. Web only (Dioxus → WASM): phones get the
+same site as a responsive PWA, and there is no desktop build. Native shells are off the table
+unless a concrete reason (store listing) appears. Successor to the archived `OxideOps/chess-v1`.
 
 ## Layout
 
 - `crates/chess-core` — rules (via `shakmaty`), `Game` history/navigation, and the client↔server
   `protocol` types. No UI, no I/O, must compile for `wasm32`. Everything chess-related that both
   the client and the server need goes here, with tests.
-- `crates/app` — the Dioxus client. Features: `web` (default), `desktop`.
+- `crates/app` — the Dioxus web client. It also type-checks on the host so `cargo clippy
+  --workspace` and `cargo test --workspace` work, but it only ships as WASM. `src/engine/` runs
+  Stockfish (a GPL Web Worker vendored in `assets/engine/`, never linked in) and exposes it as
+  the `use_analysis` hook; the UCI text protocol itself is parsed in `chess_core::engine`.
 - (planned) `crates/server` — axum + sqlx + Postgres. Owns games, clocks, and move validation.
 
 ## Working on the UI

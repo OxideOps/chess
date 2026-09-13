@@ -33,6 +33,9 @@ Prefer actually exercising the board over trusting a compile. With the Chrome to
   `document.querySelector('.board').getBoundingClientRect()` via the JavaScript tool) and use
   `x = left + (file + 0.5) * size/8`, `y = top + (7 - rank + 0.5) * size/8` for White
   orientation (files a..h = 0..7, ranks 1..8 = 0..7).
+- Click coordinates are in *screenshot* pixels, not DOM pixels. The developer's window is
+  2560px wide and screenshots come back ~1518px wide, so multiply DOM coordinates by
+  `screenshotWidth / window.innerWidth` (~0.59) or clicks land in the sidebar.
 - The sidebar grows as moves are added, which shifts the buttons down. Re-screenshot before
   clicking a button after the move list has changed.
 - The board only accepts clicks when viewing the latest position of an unfinished game. If
@@ -40,6 +43,12 @@ Prefer actually exercising the board over trusting a compile. With the Chrome to
 - A quick smoke test: `e2-e4 e7-e5 g1-f3`, confirm the move list reads `1. e4 e5 2. Nf3`,
   press ArrowLeft with the board focused, confirm the status flips to "White to move".
 - Promotion: `a2a4 b7b5 a4b5 a7a6 b5a6 b8c6 a6a7 c6b8 a7b8` opens the picker.
+- Analysis board (`/analysis`): within ~3s of load the engine header should read
+  "Stockfish 18 Lite WASM" with a depth, three `.engine .lines li` entries, one
+  `.board .arrows line`, and `.eval-bar .white` at a height other than 50%. Clicking a line
+  plays its first move; moving while in history truncates the game (check `#export-pgn`).
+  Loading a checkmate FEN should show "Idle" and no lines. Read state with the JavaScript
+  tool rather than trusting a screenshot: Dark Reader hides the board colours.
 
 Known false alarm: the developer's Chrome runs Dark Reader
 (`document.documentElement.dataset.darkreaderMode === "dynamic"`). It repaints the light

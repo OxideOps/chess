@@ -1,6 +1,6 @@
 [package]
 name = "app"
-description = "The chess client. Web first; the same code targets desktop and mobile through Dioxus. All chess logic lives in chess-core."
+description = "The chess web client (Dioxus → WASM). All chess logic lives in chess-core."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,8 +10,13 @@ publish = false
 [dependencies]
 chess-core.workspace = true
 dioxus.workspace = true
+futures-channel.workspace = true
+futures-util.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen.workspace = true
+web-sys = { workspace = true, features = ["Worker", "MessageEvent", "ErrorEvent"] }
 
 [features]
 default = ["web"]
 web = ["dioxus/web"]
-desktop = ["dioxus/desktop"]
