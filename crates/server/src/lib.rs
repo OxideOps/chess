@@ -5,6 +5,7 @@
 //! endpoints, [`room`] the rules of a game as the server enforces them.
 //! Games live in memory until persistence arrives.
 
+pub mod db;
 pub mod games;
 pub mod room;
 

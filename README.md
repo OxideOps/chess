@@ -22,8 +22,9 @@ Early scaffolding. What works today:
 - `server`: an axum binary that serves the client build (clean URLs, 404 fallback,
   precompressed assets, cross-origin isolation headers) and hosts games in memory: create a
   game over HTTP, play it over a WebSocket. The server validates every move with `chess-core`,
-  runs the clocks and flags on time, and handles resignation and draw offers. Games are
-  forgotten on restart.
+  runs the clocks and flags on time, and handles resignation and draw offers. With
+  `DATABASE_URL` set, every change is written through to Postgres and games survive restarts
+  (clocks included); without it they live in memory.
 - `web`: online play (`/online`): pick a time control, create a game, send the invite link;
   the game page shows both clocks counting down, your side only, draw offers, resign, and the
   result; reconnecting resumes; anyone with the plain link spectates.
@@ -41,8 +42,7 @@ Early scaffolding. What works today:
    [variations](https://github.com/OxideOps/chess/issues/3),
    [responsive layout and PWA](https://github.com/OxideOps/chess/issues/9))
 3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
-   validation, clocks, reconnects, persistence (static serving, in-memory games and the
-   online play UI done; Postgres next)
+   validation, clocks, reconnects, persistence (done; accounts are the next roadmap item)
 4. [Accounts and sessions](https://github.com/OxideOps/chess/issues/6)
 5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7): ratings,
    then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that explains
@@ -70,7 +70,13 @@ Serve the production build the way the real server will (after `pnpm build` in `
 
 ```sh
 cargo run -p server                 # http://127.0.0.1:8080, --bind and --static-dir to change
+DATABASE_URL=postgres://$USER@localhost/chess cargo run -p server   # …and keep games in Postgres
 ```
+
+The server applies its own migrations (`crates/server/migrations`) on start. The persistence
+tests need a database they may write to: `createdb chess_test` and
+`TEST_DATABASE_URL=postgres://$USER@localhost/chess_test cargo test -p server`; they skip
+when the variable is unset. (sqlx needs the user in the URL; it doesn't default to yours.)
 
 For online play in development, run the server next to `pnpm dev` (Vite proxies `/api` to
 it): `cargo run -p server` in another terminal, then open http://localhost:5173/online in two
