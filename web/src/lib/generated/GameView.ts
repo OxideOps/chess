@@ -26,4 +26,8 @@ lastMove: MoveSquares | null,
 /**
  * The square of the king in check, if any.
  */
-checkSquare: string | null, pieces: Array<PieceOnSquare>, moves: Array<MoveView>, startTurn: Side, startFullmove: number, };
+checkSquare: string | null, pieces: Array<PieceOnSquare>, moves: Array<MoveView>, 
+/**
+ * `1. e4 e5 2. Nf3`, for the whole game regardless of the cursor.
+ */
+movetext: string, startTurn: Side, startFullmove: number, };
