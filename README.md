@@ -62,12 +62,13 @@ cd crates/app
 dx serve
 ```
 
-Run the SvelteKit client (Node 22 and pnpm via `corepack enable`; see `web/README.md`):
+Run the SvelteKit client (Node 22, pnpm via `corepack enable`, and
+`cargo install wasm-pack --locked`; see `web/README.md`):
 
 ```sh
 cd web
 pnpm install && pnpm browsers   # first time
-pnpm dev
+pnpm dev                        # builds chess-core to WASM, then serves
 ```
 
 Checks, same as CI:
@@ -77,14 +78,18 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p app --target wasm32-unknown-unknown -- -D warnings
 cargo test --workspace
-(cd web && pnpm lint && pnpm check && pnpm test && pnpm build)
+(cd web && pnpm gen:types && pnpm build:wasm && pnpm lint && pnpm check && pnpm test && pnpm build)
 ```
+
+`pnpm gen:types` regenerates `web/src/lib/generated` (TypeScript for the protocol and view
+types, via ts-rs); CI fails if the committed files are stale.
 
 ## Layout
 
 ```
 crates/
   chess-core/   rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
+  chess-core-wasm/  wasm-bindgen wrapper around chess-core for web/ (built by `pnpm build:wasm`)
   app/          Dioxus web client (being replaced by web/; type-checks on the host, ships as WASM)
 web/            SvelteKit client (pnpm; static SPA, prerendered shells)
     assets/engine/  Stockfish.js build loaded as a Web Worker (not linked into the app)

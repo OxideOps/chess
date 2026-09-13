@@ -4,9 +4,15 @@
 //! Encoded as JSON with an external `"type"` tag, e.g.
 //! `{"type":"move","uci":"e2e4"}`. This is a first draft: expect it to grow
 //! (chat, rematch, spectators, takebacks) before the server ships.
+//!
+//! With the `ts` feature, `cargo test --features ts` writes TypeScript
+//! bindings for these types (see `web/scripts/gen-types.mjs`), so the
+//! SvelteKit client can't drift from the server either.
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use shakmaty::{Color, uci::UciMove};
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 /// `shakmaty::Color` has no serde support; encode it as `"white"` / `"black"`.
 mod color {
@@ -55,6 +61,7 @@ mod opt_color {
 /// Remaining time for both sides, in milliseconds. The server owns the clocks;
 /// clients only display them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub struct Clocks {
     pub white_ms: u64,
     pub black_ms: u64,
@@ -62,8 +69,12 @@ pub struct Clocks {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub enum ClientMessage {
-    Move { uci: UciMove },
+    Move {
+        #[cfg_attr(feature = "ts", ts(type = "string"))]
+        uci: UciMove,
+    },
     Resign,
     OfferDraw,
     AcceptDraw,
@@ -73,24 +84,29 @@ pub enum ClientMessage {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub enum ServerMessage {
     /// The complete game, sent on connect and reconnect.
     Sync {
         start_fen: String,
+        #[cfg_attr(feature = "ts", ts(type = "string[]"))]
         moves: Vec<UciMove>,
         clocks: Clocks,
         /// `None` for spectators.
         #[serde(with = "opt_color")]
+        #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\" | null"))]
         your_color: Option<Color>,
     },
     /// A move was accepted (either side's). `ply` lets a client detect gaps.
     MovePlayed {
         ply: u32,
+        #[cfg_attr(feature = "ts", ts(type = "string"))]
         uci: UciMove,
         clocks: Clocks,
     },
     DrawOffered {
         #[serde(with = "color")]
+        #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\""))]
         by: Color,
     },
     GameOver {
@@ -106,6 +122,7 @@ pub enum ServerMessage {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub enum GameResult {
     WhiteWins,
     BlackWins,
@@ -114,6 +131,7 @@ pub enum GameResult {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub enum GameOverReason {
     Checkmate,
     Resignation,

@@ -26,3 +26,6 @@ test-results
 
 # Playwright
 playwright-report
+
+# wasm-pack output (built by `pnpm build:wasm`)
+/src/lib/wasm

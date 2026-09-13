@@ -13,11 +13,19 @@ unless a concrete reason (store listing) appears. Successor to the archived `Oxi
   --workspace` and `cargo test --workspace` work, but it only ships as WASM. `src/engine/` runs
   Stockfish (a GPL Web Worker vendored in `assets/engine/`, never linked in) and exposes it as
   the `use_analysis` hook; the UCI text protocol itself is parsed in `chess_core::engine`.
+- `crates/chess-core-wasm` — wasm-bindgen wrapper around `chess-core` for the SvelteKit
+  client; the only crate that knows about JavaScript. Data in, data out, no chess logic:
+  `Game::view()` returns one `GameView` snapshot per render. View and protocol types derive
+  ts-rs behind the `ts` feature; `pnpm gen:types` writes them to `web/src/lib/generated`
+  (committed, CI checks freshness). `pnpm build:wasm` runs wasm-pack into `web/src/lib/wasm`
+  (gitignored).
 - `web` — the SvelteKit client that is replacing `crates/app` (issue #12 has the phased plan;
   each phase is one PR and `main` always works). pnpm via corepack, TS strict, plain CSS with
   the variables from `web/src/app.css`. Static SPA: `ssr = false`, every route prerendered as
-  a shell. Chess logic will come from `chess-core` through a WASM wrapper (phase 1); the same
-  rule applies as for Dioxus: no chess rules in components.
+  a shell; the root layout awaits `initChess()` so pages use the WASM synchronously.
+  Components read `GameStore.view` (`src/lib/chess/game.svelte.ts`) and never decide what is
+  legal themselves; if the UI needs a new fact, add it to `chess_core::Game` with a test,
+  expose it in `chess-core-wasm`, regenerate types.
 - (planned) `crates/server` — axum + sqlx + Postgres. Owns games, clocks, and move validation.
 
 ## Working on the UI

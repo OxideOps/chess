@@ -7,3 +7,7 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Generated (wasm-pack output; ts-rs bindings)
+/src/lib/wasm/
+/src/lib/generated/

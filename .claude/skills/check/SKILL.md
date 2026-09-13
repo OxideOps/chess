@@ -13,8 +13,11 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p app --target wasm32-unknown-unknown -- -D warnings
 cargo test --workspace
 (cd crates/app && dx build)
-(cd web && corepack pnpm format >/dev/null && corepack pnpm lint && corepack pnpm check \
-   && corepack pnpm test:unit && corepack pnpm build && corepack pnpm test:e2e)
+cargo clippy -p chess-core-wasm --target wasm32-unknown-unknown -- -D warnings
+cargo clippy --workspace --all-targets --features chess-core-wasm/ts -- -D warnings
+(cd web && corepack pnpm gen:types && git diff --exit-code -- src/lib/generated \
+   && corepack pnpm build:wasm && corepack pnpm format >/dev/null && corepack pnpm lint \
+   && corepack pnpm check && corepack pnpm test:unit && corepack pnpm build && corepack pnpm test:e2e)
 ```
 
 Notes:
@@ -25,7 +28,7 @@ Notes:
   Both must be clean because CI runs both with `-D warnings`.
 - `dx build` needs the Dioxus CLI (see `README.md`). If it isn't installed, say so rather than
   skipping silently; the other four checks still count.
-- `web/` needs `corepack pnpm install` once and `corepack pnpm browsers` once (Chromium for
+- `web/` needs `wasm-pack` (`cargo install wasm-pack --locked`), `corepack pnpm install` once and `corepack pnpm browsers` once (Chromium for
   Vitest browser mode and Playwright). `pnpm` is not on PATH here; go through `corepack`.
   `format` (not `--check`) is intentional, as with `cargo fmt`. `test:e2e` builds and
   previews the site itself.
