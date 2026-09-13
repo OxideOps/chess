@@ -19,11 +19,17 @@ export default defineConfig({
 			adapter: adapter({ fallback: '404.html', precompress: true })
 		})
 	],
+	// In development the Rust server (`cargo run -p server`) answers the API
+	// and game sockets on 8080; Vite serves the client and proxies to it.
+	server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
 			{
 				extends: './vite.config.ts',
+				// In development the Rust server (`cargo run -p server`) answers the API
+				// and game sockets on 8080; Vite serves the client and proxies to it.
+				server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
 				test: {
 					name: 'client',
 					browser: {
@@ -37,6 +43,9 @@ export default defineConfig({
 			},
 			{
 				extends: './vite.config.ts',
+				// In development the Rust server (`cargo run -p server`) answers the API
+				// and game sockets on 8080; Vite serves the client and proxies to it.
+				server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
 				test: {
 					name: 'server',
 					environment: 'node',

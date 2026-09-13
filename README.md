@@ -23,7 +23,10 @@ Early scaffolding. What works today:
   precompressed assets, cross-origin isolation headers) and hosts games in memory: create a
   game over HTTP, play it over a WebSocket. The server validates every move with `chess-core`,
   runs the clocks and flags on time, and handles resignation and draw offers. Games are
-  forgotten on restart; the client UI for online play is next.
+  forgotten on restart.
+- `web`: online play (`/online`): pick a time control, create a game, send the invite link;
+  the game page shows both clocks counting down, your side only, draw offers, resign, and the
+  result; reconnecting resumes; anyone with the plain link spectates.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
@@ -38,8 +41,8 @@ Early scaffolding. What works today:
    [variations](https://github.com/OxideOps/chess/issues/3),
    [responsive layout and PWA](https://github.com/OxideOps/chess/issues/9))
 3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
-   validation, clocks, reconnects, persistence (static serving and in-memory games done;
-   online play UI and Postgres next)
+   validation, clocks, reconnects, persistence (static serving, in-memory games and the
+   online play UI done; Postgres next)
 4. [Accounts and sessions](https://github.com/OxideOps/chess/issues/6)
 5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7): ratings,
    then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that explains
@@ -69,14 +72,16 @@ Serve the production build the way the real server will (after `pnpm build` in `
 cargo run -p server                 # http://127.0.0.1:8080, --bind and --static-dir to change
 ```
 
-Play a game against the server from two terminals (or two browser tabs, once the UI lands):
+For online play in development, run the server next to `pnpm dev` (Vite proxies `/api` to
+it): `cargo run -p server` in another terminal, then open http://localhost:5173/online in two
+browsers. The wire protocol is in `crates/chess-core/src/protocol.rs`; to drive it by hand:
 
 ```sh
 curl -s -X POST localhost:8080/api/games -H 'content-type: application/json' \
      -d '{"initial_ms": 300000, "increment_ms": 2000}'
 # → {"id":"…","white_token":"…","black_token":"…"}
 # connect a WebSocket to /api/games/<id>/ws?token=<white_token> and send
-# {"type":"move","uci":"e2e4"}; see crates/chess-core/src/protocol.rs for the messages.
+# {"type":"move","uci":"e2e4"}
 ```
 
 Checks, same as CI:

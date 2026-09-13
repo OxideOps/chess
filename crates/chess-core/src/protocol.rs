@@ -65,7 +65,10 @@ mod opt_color {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub struct Clocks {
+    // Milliseconds fit in a JS number for any game we'll ever host.
+    #[cfg_attr(feature = "ts", ts(type = "number"))]
     pub white_ms: u64,
+    #[cfg_attr(feature = "ts", ts(type = "number"))]
     pub black_ms: u64,
 }
 

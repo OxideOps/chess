@@ -4,4 +4,4 @@
  * Remaining time for both sides, in milliseconds. The server owns the clocks;
  * clients only display them.
  */
-export type Clocks = { white_ms: bigint, black_ms: bigint, };
+export type Clocks = { white_ms: number, black_ms: number, };
