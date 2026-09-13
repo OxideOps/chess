@@ -1,8 +1,7 @@
 # web
 
-The SvelteKit client. This replaces `crates/app` (Dioxus) step by step; see the migration
-issue in the repo for the plan. Chess logic stays in `crates/chess-core`, reached through a
-WASM wrapper (phase 1).
+The SvelteKit client. Chess logic stays in `crates/chess-core`, reached through the
+`crates/chess-core-wasm` wrapper; see `src/lib/chess/`.
 
 ```sh
 corepack enable            # once; makes the pinned pnpm available
