@@ -99,8 +99,9 @@ docs/
 
 ## Licenses
 
-Code is MIT (see `LICENSE`). Piece images in `crates/app/assets/pieces/cburnett` are by
-Colin M.L. Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+Code is MIT (see `LICENSE`). Piece images in `crates/app/assets/pieces/cburnett` and
+`web/static/pieces/cburnett` are by Colin M.L. Burnett, licensed
+[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 
 The engine in `crates/app/assets/engine` is [Stockfish.js](https://github.com/nmrugg/stockfish.js)
 (Stockfish 18, lite single-threaded build), GPLv3 — see `COPYING.txt` there. It runs as a
