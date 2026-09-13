@@ -1,13 +1,14 @@
 # Chess
 
-A chess site that is good at teaching you chess and lets you play other people, built in Rust.
-It is a web app, on phones too (responsive, installable as a PWA). There is no desktop or
-native mobile build, and none planned unless a store listing becomes worth the cost.
+A chess site that is good at teaching you chess and lets you play other people. The rules and
+the server are Rust; the client is SvelteKit, with the Rust rules compiled to WebAssembly. It
+is a web app, on phones too (responsive, installable as a PWA). There is no desktop or native
+mobile build, and none planned unless a store listing becomes worth the cost.
 
 This is the second attempt. The first (`OxideOps/chess-v1`, archived) taught us what not to do:
 a hand-written rules engine, a forked UI framework, and a server that trusted clients. This one
-uses a proven rules library, tracks Dioxus releases without forking, and will keep the server in
-charge of every game.
+uses a proven rules library, an off-the-shelf UI stack, and will keep the server in charge of
+every game.
 
 ## Status
 
@@ -18,9 +19,9 @@ Early scaffolding. What works today:
   the WebSocket protocol. Tested.
 - `chess-core` also reads PGN (tags, comments, variations skipped, NAGs) and parses UCI engine
   output (`info` lines, scores, principal variations).
-- `app`: a local two-player board in the browser with legal-move hints, promotion picker,
-  move list, history navigation (buttons and arrow keys), flip, and a FEN readout.
-- `app`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
+- `web`: a local two-player board with legal-move hints, promotion picker, move list, history
+  navigation (buttons and arrow keys), flip, and a FEN readout.
+- `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
   bar, the top three lines (click one to play it), a best-move arrow, FEN/PGN import, PGN
   export, and playing from any point in the history.
 
@@ -40,30 +41,15 @@ Early scaffolding. What works today:
 
 Open work is tracked in [GitHub issues](https://github.com/OxideOps/chess/issues).
 
-## Frontend migration
-
-The Dioxus client in `crates/app` is being replaced by a SvelteKit app in `web/`
-([plan](https://github.com/OxideOps/chess/issues/12)). Rust stays for `chess-core` and the
-server. Until the port is complete, `crates/app` is the working app and `web/` is a shell.
-
 ## Development
 
 Requirements:
 
 - Rust via [rustup](https://rustup.rs) — the toolchain and `wasm32` target come from
-  `rust-toolchain.toml` automatically.
-- The Dioxus CLI: `cargo install dioxus-cli --version 0.7.10 --locked`
-  (or `cargo binstall dioxus-cli@0.7.10` for a prebuilt binary).
+  `rust-toolchain.toml` automatically — plus `cargo install wasm-pack --locked`.
+- Node 22 and pnpm (`corepack enable` picks up the pinned version).
 
-Run the web client with hot reload:
-
-```sh
-cd crates/app
-dx serve
-```
-
-Run the SvelteKit client (Node 22, pnpm via `corepack enable`, and
-`cargo install wasm-pack --locked`; see `web/README.md`):
+Run the client with hot reload (see `web/README.md` for the rest of the commands):
 
 ```sh
 cd web
@@ -76,7 +62,8 @@ Checks, same as CI:
 ```sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
-cargo clippy -p app --target wasm32-unknown-unknown -- -D warnings
+cargo clippy -p chess-core-wasm --target wasm32-unknown-unknown -- -D warnings
+cargo clippy --workspace --all-targets --features chess-core-wasm/ts -- -D warnings
 cargo test --workspace
 (cd web && pnpm gen:types && pnpm build:wasm && pnpm lint && pnpm check && pnpm test && pnpm build)
 ```
@@ -88,22 +75,21 @@ types, via ts-rs); CI fails if the committed files are stale.
 
 ```
 crates/
-  chess-core/   rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
+  chess-core/       rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
   chess-core-wasm/  wasm-bindgen wrapper around chess-core for web/ (built by `pnpm build:wasm`)
-  app/          Dioxus web client (being replaced by web/; type-checks on the host, ships as WASM)
-web/            SvelteKit client (pnpm; static SPA, prerendered shells)
-    assets/engine/  Stockfish.js build loaded as a Web Worker (not linked into the app)
-docs/
-  dioxus-0.7.md quick reference for the Dioxus version in use
+web/                SvelteKit client (pnpm; static SPA, prerendered shells)
+  src/lib/chess/    WASM loader and the reactive GameStore
+  src/lib/engine/   Stockfish worker and the Analyser store
+  src/lib/generated/  TypeScript types generated from Rust (ts-rs)
+  static/engine/    Stockfish.js build loaded as a Web Worker (not linked into the app)
 ```
 
 ## Licenses
 
-Code is MIT (see `LICENSE`). Piece images in `crates/app/assets/pieces/cburnett` and
-`web/static/pieces/cburnett` are by Colin M.L. Burnett, licensed
-[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+Code is MIT (see `LICENSE`). Piece images in `web/static/pieces/cburnett` are by Colin M.L.
+Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 
-The engine in `crates/app/assets/engine` is [Stockfish.js](https://github.com/nmrugg/stockfish.js)
+The engine in `web/static/engine` is [Stockfish.js](https://github.com/nmrugg/stockfish.js)
 (Stockfish 18, lite single-threaded build), GPLv3 — see `COPYING.txt` there. It runs as a
 separate Web Worker program that the app talks to over UCI text; it is not linked into the
-MIT-licensed binary. Redistributing the site means redistributing that build under the GPL.
+MIT-licensed code. Redistributing the site means redistributing that build under the GPL.

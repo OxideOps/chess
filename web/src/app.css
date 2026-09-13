@@ -1,5 +1,4 @@
-/* Shared palette and base styles. Same variables as crates/app/assets/main.css
-   so components port over unchanged. */
+/* Shared palette and base styles. Components use these variables only. */
 :root {
 	--bg: #161512;
 	--panel: #262421;

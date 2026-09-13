@@ -1,64 +1,61 @@
 ---
 name: run-app
-description: Start the Dioxus web client (crates/app) locally, verify it in the browser, and stop it. Use when asked to run, serve, or screenshot the app, or to confirm a UI change works for real rather than just compiling.
+description: Start the SvelteKit client (web/) locally, verify it in the browser, and stop it. Use when asked to run, serve, or screenshot the app, or to confirm a UI change works for real rather than just compiling.
 ---
 
 # Run the web client
 
 ## Start
 
-Run in the background (it never exits on its own) from `crates/app`:
+From `web/`, in the background (it never exits on its own):
 
 ```sh
-cd crates/app && dx serve --port 8090 --open false
+cd web && corepack pnpm dev --port 5173 --host 127.0.0.1
 ```
 
-`dx` is the Dioxus CLI pinned in `README.md` (0.7.x); `dx --version` to confirm. The first
-build takes ~30s, later ones are incremental and hot-reload on save. Wait for readiness with a
-poll rather than a fixed sleep:
+`pnpm dev` first builds `chess-core-wasm` with wasm-pack (dev profile, a few seconds), then
+Vite serves with hot reload. Wait for readiness with a poll rather than a fixed sleep:
 
 ```sh
-for i in $(seq 1 60); do curl -s -o /dev/null --max-time 2 http://127.0.0.1:8090/ && break; sleep 1; done
+for i in $(seq 1 60); do curl -s -o /dev/null --max-time 2 http://127.0.0.1:5173/ && break; sleep 1; done
 ```
 
-If port 8090 is busy, pick another; nothing depends on the number. `dx build` in the same
-directory does a one-off build (output under `target/dx/app/debug/web/public`).
+After changing Rust code, run `corepack pnpm build:wasm --dev` (Vite picks up the new
+`src/lib/wasm`); after changing Rust types, also `corepack pnpm gen:types`.
+
+For the production build instead: `corepack pnpm build && corepack pnpm preview --port 4173`.
 
 ## Verify in the browser
 
-Prefer actually exercising the board over trusting a compile. With the Chrome tools:
+Prefer actually exercising the board over trusting a compile. The fastest reliable way is a
+Playwright script run from `web/` (so it can resolve `playwright`), reading state from the DOM:
 
-- Open `http://127.0.0.1:8090/` in a new tab, screenshot, and check the console for errors.
-- The board is a square 8x8 grid; get its bounding box from a screenshot (or
-  `document.querySelector('.board').getBoundingClientRect()` via the JavaScript tool) and use
-  `x = left + (file + 0.5) * size/8`, `y = top + (7 - rank + 0.5) * size/8` for White
-  orientation (files a..h = 0..7, ranks 1..8 = 0..7).
-- Click coordinates are in *screenshot* pixels, not DOM pixels. The developer's window is
-  2560px wide and screenshots come back ~1518px wide, so multiply DOM coordinates by
-  `screenshotWidth / window.innerWidth` (~0.59) or clicks land in the sidebar.
-- The sidebar grows as moves are added, which shifts the buttons down. Re-screenshot before
-  clicking a button after the move list has changed.
-- The board only accepts clicks when viewing the latest position of an unfinished game. If
-  clicks do nothing, check whether you're in history (use "⏭" / ArrowDown to return).
-- A quick smoke test: `e2-e4 e7-e5 g1-f3`, confirm the move list reads `1. e4 e5 2. Nf3`,
-  press ArrowLeft with the board focused, confirm the status flips to "White to move".
-- Promotion: `a2a4 b7b5 a4b5 a7a6 b5a6 b8c6 a6a7 c6b8 a7b8` opens the picker.
-- Analysis board (`/analysis`): within ~3s of load the engine header should read
-  "Stockfish 18 Lite WASM" with a depth, three `.engine .lines li` entries, one
-  `.board .arrows line`, and `.eval-bar .white` at a height other than 50%. Clicking a line
-  plays its first move; moving while in history truncates the game (check `#export-pgn`).
-  Loading a checkmate FEN should show "Idle" and no lines. Read state with the JavaScript
-  tool rather than trusting a screenshot: Dark Reader hides the board colours.
+- Squares are `button[data-square="e2"]`; click one, then the destination.
+- Play smoke test: `e2 e4, e7 e5, g1 f3`; `.move-list button.move` reads `e4 e5 Nf3`,
+  `.status` reads "Black to move", `.fen input` has the FEN. Focus `.board` and press
+  ArrowLeft: status flips to "White to move".
+- Promotion: FEN `k7/4P3/8/8/8/8/8/K7 w - - 0 1` via the analysis import, then `e7 e8` opens
+  the picker (`button[title=knight]` etc).
+- Analysis (`/analysis`): within a few seconds `.engine .name` reads "Stockfish 18 Lite WASM",
+  `.engine .summary` reads `Depth N…`, there are 3 `.engine .lines li`, one
+  `.board .arrows line`, and `[data-testid=eval-bar] .white` has a height other than 50%.
+  Clicking a line plays its first move; moving while in history truncates (`#export-pgn`).
+  A checkmate FEN shows "Idle" and no lines.
+- `e2e/*.e2e.ts` already cover all of the above; `corepack pnpm test:e2e` is often the
+  quickest "does it work" answer.
 
-Known false alarm: the developer's Chrome runs Dark Reader
-(`document.documentElement.dataset.darkreaderMode === "dynamic"`). It repaints the light
-squares near-black and hides the semi-transparent hint dots. Check computed styles or the
-served CSS before concluding the board CSS is broken.
+With the Chrome tools instead: open the URL in a new tab, screenshot, check the console.
+Click coordinates are in *screenshot* pixels, not DOM pixels: multiply DOM coordinates by
+`screenshotWidth / window.innerWidth` (~0.59 on the developer's 2560px window). The
+developer's Chrome runs Dark Reader, which repaints the light squares near-black; read state
+from the DOM rather than trusting colours.
 
 ## Stop
 
 ```sh
-pkill -f 'dx serve --port 8090'
+lsof -ti :5173 | xargs kill      # dev server
+lsof -ti :4173 | xargs kill      # preview, if started
 ```
 
-Close any browser tabs you opened.
+Kill by port: the processes show up as `vite.js dev` / `vite.js preview`, so a `pkill -f
+"vite dev"` misses them. Close any browser tabs you opened.
