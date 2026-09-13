@@ -17,6 +17,15 @@ thiserror = "2"
 wasm-bindgen = "0.2"
 serde-wasm-bindgen = "0.6"
 ts-rs = { version = "12", features = ["serde-compat"] }
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "net"] }
+tower = "0.5"
+tower-http = { version = "0.7", features = ["fs", "set-header", "trace"] }
+clap = { version = "4", features = ["derive", "env"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+http-body-util = "0.1"
+tempfile = "3"
 
 # Also what wasm-pack builds chess-core-wasm with; it then runs wasm-opt -Oz.
 [profile.release]

@@ -68,6 +68,17 @@ jobs:
       - run: pnpm test:unit
       - run: pnpm build
       - run: pnpm test:e2e
+      - name: the server serves the build
+        working-directory: .
+        run: |
+          cargo run -p server -- --static-dir web/build --bind 127.0.0.1:8085 &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:8085/healthz && break; sleep 1; done
+          set -x
+          curl -sf http://127.0.0.1:8085/ | grep -q '<html'
+          curl -sf http://127.0.0.1:8085/analysis | grep -q '<html'
+          curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8085/no/such/page | grep -q 404
+          curl -sI http://127.0.0.1:8085/ | grep -qi 'cross-origin-embedder-policy: require-corp'
+          curl -sI -H 'Accept-Encoding: br' http://127.0.0.1:8085/engine/stockfish-18-lite-single.wasm | grep -qi 'content-encoding: br'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

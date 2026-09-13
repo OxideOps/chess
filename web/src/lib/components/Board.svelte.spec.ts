@@ -47,7 +47,8 @@ describe('Board.svelte', () => {
 	it('is read-only in history unless in analysis mode', async () => {
 		const game = GameStore.fromPgn('1. e4 e5');
 		game.goBack();
-		const screen = render(Board, { game });
+		// `render` returns a promise in vitest-browser-svelte 3; awaiting works for both.
+		const screen = await render(Board, { game });
 
 		await square('e7').click();
 		expect(document.querySelectorAll('.move-hint')).toHaveLength(0);
