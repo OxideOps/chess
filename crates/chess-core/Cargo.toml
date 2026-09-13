@@ -6,10 +6,15 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[features]
+# Derive TypeScript bindings for the protocol types (`cargo test --features ts` writes them).
+ts = ["dep:ts-rs"]
+
 [dependencies]
 serde.workspace = true
 shakmaty.workspace = true
 thiserror.workspace = true
+ts-rs = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true
