@@ -1,9 +1,12 @@
-//! The HTTP side of the chess server.
+//! The chess server.
 //!
-//! Today this only serves the static SvelteKit build. It exists now so that
-//! the site is served with the headers the browser engine needs
-//! (cross-origin isolation for multi-threaded Stockfish) and a proper 404
-//! fallback, and so the game endpoints have somewhere to land.
+//! Serves the static SvelteKit build (with the headers the browser engine
+//! needs and a proper 404 fallback) and hosts games: [`games`] has the
+//! endpoints, [`room`] the rules of a game as the server enforces them.
+//! Games live in memory until persistence arrives.
+
+pub mod games;
+pub mod room;
 
 use std::path::{Path, PathBuf};
 
@@ -24,7 +27,8 @@ use tower_http::{
 /// The name of the file the client build writes for unknown routes.
 pub const FALLBACK_PAGE: &str = "404.html";
 
-/// Build the router for a client build directory (the output of `pnpm build`).
+/// Build the router: the game API plus the static client from `static_dir`
+/// (the output of `pnpm build`).
 ///
 /// - Files are served as-is, with precompressed `.br`/`.gz` siblings used
 ///   when the client accepts them. `/analysis` serves `analysis.html`: the
@@ -36,6 +40,11 @@ pub const FALLBACK_PAGE: &str = "404.html";
 ///   `SharedArrayBuffer` (and so multi-threaded engines) in browsers.
 /// - `/_app/immutable/*` is content-hashed by the build and cached forever.
 pub fn app(static_dir: impl AsRef<Path>) -> Router {
+    app_with(static_dir, games::Games::default())
+}
+
+/// [`app`] with an explicit game registry (tests share one across requests).
+pub fn app_with(static_dir: impl AsRef<Path>, games: games::Games) -> Router {
     let static_dir = static_dir.as_ref().to_path_buf();
     let fallback = ServeFile::new(static_dir.join(FALLBACK_PAGE));
     let files = ServeDir::new(&static_dir)
@@ -45,6 +54,7 @@ pub fn app(static_dir: impl AsRef<Path>) -> Router {
 
     Router::new()
         .route("/healthz", get(|| async { "ok" }))
+        .merge(games.router())
         .fallback_service(files)
         .layer(middleware::from_fn_with_state(
             static_dir,
