@@ -23,6 +23,12 @@ memory of older Dioxus APIs.
 - Keep chess logic out of components: if a component needs a new fact about the game, add a
   method to `chess_core::Game` (with a test) and call it.
 
+## Skills
+
+Project skills live in `.claude/skills/`: `run-app` (start/verify/stop the client), `dioxus-ui`
+(read before touching `crates/app`), `check` (local CI). Add a skill when a workflow has
+non-obvious steps we'd otherwise rediscover; keep one-line facts in this file instead.
+
 ## Conventions
 
 - Toolchain is pinned in `rust-toolchain.toml`. Dioxus is pinned to an exact minor; upgrade it
