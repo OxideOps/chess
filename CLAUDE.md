@@ -21,8 +21,11 @@ Successor to the archived `OxideOps/chess-v1`.
   `404.html` fallback; the root layout awaits `initChess()` so pages use the WASM
   synchronously. Stockfish (GPL, `web/static/engine`, never linked in) runs in a Web Worker
   behind `src/lib/engine/analysis.svelte.ts`.
-- (planned) `crates/server` — axum + sqlx + Postgres. Owns games, clocks, and move validation,
-  and serves `web/build`.
+- `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
+  prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
+  isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Games, clocks, and move
+  validation (with `chess-core`) and Postgres via sqlx come next (roadmap 3). Tests use
+  `tower::ServiceExt::oneshot` against a temp build dir; CI also curls the real binary.
 
 ## Working on the UI
 

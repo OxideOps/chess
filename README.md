@@ -19,6 +19,8 @@ Early scaffolding. What works today:
   the WebSocket protocol. Tested.
 - `chess-core` also reads PGN (tags, comments, variations skipped, NAGs) and parses UCI engine
   output (`info` lines, scores, principal variations).
+- `server`: an axum binary that serves the client build with clean URLs, a 404 fallback,
+  precompressed assets, and cross-origin isolation headers. No game logic yet.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
@@ -33,7 +35,7 @@ Early scaffolding. What works today:
    [variations](https://github.com/OxideOps/chess/issues/3),
    [responsive layout and PWA](https://github.com/OxideOps/chess/issues/9))
 3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
-   validation, clocks, reconnects, persistence
+   validation, clocks, reconnects, persistence (static serving done; games next)
 4. [Accounts and sessions](https://github.com/OxideOps/chess/issues/6)
 5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7): ratings,
    then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that explains
@@ -57,6 +59,12 @@ pnpm install && pnpm browsers   # first time
 pnpm dev                        # builds chess-core to WASM, then serves
 ```
 
+Serve the production build the way the real server will (after `pnpm build` in `web/`):
+
+```sh
+cargo run -p server                 # http://127.0.0.1:8080, --bind and --static-dir to change
+```
+
 Checks, same as CI:
 
 ```sh
@@ -77,6 +85,7 @@ types, via ts-rs); CI fails if the committed files are stale.
 crates/
   chess-core/       rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
   chess-core-wasm/  wasm-bindgen wrapper around chess-core for web/ (built by `pnpm build:wasm`)
+  server/           axum binary: serves web/build today, will own games (roadmap 3)
 web/                SvelteKit client (pnpm; static SPA, prerendered shells)
   src/lib/chess/    WASM loader and the reactive GameStore
   src/lib/engine/   Stockfish worker and the Analyser store

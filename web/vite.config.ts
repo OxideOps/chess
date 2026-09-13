@@ -15,7 +15,8 @@ export default defineConfig({
 			// (see src/routes/+layout.ts) and rendered in the browser. Unknown paths
 			// get the SPA shell as `404.html`, which static hosts serve for misses and
 			// the axum server will serve as its fallback later.
-			adapter: adapter({ fallback: '404.html' })
+			// `precompress` writes .br/.gz siblings that the server hands out as-is.
+			adapter: adapter({ fallback: '404.html', precompress: true })
 		})
 	],
 	test: {
