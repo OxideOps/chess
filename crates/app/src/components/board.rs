@@ -22,11 +22,18 @@ struct SquareView {
 
 /// An interactive board. Click a piece, then click where it should go.
 ///
-/// The board is only interactive when viewing the latest position of a game
-/// that isn't over. Arrow keys step through the move history when the board
-/// has focus.
+/// In play mode the board only accepts moves at the latest position of a
+/// game that isn't over. In `analysis` mode any position can be played from:
+/// moving while viewing history discards the moves after it. Arrow keys step
+/// through the move history when the board has focus. `arrows` are drawn
+/// from square to square, e.g. for engine suggestions.
 #[component]
-pub fn Board(game: Signal<Game>, orientation: Color) -> Element {
+pub fn Board(
+    game: Signal<Game>,
+    orientation: Color,
+    #[props(default)] analysis: bool,
+    #[props(default)] arrows: Vec<(Square, Square)>,
+) -> Element {
     let mut selected: Signal<Option<Square>> = use_signal(|| None);
     // A move that needs a promotion piece before it can be played.
     let mut promotion: Signal<Option<(Square, Square)>> = use_signal(|| None);
@@ -34,7 +41,7 @@ pub fn Board(game: Signal<Game>, orientation: Color) -> Element {
     let g = game.read();
     let position = g.position();
     let turn = position.turn();
-    let interactive = !g.is_viewing_history() && !g.status().is_game_over();
+    let interactive = !g.status().is_game_over() && (analysis || !g.is_viewing_history());
     let selected_square = if interactive { selected() } else { None };
     let destinations = selected_square
         .map(|sq| g.legal_destinations(sq))
@@ -73,6 +80,21 @@ pub fn Board(game: Signal<Game>, orientation: Color) -> Element {
         })
         .collect();
     drop(g);
+    let arrow_views: Vec<ArrowView> = arrows
+        .iter()
+        .map(|&(from, to)| ArrowView::new(from, to, orientation))
+        .collect();
+
+    // Plays at the end of the game, or from the viewed position in analysis mode.
+    let play = move |from: Square, to: Square, promotion: Option<Role>| -> Result<(), GameError> {
+        let mut game = game;
+        let mut g = game.write();
+        if analysis {
+            g.play_here_from_to(from, to, promotion).map(|_| ())
+        } else {
+            g.play_from_to(from, to, promotion).map(|_| ())
+        }
+    };
 
     let mut on_square_click = move |square: Square| {
         if !interactive {
@@ -88,8 +110,7 @@ pub fn Board(game: Signal<Game>, orientation: Color) -> Element {
         match selected() {
             Some(from) if from == square => selected.set(None),
             Some(from) => {
-                let outcome = game.write().play_from_to(from, square, None).map(|_| ());
-                match outcome {
+                match play(from, square, None) {
                     Ok(()) => selected.set(None),
                     Err(GameError::PromotionRequired) => promotion.set(Some((from, square))),
                     // Clicking another of your own pieces selects it instead.
@@ -155,21 +176,81 @@ pub fn Board(game: Signal<Game>, orientation: Color) -> Element {
                     }
                 }
             }
+            if !arrow_views.is_empty() {
+                svg { class: "arrows", "viewBox": "0 0 8 8",
+                    defs {
+                        marker {
+                            id: "arrowhead",
+                            "viewBox": "0 0 10 10",
+                            "refX": "5",
+                            "refY": "5",
+                            "markerWidth": "4",
+                            "markerHeight": "4",
+                            orient: "auto",
+                            polygon { points: "0,0 10,5 0,10" }
+                        }
+                    }
+                    for a in arrow_views {
+                        line {
+                            x1: "{a.x1}",
+                            y1: "{a.y1}",
+                            x2: "{a.x2}",
+                            y2: "{a.y2}",
+                            "marker-end": "url(#arrowhead)",
+                        }
+                    }
+                }
+            }
             if let Some((from, to)) = promotion() {
                 PromotionPicker {
                     color: turn,
                     on_pick: move |role: Option<Role>| {
-                        if let Some(role) = role {
-                            let mut game = game;
-                            if let Err(err) = game.write().play_from_to(from, to, Some(role)) {
-                                dioxus::logger::tracing::warn!("promotion failed: {err}");
-                            }
+                        if let Some(role) = role
+                            && let Err(err) = play(from, to, Some(role))
+                        {
+                            dioxus::logger::tracing::warn!("promotion failed: {err}");
                         }
                         promotion.set(None);
                         selected.set(None);
                     },
                 }
             }
+        }
+    }
+}
+
+/// An arrow in board coordinates (8x8, origin top-left as drawn).
+struct ArrowView {
+    x1: f64,
+    y1: f64,
+    x2: f64,
+    y2: f64,
+}
+
+impl ArrowView {
+    fn new(from: Square, to: Square, orientation: Color) -> Self {
+        let centre = |sq: Square| {
+            let (file, rank) = (
+                f64::from(u32::from(sq.file())),
+                f64::from(u32::from(sq.rank())),
+            );
+            if orientation.is_white() {
+                (file + 0.5, 7.5 - rank)
+            } else {
+                (7.5 - file, rank + 0.5)
+            }
+        };
+        let (x1, y1) = centre(from);
+        let (x2, y2) = centre(to);
+        // Stop short of the destination centre so the head sits inside the square.
+        let (dx, dy) = (x2 - x1, y2 - y1);
+        let len = (dx * dx + dy * dy).sqrt().max(f64::EPSILON);
+        let shorten = 0.3;
+        Self {
+            x1,
+            y1,
+            x2: x2 - dx / len * shorten,
+            y2: y2 - dy / len * shorten,
         }
     }
 }

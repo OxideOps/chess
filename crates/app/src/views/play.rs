@@ -1,7 +1,7 @@
-use chess_core::{Color, Game, GameStatus};
+use chess_core::{Color, Game};
 use dioxus::prelude::*;
 
-use crate::components::{Board, Controls, MoveList, side_name};
+use crate::components::{Board, Controls, MoveList, status_text};
 
 /// A local two-player game: both sides are moved from this screen.
 #[component]
@@ -27,17 +27,5 @@ pub fn Play() -> Element {
                 }
             }
         }
-    }
-}
-
-fn status_text(status: GameStatus, turn: Color) -> String {
-    match status {
-        GameStatus::Ongoing => format!("{} to move", side_name(turn)),
-        GameStatus::Check => format!("{} to move — check", side_name(turn)),
-        GameStatus::Checkmate { winner } => format!("Checkmate — {} wins", side_name(winner)),
-        GameStatus::Stalemate => "Draw by stalemate".into(),
-        GameStatus::InsufficientMaterial => "Draw by insufficient material".into(),
-        GameStatus::FiftyMoveRule => "Draw by the fifty-move rule".into(),
-        GameStatus::ThreefoldRepetition => "Draw by threefold repetition".into(),
     }
 }

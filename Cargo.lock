@@ -47,6 +47,10 @@ version = "0.1.0"
 dependencies = [
  "chess-core",
  "dioxus",
+ "futures-channel",
+ "futures-util",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

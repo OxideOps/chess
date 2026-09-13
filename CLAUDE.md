@@ -8,7 +8,9 @@ mobile later from the same UI code. Successor to the archived `OxideOps/chess-v1
 - `crates/chess-core` — rules (via `shakmaty`), `Game` history/navigation, and the client↔server
   `protocol` types. No UI, no I/O, must compile for `wasm32`. Everything chess-related that both
   the client and the server need goes here, with tests.
-- `crates/app` — the Dioxus client. Features: `web` (default), `desktop`.
+- `crates/app` — the Dioxus client. Features: `web` (default), `desktop`. `src/engine/` runs
+  Stockfish (a GPL Web Worker vendored in `assets/engine/`, never linked in) and exposes it as
+  the `use_analysis` hook; the UCI text protocol itself is parsed in `chess_core::engine`.
 - (planned) `crates/server` — axum + sqlx + Postgres. Owns games, clocks, and move validation.
 
 ## Working on the UI

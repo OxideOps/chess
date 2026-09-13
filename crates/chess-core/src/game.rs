@@ -16,6 +16,8 @@ pub enum GameError {
     InvalidFen(String),
     #[error("invalid UCI move: {0}")]
     InvalidUci(String),
+    #[error("invalid PGN: {0}")]
+    InvalidPgn(String),
 }
 
 /// The state of the position currently being viewed.
@@ -94,6 +96,11 @@ impl Game {
         Ok(Self::from_position(pos))
     }
 
+    /// Load the main line of the first game in a PGN. See [`crate::pgn`].
+    pub fn from_pgn(pgn: &str) -> Result<Self, GameError> {
+        crate::pgn::parse(pgn).map(|p| p.game)
+    }
+
     fn from_position(pos: Chess) -> Self {
         Self {
             start_fen: Fen::from_position(&pos, EnPassantMode::Legal),
@@ -156,8 +163,18 @@ impl Game {
         self.position().turn()
     }
 
+    /// Status of the position at the cursor.
     pub fn status(&self) -> GameStatus {
-        let pos = self.position();
+        self.status_at(self.cursor)
+    }
+
+    /// Status of the position after the last move, ignoring the cursor.
+    pub fn final_status(&self) -> GameStatus {
+        self.status_at(self.moves.len())
+    }
+
+    fn status_at(&self, ply: usize) -> GameStatus {
+        let pos = &self.positions[ply];
         if pos.is_checkmate() {
             GameStatus::Checkmate {
                 winner: !pos.turn(),
@@ -168,7 +185,7 @@ impl Game {
             GameStatus::InsufficientMaterial
         } else if pos.halfmoves() >= 100 {
             GameStatus::FiftyMoveRule
-        } else if self.repetition_count() >= 3 {
+        } else if self.repetition_count_at(ply) >= 3 {
             GameStatus::ThreefoldRepetition
         } else if pos.is_check() {
             GameStatus::Check
@@ -180,10 +197,12 @@ impl Game {
     /// How many times the position at the cursor has occurred so far
     /// (including this occurrence).
     pub fn repetition_count(&self) -> usize {
-        let hash = self
-            .position()
-            .zobrist_hash::<Zobrist64>(EnPassantMode::Legal);
-        self.positions[..=self.cursor]
+        self.repetition_count_at(self.cursor)
+    }
+
+    fn repetition_count_at(&self, ply: usize) -> usize {
+        let hash = self.positions[ply].zobrist_hash::<Zobrist64>(EnPassantMode::Legal);
+        self.positions[..=ply]
             .iter()
             .filter(|p| p.zobrist_hash::<Zobrist64>(EnPassantMode::Legal) == hash)
             .count()
@@ -232,25 +251,34 @@ impl Game {
         to: Square,
         promotion: Option<Role>,
     ) -> Result<&PlayedMove, GameError> {
-        let candidates: Vec<Move> = self
-            .latest()
-            .legal_moves()
-            .iter()
-            .copied()
-            .filter(|m| uci_squares(m) == Some((from, to)))
-            .collect();
+        let mv = resolve_move(self.latest(), from, to, promotion)?;
+        self.play(mv)
+    }
 
-        let mv = match candidates.as_slice() {
-            [] => return Err(GameError::IllegalMove),
-            [single] if !single.is_promotion() => *single,
-            _ => {
-                let role = promotion.ok_or(GameError::PromotionRequired)?;
-                *candidates
-                    .iter()
-                    .find(|m| m.promotion() == Some(role))
-                    .ok_or(GameError::IllegalMove)?
-            }
-        };
+    /// Like [`Game::play_from_to`], but from the position at the cursor: any
+    /// moves after the cursor are discarded first. Nothing changes if the
+    /// move is illegal or still needs a promotion piece.
+    pub fn play_here_from_to(
+        &mut self,
+        from: Square,
+        to: Square,
+        promotion: Option<Role>,
+    ) -> Result<&PlayedMove, GameError> {
+        let mv = resolve_move(self.position(), from, to, promotion)?;
+        self.truncate_to_cursor();
+        self.play(mv)
+    }
+
+    /// Play a UCI move from the position at the cursor, discarding any moves
+    /// after it. Used to follow an engine line.
+    pub fn play_here_uci(&mut self, uci: &str) -> Result<&PlayedMove, GameError> {
+        let uci: UciMove = uci
+            .parse()
+            .map_err(|_| GameError::InvalidUci(uci.to_string()))?;
+        let mv = uci
+            .to_move(self.position())
+            .map_err(|_| GameError::IllegalMove)?;
+        self.truncate_to_cursor();
         self.play(mv)
     }
 
@@ -263,6 +291,13 @@ impl Game {
             .to_move(self.latest())
             .map_err(|_| GameError::IllegalMove)?;
         self.play(mv)
+    }
+
+    /// Forget every move after the cursor, so the viewed position becomes the
+    /// end of the game. This is how an analysis board "plays from here".
+    pub fn truncate_to_cursor(&mut self) {
+        self.positions.truncate(self.cursor + 1);
+        self.moves.truncate(self.cursor);
     }
 
     // ----- navigation ----------------------------------------------------
@@ -293,22 +328,85 @@ impl Game {
     /// Starts from the game's start position, so a game that began from a
     /// FEN with Black to move opens with `1... e5`.
     pub fn movetext(&self) -> String {
-        let start = &self.positions[0];
-        let mut out = String::new();
-        let mut number = start.fullmoves().get();
-        for (i, played) in self.moves.iter().enumerate() {
-            let white_to_move = (i % 2 == 0) == (start.turn() == Color::White);
-            if white_to_move {
-                let _ = write!(out, "{number}. ");
-            } else if i == 0 {
-                let _ = write!(out, "{number}... ");
-            }
-            let _ = write!(out, "{} ", played.san);
-            if !white_to_move {
-                number += 1;
-            }
+        write_movetext(&self.positions[0], self.moves.iter().map(|m| &m.san))
+    }
+
+    /// The result token for the game as played: `1-0`, `0-1`, `1/2-1/2`, or
+    /// `*` while it is unfinished.
+    pub fn result_token(&self) -> &'static str {
+        let status = self.final_status();
+        match status.winner() {
+            Some(Color::White) => "1-0",
+            Some(Color::Black) => "0-1",
+            None if status.is_game_over() => "1/2-1/2",
+            None => "*",
         }
-        out.trim_end().to_string()
+    }
+
+    /// A minimal PGN export: `SetUp`/`FEN` tags when the game didn't start
+    /// from the initial position, the movetext, and the result token.
+    pub fn pgn(&self) -> String {
+        let mut out = String::new();
+        if *self.start_position() != Chess::default() {
+            let _ = writeln!(out, "[SetUp \"1\"]");
+            let _ = writeln!(out, "[FEN \"{}\"]", self.start_fen());
+            out.push('\n');
+        }
+        let movetext = self.movetext();
+        if !movetext.is_empty() {
+            out.push_str(&movetext);
+            out.push(' ');
+        }
+        out.push_str(self.result_token());
+        out
+    }
+}
+
+/// Number a sequence of SAN moves starting from `start`, e.g. `1. e4 e5 2. Nf3`
+/// or `1... e5 2. Nf3` when Black moves first.
+pub(crate) fn write_movetext<'a>(start: &Chess, sans: impl Iterator<Item = &'a SanPlus>) -> String {
+    let mut out = String::new();
+    let mut number = start.fullmoves().get();
+    for (i, san) in sans.enumerate() {
+        let white_to_move = (i % 2 == 0) == (start.turn() == Color::White);
+        if white_to_move {
+            let _ = write!(out, "{number}. ");
+        } else if i == 0 {
+            let _ = write!(out, "{number}... ");
+        }
+        let _ = write!(out, "{san} ");
+        if !white_to_move {
+            number += 1;
+        }
+    }
+    out.trim_end().to_string()
+}
+
+/// Find the legal move in `pos` matching a from/to pair and optional promotion.
+fn resolve_move(
+    pos: &Chess,
+    from: Square,
+    to: Square,
+    promotion: Option<Role>,
+) -> Result<Move, GameError> {
+    let candidates: Vec<Move> = pos
+        .legal_moves()
+        .iter()
+        .copied()
+        .filter(|m| uci_squares(m) == Some((from, to)))
+        .collect();
+
+    match candidates.as_slice() {
+        [] => Err(GameError::IllegalMove),
+        [single] if !single.is_promotion() => Ok(*single),
+        _ => {
+            let role = promotion.ok_or(GameError::PromotionRequired)?;
+            candidates
+                .iter()
+                .find(|m| m.promotion() == Some(role))
+                .copied()
+                .ok_or(GameError::IllegalMove)
+        }
     }
 }
 
@@ -479,6 +577,72 @@ mod tests {
         g.play_uci("b8c6").unwrap();
         assert_eq!(g.movetext(), "1. e4 e5 2. Nf3 Nc6");
         assert!(!g.is_viewing_history());
+    }
+
+    #[test]
+    fn truncate_to_cursor_plays_from_here() {
+        let mut g = game("e2e4 e7e5 g1f3 b8c6");
+        g.go_to_ply(2);
+        g.truncate_to_cursor();
+        assert_eq!(g.ply_count(), 2);
+        assert!(!g.is_viewing_history());
+        assert_eq!(g.movetext(), "1. e4 e5");
+        g.play_uci("f1c4").unwrap();
+        assert_eq!(g.movetext(), "1. e4 e5 2. Bc4");
+
+        // At the end it is a no-op; at the start it clears the game.
+        g.truncate_to_cursor();
+        assert_eq!(g.ply_count(), 3);
+        g.go_to_start();
+        g.truncate_to_cursor();
+        assert_eq!(g.ply_count(), 0);
+        assert_eq!(g.fen(), START_FEN);
+    }
+
+    #[test]
+    fn playing_from_history_discards_the_future() {
+        let mut g = game("e2e4 e7e5 g1f3 b8c6");
+        g.go_to_ply(1);
+        // An illegal move changes nothing, not even the history.
+        assert_eq!(
+            g.play_here_from_to(sq("e7"), sq("e4"), None),
+            Err(GameError::IllegalMove)
+        );
+        assert_eq!(g.ply_count(), 4);
+        assert_eq!(g.cursor(), 1);
+
+        g.play_here_from_to(sq("c7"), sq("c5"), None).unwrap();
+        assert_eq!(g.movetext(), "1. e4 c5");
+        assert!(!g.is_viewing_history());
+
+        g.go_to_start();
+        g.play_here_uci("d2d4").unwrap();
+        assert_eq!(g.movetext(), "1. d4");
+        assert_eq!(g.play_here_uci("d2d4"), Err(GameError::IllegalMove));
+    }
+
+    #[test]
+    fn pgn_export_and_result() {
+        let g = game("e2e4 e7e5 f1c4 b8c6 d1h5 g8f6 h5f7");
+        assert_eq!(g.result_token(), "1-0");
+        assert_eq!(g.pgn(), "1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0");
+        assert_eq!(Game::new().pgn(), "*");
+
+        let mut g = game("e2e4 e7e5");
+        g.go_to_start();
+        // The result describes the whole game, not the viewed position.
+        assert_eq!(g.result_token(), "*");
+        assert_eq!(g.final_status(), GameStatus::Ongoing);
+
+        let mut g =
+            Game::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1").unwrap();
+        g.play_uci("e7e5").unwrap();
+        assert_eq!(
+            g.pgn(),
+            "[SetUp \"1\"]\n[FEN \"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1\"]\n\n1... e5 *"
+        );
+        // Round trip.
+        assert_eq!(Game::from_pgn(&g.pgn()).unwrap().pgn(), g.pgn());
     }
 
     #[test]
