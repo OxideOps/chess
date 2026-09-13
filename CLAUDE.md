@@ -23,9 +23,13 @@ Successor to the archived `OxideOps/chess-v1`.
   behind `src/lib/engine/analysis.svelte.ts`.
 - `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
   prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
-  isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Games, clocks, and move
-  validation (with `chess-core`) and Postgres via sqlx come next (roadmap 3). Tests use
-  `tower::ServiceExt::oneshot` against a temp build dir; CI also curls the real binary.
+  isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:
+  `room.rs` is the pure game state (rules via `chess-core`, clocks, draw offers, timeouts;
+  takes `now` as a parameter so it is unit-tested without a runtime), `games.rs` the
+  in-memory registry and the `/api/games` HTTP + WebSocket endpoints (one secret token per
+  side until accounts exist). Static tests use `tower::ServiceExt::oneshot`; socket tests
+  run a real listener with `tokio-tungstenite`; CI also curls the real binary. Postgres
+  persistence is still to come (roadmap 3).
 
 ## Working on the UI
 

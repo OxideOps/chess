@@ -14,6 +14,8 @@ use shakmaty::{Color, uci::UciMove};
 #[cfg(feature = "ts")]
 use ts_rs::TS;
 
+use crate::GameStatus;
+
 /// `shakmaty::Color` has no serde support; encode it as `"white"` / `"black"`.
 mod color {
     use super::*;
@@ -96,6 +98,13 @@ pub enum ServerMessage {
         #[serde(with = "opt_color")]
         #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\" | null"))]
         your_color: Option<Color>,
+        /// Set once the game is over.
+        #[serde(default)]
+        ended: Option<GameEnd>,
+        /// A draw offer that is still open.
+        #[serde(default, with = "opt_color")]
+        #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\" | null"))]
+        draw_offer: Option<Color>,
     },
     /// A move was accepted (either side's). `ply` lets a client detect gaps.
     MovePlayed {
@@ -109,15 +118,42 @@ pub enum ServerMessage {
         #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\""))]
         by: Color,
     },
+    DrawDeclined,
     GameOver {
-        result: GameResult,
-        reason: GameOverReason,
+        #[serde(flatten)]
+        end: GameEnd,
     },
     /// A request was rejected. The game state is unchanged.
     Rejected {
         message: String,
     },
     Pong,
+}
+
+/// How a game ended.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct GameEnd {
+    pub result: GameResult,
+    pub reason: GameOverReason,
+}
+
+impl GameEnd {
+    /// The end implied by the rules for a position, if it is over.
+    pub fn from_status(status: GameStatus) -> Option<GameEnd> {
+        let reason = match status {
+            GameStatus::Ongoing | GameStatus::Check => return None,
+            GameStatus::Checkmate { .. } => GameOverReason::Checkmate,
+            GameStatus::Stalemate => GameOverReason::Stalemate,
+            GameStatus::InsufficientMaterial => GameOverReason::InsufficientMaterial,
+            GameStatus::FiftyMoveRule => GameOverReason::FiftyMoves,
+            GameStatus::ThreefoldRepetition => GameOverReason::Repetition,
+        };
+        Some(GameEnd {
+            result: GameResult::from_winner(status.winner()),
+            reason,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -127,6 +163,16 @@ pub enum GameResult {
     WhiteWins,
     BlackWins,
     Draw,
+}
+
+impl GameResult {
+    pub fn from_winner(winner: Option<Color>) -> GameResult {
+        match winner {
+            Some(Color::White) => GameResult::WhiteWins,
+            Some(Color::Black) => GameResult::BlackWins,
+            None => GameResult::Draw,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -158,8 +204,10 @@ mod tests {
         assert_eq!(serde_json::from_str::<ClientMessage>(&json).unwrap(), msg);
 
         let msg = ServerMessage::GameOver {
-            result: GameResult::Draw,
-            reason: GameOverReason::Repetition,
+            end: GameEnd {
+                result: GameResult::Draw,
+                reason: GameOverReason::Repetition,
+            },
         };
         let json = serde_json::to_string(&msg).unwrap();
         assert_eq!(
@@ -176,11 +224,14 @@ mod tests {
                 black_ms: 2,
             },
             your_color: Some(Color::Black),
+            ended: None,
+            draw_offer: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         assert!(json.contains(r#""your_color":"black""#), "{json}");
+        assert!(json.contains(r#""ended":null"#), "{json}");
         assert_eq!(serde_json::from_str::<ServerMessage>(&json).unwrap(), msg);
-        let spectator = json.replace(r#""black""#, "null");
+        let spectator = json.replace(r#""your_color":"black""#, r#""your_color":null"#);
         assert!(matches!(
             serde_json::from_str::<ServerMessage>(&spectator).unwrap(),
             ServerMessage::Sync {
@@ -188,5 +239,30 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn game_end_follows_the_rules() {
+        use crate::Game;
+        let mut g = Game::new();
+        assert_eq!(GameEnd::from_status(g.status()), None);
+        for m in ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6", "h5f7"] {
+            g.play_uci(m).unwrap();
+        }
+        assert_eq!(
+            GameEnd::from_status(g.status()),
+            Some(GameEnd {
+                result: GameResult::WhiteWins,
+                reason: GameOverReason::Checkmate
+            })
+        );
+        let g = Game::from_fen("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1").unwrap();
+        assert_eq!(
+            GameEnd::from_status(g.status()),
+            Some(GameEnd {
+                result: GameResult::Draw,
+                reason: GameOverReason::Stalemate
+            })
+        );
     }
 }
