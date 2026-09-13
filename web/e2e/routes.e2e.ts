@@ -16,3 +16,11 @@ test('analysis page opens directly and the nav links back', async ({ page }) => 
 	await expect(page).toHaveURL('/');
 	await expect(page.locator('.board')).toBeVisible();
 });
+
+test('unknown paths show the 404 page', async ({ page }) => {
+	await page.goto('/no/such/page');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page not found');
+	await expect(page.getByText('There is nothing at /no/such/page.')).toBeVisible();
+	await page.getByRole('link', { name: 'Analysis' }).click();
+	await expect(page.locator('.engine')).toBeVisible();
+});

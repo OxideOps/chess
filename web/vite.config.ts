@@ -12,9 +12,10 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			// The app is a static SPA: every route is prerendered as an empty shell
-			// (see src/routes/+layout.ts) and rendered in the browser. The axum server
-			// will serve `build/` and fall back to index.html for dynamic routes later.
-			adapter: adapter()
+			// (see src/routes/+layout.ts) and rendered in the browser. Unknown paths
+			// get the SPA shell as `404.html`, which static hosts serve for misses and
+			// the axum server will serve as its fallback later.
+			adapter: adapter({ fallback: '404.html' })
 		})
 	],
 	test: {
