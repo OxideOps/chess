@@ -1,0 +1,17 @@
+[package]
+name = "app"
+description = "The chess client. Web first; the same code targets desktop and mobile through Dioxus. All chess logic lives in chess-core."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+chess-core.workspace = true
+dioxus.workspace = true
+
+[features]
+default = ["web"]
+web = ["dioxus/web"]
+desktop = ["dioxus/desktop"]

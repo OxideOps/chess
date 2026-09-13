@@ -1,0 +1,119 @@
+.board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: min(92vw, 640px);
+    aspect-ratio: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.board:focus-visible {
+    box-shadow: 0 0 0 3px var(--accent), 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.square {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.square.light { background: var(--square-light); }
+.square.dark { background: var(--square-dark); }
+
+.board.interactive .square:has(.piece),
+.board.interactive .square:has(.move-hint),
+.board.interactive .square:has(.capture-hint) {
+    cursor: pointer;
+}
+
+/* Highlights are painted in a pseudo-element so they sit under the piece. */
+.square.selected::before,
+.square.last-move::before,
+.square.check::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.square.last-move::before { background: var(--highlight-last-move); }
+.square.selected::before { background: var(--highlight-selected); }
+.square.check::before {
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 0, 0, 1) 0%,
+        rgba(231, 0, 0, 1) 25%,
+        rgba(169, 0, 0, 0) 89%,
+        rgba(158, 0, 0, 0) 100%
+    );
+}
+
+.piece {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.move-hint {
+    position: absolute;
+    z-index: 1;
+    width: 32%;
+    height: 32%;
+    border-radius: 50%;
+    background: var(--highlight-destination);
+}
+
+.capture-hint {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    border-radius: 50%;
+    border: 0.4rem solid var(--highlight-destination);
+    box-sizing: border-box;
+}
+
+.coord {
+    position: absolute;
+    z-index: 3;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0.85;
+}
+
+.coord.rank { top: 3px; left: 4px; }
+.coord.file { bottom: 3px; right: 4px; }
+.light .coord { color: var(--square-dark); }
+.dark .coord { color: var(--square-light); }
+
+.promotion {
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.promotion button {
+    width: 17%;
+    aspect-ratio: 1;
+    padding: 4%;
+    border: none;
+    border-radius: 12px;
+    background: var(--square-light);
+    cursor: pointer;
+}
+
+.promotion button:hover { background: #fff; }
+.promotion img { width: 100%; height: 100%; }

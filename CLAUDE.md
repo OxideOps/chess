@@ -1,0 +1,33 @@
+# Chess (v2)
+
+A chess site for learning and playing, built in Rust. Web first (Dioxus → WASM), desktop and
+mobile later from the same UI code. Successor to the archived `OxideOps/chess-v1`.
+
+## Layout
+
+- `crates/chess-core` — rules (via `shakmaty`), `Game` history/navigation, and the client↔server
+  `protocol` types. No UI, no I/O, must compile for `wasm32`. Everything chess-related that both
+  the client and the server need goes here, with tests.
+- `crates/app` — the Dioxus client. Features: `web` (default), `desktop`.
+- (planned) `crates/server` — axum + sqlx + Postgres. Owns games, clocks, and move validation.
+
+## Working on the UI
+
+Dioxus 0.7 is very different from older versions (`cx`, `Scope`, `use_state`, `use_shared_state`
+are gone). **Read `docs/dioxus-0.7.md` before writing or editing components.** Don't rely on
+memory of older Dioxus APIs.
+
+- Run the client with `dx serve` from `crates/app` (hot reloads).
+- Never hold a signal `.read()`/`.write()` guard across an `await` or while calling another
+  signal write (see `crates/app/clippy.toml`).
+- Keep chess logic out of components: if a component needs a new fact about the game, add a
+  method to `chess_core::Game` (with a test) and call it.
+
+## Conventions
+
+- Toolchain is pinned in `rust-toolchain.toml`. Dioxus is pinned to an exact minor; upgrade it
+  deliberately, on its own PR. Never fork dependencies.
+- CI runs `cargo fmt --check`, `cargo clippy -D warnings` (native and wasm), `cargo test`, and
+  `dx build`. Run the same locally before opening a PR.
+- Piece images are Colin M.L. Burnett's `cburnett` set (CC BY-SA 3.0). Any new assets need a
+  license compatible with MIT noted in `README.md`.

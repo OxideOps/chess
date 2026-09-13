@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Dioxus breaks its API every minor release; upgrade it deliberately, on its own.
+      dioxus:
+        patterns: ["dioxus*"]
+      dependencies:
+        patterns: ["*"]
+        exclude-patterns: ["dioxus*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
