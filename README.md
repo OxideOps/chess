@@ -1,6 +1,8 @@
 # Chess
 
 A chess site that is good at teaching you chess and lets you play other people, built in Rust.
+It is a web app, on phones too (responsive, installable as a PWA). There is no desktop or
+native mobile build, and none planned unless a store listing becomes worth the cost.
 
 This is the second attempt. The first (`OxideOps/chess-v1`, archived) taught us what not to do:
 a hand-written rules engine, a forked UI framework, and a server that trusted clients. This one
@@ -28,7 +30,7 @@ Early scaffolding. What works today:
 2. ~~Analysis board: FEN/PGN import, Stockfish in the browser (WASM), eval bar, best-move arrows~~
    (still open: [multi-threaded engine](https://github.com/OxideOps/chess/issues/2),
    [variations](https://github.com/OxideOps/chess/issues/3),
-   [native engine on desktop](https://github.com/OxideOps/chess/issues/4))
+   [responsive layout and PWA](https://github.com/OxideOps/chess/issues/9))
 3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
    validation, clocks, reconnects, persistence
 4. [Accounts and sessions](https://github.com/OxideOps/chess/issues/6)
@@ -54,12 +56,6 @@ cd crates/app
 dx serve
 ```
 
-Desktop (needs the platform's webview dev packages on Linux; nothing extra on macOS/Windows):
-
-```sh
-dx serve --platform desktop
-```
-
 Checks, same as CI:
 
 ```sh
@@ -74,7 +70,7 @@ cargo test --workspace
 ```
 crates/
   chess-core/   rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
-  app/          Dioxus client (web by default; desktop via --platform desktop)
+  app/          Dioxus web client (type-checks on the host; ships only as WASM)
     assets/engine/  Stockfish.js build loaded as a Web Worker (not linked into the app)
 docs/
   dioxus-0.7.md quick reference for the Dioxus version in use

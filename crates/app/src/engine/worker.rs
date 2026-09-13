@@ -1,10 +1,12 @@
-//! The engine process. On the web it is Stockfish compiled to WASM running in
-//! a Web Worker; text goes in with `postMessage` and comes back one line per
-//! message. Other platforms don't have an engine yet and say so.
+//! The engine process: Stockfish compiled to WASM running in a Web Worker.
+//! Text goes in with `postMessage` and comes back one line per message.
+//!
+//! The app only ships as WASM. The host-side stub exists so the workspace
+//! type-checks and tests natively; it is not a platform we run on.
 
 /// Something the engine sent back.
 #[derive(Debug, Clone)]
-#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))] // only the web build has an engine
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))] // only the wasm build has an engine
 pub enum EngineEvent {
     /// One line of UCI output.
     Line(String),
@@ -97,12 +99,12 @@ pub use native::Engine;
 mod native {
     use super::EngineEvent;
 
-    /// Placeholder until the desktop build spawns a native Stockfish.
+    /// Host-side stub: never runs, only compiles.
     pub struct Engine;
 
     impl Engine {
         pub fn start(_on_event: impl Fn(EngineEvent) + 'static) -> Result<Engine, String> {
-            Err("The engine is only available in the web build for now.".into())
+            Err("The engine only runs in the browser.".into())
         }
 
         pub fn send(&self, _command: &str) {}
