@@ -15,3 +15,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    groups:
+      svelte:
+        patterns: ["svelte", "@sveltejs/*", "vite", "@vitest/*", "vitest*", "playwright", "@playwright/*"]
+      dependencies:
+        patterns: ["*"]
+        exclude-patterns: ["svelte", "@sveltejs/*", "vite", "@vitest/*", "vitest*", "playwright", "@playwright/*"]

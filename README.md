@@ -40,6 +40,12 @@ Early scaffolding. What works today:
 
 Open work is tracked in [GitHub issues](https://github.com/OxideOps/chess/issues).
 
+## Frontend migration
+
+The Dioxus client in `crates/app` is being replaced by a SvelteKit app in `web/`
+([plan](https://github.com/OxideOps/chess/issues/12)). Rust stays for `chess-core` and the
+server. Until the port is complete, `crates/app` is the working app and `web/` is a shell.
+
 ## Development
 
 Requirements:
@@ -56,6 +62,14 @@ cd crates/app
 dx serve
 ```
 
+Run the SvelteKit client (Node 22 and pnpm via `corepack enable`; see `web/README.md`):
+
+```sh
+cd web
+pnpm install && pnpm browsers   # first time
+pnpm dev
+```
+
 Checks, same as CI:
 
 ```sh
@@ -63,6 +77,7 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p app --target wasm32-unknown-unknown -- -D warnings
 cargo test --workspace
+(cd web && pnpm lint && pnpm check && pnpm test && pnpm build)
 ```
 
 ## Layout
@@ -70,7 +85,8 @@ cargo test --workspace
 ```
 crates/
   chess-core/   rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
-  app/          Dioxus web client (type-checks on the host; ships only as WASM)
+  app/          Dioxus web client (being replaced by web/; type-checks on the host, ships as WASM)
+web/            SvelteKit client (pnpm; static SPA, prerendered shells)
     assets/engine/  Stockfish.js build loaded as a Web Worker (not linked into the app)
 docs/
   dioxus-0.7.md quick reference for the Dioxus version in use

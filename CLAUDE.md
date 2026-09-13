@@ -13,6 +13,11 @@ unless a concrete reason (store listing) appears. Successor to the archived `Oxi
   --workspace` and `cargo test --workspace` work, but it only ships as WASM. `src/engine/` runs
   Stockfish (a GPL Web Worker vendored in `assets/engine/`, never linked in) and exposes it as
   the `use_analysis` hook; the UCI text protocol itself is parsed in `chess_core::engine`.
+- `web` — the SvelteKit client that is replacing `crates/app` (issue #12 has the phased plan;
+  each phase is one PR and `main` always works). pnpm via corepack, TS strict, plain CSS with
+  the variables from `web/src/app.css`. Static SPA: `ssr = false`, every route prerendered as
+  a shell. Chess logic will come from `chess-core` through a WASM wrapper (phase 1); the same
+  rule applies as for Dioxus: no chess rules in components.
 - (planned) `crates/server` — axum + sqlx + Postgres. Owns games, clocks, and move validation.
 
 ## Working on the UI
@@ -37,7 +42,8 @@ non-obvious steps we'd otherwise rediscover; keep one-line facts in this file in
 
 - Toolchain is pinned in `rust-toolchain.toml`. Dioxus is pinned to an exact minor; upgrade it
   deliberately, on its own PR. Never fork dependencies.
-- CI runs `cargo fmt --check`, `cargo clippy -D warnings` (native and wasm), `cargo test`, and
-  `dx build`. Run the same locally before opening a PR.
+- CI runs `cargo fmt --check`, `cargo clippy -D warnings` (native and wasm), `cargo test`,
+  `dx build`, and for `web/`: `pnpm lint`, `check`, `test:unit`, `build`, `test:e2e`. Run the
+  same locally before opening a PR (the `check` skill does all of it).
 - Piece images are Colin M.L. Burnett's `cburnett` set (CC BY-SA 3.0). Any new assets need a
   license compatible with MIT noted in `README.md`.
