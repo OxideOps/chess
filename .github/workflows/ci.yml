@@ -50,7 +50,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: cargo-bins/cargo-binstall@main
       - run: cargo binstall wasm-pack --no-confirm --force
-      - uses: pnpm/action-setup@v4 # reads the pinned version from packageManager
+      - uses: pnpm/action-setup@v6 # reads the pinned version from packageManager
         with:
           package_json_file: web/package.json
       - uses: actions/setup-node@v4
