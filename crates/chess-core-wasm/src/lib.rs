@@ -169,6 +169,8 @@ pub struct GameView {
     pub moves: Vec<MoveView>,
     /// `1. e4 e5 2. Nf3`, for the whole game regardless of the cursor.
     pub movetext: String,
+    /// Minimal PGN export of the whole game (see `chess_core::Game::pgn`).
+    pub pgn: String,
     pub start_turn: Side,
     pub start_fullmove: u32,
 }
@@ -270,6 +272,7 @@ impl Game {
             pieces,
             moves,
             movetext: g.movetext(),
+            pgn: g.pgn(),
             start_turn: g.start_position().turn().into(),
             start_fullmove: g.start_position().fullmoves().get(),
         };
@@ -521,6 +524,7 @@ mod tests {
         assert_eq!(json["lastMove"]["from"], "e7");
         assert_eq!(json["moves"][1]["san"], "e5");
         assert_eq!(json["movetext"], "1. e4 e5");
+        assert_eq!(json["pgn"], "1. e4 e5 *");
         assert_eq!(json["pieces"].as_array().unwrap().len(), 32);
         assert_eq!(json["winner"], serde_json::Value::Null);
     }
@@ -589,6 +593,7 @@ mod tests {
                     })
                     .collect(),
                 movetext: g.movetext(),
+                pgn: g.pgn(),
                 start_turn: g.start_position().turn().into(),
                 start_fullmove: g.start_position().fullmoves().get(),
             }

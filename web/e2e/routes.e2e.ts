@@ -10,7 +10,8 @@ test('play page opens directly', async ({ page }) => {
 
 test('analysis page opens directly and the nav links back', async ({ page }) => {
 	await page.goto('/analysis');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Analysis');
+	await expect(page.locator('.engine')).toBeVisible();
+	await expect(page.getByTestId('eval-bar')).toBeVisible();
 	await page.getByRole('link', { name: 'Play' }).click();
 	await expect(page).toHaveURL('/');
 	await expect(page.locator('.board')).toBeVisible();
