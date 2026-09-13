@@ -12,7 +12,7 @@ cargo fmt --all                                    # fixes formatting in place
 cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p chess-core-wasm --target wasm32-unknown-unknown -- -D warnings
 cargo clippy --workspace --all-targets --features chess-core-wasm/ts -- -D warnings
-cargo test --workspace
+TEST_DATABASE_URL=postgres://$USER@localhost/chess_test cargo test --workspace
 (cd web && corepack pnpm gen:types && git diff --exit-code -- src/lib/generated \
    && corepack pnpm build:wasm && corepack pnpm format >/dev/null && corepack pnpm lint \
    && corepack pnpm check && corepack pnpm test:unit && corepack pnpm build && corepack pnpm test:e2e)
@@ -27,6 +27,10 @@ Notes:
   `-D warnings`.
 - `git diff --exit-code -- src/lib/generated` fails when Rust types changed but the generated
   TypeScript wasn't committed. Commit the regenerated files; don't hand-edit them.
+- The persistence tests need a Postgres they can write to. The local one is Homebrew's
+  postgresql@17 with a `chess_test` database (`createdb chess_test` once); the URL must name
+  the user (`$USER@localhost`), sqlx connects as "anonymous" otherwise. Without
+  `TEST_DATABASE_URL` they print "skipping" and pass, which is not the same as passing.
 - `web/` needs `wasm-pack` (`cargo install wasm-pack --locked`), `corepack pnpm install` once
   and `corepack pnpm browsers` once (Chromium for Vitest browser mode and Playwright). `pnpm`
   is not on PATH here; go through `corepack`. `test:e2e` builds and previews the site itself

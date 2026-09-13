@@ -7,7 +7,7 @@
 use std::time::{Duration, Instant};
 
 use chess_core::{
-    Color, Game,
+    Color, Game, GameError,
     protocol::{ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, ServerMessage},
 };
 
@@ -25,6 +25,22 @@ impl Default for TimeControl {
             increment: Duration::ZERO,
         }
     }
+}
+
+/// Everything needed to rebuild a [`Room`] later, e.g. from the database.
+/// Durations are milliseconds; `clock_running_for_ms` is how long the side
+/// to move's clock had been running when the snapshot was taken.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Snapshot {
+    pub initial_ms: u64,
+    pub increment_ms: u64,
+    /// UCI moves from the initial position.
+    pub moves: Vec<String>,
+    pub white_ms: u64,
+    pub black_ms: u64,
+    pub clock_running_for_ms: Option<u64>,
+    pub draw_offer: Option<Color>,
+    pub ended: Option<GameEnd>,
 }
 
 /// A message produced by the room, and who should get it.
@@ -68,6 +84,59 @@ impl Room {
 
     pub fn game(&self) -> &Game {
         &self.game
+    }
+
+    pub fn time_control(&self) -> TimeControl {
+        self.time_control
+    }
+
+    /// Capture the room as data, as of `now`.
+    pub fn snapshot(&self, now: Instant) -> Snapshot {
+        Snapshot {
+            initial_ms: self.time_control.initial.as_millis() as u64,
+            increment_ms: self.time_control.increment.as_millis() as u64,
+            moves: self
+                .game
+                .moves()
+                .iter()
+                .map(|m| m.uci.to_string())
+                .collect(),
+            white_ms: self.remaining[0].as_millis() as u64,
+            black_ms: self.remaining[1].as_millis() as u64,
+            clock_running_for_ms: self
+                .clock_since
+                .map(|since| now.saturating_duration_since(since).as_millis() as u64),
+            draw_offer: self.draw_offer,
+            ended: self.ended,
+        }
+    }
+
+    /// Rebuild a room from a snapshot taken `age` ago (the clock, if it was
+    /// running, has kept running meanwhile). Fails if the moves don't replay.
+    pub fn restore(snapshot: &Snapshot, age: Duration, now: Instant) -> Result<Room, GameError> {
+        let mut game = Game::new();
+        for uci in &snapshot.moves {
+            game.play_uci(uci)?;
+        }
+        let clock_since = snapshot.clock_running_for_ms.and_then(|running| {
+            let since = now.checked_sub(Duration::from_millis(running) + age);
+            // Only a running clock makes sense; a finished game has none.
+            since.filter(|_| snapshot.ended.is_none())
+        });
+        Ok(Room {
+            game,
+            time_control: TimeControl {
+                initial: Duration::from_millis(snapshot.initial_ms),
+                increment: Duration::from_millis(snapshot.increment_ms),
+            },
+            remaining: [
+                Duration::from_millis(snapshot.white_ms),
+                Duration::from_millis(snapshot.black_ms),
+            ],
+            clock_since,
+            draw_offer: snapshot.draw_offer,
+            ended: snapshot.ended,
+        })
     }
 
     pub fn ended(&self) -> Option<GameEnd> {
@@ -374,6 +443,51 @@ mod tests {
                 .as_slice(),
             [Reply(ServerMessage::Rejected { .. })]
         ));
+    }
+
+    #[test]
+    fn snapshot_round_trips_and_keeps_the_clock_running() {
+        let (mut r, t0) = room();
+        r.handle(Some(Color::White), mv("e2e4"), t0);
+        r.handle(Some(Color::Black), mv("e7e5"), t0);
+        r.handle(Some(Color::White), ClientMessage::OfferDraw, t0);
+        // White's clock has run 10s when we snapshot.
+        let snap = r.snapshot(t0 + secs(10));
+        assert_eq!(snap.moves, ["e2e4", "e7e5"]);
+        assert_eq!((snap.white_ms, snap.black_ms), (60_000, 60_000));
+        assert_eq!(snap.clock_running_for_ms, Some(10_000));
+        assert_eq!(snap.draw_offer, Some(Color::White));
+
+        // Restored 5s later: the clock ran the whole time.
+        let t1 = t0 + secs(15);
+        let restored = Room::restore(&snap, secs(5), t1).unwrap();
+        assert_eq!(restored.game().movetext(), "1. e4 e5");
+        assert_eq!(restored.clocks(t1).white_ms, 45_000);
+        assert_eq!(restored.deadline(), Some(t0 + secs(60)));
+        assert_eq!(
+            restored.snapshot(t1),
+            Snapshot {
+                clock_running_for_ms: Some(15_000),
+                ..snap
+            }
+        );
+
+        // A finished game restores without a running clock.
+        let mut r = restored;
+        r.handle(Some(Color::Black), ClientMessage::AcceptDraw, t1);
+        let snap = r.snapshot(t1);
+        assert!(snap.ended.is_some());
+        assert_eq!(snap.clock_running_for_ms, None);
+        let again = Room::restore(&snap, secs(100), t1 + secs(100)).unwrap();
+        assert!(again.is_over());
+        assert_eq!(again.deadline(), None);
+
+        // Garbage moves don't restore.
+        let bad = Snapshot {
+            moves: vec!["e2e5".into()],
+            ..snap
+        };
+        assert!(Room::restore(&bad, secs(0), t1).is_err());
     }
 
     #[test]
