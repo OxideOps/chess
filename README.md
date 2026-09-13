@@ -26,11 +26,17 @@ Early scaffolding. What works today:
 
 1. ~~Workspace, rules crate, board component~~
 2. ~~Analysis board: FEN/PGN import, Stockfish in the browser (WASM), eval bar, best-move arrows~~
-   (variations in the move tree and a native engine for desktop are still open)
-3. Server (axum + Postgres) that owns games: validation, clocks, reconnects, persistence
-4. Accounts and sessions
-5. Ratings, then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that
-   explains engine analysis in plain language
+   (still open: [multi-threaded engine](https://github.com/OxideOps/chess/issues/2),
+   [variations](https://github.com/OxideOps/chess/issues/3),
+   [native engine on desktop](https://github.com/OxideOps/chess/issues/4))
+3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
+   validation, clocks, reconnects, persistence
+4. [Accounts and sessions](https://github.com/OxideOps/chess/issues/6)
+5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7): ratings,
+   then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that explains
+   engine analysis in plain language
+
+Open work is tracked in [GitHub issues](https://github.com/OxideOps/chess/issues).
 
 ## Development
 
