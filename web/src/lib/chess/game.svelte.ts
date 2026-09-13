@@ -116,6 +116,7 @@ function emptyView(): GameView {
 		pieces: [],
 		moves: [],
 		movetext: '',
+		pgn: '*',
 		startTurn: 'white',
 		startFullmove: 1
 	};

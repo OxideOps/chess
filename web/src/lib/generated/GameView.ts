@@ -30,4 +30,8 @@ checkSquare: string | null, pieces: Array<PieceOnSquare>, moves: Array<MoveView>
 /**
  * `1. e4 e5 2. Nf3`, for the whole game regardless of the cursor.
  */
-movetext: string, startTurn: Side, startFullmove: number, };
+movetext: string, 
+/**
+ * Minimal PGN export of the whole game (see `chess_core::Game::pgn`).
+ */
+pgn: string, startTurn: Side, startFullmove: number, };
