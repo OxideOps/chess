@@ -6,6 +6,7 @@
 	import { awayText, gameEndText, sideName, statusText } from '$lib/chess/status';
 	import type { OnlineGame } from '$lib/online/client.svelte';
 	import { inviteLink } from '$lib/online/invites';
+	import { gameKind } from '$lib/online/ratings';
 	import { withNext } from '$lib/auth/next';
 
 	// Everything beside the board in an online game: status, the invite while
@@ -24,6 +25,7 @@
 	const atStart = $derived(game.view.cursor === 0);
 	const atEnd = $derived(!game.view.viewingHistory);
 	const loginHref = $derived(withNext(resolve('/login'), page.url.pathname));
+	const signupHref = $derived(withNext(resolve('/signup'), page.url.pathname));
 
 	const connectionText: Record<typeof online.connection, string> = {
 		connecting: 'Connecting…',
@@ -90,7 +92,17 @@
 			<button type="button" onclick={copyInvite}>{copied ? 'Copied' : 'Copy link'}</button>
 		</div>
 	{/if}
-	{#if online.canJoin}
+	{#if online.synced}
+		<p class="kind" data-testid="game-kind">{gameKind(online.rated, online.category)}</p>
+	{/if}
+	{#if online.canJoin && online.rated && !session.registered}
+		<div class="invite">
+			<p>The Black seat is open, but this is a rated game.</p>
+			<p class="hint">
+				<a href={loginHref}>Log in</a> or <a href={signupHref}>sign up</a> to play it.
+			</p>
+		</div>
+	{:else if online.canJoin}
 		<div class="invite">
 			<p>The Black seat is open.</p>
 			<button type="button" onclick={join}>Join as Black</button>
@@ -143,6 +155,12 @@
 </aside>
 
 <style>
+	.kind {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: 0.85rem;
+	}
+
 	.connection {
 		color: var(--text-muted);
 		font-weight: 400;

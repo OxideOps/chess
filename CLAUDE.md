@@ -42,12 +42,16 @@ Successor to the archived `OxideOps/chess-v1`.
   `/callback`; `state` + PKCE verifier in a 10-minute cookie; `identities(provider, subject)`
   → `users`; a built-in fake provider behind `--fake-oauth` for dev and tests, in-process,
   no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
-  `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `db.rs` the
+  `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
+  pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
+  `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;
   migrations embedded and applied on start). After changing SQL or migrations run
   `cargo sqlx prepare --workspace -D $TEST_DATABASE_URL` (migrate first) and commit `.sqlx`. The
   registry writes through after every change and loads games not in memory on first access;
+  when a rated game ends it calls `Db::apply_ratings`, which updates both players once (a flag
+  on the game row, set in the same transaction, makes repeats no-ops);
   `DATABASE_URL` is optional. Static tests use `tower::ServiceExt::oneshot`; socket tests run
   a real listener with `tokio-tungstenite`; persistence tests need `TEST_DATABASE_URL`
   (local: `postgres://$USER@localhost/chess_test`; CI runs a postgres service) and skip without it;

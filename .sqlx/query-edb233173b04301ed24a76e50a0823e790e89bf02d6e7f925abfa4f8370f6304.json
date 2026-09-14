@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE games SET black_user_id = $2, black_rating = $3, black_provisional = $4,\n                              updated_at = now()\n             WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int4",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "edb233173b04301ed24a76e50a0823e790e89bf02d6e7f925abfa4f8370f6304"
+}

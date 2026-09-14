@@ -138,7 +138,7 @@ async fn every_result_and_reason_can_be_stored() {
         .chain(reasons.iter().map(|&reason| (Draw, reason)));
     for (result, reason) in ends {
         let id = uuid::Uuid::new_v4().to_string();
-        db.insert(&id, &[None, None], TimeControl::default())
+        db.insert(&id, &[None, None], TimeControl::default(), false)
             .await
             .unwrap();
         let end = GameEnd { result, reason };

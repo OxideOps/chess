@@ -9,7 +9,8 @@ use std::time::{Duration, Instant};
 use chess_core::{
     Color, Game, GameError,
     protocol::{
-        Away, ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, Players, ServerMessage,
+        Away, Category, ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, Players,
+        ServerMessage,
     },
 };
 
@@ -95,6 +96,13 @@ impl Room {
 
     pub fn time_control(&self) -> TimeControl {
         self.time_control
+    }
+
+    pub fn category(&self) -> Category {
+        Category::of(
+            self.time_control.initial.as_millis() as u64,
+            self.time_control.increment.as_millis() as u64,
+        )
     }
 
     /// Capture the room as data, as of `now`.
@@ -186,6 +194,10 @@ impl Room {
             // Seats are the registry's business; it fills them in.
             players: Players::default(),
             away: self.away_at(now),
+            // Rated or not is the registry's business too.
+            rated: false,
+            category: self.category(),
+            rating_diffs: None,
         }
     }
 

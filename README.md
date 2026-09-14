@@ -46,6 +46,11 @@ Early scaffolding. What works today:
   proxy set `CHESS_TRUST_PROXY=1` (client addresses from `X-Forwarded-For`),
   `CHESS_SECURE_COOKIES=1` over https, and `CHESS_ALLOWED_ORIGINS=https://your.host` if the
   proxy rewrites `Host`.
+- `server` + `web`: ratings. Games are rated or casual (rated needs an account on both sides;
+  aborted games never count). Glicko-2 per category (bullet, blitz, rapid, classical, by
+  initial time + 40 × increment), one update per game, deviation growing back while idle,
+  "?" while provisional. Ratings show next to names on the clocks with the change at the end,
+  in the games list, and on profile pages (`/players/<name>`).
 - `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
   turns on Lichess (a public client: PKCE, no secret, no registration);
   `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register
@@ -72,16 +77,17 @@ Early scaffolding. What works today:
 ## Roadmap
 
 1. ~~Workspace, rules crate, board component~~
-2. ~~Analysis board: FEN/PGN import, Stockfish in the browser (WASM), eval bar, best-move arrows~~
-   (still open: [multi-threaded engine](https://github.com/OxideOps/chess/issues/2),
-   [variations](https://github.com/OxideOps/chess/issues/3),
-   [responsive layout and PWA](https://github.com/OxideOps/chess/issues/9))
-3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
-   validation, clocks, reconnects, persistence (done; reconnect grace and abandonment remain)
-4. ~~Accounts and sessions~~ (guests, passwords, Lichess and Google sign-in; #6 closed)
-5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7): ratings,
-   then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that explains
-   engine analysis in plain language
+2. ~~Analysis board: FEN/PGN import, Stockfish in the browser (multi-threaded when possible),
+   eval bar, best-move arrows; phones and offline (PWA)~~ (still open:
+   [variations](https://github.com/OxideOps/chess/issues/3))
+3. ~~Server (axum + Postgres) that owns games: validation, clocks, reconnects and abandonment,
+   persistence~~
+4. ~~Accounts and sessions: guests, passwords, Lichess and Google sign-in~~
+5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7):
+   [ratings](https://github.com/OxideOps/chess/issues/38), then
+   [puzzles](https://github.com/OxideOps/chess/issues/39) (Lichess's CC0 puzzle database), then
+   [lessons and an AI coach](https://github.com/OxideOps/chess/issues/40) that explains engine
+   analysis in plain language
 
 Open work is tracked in [GitHub issues](https://github.com/OxideOps/chess/issues).
 

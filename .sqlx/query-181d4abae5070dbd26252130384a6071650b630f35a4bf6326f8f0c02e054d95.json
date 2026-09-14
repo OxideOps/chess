@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE games SET white_rating_diff = $2, black_rating_diff = $3 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "181d4abae5070dbd26252130384a6071650b630f35a4bf6326f8f0c02e054d95"
+}

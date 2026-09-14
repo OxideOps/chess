@@ -20,7 +20,7 @@ test('continue with a provider from the login page and land back where you were'
 
 	// Back on the game, upgraded in place: same seat, now with a name.
 	await expect(page).toHaveURL(gameUrl);
-	await expect(page.getByRole('link', { name })).toBeVisible();
+	await expect(page.locator('#navbar').getByRole('link', { name })).toBeVisible();
 	await expect(page.getByLabel('White clock')).toContainText(name);
 
 	// Cancelling at the provider comes back to the login page with the reason.

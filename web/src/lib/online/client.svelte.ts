@@ -2,6 +2,8 @@ import { Game } from '$lib/chess/wasm';
 import { GameStore, type Promotion } from '$lib/chess/game.svelte';
 import type { PlayResult } from '$lib/chess/wasm';
 import type { Away } from '$lib/generated/Away';
+import type { Category } from '$lib/generated/Category';
+import type { RatingDiffs } from '$lib/generated/RatingDiffs';
 import type { ClientMessage } from '$lib/generated/ClientMessage';
 import type { Clocks } from '$lib/generated/Clocks';
 import type { GameEnd } from '$lib/generated/GameEnd';
@@ -55,6 +57,11 @@ export class OnlineGame {
 	rejection: string | null = $state(null);
 	/** Whether the server's first Sync has arrived: until then nothing is known. */
 	synced = $state(false);
+	/** Whether the result changes ratings, and the game's speed. */
+	rated = $state(false);
+	category: Category = $state('blitz');
+	/** What a finished rated game did to each side's rating. */
+	ratingDiffs: RatingDiffs | null = $state(null);
 	#clocks: ServerClocks = $state({ whiteMs: 0, blackMs: 0, at: 0 });
 	/** A player counting down to losing the game for leaving, and when we heard. */
 	#away: (Away & { at: number }) | null = $state(null);
@@ -202,12 +209,18 @@ export class OnlineGame {
 				this.drawOffer = msg.draw_offer;
 				this.players = msg.players;
 				this.synced = true;
+				this.rated = msg.rated;
+				this.category = msg.category;
+				this.ratingDiffs = msg.rating_diffs;
 				this.#setAway(msg.away);
 				this.#setClocks(msg.clocks);
 				break;
 			}
 			case 'players_changed':
 				this.players = msg.players;
+				break;
+			case 'ratings_changed':
+				this.ratingDiffs = { white: msg.white, black: msg.black };
 				break;
 			case 'away_changed':
 				this.#setAway(msg.away);
