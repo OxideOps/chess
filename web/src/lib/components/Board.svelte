@@ -132,11 +132,14 @@
 			case 'ArrowRight':
 				game.goForward();
 				break;
+			// Shift+Up/Down switch between variations; plain Up/Down jump to the ends.
 			case 'ArrowUp':
-				game.goToStart();
+				if (event.shiftKey) game.switchVariation(-1);
+				else game.goToStart();
 				break;
 			case 'ArrowDown':
-				game.goToEnd();
+				if (event.shiftKey) game.switchVariation(1);
+				else game.goToEnd();
 				break;
 			case 'Escape':
 				selected = null;

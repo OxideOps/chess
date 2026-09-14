@@ -14,6 +14,6 @@ pub mod pgn;
 pub mod protocol;
 pub mod puzzle;
 
-pub use game::{Game, GameError, GameStatus, PlayedMove};
+pub use game::{Game, GameError, GameStatus, NodeId, PlayedMove, Token};
 pub use shakmaty;
 pub use shakmaty::{Color, File, Move, Piece, Rank, Role, Square};

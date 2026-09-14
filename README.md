@@ -89,14 +89,16 @@ Early scaffolding. What works today:
   multi-threaded build with one thread per spare core when the page is cross-origin
   isolated, which the server arranges; single-threaded otherwise), an eval
   bar, the top three lines (click one to play it), a best-move arrow, FEN/PGN import, PGN
-  export, and playing from any point in the history.
+  export, and variations: a move played from earlier in the game starts a variation instead of
+  replacing what came after. The move list shows variations (nested ones too) under the move
+  they branch from; click any move to go there, promote a variation or delete from a move,
+  and switch between alternatives with Shift+↑/↓. PGN import and export keep them.
 
 ## Roadmap
 
 1. ~~Workspace, rules crate, board component~~
-2. ~~Analysis board: FEN/PGN import, Stockfish in the browser (multi-threaded when possible),
-   eval bar, best-move arrows; phones and offline (PWA)~~ (still open:
-   [variations](https://github.com/OxideOps/chess/issues/3))
+2. ~~Analysis board: FEN/PGN import with variations, Stockfish in the browser
+   (multi-threaded when possible), eval bar, best-move arrows; phones and offline (PWA)~~
 3. ~~Server (axum + Postgres) that owns games: validation, clocks, reconnects and abandonment,
    persistence~~
 4. ~~Accounts and sessions: guests, passwords, Lichess and Google sign-in~~

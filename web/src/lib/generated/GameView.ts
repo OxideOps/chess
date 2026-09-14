@@ -4,6 +4,7 @@ import type { MoveView } from "./MoveView";
 import type { PieceOnSquare } from "./PieceOnSquare";
 import type { Side } from "./Side";
 import type { Status } from "./Status";
+import type { TreeToken } from "./TreeToken";
 
 /**
  * Everything the UI needs to draw the position at the cursor and the move
@@ -26,9 +27,25 @@ lastMove: MoveSquares | null,
 /**
  * The square of the king in check, if any.
  */
-checkSquare: string | null, pieces: Array<PieceOnSquare>, moves: Array<MoveView>, 
+checkSquare: string | null, pieces: Array<PieceOnSquare>, 
 /**
- * `1. e4 e5 2. Nf3`, for the whole game regardless of the cursor.
+ * The moves of the current line.
+ */
+moves: Array<MoveView>, 
+/**
+ * The whole tree, variations included, for the move list.
+ */
+tree: Array<TreeToken>, 
+/**
+ * The node at the cursor (`0` is the start position).
+ */
+node: number, 
+/**
+ * Whether the cursor is on the main line.
+ */
+mainLine: boolean, 
+/**
+ * `1. e4 e5 (1... c5) 2. Nf3`, for the whole game regardless of the cursor.
  */
 movetext: string, 
 /**

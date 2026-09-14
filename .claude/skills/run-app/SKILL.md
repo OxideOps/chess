@@ -48,7 +48,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   page isn't cross-origin isolated, in which case the single-threaded build is running),
   `.engine .summary` reads `Depth N…`, there are 3 `.engine .lines li`, one
   `.board .arrows line`, and `[data-testid=eval-bar] .white` has a height other than 50%.
-  Clicking a line plays its first move; moving while in history truncates (`#export-pgn`).
+  Clicking a line plays its first move; moving while in history starts a variation, shown in
+  `.move-list .variation` and in `#export-pgn` as `1. e4 (1. d4) …`; "Promote variation" and
+  "Delete from here" edit the tree, Shift+↑/↓ switch alternatives.
   A checkmate FEN shows "Idle" and no lines.
 - Online (`/online`): pick a time control, "Create game" (a guest session is created for
   you), copy `[data-testid=invite-link]` into a second browser context, click "Join as

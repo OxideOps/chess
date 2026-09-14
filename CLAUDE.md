@@ -7,7 +7,9 @@ Successor to the archived `OxideOps/chess-v1`.
 
 ## Layout
 
-- `crates/chess-core` — rules (via `shakmaty`), `Game` history/navigation, PGN reader, UCI
+- `crates/chess-core` — rules (via `shakmaty`), `Game` (a move tree with variations; its
+  linear API walks the current line, so code that never branches sees a plain game), PGN
+  reader with nested variations, UCI
   engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
   counts), the lesson drills and their win/loss rules (`lesson.rs`), and the client↔server
   `protocol` types. No UI, no I/O, must compile
