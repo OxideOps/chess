@@ -51,6 +51,15 @@ impl Score {
         (1.0 + self.win_chance()) / 2.0
     }
 
+    /// Whether going from `before` to `after` (both from the point of view of
+    /// the side that just moved) throws away enough winning chances to call
+    /// the move a mistake: a drop of at least [`MISTAKE_DROP`] in
+    /// [`Score::win_chance`], Lichess's scale for "blunder". A winning move
+    /// that merely wins more slowly isn't one.
+    pub fn is_mistake(before: Score, after: Score) -> bool {
+        before.win_chance() - after.win_chance() >= MISTAKE_DROP
+    }
+
     /// A White-perspective score in words, the way a coach would put it:
     /// "roughly equal", "Black is slightly better", "White mates in 3".
     pub fn describe(self) -> String {
@@ -86,6 +95,10 @@ impl fmt::Display for Score {
         }
     }
 }
+
+/// How much of [`Score::win_chance`] (-1 to 1) a move must give away to count
+/// as a mistake in [`Score::is_mistake`].
+pub const MISTAKE_DROP: f64 = 0.3;
 
 /// One principal variation from an `info` line.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -225,6 +238,23 @@ mod tests {
 
     fn uci(s: &str) -> UciMove {
         s.parse().unwrap()
+    }
+
+    #[test]
+    fn mistakes_throw_away_winning_chances() {
+        use Score::*;
+        // Mate to a dead draw, or a winning pawn ending to equality: mistakes.
+        assert!(Score::is_mistake(Mate(7), Cp(0)));
+        assert!(Score::is_mistake(Cp(600), Cp(10)));
+        // Holding the draw, then losing it.
+        assert!(Score::is_mistake(Cp(0), Cp(-400)));
+        assert!(Score::is_mistake(Cp(0), Mate(-5)));
+        // Mating more slowly, or small wobbles, are fine.
+        assert!(!Score::is_mistake(Mate(3), Mate(6)));
+        assert!(!Score::is_mistake(Cp(800), Cp(700)));
+        assert!(!Score::is_mistake(Cp(20), Cp(-30)));
+        // Improving is never a mistake.
+        assert!(!Score::is_mistake(Cp(0), Mate(4)));
     }
 
     #[test]

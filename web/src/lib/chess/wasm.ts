@@ -37,6 +37,11 @@ export function barFraction(score: EngineScore): number {
 	return raw.barFraction(score);
 }
 
+/** Whether going from `before` to `after` (from the mover's view) was a mistake. */
+export function isMistake(before: EngineScore, after: EngineScore): boolean {
+	return raw.isMistake(before, after);
+}
+
 /** `+0.35`, `-1.20`, `#3`. */
 export function formatScore(score: EngineScore): string {
 	return raw.formatScore(score);

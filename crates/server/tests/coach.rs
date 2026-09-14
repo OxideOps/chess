@@ -239,3 +239,46 @@ async fn off_without_a_key() {
     .await;
     assert_eq!(r.status, 404, "{}", r.body);
 }
+
+#[tokio::test]
+async fn explains_a_drill_mistake() {
+    let Some((base, mock)) = coached(30).await else {
+        return;
+    };
+    let body = r#"{"fen":"8/8/8/3k4/8/8/7Q/4K3 w - - 0 1","played":"h2e5",
+        "better":["h2e2","d5d4"],"before":{"kind":"mate","value":8},
+        "after":{"kind":"cp","value":0},"drill":"queen-mate"}"#;
+    let guest_session = guest(&base).await;
+    let r = http(
+        &base,
+        "POST",
+        "/api/coach/mistake",
+        Some(&guest_session),
+        body,
+    )
+    .await;
+    assert_eq!(r.status, 403, "{}", r.body);
+
+    let me = account(&base).await;
+    let r = http(&base, "POST", "/api/coach/mistake", Some(&me), body).await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    {
+        let calls = mock.calls.lock().unwrap();
+        let (_, sent) = calls.last().unwrap();
+        assert!(sent["system"].as_str().unwrap().contains("made a mistake"));
+        let prompt = sent["messages"][0]["content"].as_str().unwrap();
+        assert!(prompt.contains("The student played: Qe5+"), "{prompt}");
+        assert!(prompt.contains("Drill: King and queen."), "{prompt}");
+    }
+    // Asked again: from the cache.
+    let before = mock.calls.lock().unwrap().len();
+    let r = http(&base, "POST", "/api/coach/mistake", Some(&me), body).await;
+    assert_eq!(r.status, 200);
+    assert_eq!(mock.calls.lock().unwrap().len(), before);
+
+    // An illegal "played" move never reaches the API.
+    let bad = body.replace("h2e5", "e1e3");
+    let r = http(&base, "POST", "/api/coach/mistake", Some(&me), &bad).await;
+    assert_eq!(r.status, 400, "{}", r.body);
+    assert_eq!(mock.calls.lock().unwrap().len(), before);
+}

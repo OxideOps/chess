@@ -25,9 +25,10 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   position; injectable fetch). `CoachPanel` shows it under the engine on `/analysis` and hides
   itself when the server has no coach.
 - `src/lib/lessons/` — `drill.svelte.ts` (`DrillSession`: the student's moves, `assessDrill`
-  from the WASM after each, the engine's replies through an `OpponentLike`), `progress.ts`
+  from the WASM after each, the engine's replies through an `OpponentLike`, and `mistake`:
+  the engine's score before and after a student move, compared with `isMistake`), `progress.ts`
   (completed lessons in localStorage). `src/lib/engine/opponent.svelte.ts` is Stockfish
-  playing a side (`move(fen, moves)` → its best move after `go movetime`).
+  playing a side (`search(fen, moves)` → its best move, score and line after `go movetime`).
 - `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle, plays the setup
   move and the replies, judges each move with `judgePuzzle` from the WASM, reports the first
   try; injectable fetch and delay for tests).

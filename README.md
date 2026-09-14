@@ -67,7 +67,9 @@ Early scaffolding. What works today:
   rook, winning a king and pawn ending, and holding one to a draw. Each has a move budget and
   a short explanation of the technique; chess-core judges when a drill is won or lost
   (stalemate, a lost queen, a promoted pawn, running out of moves). Completed lessons are
-  remembered in the browser.
+  remembered in the browser. A move that throws away the win (or the draw) is pointed out with
+  Stockfish's better move, judged from the engine's own searches (a drop in winning chances,
+  `Score::is_mistake`); accounts can ask the coach why.
 - `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
   turns on Lichess (a public client: PKCE, no secret, no registration);
   `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register

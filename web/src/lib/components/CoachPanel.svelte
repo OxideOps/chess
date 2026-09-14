@@ -29,9 +29,9 @@
 	const ready = $derived(
 		analyser.fen === fen && analyser.lines.length > 0 && (analyser.depth ?? 0) >= MIN_DEPTH
 	);
-	const answer = $derived(coach.fen === fen ? coach.text : coach.answerFor(fen));
-	const busy = $derived(coach.busy && coach.fen === fen);
-	const error = $derived(coach.fen === fen ? coach.error : null);
+	const answer = $derived(coach.key === fen ? coach.text : coach.answerFor(fen));
+	const busy = $derived(coach.busy && coach.key === fen);
+	const error = $derived(coach.key === fen ? coach.error : null);
 	const here = $derived(page.url.pathname);
 </script>
 
