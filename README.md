@@ -82,8 +82,10 @@ Early scaffolding. What works today:
   sized to the screen (width and height), and buttons are thumb-sized on touch screens. It
   installs as an app (manifest, icons, an "Install app" button where the browser offers it)
   and works offline after one visit: a service worker caches the app shell per deploy and the
-  engine build the browser runs (kept across deploys). A new deploy takes over once the old
-  tabs are closed. If the multi-threaded engine can't start (e.g. a phone that won't give it
+  engine build the browser runs (kept across deploys). After a deploy, open pages show "A new
+  version of the site is available · Reload" (checked when the tab comes back into view and
+  every half hour); nothing reloads by itself, and the banner waits during an online game.
+  If the multi-threaded engine can't start (e.g. a phone that won't give it
   the shared memory), the single-threaded one takes its place.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker (the
   multi-threaded build with one thread per spare core when the page is cross-origin
