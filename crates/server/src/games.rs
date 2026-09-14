@@ -122,6 +122,10 @@ pub struct GameSnapshot {
 pub struct GameListing {
     pub id: String,
     pub players: Players,
+    /// Which seat the caller holds.
+    #[serde(with = "chess_core::protocol::color")]
+    #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\""))]
+    pub your_color: Color,
     pub ended: Option<chess_core::protocol::GameEnd>,
     pub moves: u32,
     /// ISO 8601.

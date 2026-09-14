@@ -26,9 +26,11 @@ Successor to the archived `OxideOps/chess-v1`.
   isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:
   `room.rs` is the pure game state (rules via `chess-core`, clocks, draw offers, timeouts;
   takes `now` as a parameter so it is unit-tested without a runtime), `games.rs` the
-  in-memory registry and the `/api/games` HTTP + WebSocket endpoints (one secret token per
-  side; `join` fills the Black seat; sockets authenticate from the cookie), `auth.rs` users + sessions (guests, argon2id passwords, DB
-  sessions in an `HttpOnly` cookie; `CurrentUser`/`RequireUser` extractors), `db.rs` the
+  in-memory registry and the `/api/games` HTTP + WebSocket endpoints (the creator holds
+  White, `join` fills the Black seat, sockets authenticate from the session cookie,
+  `/api/me/games` lists the caller's games), `auth.rs` users + sessions (guests, argon2id
+  passwords, DB sessions in an `HttpOnly` cookie; `CurrentUser`/`RequireUser` extractors),
+  `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;
   migrations embedded and applied on start). After changing SQL or migrations run

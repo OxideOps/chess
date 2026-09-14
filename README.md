@@ -30,10 +30,13 @@ Early scaffolding. What works today:
   an `HttpOnly` cookie. Games have seats: the creator is White, the first person to join is
   Black, everyone else spectates; `GET /api/me/games` lists yours.
 - `web`: online play (`/online`): pick a time control, create a game, send the link; the
-  opponent clicks "Join as Black". The game page shows both clocks counting down, your side
-  only, draw offers, resign, and the result; reconnecting resumes; anyone else spectates.
-  Online play needs the database (`DATABASE_URL`); the Vite dev proxy and the e2e suite start
-  the server on `chess_test`.
+  opponent clicks "Join as Black". The game page shows both clocks counting down with the
+  players' names, your side only, draw offers, resign, and the result; reconnecting resumes;
+  anyone else spectates. Online play needs the database (`DATABASE_URL`); the Vite dev proxy
+  and the e2e suite start the server on `chess_test`.
+- `web`: accounts. The nav shows who you are (a name, or *Guest*); `/signup` and `/login`
+  take you back where you were (`?next=`); a guest who signs up keeps their games; `/games`
+  lists your games with the result from your side.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
@@ -100,11 +103,11 @@ it): `cargo run -p server` in another terminal, then open http://localhost:5173/
 browsers. The wire protocol is in `crates/chess-core/src/protocol.rs`; to drive it by hand:
 
 ```sh
-curl -s -X POST localhost:8080/api/games -H 'content-type: application/json' \
-     -d '{"initial_ms": 300000, "increment_ms": 2000}'
-# → {"id":"…","white_token":"…","black_token":"…"}
-# connect a WebSocket to /api/games/<id>/ws?token=<white_token> and send
-# {"type":"move","uci":"e2e4"}
+curl -s -c jar -X POST localhost:8080/api/auth/guest            # a session cookie
+curl -s -b jar -X POST localhost:8080/api/games -H 'content-type: application/json' \
+     -d '{"initial_ms": 300000, "increment_ms": 2000}'            # → {"id":"…"}, you are White
+# a second cookie jar POSTs /api/games/<id>/join to take Black; then connect a WebSocket
+# to /api/games/<id>/ws with the cookie and send {"type":"move","uci":"e2e4"}
 ```
 
 Checks, same as CI:

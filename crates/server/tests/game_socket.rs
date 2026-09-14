@@ -123,10 +123,14 @@ async fn two_players_and_a_spectator() {
     let r = http(&base, "GET", "/api/me/games", Some(&white_session), "").await;
     assert_eq!(r.status, 200);
     assert!(
-        r.body.contains(&game.id) && r.body.contains("resignation"),
+        r.body.contains(&game.id)
+            && r.body.contains("resignation")
+            && r.body.contains(r#""your_color":"white""#),
         "{}",
         r.body
     );
+    let r = http(&base, "GET", "/api/me/games", Some(&black_session), "").await;
+    assert!(r.body.contains(r#""your_color":"black""#), "{}", r.body);
     let r = http(&base, "GET", "/api/me/games", Some(&third), "").await;
     assert_eq!(r.body, "[]");
 

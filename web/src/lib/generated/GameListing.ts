@@ -5,7 +5,11 @@ import type { Players } from "./Players";
 /**
  * One row of `GET /api/me/games`.
  */
-export type GameListing = { id: string, players: Players, ended: GameEnd | null, moves: number, 
+export type GameListing = { id: string, players: Players, 
+/**
+ * Which seat the caller holds.
+ */
+your_color: "white" | "black", ended: GameEnd | null, moves: number, 
 /**
  * ISO 8601.
  */

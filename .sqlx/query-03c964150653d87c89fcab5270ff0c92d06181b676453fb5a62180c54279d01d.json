@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT g.initial_ms, g.increment_ms, g.moves, g.white_ms, g.black_ms,\n                      g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,\n                      g.white_user_id, w.username AS \"white_name?\",\n                      g.black_user_id, b.username AS \"black_name?\"\n               FROM games g\n               LEFT JOIN users w ON w.id = g.white_user_id\n               LEFT JOIN users b ON b.id = g.black_user_id\n               WHERE g.id = $1",
+  "query": "SELECT g.initial_ms, g.increment_ms, g.moves, g.white_ms, g.black_ms,\n                      g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,\n                      g.white_user_id,\n                      (SELECT username FROM users WHERE id = g.white_user_id) AS \"white_name?\",\n                      g.black_user_id,\n                      (SELECT username FROM users WHERE id = g.black_user_id) AS \"black_name?\"\n               FROM games g\n               WHERE g.id = $1",
   "describe": {
     "columns": [
       {
@@ -117,12 +117,7 @@
         "ordinal": 10,
         "name": "white_name?",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "username"
-          }
-        }
+        "origin": "Expression"
       },
       {
         "ordinal": 11,
@@ -139,12 +134,7 @@
         "ordinal": 12,
         "name": "black_name?",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "username"
-          }
-        }
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -163,10 +153,10 @@
       true,
       true,
       true,
+      null,
       true,
-      true,
-      true
+      null
     ]
   },
-  "hash": "98383126920fd40b4573a8bd9d4e68b71e852098daeac46e49c9bb5b18c96b51"
+  "hash": "03c964150653d87c89fcab5270ff0c92d06181b676453fb5a62180c54279d01d"
 }

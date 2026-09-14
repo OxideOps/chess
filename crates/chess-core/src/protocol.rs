@@ -17,7 +17,7 @@ use ts_rs::TS;
 use crate::GameStatus;
 
 /// `shakmaty::Color` has no serde support; encode it as `"white"` / `"black"`.
-mod color {
+pub mod color {
     use super::*;
 
     pub fn serialize<S: Serializer>(color: &Color, s: S) -> Result<S::Ok, S::Error> {

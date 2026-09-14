@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT g.id, g.moves, g.result, g.reason,\n                      to_char(g.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS \"updated_at!\",\n                      g.white_user_id, w.username AS \"white_name?\",\n                      g.black_user_id, b.username AS \"black_name?\"\n               FROM games g\n               LEFT JOIN users w ON w.id = g.white_user_id\n               LEFT JOIN users b ON b.id = g.black_user_id\n               WHERE g.white_user_id = $1 OR g.black_user_id = $1\n               ORDER BY g.updated_at DESC\n               LIMIT 100",
+  "query": "SELECT g.id, g.moves, g.result, g.reason,\n                      to_char(g.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS \"updated_at!\",\n                      g.white_user_id,\n                      (SELECT username FROM users WHERE id = g.white_user_id) AS \"white_name?\",\n                      g.black_user_id,\n                      (SELECT username FROM users WHERE id = g.black_user_id) AS \"black_name?\"\n               FROM games g\n               WHERE g.white_user_id = $1 OR g.black_user_id = $1\n               ORDER BY g.updated_at DESC\n               LIMIT 100",
   "describe": {
     "columns": [
       {
@@ -68,12 +68,7 @@
         "ordinal": 6,
         "name": "white_name?",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "username"
-          }
-        }
+        "origin": "Expression"
       },
       {
         "ordinal": 7,
@@ -90,12 +85,7 @@
         "ordinal": 8,
         "name": "black_name?",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "username"
-          }
-        }
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -110,10 +100,10 @@
       true,
       null,
       true,
+      null,
       true,
-      true,
-      true
+      null
     ]
   },
-  "hash": "192dd40d7e260a5844beb7c80cac9994cc901a4e1f12207711eff42433dc3a6d"
+  "hash": "dad830ab5c50a9e6a1f06d9b896cd4d5efd425c7837937663ae161f1871a70d4"
 }

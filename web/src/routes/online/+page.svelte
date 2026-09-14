@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { TIME_CONTROLS } from '$lib/online/clock';
-	import { ensureSession } from '$lib/online/session';
+	import { session } from '$lib/auth/session.svelte';
 
 	// Create a game on the server and go to it as White; the page then shows
 	// the link to send to the opponent. A guest session is started if needed.
@@ -15,7 +15,7 @@
 		error = null;
 		const tc = TIME_CONTROLS[selected];
 		try {
-			await ensureSession();
+			await session.ensure();
 			const response = await fetch('/api/games', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
