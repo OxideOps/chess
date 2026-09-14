@@ -80,6 +80,11 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
 
 ## Gotchas that already cost a cycle
 
+- Vitest 5.0.0 corrupts SvelteKit's `define` values in browser tests (`resolve('/')` becomes
+  `""#/`). `vite.config.ts` has a small `vitest500BrowserDefines` plugin on the client test
+  project that applies the upstream fix; delete it once Vitest is past 5.0.0 and the Nav
+  component tests still pass.
+
 - The service worker (`src/service-worker.ts`) serves the prerendered pages and built assets
   from its cache. After a rebuild, an open tab keeps the old version until every tab of the
   site closes (no `skipWaiting`, so an old page never loads a half-new app); in Chrome,
