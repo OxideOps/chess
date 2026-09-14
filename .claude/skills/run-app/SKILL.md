@@ -51,6 +51,8 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - Online (`/online`): pick a time control, "Create game" (a guest session is created for
   you), copy `[data-testid=invite-link]` into a second browser context, click "Join as
   Black"; `[data-testid=game-status]` reads "Your move" / "Waiting for your opponent";
+  (in `pnpm dev` the Vite proxy rewrites `Origin`/`Host` to the Rust server's, since it
+  refuses game sockets from other origins; a 403 on the socket means that rewrite is gone)
   `[aria-label="White clock"]` gets `.active` once both have moved and shows the player's
   name ("Guest" until they sign up; "Open seat" while nobody holds Black).
 - Accounts: the nav's right side reads "Log in · Sign up" (nobody), "Guest · Log in · Sign

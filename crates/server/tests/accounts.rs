@@ -7,7 +7,7 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use http_body_util::BodyExt as _;
-use server::{AppState, auth::User, db::Db};
+use server::{AppState, Config, auth::User, db::Db};
 use tower::ServiceExt as _;
 
 async fn app() -> Option<Router> {
@@ -20,7 +20,10 @@ async fn app() -> Option<Router> {
     std::fs::write(dir.path().join("404.html"), "shell").unwrap();
     // Leak the temp dir for the test's lifetime; the router only reads it.
     let path = dir.keep();
-    Some(server::app_with(path, AppState::with_db(db, false)))
+    Some(server::app_with(
+        path,
+        AppState::with_db(db, Config::default()),
+    ))
 }
 
 struct Reply {

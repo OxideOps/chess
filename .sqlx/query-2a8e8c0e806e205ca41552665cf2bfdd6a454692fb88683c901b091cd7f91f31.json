@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM users u\n             WHERE u.is_guest\n               AND u.created_at < now() - interval '1 day'\n               AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id)\n               AND NOT EXISTS (SELECT 1 FROM games g\n                               WHERE g.white_user_id = u.id OR g.black_user_id = u.id)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "2a8e8c0e806e205ca41552665cf2bfdd6a454692fb88683c901b091cd7f91f31"
+}

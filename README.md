@@ -37,6 +37,12 @@ Early scaffolding. What works today:
 - `web`: accounts. The nav shows who you are (a name, or *Guest*); `/signup` and `/login`
   take you back where you were (`?next=`); a guest who signs up keeps their games; `/games`
   lists your games with the result from your side.
+- `server`: hardening. Logins are rate limited per username and per client address, signups
+  and guest creation per address (429 with `Retry-After`); expired sessions and guests who
+  never played are swept hourly; game sockets refuse cross-origin upgrades. Behind a reverse
+  proxy set `CHESS_TRUST_PROXY=1` (client addresses from `X-Forwarded-For`),
+  `CHESS_SECURE_COOKIES=1` over https, and `CHESS_ALLOWED_ORIGINS=https://your.host` if the
+  proxy rewrites `Host`.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval

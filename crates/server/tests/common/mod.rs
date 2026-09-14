@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use chess_core::protocol::{ClientMessage, ServerMessage};
 use futures_util::{SinkExt as _, StreamExt as _};
-use server::{AppState, db::Db, games::CreatedGame};
+use server::{AppState, Config, db::Db, games::CreatedGame};
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
     net::TcpStream,
@@ -33,9 +33,14 @@ pub async fn db() -> Option<Db> {
 
 /// Start a server with games and accounts on `db`; returns `host:port`.
 pub async fn serve(db: Db) -> String {
+    serve_with(db, Config::default()).await
+}
+
+pub async fn serve_with(db: Db, config: Config) -> String {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("404.html"), "shell").unwrap();
-    let app = server::app_with(dir.path(), AppState::with_db(db, false));
+    let app = server::app_with(dir.path(), AppState::with_db(db, config))
+        .into_make_service_with_connect_info::<std::net::SocketAddr>();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     tokio::spawn(async move {
@@ -49,16 +54,39 @@ pub struct Reply {
     pub status: u16,
     pub body: String,
     pub cookie: Option<String>,
+    /// The response headers, lowercased names, one per line.
+    pub head: String,
+}
+
+impl Reply {
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.head
+            .lines()
+            .find_map(|l| l.strip_prefix(&format!("{name}: ")))
+    }
 }
 
 /// One HTTP/1.1 request; `cookie` is a session id.
 pub async fn http(base: &str, method: &str, path: &str, cookie: Option<&str>, body: &str) -> Reply {
+    http_with(base, method, path, cookie, body, &[]).await
+}
+
+/// [`http`] with extra request headers.
+pub async fn http_with(
+    base: &str,
+    method: &str,
+    path: &str,
+    cookie: Option<&str>,
+    body: &str,
+    extra: &[(&str, &str)],
+) -> Reply {
     let mut stream = TcpStream::connect(base).await.unwrap();
     let cookie_line = cookie
         .map(|c| format!("Cookie: session={c}\r\n"))
         .unwrap_or_default();
+    let extra_lines: String = extra.iter().map(|(k, v)| format!("{k}: {v}\r\n")).collect();
     let req = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {base}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n{cookie_line}Connection: close\r\n\r\n{body}",
+        "{method} {path} HTTP/1.1\r\nHost: {base}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n{cookie_line}{extra_lines}Connection: close\r\n\r\n{body}",
         body.len()
     );
     stream.write_all(req.as_bytes()).await.unwrap();
@@ -74,6 +102,7 @@ pub async fn http(base: &str, method: &str, path: &str, cookie: Option<&str>, bo
         status,
         body: body.to_string(),
         cookie,
+        head: head.to_string(),
     }
 }
 
@@ -102,6 +131,16 @@ pub async fn join(base: &str, session: &str, id: &str) -> Reply {
 }
 
 pub async fn connect(base: &str, id: &str, session: Option<&str>) -> Socket {
+    try_connect(base, id, session, None).await.unwrap()
+}
+
+/// Open the game socket, optionally as a browser would, with an `Origin`.
+pub async fn try_connect(
+    base: &str,
+    id: &str,
+    session: Option<&str>,
+    origin: Option<&str>,
+) -> Result<Socket, tokio_tungstenite::tungstenite::Error> {
     let mut request = format!("ws://{base}/api/games/{id}/ws")
         .into_client_request()
         .unwrap();
@@ -110,7 +149,12 @@ pub async fn connect(base: &str, id: &str, session: Option<&str>) -> Socket {
             .headers_mut()
             .insert("Cookie", format!("session={s}").parse().unwrap());
     }
-    tokio_tungstenite::connect_async(request).await.unwrap().0
+    if let Some(o) = origin {
+        request.headers_mut().insert("Origin", o.parse().unwrap());
+    }
+    tokio_tungstenite::connect_async(request)
+        .await
+        .map(|(socket, _)| socket)
 }
 
 pub async fn send(socket: &mut Socket, msg: &ClientMessage) {

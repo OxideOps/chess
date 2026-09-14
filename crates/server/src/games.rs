@@ -24,7 +24,7 @@ use axum::{
         Path, State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
@@ -379,12 +379,17 @@ async fn my_games(State(games): State<Games>, RequireUser(user): RequireUser) ->
 }
 
 async fn connect(
-    State(games): State<Games>,
+    State(state): State<AppState>,
     CurrentUser(user): CurrentUser,
     Path(id): Path<String>,
+    headers: HeaderMap,
     ws: WebSocketUpgrade,
 ) -> Response {
-    let Some(entry) = games.get(&id).await else {
+    // A page on another site must not play with this browser's cookie.
+    if !crate::origin::origin_allowed(&headers, &state.config.allowed_origins) {
+        return (StatusCode::FORBIDDEN, "cross-origin socket refused").into_response();
+    }
+    let Some(entry) = state.games.get(&id).await else {
         return StatusCode::NOT_FOUND.into_response();
     };
     let side = entry.side_of(user.as_ref());
