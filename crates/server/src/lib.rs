@@ -12,6 +12,7 @@ pub mod limit;
 pub mod oauth;
 pub mod origin;
 pub mod players;
+pub mod puzzles;
 pub mod rating;
 pub mod room;
 
@@ -126,6 +127,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(auth::router())
         .merge(oauth::router())
         .merge(players::router())
+        .merge(puzzles::router())
         .with_state(state)
         .fallback_service(files)
         .layer(middleware::from_fn_with_state(

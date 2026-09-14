@@ -487,6 +487,25 @@ pub fn format_score(score: JsValue) -> Result<String, JsError> {
     Ok(score_from_js(score)?.to_string())
 }
 
+/// Judge a puzzle move (`Verdict`): `moves` is the puzzle as published (the
+/// setup move first), `played` every move made since the setup, ending with
+/// the solver's newest.
+#[wasm_bindgen(js_name = judgePuzzle)]
+pub fn judge_puzzle(
+    fen: &str,
+    moves: Vec<String>,
+    played: Vec<String>,
+) -> Result<JsValue, JsError> {
+    let moves: Vec<&str> = moves.iter().map(String::as_str).collect();
+    let played: Vec<&str> = played.iter().map(String::as_str).collect();
+    let puzzle =
+        chess_core::puzzle::Puzzle::new(fen, &moves).map_err(|e| JsError::new(&e.to_string()))?;
+    let verdict = puzzle
+        .judge(&played)
+        .map_err(|e| JsError::new(&e.to_string()))?;
+    to_js(&verdict)
+}
+
 /// A principal variation as numbered SAN movetext from the position `fen`.
 #[wasm_bindgen(js_name = pvMovetext)]
 pub fn pv_movetext(fen: &str, pv: Vec<String>) -> Result<String, JsError> {

@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, fen, moves, rating, themes FROM puzzles p\n             WHERE rating BETWEEN $1 AND $2\n               AND NOT EXISTS (SELECT 1 FROM puzzle_attempts a\n                               WHERE a.user_id = $3 AND a.puzzle_id = p.id)\n             ORDER BY random() LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "fen",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "fen"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "moves",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "moves"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "rating",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "themes",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "themes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "533ceef3f7708b690ea2377d98473aee5d47e29a6ca8d8689f6e6a783afd3417"
+}

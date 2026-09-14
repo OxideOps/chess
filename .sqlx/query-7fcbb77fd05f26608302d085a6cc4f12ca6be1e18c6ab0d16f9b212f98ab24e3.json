@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT rating, deviation FROM puzzles WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rating",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "deviation",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "deviation"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "7fcbb77fd05f26608302d085a6cc4f12ca6be1e18c6ab0d16f9b212f98ab24e3"
+}

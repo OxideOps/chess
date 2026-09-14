@@ -67,6 +67,10 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 
+- Puzzles (`/puzzles`) need puzzles in the database: `cargo run -p server -- import-puzzles
+  crates/server/tests/fixtures/puzzles.csv` (Playwright does this at start). The status line
+  reads "Find the best move for White/Black.", then "Correct! Find the next move.", "Solved!"
+  or "Not quite: the move was …". `/api/puzzles/next` shows the served puzzle's solution.
 - Phone: `corepack pnpm exec playwright test --project phone` runs the layout checks at Pixel
   7 size. To look, a Playwright script with `devices['Pixel 7']` and `page.screenshot` beats
   resizing the developer's Chrome window.

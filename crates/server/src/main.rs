@@ -1,12 +1,15 @@
 use std::{net::SocketAddr, path::PathBuf};
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-/// Serve the chess web client.
+/// Serve the chess web client (or, with a subcommand, maintain its data).
 #[derive(Parser, Debug)]
 #[command(name = "chess-server", version)]
 struct Args {
+    #[command(subcommand)]
+    command: Option<Command>,
+
     /// Directory with the client build (`pnpm build` in web/).
     #[arg(long, env = "CHESS_STATIC_DIR", default_value_os_t = server::default_static_dir())]
     static_dir: PathBuf,
@@ -17,7 +20,7 @@ struct Args {
 
     /// Postgres connection URL. Without it games live in memory only and
     /// there are no accounts.
-    #[arg(long, env = "DATABASE_URL")]
+    #[arg(long, env = "DATABASE_URL", global = true)]
     database_url: Option<String>,
 
     /// Mark the session cookie `Secure`. Turn on when serving over https.
@@ -67,12 +70,76 @@ struct Args {
     fake_oauth: bool,
 }
 
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Load puzzles from the Lichess puzzle database CSV
+    /// (https://database.lichess.org/#puzzles). Decompress it on the way in:
+    /// `zstd -dc lichess_db_puzzle.csv.zst | chess-server import-puzzles -`.
+    ImportPuzzles {
+        /// The CSV file, or `-` for standard input.
+        file: PathBuf,
+        /// Skip puzzles players rated lower than this (-100 to 100).
+        #[arg(long, default_value_t = 90)]
+        min_popularity: i32,
+        /// Skip puzzles played fewer times than this.
+        #[arg(long, default_value_t = 1000)]
+        min_plays: i32,
+        /// Skip puzzles whose rating is less settled than this deviation.
+        #[arg(long, default_value_t = 90)]
+        max_deviation: i32,
+        /// Keep at most this many puzzles per 100 rating points.
+        #[arg(long, default_value_t = 10_000)]
+        per_band: usize,
+    },
+}
+
+/// `chess-server import-puzzles`.
+async fn import_puzzles(
+    database_url: Option<&str>,
+    file: &std::path::Path,
+    options: server::puzzles::ImportOptions,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let url = database_url.ok_or("importing puzzles needs a database: set DATABASE_URL")?;
+    let db = server::db::Db::connect(url).await?;
+    let reader: Box<dyn std::io::Read> = if file.as_os_str() == "-" {
+        Box::new(std::io::stdin().lock())
+    } else {
+        Box::new(std::io::BufReader::new(std::fs::File::open(file)?))
+    };
+    let stats = server::puzzles::import(&db, reader, &options, |s| {
+        eprintln!("… {} rows read, {} kept", s.read, s.imported);
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    eprintln!(
+        "read {} puzzles: imported {}, below the bar {}, band full {}, invalid {}",
+        stats.read, stats.imported, stats.filtered, stats.band_full, stats.invalid
+    );
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .init();
     let args = Args::parse();
+    if let Some(Command::ImportPuzzles {
+        file,
+        min_popularity,
+        min_plays,
+        max_deviation,
+        per_band,
+    }) = &args.command
+    {
+        let options = server::puzzles::ImportOptions {
+            min_popularity: *min_popularity,
+            min_plays: *min_plays,
+            max_deviation: *max_deviation,
+            per_band: *per_band,
+        };
+        return import_puzzles(args.database_url.as_deref(), file, options).await;
+    }
 
     let fallback = args.static_dir.join(server::FALLBACK_PAGE);
     if !fallback.is_file() {

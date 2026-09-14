@@ -11,6 +11,7 @@ pub mod engine;
 pub mod game;
 pub mod pgn;
 pub mod protocol;
+pub mod puzzle;
 
 pub use game::{Game, GameError, GameStatus, PlayedMove};
 pub use shakmaty;

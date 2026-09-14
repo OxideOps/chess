@@ -6,6 +6,7 @@
 import init, * as raw from '$lib/wasm/chess_core';
 import type { EngineMessage } from '$lib/generated/EngineMessage';
 import type { EngineScore } from '$lib/generated/EngineScore';
+import type { PuzzleVerdict } from '$lib/generated/PuzzleVerdict';
 import type { Side } from '$lib/generated/Side';
 
 export { Game } from '$lib/wasm/chess_core';
@@ -37,6 +38,15 @@ export function barFraction(score: EngineScore): number {
 /** `+0.35`, `-1.20`, `#3`. */
 export function formatScore(score: EngineScore): string {
 	return raw.formatScore(score);
+}
+
+/**
+ * Judge the solver's latest move in a puzzle. `moves` is the puzzle as
+ * served (setup move first); `played` every move since the setup, ending
+ * with the solver's newest.
+ */
+export function judgePuzzle(fen: string, moves: string[], played: string[]): PuzzleVerdict {
+	return raw.judgePuzzle(fen, moves, played) as PuzzleVerdict;
 }
 
 /** A principal variation as numbered SAN movetext from the position `fen`. */
