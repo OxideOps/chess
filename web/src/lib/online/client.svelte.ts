@@ -4,6 +4,7 @@ import type { PlayResult } from '$lib/chess/wasm';
 import type { ClientMessage } from '$lib/generated/ClientMessage';
 import type { Clocks } from '$lib/generated/Clocks';
 import type { GameEnd } from '$lib/generated/GameEnd';
+import type { Players } from '$lib/generated/Players';
 import type { ServerMessage } from '$lib/generated/ServerMessage';
 import type { Side } from '$lib/generated/Side';
 
@@ -20,8 +21,6 @@ export interface SocketLike {
 }
 
 export interface OnlineGameOptions {
-	/** Play as the side this token belongs to; omit to spectate. */
-	token?: string;
 	createSocket?: (url: string) => SocketLike;
 	/** Clock for the local countdown; defaults to `performance.now`. */
 	now?: () => number;
@@ -46,11 +45,13 @@ export class OnlineGame {
 	yourColor: Side | null = $state(null);
 	ended: GameEnd | null = $state(null);
 	drawOffer: Side | null = $state(null);
+	players: Players = $state({ white: null, black: null });
 	/** The most recent rejection from the server, for a status line. */
 	rejection: string | null = $state(null);
 	#clocks: ServerClocks = $state({ whiteMs: 0, blackMs: 0, at: 0 });
 	#tick = $state(0);
 
+	readonly #id: string;
 	readonly #url: string;
 	readonly #createSocket: (url: string) => SocketLike;
 	readonly #now: () => number;
@@ -59,13 +60,28 @@ export class OnlineGame {
 	#retryMs = 1000;
 	#ticker: ReturnType<typeof setInterval> | null = null;
 
-	constructor(id: string, { token, createSocket, now }: OnlineGameOptions = {}) {
+	constructor(id: string, { createSocket, now }: OnlineGameOptions = {}) {
 		const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-		const query = token ? `?token=${encodeURIComponent(token)}` : '';
-		this.#url = `${proto}://${location.host}/api/games/${encodeURIComponent(id)}/ws${query}`;
+		// The session cookie identifies us; seat holders play, others watch.
+		this.#id = id;
+		this.#url = `${proto}://${location.host}/api/games/${encodeURIComponent(id)}/ws`;
 		this.#createSocket = createSocket ?? ((url) => new WebSocket(url) as unknown as SocketLike);
 		this.#now = now ?? (() => performance.now());
 		this.#connect();
+	}
+
+	/** The Black seat is open and we don't hold White. */
+	get canJoin(): boolean {
+		return this.players.black === null && this.yourColor === null && !this.ended;
+	}
+
+	/** Take the open Black seat, then reconnect so the server seats us. */
+	async join(): Promise<void> {
+		const response = await fetch(`/api/games/${encodeURIComponent(this.#id)}/join`, {
+			method: 'POST'
+		});
+		if (!response.ok) throw new Error(await response.text());
+		this.#resync();
 	}
 
 	/** Whose clock is running, if any. */
@@ -161,9 +177,13 @@ export class OnlineGame {
 				this.yourColor = msg.your_color;
 				this.ended = msg.ended;
 				this.drawOffer = msg.draw_offer;
+				this.players = msg.players;
 				this.#setClocks(msg.clocks);
 				break;
 			}
+			case 'players_changed':
+				this.players = msg.players;
+				break;
 			case 'move_played': {
 				const ply = this.game.view.plyCount;
 				if (msg.ply === ply + 1) {

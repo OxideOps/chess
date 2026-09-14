@@ -60,6 +60,21 @@ mod opt_color {
     }
 }
 
+/// Who sits on a side. `username` is `None` for guests.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct PlayerInfo {
+    pub username: Option<String>,
+}
+
+/// Both seats; `None` while a seat is still open.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct Players {
+    pub white: Option<PlayerInfo>,
+    pub black: Option<PlayerInfo>,
+}
+
 /// Remaining time for both sides, in milliseconds. The server owns the clocks;
 /// clients only display them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -108,6 +123,12 @@ pub enum ServerMessage {
         #[serde(default, with = "opt_color")]
         #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\" | null"))]
         draw_offer: Option<Color>,
+        #[serde(default)]
+        players: Players,
+    },
+    /// A seat was taken (or, later, vacated).
+    PlayersChanged {
+        players: Players,
     },
     /// A move was accepted (either side's). `ply` lets a client detect gaps.
     MovePlayed {
@@ -229,6 +250,7 @@ mod tests {
             your_color: Some(Color::Black),
             ended: None,
             draw_offer: None,
+            players: Players::default(),
         };
         let json = serde_json::to_string(&msg).unwrap();
         assert!(json.contains(r#""your_color":"black""#), "{json}");

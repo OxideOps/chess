@@ -2,10 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { TIME_CONTROLS } from '$lib/online/clock';
-	import { rememberInvite } from '$lib/online/invites';
+	import { ensureSession } from '$lib/online/session';
 
 	// Create a game on the server and go to it as White; the page then shows
-	// the link to send to the opponent.
+	// the link to send to the opponent. A guest session is started if needed.
 	let selected = $state(2); // 5+0
 	let error: string | null = $state(null);
 	let busy = $state(false);
@@ -15,18 +15,15 @@
 		error = null;
 		const tc = TIME_CONTROLS[selected];
 		try {
+			await ensureSession();
 			const response = await fetch('/api/games', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ initial_ms: tc.initialMs, increment_ms: tc.incrementMs })
 			});
 			if (!response.ok) throw new Error(`server said ${response.status}`);
-			const created: { id: string; white_token: string; black_token: string } =
-				await response.json();
-			rememberInvite(created.id, created.black_token);
-			// The path is resolved; the token has to travel as a query string.
-			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(`${resolve('/game/[id]', { id: created.id })}?token=${created.white_token}`);
+			const created: { id: string } = await response.json();
+			await goto(resolve('/game/[id]', { id: created.id }));
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e);
 		} finally {

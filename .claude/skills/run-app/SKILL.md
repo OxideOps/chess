@@ -23,9 +23,11 @@ for i in $(seq 1 60); do curl -s -o /dev/null --max-time 2 http://127.0.0.1:5173
 After changing Rust code, run `corepack pnpm build:wasm --dev` (Vite picks up the new
 `src/lib/wasm`); after changing Rust types, also `corepack pnpm gen:types`.
 
-Online play (`/online`, `/game/[id]`) needs the Rust server too; Vite proxies `/api` and the
-game sockets to it: `cargo run -p server` (listens on 8080; it needs `web/build` to exist,
-so run `corepack pnpm build` once, or pass any dir with a `404.html`).
+Online play (`/online`, `/game/[id]`) needs the Rust server and a database (accounts);
+Vite proxies `/api` and the game sockets to it:
+`DATABASE_URL=postgres://$USER@localhost/chess_test cargo run -p server` (listens on 8080;
+it needs `web/build` to exist, so run `corepack pnpm build` once, or pass any dir with a
+`404.html`). Two browsers = two browser contexts/profiles, since the session is a cookie.
 
 For the production build instead: `corepack pnpm build && cargo run -p server -- --static-dir
 build --bind 127.0.0.1:4173` (that is exactly what `pnpm test:e2e` starts).
@@ -46,9 +48,10 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   `.board .arrows line`, and `[data-testid=eval-bar] .white` has a height other than 50%.
   Clicking a line plays its first move; moving while in history truncates (`#export-pgn`).
   A checkmate FEN shows "Idle" and no lines.
-- Online (`/online`): pick a time control, "Create game", copy `[data-testid=invite-link]`
-  into a second page; `[data-testid=game-status]` reads "Your move" / "Waiting for your
-  opponent"; `[aria-label="White clock"]` gets `.active` once both have moved.
+- Online (`/online`): pick a time control, "Create game" (a guest session is created for
+  you), copy `[data-testid=invite-link]` into a second browser context, click "Join as
+  Black"; `[data-testid=game-status]` reads "Your move" / "Waiting for your opponent";
+  `[aria-label="White clock"]` gets `.active` once both have moved.
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 

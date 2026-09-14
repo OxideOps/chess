@@ -12,7 +12,18 @@ rmSync(outDir, { recursive: true, force: true });
 
 const result = spawnSync(
 	'cargo',
-	['test', '-p', 'chess-core', '-p', 'chess-core-wasm', '--features', 'ts', 'export_bindings'],
+	[
+		'test',
+		'-p',
+		'chess-core',
+		'-p',
+		'chess-core-wasm',
+		'-p',
+		'server',
+		'--features',
+		'chess-core/ts,chess-core-wasm/ts,server/ts',
+		'export_bindings'
+	],
 	{
 		cwd: path.join(web, '..'),
 		stdio: 'inherit',

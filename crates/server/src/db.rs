@@ -13,7 +13,10 @@ use chess_core::{
 };
 use sqlx::{PgPool, postgres::PgPoolOptions};
 
-use crate::room::{Snapshot, TimeControl};
+use crate::{
+    games::{GameListing, Seat},
+    room::{Snapshot, TimeControl},
+};
 
 #[derive(Clone)]
 pub struct Db {
@@ -23,7 +26,7 @@ pub struct Db {
 /// What we store per game besides the room itself.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StoredGame {
-    pub tokens: [String; 2],
+    pub seats: [Option<Seat>; 2],
     pub snapshot: Snapshot,
     /// How old the snapshot is: how long a running clock has kept running
     /// since it was written.
@@ -45,21 +48,76 @@ impl Db {
     pub async fn insert(
         &self,
         id: &str,
-        tokens: &[String; 2],
+        seats: &[Option<Seat>; 2],
         time_control: TimeControl,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "INSERT INTO games (id, white_token, black_token, initial_ms, increment_ms, white_ms, black_ms)
+            "INSERT INTO games (id, white_user_id, black_user_id, initial_ms, increment_ms, white_ms, black_ms)
              VALUES ($1, $2, $3, $4, $5, $4, $4)",
             id,
-            tokens[0],
-            tokens[1],
+            seats[0].as_ref().map(|s| s.user_id.as_str()),
+            seats[1].as_ref().map(|s| s.user_id.as_str()),
             time_control.initial.as_millis() as i64,
             time_control.increment.as_millis() as i64,
         )
         .execute(&self.pool)
         .await?;
         Ok(())
+    }
+
+    pub async fn set_black(&self, id: &str, user_id: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "UPDATE games SET black_user_id = $2, updated_at = now() WHERE id = $1",
+            id,
+            user_id
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// The games a user sits in, newest activity first.
+    pub async fn games_of(&self, user_id: &str) -> Result<Vec<GameListing>, sqlx::Error> {
+        let rows = sqlx::query!(
+            r#"SELECT g.id, g.moves, g.result, g.reason,
+                      to_char(g.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "updated_at!",
+                      g.white_user_id, w.username AS "white_name?",
+                      g.black_user_id, b.username AS "black_name?"
+               FROM games g
+               LEFT JOIN users w ON w.id = g.white_user_id
+               LEFT JOIN users b ON b.id = g.black_user_id
+               WHERE g.white_user_id = $1 OR g.black_user_id = $1
+               ORDER BY g.updated_at DESC
+               LIMIT 100"#,
+            user_id
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        rows.into_iter()
+            .map(|r| {
+                let ended = match (r.result, r.reason) {
+                    (Some(res), Some(why)) => Some(GameEnd {
+                        result: parse_result(&res).ok_or_else(|| bad_column("result", &res))?,
+                        reason: parse_reason(&why).ok_or_else(|| bad_column("reason", &why))?,
+                    }),
+                    _ => None,
+                };
+                Ok(GameListing {
+                    id: r.id,
+                    players: chess_core::protocol::Players {
+                        white: r.white_user_id.map(|_| chess_core::protocol::PlayerInfo {
+                            username: r.white_name,
+                        }),
+                        black: r.black_user_id.map(|_| chess_core::protocol::PlayerInfo {
+                            username: r.black_name,
+                        }),
+                    },
+                    ended,
+                    moves: r.moves.split_whitespace().count() as u32,
+                    updated_at: r.updated_at,
+                })
+            })
+            .collect()
     }
 
     /// Write a room's state. Take the snapshot under the room lock, then call
@@ -88,9 +146,14 @@ impl Db {
 
     pub async fn load(&self, id: &str) -> Result<Option<StoredGame>, sqlx::Error> {
         let Some(row) = sqlx::query!(
-            "SELECT white_token, black_token, initial_ms, increment_ms, moves, white_ms, black_ms,
-                    clock_since_unix_ms, draw_offer, result, reason
-             FROM games WHERE id = $1",
+            r#"SELECT g.initial_ms, g.increment_ms, g.moves, g.white_ms, g.black_ms,
+                      g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,
+                      g.white_user_id, w.username AS "white_name?",
+                      g.black_user_id, b.username AS "black_name?"
+               FROM games g
+               LEFT JOIN users w ON w.id = g.white_user_id
+               LEFT JOIN users b ON b.id = g.black_user_id
+               WHERE g.id = $1"#,
             id
         )
         .fetch_optional(&self.pool)
@@ -118,8 +181,14 @@ impl Db {
             ),
             None => (None, Duration::ZERO),
         };
+        let seat = |user_id: Option<String>, username: Option<String>| {
+            user_id.map(|user_id| Seat { user_id, username })
+        };
         Ok(Some(StoredGame {
-            tokens: [row.white_token, row.black_token],
+            seats: [
+                seat(row.white_user_id, row.white_name),
+                seat(row.black_user_id, row.black_name),
+            ],
             snapshot: Snapshot {
                 initial_ms: row.initial_ms as u64,
                 increment_ms: row.increment_ms as u64,

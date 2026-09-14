@@ -6,14 +6,18 @@ test('create a game, invite an opponent, play, resign', async ({ browser }) => {
 	await white.goto('/online');
 	await white.getByRole('combobox').selectOption({ label: '3+2 Blitz' });
 	await white.getByRole('button', { name: 'Create game' }).click();
-	await expect(white).toHaveURL(/\/game\/[0-9a-f-]+\?token=/);
-	await expect(white.getByTestId('game-status')).toHaveText('Your move');
+	await expect(white).toHaveURL(/\/game\/[0-9a-f-]+$/);
+	await expect(white.getByTestId('game-status')).toHaveText('Waiting for an opponent to join');
 	const invite = await white.getByTestId('invite-link').inputValue();
-	expect(invite).toMatch(/\/game\/[0-9a-f-]+\?token=/);
+	expect(invite).toMatch(/\/game\/[0-9a-f-]+$/);
 
-	const black = await browser.newPage();
+	// A second browser (its own cookies) opens the link and takes Black.
+	const black = await (await browser.newContext()).newPage();
 	await black.goto(invite);
+	await black.getByRole('button', { name: 'Join as Black' }).click();
 	await expect(black.getByTestId('game-status')).toHaveText('Waiting for your opponent');
+	await expect(white.getByTestId('game-status')).toHaveText('Your move');
+	await expect(white.getByTestId('invite-link')).toHaveCount(0);
 	// Black sees the board from their side, and cannot move White's pieces.
 	await expect(black.locator('.square').first()).toHaveAttribute('data-square', 'h1');
 	await sq(black, 'e2').click();
@@ -24,7 +28,6 @@ test('create a game, invite an opponent, play, resign', async ({ browser }) => {
 	await expect(white.locator('.move-list button.move')).toHaveText(['e4']);
 	await expect(black.locator('.move-list button.move')).toHaveText(['e4']);
 	await expect(black.getByTestId('game-status')).toHaveText('Your move');
-	await expect(white.getByTestId('invite-link')).toHaveCount(0);
 
 	await sq(black, 'e7').click();
 	await sq(black, 'e5').click();
@@ -43,11 +46,12 @@ test('create a game, invite an opponent, play, resign', async ({ browser }) => {
 	await expect(black.getByTestId('game-status')).toHaveText('Black wins by resignation');
 	await expect(black.getByRole('button', { name: 'Resign' })).toHaveCount(0);
 
-	// A spectator opening the plain link sees the finished game.
-	const watcher = await browser.newPage();
-	await watcher.goto(invite.split('?')[0]);
+	// A third browser opening the link is a spectator: no seat to join, finished game shown.
+	const watcher = await (await browser.newContext()).newPage();
+	await watcher.goto(invite);
 	await expect(watcher.locator('.move-list button.move')).toHaveText(['e4', 'e5']);
 	await expect(watcher.getByTestId('game-status')).toHaveText('Black wins by resignation');
+	await expect(watcher.getByRole('button', { name: 'Join as Black' })).toHaveCount(0);
 });
 
 function sq(page: Page, name: string) {

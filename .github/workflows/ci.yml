@@ -51,11 +51,23 @@ jobs:
       - name: clippy (chess-core-wasm)
         run: cargo clippy -p chess-core-wasm --target wasm32-unknown-unknown -- -D warnings
       - name: clippy (ts bindings feature)
-        run: cargo clippy --workspace --all-targets --features chess-core-wasm/ts -- -D warnings
+        run: cargo clippy --workspace --all-targets --features chess-core-wasm/ts,server/ts -- -D warnings
 
   web:
     name: web (lint, check, test, build)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      # The e2e suite plays real online games, which need accounts and so a database.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
     defaults:
       run:
         working-directory: web

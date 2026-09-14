@@ -6,7 +6,14 @@ export default defineConfig({
 	webServer: {
 		command: 'npm run build && cargo run -p server -- --static-dir build --bind 127.0.0.1:4173',
 		port: 4173,
-		timeout: 300_000
+		timeout: 300_000,
+		env: {
+			// Online play needs accounts, so the server runs on the test database
+			// (`createdb chess_test` locally; CI provides a postgres service).
+			DATABASE_URL:
+				process.env.TEST_DATABASE_URL ??
+				`postgres://${process.env.USER ?? 'postgres'}@localhost/chess_test`
+		}
 	},
 	testDir: 'e2e',
 	testMatch: '**/*.e2e.{ts,js}',

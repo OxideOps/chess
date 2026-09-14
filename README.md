@@ -27,10 +27,13 @@ Early scaffolding. What works today:
   (clocks included); without it they live in memory.
 - `server`: accounts. Guests are created on demand (no signup needed to play), can upgrade to
   a username + password (argon2id) and keep their games; sessions are server-side rows behind
-  an `HttpOnly` cookie. The client and the game seats move onto accounts next.
-- `web`: online play (`/online`): pick a time control, create a game, send the invite link;
-  the game page shows both clocks counting down, your side only, draw offers, resign, and the
-  result; reconnecting resumes; anyone with the plain link spectates.
+  an `HttpOnly` cookie. Games have seats: the creator is White, the first person to join is
+  Black, everyone else spectates; `GET /api/me/games` lists yours.
+- `web`: online play (`/online`): pick a time control, create a game, send the link; the
+  opponent clicks "Join as Black". The game page shows both clocks counting down, your side
+  only, draw offers, resign, and the result; reconnecting resumes; anyone else spectates.
+  Online play needs the database (`DATABASE_URL`); the Vite dev proxy and the e2e suite start
+  the server on `chess_test`.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
