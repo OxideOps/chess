@@ -37,7 +37,10 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   rows). Moves are applied locally first (same rules as the server) and sent; a `Rejected`
   or a gap in plies closes the socket, and the reconnect's `Sync` puts things right.
 - `src/lib/components/` — `Board` (props `playAs` and `onmove` for online play),
-  `PromotionPicker`, `EvalBar`, `EnginePanel`, `ImportPanel`, `MoveList`, `Controls`,
+  `PromotionPicker`, `EvalBar`, `EnginePanel`, `ImportPanel`, `MoveList` (lays out
+  `view.tree`, the PGN-shaped tokens of the move tree, with `src/lib/chess/movelist.ts`:
+  main-line rows plus variation blocks; `button.move` is a main-line cell, `button.var-move`
+  a variation move), `Controls`,
   `Clock` (side + player name), `GameSidebar` (everything beside an online board: status,
   invite, join, draw offers, controls), `AuthForm` (signup and login), `Nav` (links plus the
   account area). Each has its own scoped `<style>`; shared

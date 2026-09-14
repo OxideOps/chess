@@ -144,6 +144,29 @@ pub struct MoveView {
     pub uci: String,
 }
 
+/// One element of the move tree written out like PGN (see
+/// `chess_core::Game::tokens`), marked up for the move list.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub enum TreeToken {
+    Move {
+        /// For `goToNode`, `deleteFrom`.
+        id: u32,
+        /// `3.`, or `3...` where a Black move needs one.
+        number: Option<String>,
+        san: String,
+        /// Variation depth: 0 on the main line.
+        depth: u32,
+        /// The move at the cursor.
+        current: bool,
+        /// On the current line (the one Back/Forward walk).
+        line: bool,
+    },
+    VariationStart,
+    VariationEnd,
+}
+
 /// Everything the UI needs to draw the position at the cursor and the move
 /// list. One of these per render; see `Game::view`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -166,8 +189,15 @@ pub struct GameView {
     /// The square of the king in check, if any.
     pub check_square: Option<String>,
     pub pieces: Vec<PieceOnSquare>,
+    /// The moves of the current line.
     pub moves: Vec<MoveView>,
-    /// `1. e4 e5 2. Nf3`, for the whole game regardless of the cursor.
+    /// The whole tree, variations included, for the move list.
+    pub tree: Vec<TreeToken>,
+    /// The node at the cursor (`0` is the start position).
+    pub node: u32,
+    /// Whether the cursor is on the main line.
+    pub main_line: bool,
+    /// `1. e4 e5 (1... c5) 2. Nf3`, for the whole game regardless of the cursor.
     pub movetext: String,
     /// Minimal PGN export of the whole game (see `chess_core::Game::pgn`).
     pub pgn: String,
@@ -194,6 +224,86 @@ fn play_result(r: Result<&chess_core::PlayedMove, GameError>) -> Result<PlayResu
     }
 }
 
+/// Everything `Game::view` reports, as a Rust value (also used by the tests).
+fn game_view(g: &chess_core::Game) -> GameView {
+    let pos = g.position();
+    let status = g.status();
+    let last_move = g.last_move().and_then(|m| match m.uci {
+        UciMove::Normal { from, to, .. } => Some(MoveSquares {
+            from: from.to_string(),
+            to: to.to_string(),
+        }),
+        _ => None,
+    });
+    let check_square = pos
+        .is_check()
+        .then(|| pos.board().king_of(pos.turn()))
+        .flatten()
+        .map(|sq| sq.to_string());
+    let pieces = pos
+        .board()
+        .iter()
+        .map(|(square, piece)| PieceOnSquare {
+            square: square.to_string(),
+            color: piece.color.into(),
+            role: piece.role.into(),
+        })
+        .collect();
+    let moves = g
+        .moves()
+        .iter()
+        .enumerate()
+        .map(|(i, m)| MoveView {
+            ply: i as u32 + 1,
+            san: m.san.to_string(),
+            uci: m.uci.to_string(),
+        })
+        .collect();
+    let here = g.node();
+    let tree = g
+        .tokens()
+        .into_iter()
+        .map(|t| match t {
+            chess_core::Token::Move {
+                id,
+                number,
+                san,
+                depth,
+            } => TreeToken::Move {
+                id: id as u32,
+                number,
+                san,
+                depth,
+                current: id == here,
+                line: g.line().contains(&id),
+            },
+            chess_core::Token::VariationStart => TreeToken::VariationStart,
+            chess_core::Token::VariationEnd => TreeToken::VariationEnd,
+        })
+        .collect();
+    GameView {
+        fen: g.fen(),
+        turn: g.turn().into(),
+        status: status.into(),
+        winner: status.winner().map(Into::into),
+        game_over: status.is_game_over(),
+        cursor: g.cursor() as u32,
+        ply_count: g.ply_count() as u32,
+        viewing_history: g.is_viewing_history(),
+        last_move,
+        check_square,
+        pieces,
+        moves,
+        tree,
+        node: here as u32,
+        main_line: g.is_main_line(here),
+        movetext: g.movetext(),
+        pgn: g.pgn(),
+        start_turn: g.start_position().turn().into(),
+        start_fullmove: g.start_position().fullmoves().get(),
+    }
+}
+
 // ----- Game -------------------------------------------------------------
 
 /// A chess game with history and a cursor. See `chess_core::Game`.
@@ -214,7 +324,7 @@ impl Game {
             .map_err(game_error)
     }
 
-    /// The main line of the first game in a PGN.
+    /// The first game in a PGN, variations included.
     #[wasm_bindgen(js_name = fromPgn)]
     pub fn from_pgn(pgn: &str) -> Result<Game, JsError> {
         chess_core::Game::from_pgn(pgn)
@@ -224,59 +334,7 @@ impl Game {
 
     /// A `GameView` snapshot of the position at the cursor.
     pub fn view(&self) -> Result<JsValue, JsError> {
-        let g = &self.0;
-        let pos = g.position();
-        let status = g.status();
-        let last_move = g.last_move().and_then(|m| match m.uci {
-            UciMove::Normal { from, to, .. } => Some(MoveSquares {
-                from: from.to_string(),
-                to: to.to_string(),
-            }),
-            _ => None,
-        });
-        let check_square = pos
-            .is_check()
-            .then(|| pos.board().king_of(pos.turn()))
-            .flatten()
-            .map(|sq| sq.to_string());
-        let pieces = pos
-            .board()
-            .iter()
-            .map(|(square, piece)| PieceOnSquare {
-                square: square.to_string(),
-                color: piece.color.into(),
-                role: piece.role.into(),
-            })
-            .collect();
-        let moves = g
-            .moves()
-            .iter()
-            .enumerate()
-            .map(|(i, m)| MoveView {
-                ply: i as u32 + 1,
-                san: m.san.to_string(),
-                uci: m.uci.to_string(),
-            })
-            .collect();
-        let view = GameView {
-            fen: g.fen(),
-            turn: g.turn().into(),
-            status: status.into(),
-            winner: status.winner().map(Into::into),
-            game_over: status.is_game_over(),
-            cursor: g.cursor() as u32,
-            ply_count: g.ply_count() as u32,
-            viewing_history: g.is_viewing_history(),
-            last_move,
-            check_square,
-            pieces,
-            moves,
-            movetext: g.movetext(),
-            pgn: g.pgn(),
-            start_turn: g.start_position().turn().into(),
-            start_fullmove: g.start_position().fullmoves().get(),
-        };
-        to_js(&view)
+        to_js(&game_view(&self.0))
     }
 
     pub fn fen(&self) -> String {
@@ -340,6 +398,30 @@ impl Game {
     #[wasm_bindgen(js_name = playHereUci)]
     pub fn play_here_uci(&mut self, uci: &str) -> Result<PlayResult, JsError> {
         play_result(self.0.play_here_uci(uci))
+    }
+
+    /// View a move anywhere in the tree (its line becomes current).
+    #[wasm_bindgen(js_name = goToNode)]
+    pub fn go_to_node(&mut self, id: u32) {
+        self.0.go_to_node(id as usize);
+    }
+
+    /// Switch to the next (`1`) or previous (`-1`) alternative to the move at
+    /// the cursor.
+    #[wasm_bindgen(js_name = switchVariation)]
+    pub fn switch_variation(&mut self, step: i32) {
+        self.0.switch_variation(step);
+    }
+
+    /// Promote the variation `id` is in one level. Whether anything changed.
+    pub fn promote(&mut self, id: u32) -> bool {
+        self.0.promote(id as usize)
+    }
+
+    /// Delete move `id` and everything after it. Whether anything changed.
+    #[wasm_bindgen(js_name = deleteFrom)]
+    pub fn delete_from(&mut self, id: u32) -> bool {
+        self.0.delete_from(id as usize)
     }
 
     #[wasm_bindgen(js_name = goToPly)]
@@ -589,50 +671,7 @@ mod tests {
     struct GameViewProbe;
     impl GameViewProbe {
         fn from(game: &Game) -> GameView {
-            let g = &game.0;
-            let status = g.status();
-            GameView {
-                fen: g.fen(),
-                turn: g.turn().into(),
-                status: status.into(),
-                winner: status.winner().map(Into::into),
-                game_over: status.is_game_over(),
-                cursor: g.cursor() as u32,
-                ply_count: g.ply_count() as u32,
-                viewing_history: g.is_viewing_history(),
-                last_move: g.last_move().and_then(|m| match m.uci {
-                    UciMove::Normal { from, to, .. } => Some(MoveSquares {
-                        from: from.to_string(),
-                        to: to.to_string(),
-                    }),
-                    _ => None,
-                }),
-                check_square: None,
-                pieces: g
-                    .position()
-                    .board()
-                    .iter()
-                    .map(|(square, piece)| PieceOnSquare {
-                        square: square.to_string(),
-                        color: piece.color.into(),
-                        role: piece.role.into(),
-                    })
-                    .collect(),
-                moves: g
-                    .moves()
-                    .iter()
-                    .enumerate()
-                    .map(|(i, m)| MoveView {
-                        ply: i as u32 + 1,
-                        san: m.san.to_string(),
-                        uci: m.uci.to_string(),
-                    })
-                    .collect(),
-                movetext: g.movetext(),
-                pgn: g.pgn(),
-                start_turn: g.start_position().turn().into(),
-                start_fullmove: g.start_position().fullmoves().get(),
-            }
+            game_view(&game.0)
         }
     }
 }

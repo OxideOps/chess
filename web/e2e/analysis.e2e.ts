@@ -42,12 +42,32 @@ test.describe('analysis board', () => {
 		await expect(page.locator('.move-list .move')).toHaveCount(2);
 		await expect(page.locator('.status')).toHaveText('White to move');
 
-		// Moving from history truncates the game.
+		// Moving from history starts a variation; the old moves stay the main line.
+		const pgn = page.locator('#export-pgn');
 		await page.locator('.board').focus();
 		await page.keyboard.press('ArrowUp');
 		await sq('d2').click();
 		await sq('d4').click();
-		await expect(page.locator('#export-pgn')).toHaveValue('1. d4 *');
+		await expect(pgn).toHaveValue(/^1\. e4 \(1\. d4\) 1\.\.\. \S+ \*$/);
+		const variation = page.locator('.move-list .variation');
+		await expect(variation).toHaveText(/1\.\s*d4/);
+		await expect(variation.locator('.var-move.current')).toHaveText('d4');
+		const promote = page.getByRole('button', { name: 'Promote variation' });
+		await expect(promote).toBeEnabled();
+
+		// Shift+Up switches to the alternative, which is the main line.
+		await page.locator('.board').focus();
+		await page.keyboard.press('Shift+ArrowUp');
+		await expect(page.locator('.move-list .move.current')).toHaveText('e4');
+		await expect(promote).toBeDisabled();
+
+		// Click the variation, promote it, then delete it again.
+		await variation.getByRole('button', { name: 'd4' }).click();
+		await promote.click();
+		await expect(pgn).toHaveValue(/^1\. d4 \(1\. e4 \S+\) \*$/);
+		await page.getByRole('button', { name: 'Delete from here' }).click();
+		await expect(pgn).toHaveValue(/^1\. e4 \S+ \*$/);
+		await expect(page.locator('.move-list .variation')).toHaveCount(0);
 
 		// PGN import with comments, variations and annotations.
 		await page
@@ -55,7 +75,7 @@ test.describe('analysis board', () => {
 			.fill('1. e4 {best} e5 2. Nf3 (2. Bc4 Nf6) 2... Nc6 3. Bb5!? a6 4. Ba4 Nf6 5. O-O Be7 1-0');
 		await page.locator('#import-pgn ~ .row button').click();
 		await expect(page.locator('#export-pgn')).toHaveValue(
-			'1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 *'
+			'1. e4 e5 2. Nf3 (2. Bc4 Nf6) 2... Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 *'
 		);
 		await expect(page.locator('.move-list .move.current')).toHaveText('Be7');
 

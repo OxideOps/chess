@@ -57,7 +57,8 @@ describe('Board.svelte', () => {
 		render(Board, { game, analysis: true });
 		await square('c7').click();
 		await square('c5').click();
-		expect(game.view.movetext).toBe('1. e4 c5');
+		// In analysis the old move stays, as the main line.
+		expect(game.view.movetext).toBe('1. e4 e5 (1... c5)');
 		game.dispose();
 	});
 

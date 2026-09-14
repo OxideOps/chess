@@ -52,6 +52,24 @@
 		<CoachPanel {game} {analyser} />
 		<p class="status">{statusText(game.view)}</p>
 		<MoveList {game} />
+		<div class="variation-actions">
+			<button
+				type="button"
+				disabled={game.view.mainLine}
+				onclick={() => game.promoteVariation()}
+				title="Make this variation the main line (one level at a time)">Promote variation</button
+			>
+			<button
+				type="button"
+				disabled={game.view.node === 0}
+				onclick={() => game.deleteFromHere()}
+				title="Delete this move and everything after it">Delete from here</button
+			>
+		</div>
+		<p class="keys">
+			Moves played from earlier positions become variations. Keys: ←/→ step, ↑/↓ start and end,
+			Shift+↑/↓ switch variation.
+		</p>
 		<Controls {game} bind:orientation />
 		<ImportPanel {game} />
 	</aside>
@@ -61,6 +79,35 @@
 	.analysis {
 		/* The eval bar and its gap sit beside the board. */
 		--board-beside: 2rem;
+	}
+
+	.variation-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.variation-actions button {
+		flex: 1;
+		min-height: var(--tap);
+		padding: 0.35rem 0.6rem;
+		border: 1px solid var(--panel-border);
+		border-radius: 6px;
+		background: var(--panel);
+		color: var(--text);
+		font: inherit;
+		font-size: 0.9rem;
+		cursor: pointer;
+	}
+
+	.variation-actions button:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+
+	.keys {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: 0.8rem;
 	}
 
 	.board-with-bar {

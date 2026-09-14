@@ -49,7 +49,10 @@ export class GameStore {
 		return this.#mutate(() => this.#game.playFromTo(from, to, promotion));
 	}
 
-	/** Play from the viewed position, discarding any moves after it. */
+	/**
+	 * Play from the viewed position: a move already played there is
+	 * followed, a new one starts a variation (see `chess_core::Game`).
+	 */
 	playHere(from: string, to: string, promotion?: Promotion): PlayResult {
 		return this.#mutate(() => this.#game.playHereFromTo(from, to, promotion));
 	}
@@ -60,6 +63,26 @@ export class GameStore {
 
 	playHereUci(uci: string): PlayResult {
 		return this.#mutate(() => this.#game.playHereUci(uci));
+	}
+
+	/** View a move anywhere in the tree; its line becomes current. */
+	goToNode(id: number): void {
+		this.#mutate(() => this.#game.goToNode(id));
+	}
+
+	/** The next (`1`) or previous (`-1`) alternative to the move at the cursor. */
+	switchVariation(step: 1 | -1): void {
+		this.#mutate(() => this.#game.switchVariation(step));
+	}
+
+	/** Promote the variation the cursor is in by one level. */
+	promoteVariation(): boolean {
+		return this.#mutate(() => this.#game.promote(this.view.node));
+	}
+
+	/** Delete the move at the cursor and everything after it. */
+	deleteFromHere(): boolean {
+		return this.#mutate(() => this.#game.deleteFrom(this.view.node));
 	}
 
 	goToPly(ply: number): void {
@@ -115,6 +138,9 @@ function emptyView(): GameView {
 		checkSquare: null,
 		pieces: [],
 		moves: [],
+		tree: [],
+		node: 0,
+		mainLine: true,
 		movetext: '',
 		pgn: '*',
 		startTurn: 'white',

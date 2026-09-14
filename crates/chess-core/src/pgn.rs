@@ -1,15 +1,16 @@
 //! A small PGN reader: enough to import a pasted game.
 //!
-//! Handles tag pairs, comments (`{...}` and `;`), nested variations (skipped),
-//! NAGs (`$1`), `!?`-style suffixes, move numbers in any spacing, and result
-//! tokens. Only the main line of the first game in the text is kept, which is
-//! what an analysis board needs. Anything the rules reject is an error.
+//! Handles tag pairs, comments (`{...}` and `;`), nested variations (kept, as
+//! the game's variations), NAGs (`$1`), `!?`-style suffixes, move numbers in
+//! any spacing, and result tokens. Only the first game in the text is read.
+//! Anything the rules reject is an error.
 
 use shakmaty::{Position, san::SanPlus};
 
-use crate::{Game, GameError};
+use crate::{Game, GameError, NodeId};
 
-/// A parsed game: its tag pairs in file order and the main line as a [`Game`].
+/// A parsed game: its tag pairs in file order and the moves, with their
+/// variations, as a [`Game`] viewing the end of the main line.
 #[derive(Debug, Clone)]
 pub struct Pgn {
     pub headers: Vec<(String, String)>,
@@ -137,46 +138,43 @@ impl Parser<'_> {
         }
     }
 
-    fn skip_variation(&mut self) -> Result<(), GameError> {
-        // Called with the cursor on `(`.
-        let mut depth = 0usize;
-        while let Some(c) = self.peek() {
-            match c {
-                b'(' => depth += 1,
-                b')' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        self.pos += 1;
-                        return Ok(());
-                    }
-                }
-                b'{' => {
-                    self.skip_brace_comment();
-                    continue;
-                }
-                b';' => {
-                    self.skip_line();
-                    continue;
-                }
-                _ => {}
-            }
-            self.pos += 1;
-        }
-        Err(self.error("unterminated variation"))
-    }
-
     fn movetext(&mut self, game: &mut Game) -> Result<(), GameError> {
+        // The move each open variation returns to when it closes.
+        let mut returns: Vec<NodeId> = Vec::new();
+        let finish = |p: &Self, returns: &Vec<NodeId>| {
+            if returns.is_empty() {
+                Ok(())
+            } else {
+                Err(p.error("unterminated variation"))
+            }
+        };
         loop {
             self.skip_whitespace();
             let Some(c) = self.peek() else {
-                return Ok(());
+                return finish(self, &returns);
             };
             match c {
                 b'{' => self.skip_brace_comment(),
                 b';' => self.skip_line(),
                 b'%' if self.pos == 0 || self.src[self.pos - 1] == b'\n' => self.skip_line(),
-                b'(' => self.skip_variation()?,
-                b')' => return Err(self.error("unexpected ')'")),
+                b'(' => {
+                    // A variation is an alternative to the move just played:
+                    // it continues from the position before that move.
+                    let here = game.node();
+                    let Some(before) = game.parent(here) else {
+                        return Err(self.error("a variation must follow a move"));
+                    };
+                    self.pos += 1;
+                    returns.push(here);
+                    game.go_to_node(before);
+                }
+                b')' => {
+                    let Some(back) = returns.pop() else {
+                        return Err(self.error("unexpected ')'"));
+                    };
+                    self.pos += 1;
+                    game.go_to_node(back);
+                }
                 b'$' => {
                     self.pos += 1;
                     while self.peek().is_some_and(|c| c.is_ascii_digit()) {
@@ -184,7 +182,7 @@ impl Parser<'_> {
                     }
                 }
                 // Tag pairs after the movetext started belong to the next game.
-                b'[' => return Ok(()),
+                b'[' => return finish(self, &returns),
                 _ => {
                     let start = self.pos;
                     while self
@@ -195,7 +193,7 @@ impl Parser<'_> {
                     }
                     let token = &self.src[start..self.pos];
                     if RESULTS.iter().any(|r| r.as_bytes() == token) {
-                        return Ok(());
+                        return finish(self, &returns);
                     }
                     if let Some(san) = san_token(token) {
                         self.play_san(game, san)?;
@@ -209,18 +207,17 @@ impl Parser<'_> {
         let text = String::from_utf8_lossy(san).into_owned();
         let san = SanPlus::from_ascii(san)
             .map_err(|_| self.error(format!("cannot read move \"{text}\"")))?;
-        let mv = san.san.to_move(game.latest()).map_err(|_| {
+        let to_move = if game.position().turn().is_white() {
+            "White"
+        } else {
+            "Black"
+        };
+        let ply = game.cursor() + 1;
+        game.play_here_san(&san).map(|_| ()).map_err(|_| {
             self.error(format!(
-                "illegal move {text} at ply {} ({} to move)",
-                game.ply_count() + 1,
-                if game.latest().turn().is_white() {
-                    "White"
-                } else {
-                    "Black"
-                }
+                "illegal move {text} at ply {ply} ({to_move} to move)"
             ))
-        })?;
-        game.play(mv).map(|_| ())
+        })
     }
 }
 
@@ -276,7 +273,34 @@ mod tests {
         assert_eq!(pgn.header("Result"), Some("1-0"));
         assert_eq!(
             pgn.game.movetext(),
-            "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O"
+            "1. e4 e5 2. Nf3 (2. Bc4 Nf6 (2... Bc5) 3. d3) 2... Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O"
+        );
+        // The main line is current, at its end.
+        assert_eq!(pgn.game.ply_count(), 9);
+        assert!(!pgn.game.is_viewing_history());
+        assert!(pgn.game.is_main_line(pgn.game.node()));
+    }
+
+    #[test]
+    fn variations_round_trip() {
+        let text = "1. e4 e5 (1... c5 2. Nf3 (2. c3 d5) 2... d6) 2. Nf3 (2. Bc4) 2... Nc6 *";
+        let game = parse(text).unwrap().game;
+        let movetext = game.movetext();
+        assert_eq!(movetext, text.trim_end_matches(" *"));
+        assert_eq!(parse(&movetext).unwrap().game.movetext(), movetext);
+        assert_eq!(game.pgn(), text);
+    }
+
+    #[test]
+    fn variation_brackets_must_match_moves() {
+        let err = |text: &str| parse(text).unwrap_err().to_string();
+        assert!(err("(1. e4) 1. d4").contains("a variation must follow a move"));
+        assert!(err("1. e4 (1. d4").contains("unterminated variation"));
+        assert!(err("1. e4 e5) 2. Nf3").contains("unexpected ')'"));
+        // Illegal moves inside a variation are reported like any other.
+        assert!(
+            err("1. e4 e5 (1... Ke7 2. Qh5 Kd9)").contains("cannot read move \"Kd9\"")
+                || err("1. e4 e5 (1... Ke7 2. Qh5 Kd9)").contains("illegal move")
         );
     }
 

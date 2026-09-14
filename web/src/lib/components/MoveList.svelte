@@ -1,43 +1,27 @@
 <script lang="ts">
 	import type { GameStore } from '$lib/chess/game.svelte';
-	import type { MoveView } from '$lib/generated/MoveView';
+	import { layout, type TreeMove } from '$lib/chess/movelist';
 
-	// Numbered move pairs. Clicking a move shows the position after it.
+	// The main line as numbered pairs, with any variations written inline
+	// under the move they branch from. Clicking a move shows the position
+	// after it (and makes its line current).
 	let { game }: { game: GameStore } = $props();
 
-	interface Row {
-		number: number;
-		white: MoveView | null;
-		black: MoveView | null;
-	}
-
-	const rows = $derived.by(() => {
-		const view = game.view;
-		const rows: Row[] = [];
-		let number = view.startFullmove;
-		view.moves.forEach((move, i) => {
-			const whiteMove = (i % 2 === 0) === (view.startTurn === 'white');
-			if (whiteMove) {
-				rows.push({ number, white: move, black: null });
-			} else {
-				const last = rows.at(-1);
-				if (last && last.black === null) last.black = move;
-				// A game that started with Black to move has no white move in its first row.
-				else rows.push({ number, white: null, black: move });
-				number += 1;
-			}
-		});
-		return rows;
-	});
+	const blocks = $derived(layout(game.view.tree, game.view.startFullmove));
+	// Keys for the keyed each: rows by their first move, blocks by position.
+	const keyOf = (i: number) => {
+		const b = blocks[i];
+		return b.kind === 'row' ? `r${b.white?.id ?? b.black?.id}` : `v${i}`;
+	};
 </script>
 
-{#snippet cell(move: MoveView | null)}
+{#snippet cell(move: TreeMove | null)}
 	{#if move}
 		<button
 			type="button"
 			class="move"
-			class:current={move.ply === game.view.cursor}
-			onclick={() => game.goToPly(move.ply)}
+			class:current={move.current}
+			onclick={() => game.goToNode(move.id)}
 		>
 			{move.san}
 		</button>
@@ -47,12 +31,37 @@
 {/snippet}
 
 <ol class="move-list">
-	{#each rows as row (row.number)}
-		<li>
-			<span class="number">{row.number}.</span>
-			{@render cell(row.white)}
-			{@render cell(row.black)}
-		</li>
+	{#each blocks as block, i (keyOf(i))}
+		{#if block.kind === 'row'}
+			<li>
+				<span class="number">{block.number}.</span>
+				{@render cell(block.white)}
+				{@render cell(block.black)}
+			</li>
+		{:else}
+			<li class="variations">
+				{#each block.variations as variation, v (v)}
+					<p class="variation">
+						{#each variation as token, t (t)}
+							{#if token.kind === 'move'}
+								{#if token.number}<span class="var-number">{token.number}</span>{/if}
+								<button
+									type="button"
+									class="var-move"
+									class:current={token.current}
+									class:line={token.line}
+									onclick={() => game.goToNode(token.id)}>{token.san}</button
+								>
+							{:else}
+								<span class="paren" class:open={token.kind === 'variation_start'}
+									>{token.kind === 'variation_start' ? '(' : ')'}</span
+								>
+							{/if}
+						{/each}
+					</p>
+				{/each}
+			</li>
+		{/if}
 	{/each}
 </ol>
 
@@ -92,11 +101,13 @@
 		cursor: pointer;
 	}
 
-	.move:hover {
+	.move:hover,
+	.var-move:hover {
 		background: rgba(255, 255, 255, 0.06);
 	}
 
-	.move.current {
+	.move.current,
+	.var-move.current {
 		background: var(--accent);
 		color: #fff;
 	}
@@ -104,5 +115,54 @@
 	.move.empty {
 		color: var(--text-muted);
 		cursor: default;
+	}
+
+	li.variations {
+		display: block;
+		padding: 0.15rem 0.8rem 0.3rem 1.6rem;
+		border-left: 2px solid var(--panel-border);
+		margin: 0.1rem 0 0.1rem 0.9rem;
+	}
+
+	/* Flex, so whitespace between tokens doesn't show; the gap spaces them. */
+	.variation {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		column-gap: 0.3rem;
+		margin: 0.1rem 0;
+		line-height: 1.7;
+		font-size: 0.9rem;
+		color: var(--text-muted);
+	}
+
+	/* Brackets hug what they enclose: "(2. c3 d5)". */
+	.paren.open {
+		margin-right: -0.3rem;
+	}
+
+	/* A closing bracket follows a move button: also absorb its padding. */
+	.paren:not(.open) {
+		margin-left: -0.6rem;
+	}
+
+	.var-number,
+	.paren {
+		color: var(--text-muted);
+	}
+
+	.var-move {
+		min-height: min(var(--tap), 32px);
+		padding: 0.05rem 0.3rem;
+		border: none;
+		border-radius: 4px;
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.var-move.line {
+		color: var(--text);
 	}
 </style>

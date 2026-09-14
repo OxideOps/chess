@@ -28,7 +28,7 @@ describe('GameStore', () => {
 		game.dispose();
 	});
 
-	it('navigates history and plays from the middle of it', () => {
+	it('navigates history, and playing from the middle of it starts a variation', () => {
 		const game = GameStore.fromPgn('1. e4 e5 2. Nf3 Nc6');
 		game.goBack();
 		expect(game.view.viewingHistory).toBe(true);
@@ -36,8 +36,38 @@ describe('GameStore', () => {
 		game.goToStart();
 		expect(game.view.fen).toBe(START);
 		expect(game.playHere('d2', 'd4')).toBe('ok');
-		expect(game.movetext()).toBe('1. d4');
-		expect(game.pgn()).toBe('1. d4 *');
+		expect(game.movetext()).toBe('1. e4 (1. d4) 1... e5 2. Nf3 Nc6');
+		expect(game.pgn()).toBe('1. e4 (1. d4) 1... e5 2. Nf3 Nc6 *');
+		// The variation is current and off the main line; the tree has both.
+		expect(game.view.moves.map((m) => m.san)).toEqual(['d4']);
+		expect(game.view.mainLine).toBe(false);
+		const d4 = game.view.node;
+		expect(game.view.tree.filter((t) => t.kind === 'move').map((t) => t.san)).toEqual([
+			'e4',
+			'd4',
+			'e5',
+			'Nf3',
+			'Nc6'
+		]);
+
+		// Promote it, then delete it: back to the original game.
+		expect(game.promoteVariation()).toBe(true);
+		expect(game.movetext()).toBe('1. d4 (1. e4 e5 2. Nf3 Nc6)');
+		expect(game.view.mainLine).toBe(true);
+		expect(game.deleteFromHere()).toBe(true);
+		expect(game.movetext()).toBe('1. e4 e5 2. Nf3 Nc6');
+		expect(game.view.node).toBe(0);
+		game.goToNode(d4); // deleted: nothing happens
+		expect(game.view.node).toBe(0);
+
+		// Switching between alternatives at the same move.
+		game.goToEnd();
+		game.goBack();
+		game.playHere('g8', 'f6');
+		game.switchVariation(-1);
+		expect(game.view.moves.at(-1)?.san).toBe('Nc6');
+		game.switchVariation(1);
+		expect(game.view.moves.at(-1)?.san).toBe('Nf6');
 		game.dispose();
 	});
 
