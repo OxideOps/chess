@@ -112,7 +112,7 @@ jobs:
           curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8085/no/such/page | grep -q 404
           curl -sI http://127.0.0.1:8085/ | grep -qi 'cross-origin-embedder-policy: require-corp'
           curl -sI -H 'Accept-Encoding: br' http://127.0.0.1:8085/engine/stockfish-18-lite-single.wasm | grep -qi 'content-encoding: br'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
