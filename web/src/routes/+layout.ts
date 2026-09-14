@@ -1,5 +1,7 @@
 import { initChess } from '$lib/chess/wasm';
 import { session } from '$lib/auth/session.svelte';
+// Listen for the browser's install offer from the start; it can come early.
+import '$lib/pwa/install.svelte';
 
 // Single-page app: no server rendering (the chess-core WASM only runs in the
 // browser), but every route is prerendered as an HTML shell so a static host

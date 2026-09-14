@@ -17,7 +17,7 @@
 	<title>Chess</title>
 </svelte:head>
 
-<div class="play">
+<div class="play board-page">
 	<Board {game} {orientation} />
 	<aside class="sidebar">
 		<p class="status">{statusText(game.view)}</p>
@@ -31,13 +31,6 @@
 </div>
 
 <style>
-	.play {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1.5rem;
-		align-items: flex-start;
-	}
-
 	.fen {
 		display: flex;
 		flex-direction: column;

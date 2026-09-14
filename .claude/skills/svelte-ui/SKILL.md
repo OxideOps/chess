@@ -52,6 +52,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
 - Props are typed with an `interface Props`; callbacks are plain function props (`onpick`),
   not events.
 - Plain CSS, scoped per component, colours only through the variables in `app.css`.
+- Layout works down to phone width (Playwright's `phone` project checks it). Pages built
+  around a board put `board-page` on their wrapper; the board and anything that should match
+  it use `width: var(--board-size)`, and the page sets `--board-beside` / `--board-around`
+  for what sits next to or above and below the board (eval bar, clocks). Anything tappable
+  gets `min-height: var(--tap)` (44px on touch screens, 0 otherwise). A flex item holding
+  unbreakable text (engine lines) needs `min-width: 0`, or it widens the page on phones.
 - Interactive things are `<button type="button">` (the board squares included) so no a11y
   suppressions are needed. Don't add `svelte-ignore` comments; fix the markup.
 - Tests: `*.svelte.spec.ts` run in real Chromium (Vitest browser mode) and may use the WASM
@@ -63,6 +69,17 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   `#[ts(type = "number")]`.
 
 ## Gotchas that already cost a cycle
+
+- The service worker (`src/service-worker.ts`) serves the prerendered pages and built assets
+  from its cache. After a rebuild, an open tab keeps the old version until every tab of the
+  site closes (no `skipWaiting`, so an old page never loads a half-new app); in Chrome,
+  DevTools → Application → Service workers → "Update on reload" skips that while testing.
+- Engine files must be answered with a newly built `Response`, not the cached one: the
+  Stockfish loader reads its role from the URL fragment (`#…wasm,worker` for its threads), a
+  worker's URL is its response's URL, and cached responses have no fragment. Getting this
+  wrong makes every thread spawn threads, forever.
+- The offline fallback for other routes is `404.html`, not `/`: prerendered pages use
+  relative asset paths (`./_app/…`), so they only work at their own URL.
 
 - A `$derived` that calls a `GameStore` method (not a `$state` read) won't recompute when the
   game changes. Read something reactive first, e.g. `void view.fen;` — see `destinations` in

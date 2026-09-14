@@ -138,6 +138,7 @@
 
 	input,
 	button {
+		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--panel-border);
 		border-radius: 6px;
@@ -180,6 +181,7 @@
 	}
 
 	.provider {
+		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--panel-border);
 		border-radius: 6px;
@@ -187,6 +189,9 @@
 		color: var(--text);
 		text-decoration: none;
 		text-align: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.provider:hover {

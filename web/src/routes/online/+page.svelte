@@ -89,6 +89,7 @@
 
 	select,
 	button {
+		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--panel-border);
 		border-radius: 6px;

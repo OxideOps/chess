@@ -15,14 +15,15 @@ export interface BuildEnvironment {
 	hardwareConcurrency: number;
 }
 
+/** Runs anywhere; also what the threaded build falls back to. */
+export const SINGLE_THREADED: EngineBuild = { stem: 'stockfish-18-lite-single', threads: 1 };
+
 /** Leave a core for the UI and the WASM main thread; cap so the lite net's
  * small hash table doesn't drown in threads on big machines. */
 const MAX_THREADS = 8;
 
 export function pickBuild(env: BuildEnvironment): EngineBuild {
-	if (!env.crossOriginIsolated) {
-		return { stem: 'stockfish-18-lite-single', threads: 1 };
-	}
+	if (!env.crossOriginIsolated) return SINGLE_THREADED;
 	const cores = Math.max(1, Math.floor(env.hardwareConcurrency) || 1);
 	const threads = Math.min(MAX_THREADS, Math.max(1, cores - 1));
 	return { stem: 'stockfish-18-lite', threads };

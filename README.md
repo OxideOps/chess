@@ -53,6 +53,13 @@ Early scaffolding. What works today:
   signs in as any name you type, for development and the e2e suite; never in production.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
+- `web`: phones get the same site. Below 700px the panels stack under the board, the board is
+  sized to the screen (width and height), and buttons are thumb-sized on touch screens. It
+  installs as an app (manifest, icons, an "Install app" button where the browser offers it)
+  and works offline after one visit: a service worker caches the app shell per deploy and the
+  engine build the browser runs (kept across deploys). A new deploy takes over once the old
+  tabs are closed. If the multi-threaded engine can't start (e.g. a phone that won't give it
+  the shared memory), the single-threaded one takes its place.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker (the
   multi-threaded build with one thread per spare core when the page is cross-origin
   isolated, which the server arranges; single-threaded otherwise), an eval
@@ -157,7 +164,9 @@ web/                SvelteKit client (pnpm; static SPA, prerendered shells)
 ## Licenses
 
 Code is MIT (see `LICENSE`). Piece images in `web/static/pieces/cburnett` are by Colin M.L.
-Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). The app
+icons (`web/static/icons`, `web/src/lib/assets/favicon.svg`) are his knight on a green square,
+under the same license; `web/scripts/gen-icons.mjs` renders them.
 
 The engine in `web/static/engine` is [Stockfish.js](https://github.com/nmrugg/stockfish.js)
 (Stockfish 18, the lite multi-threaded and lite single-threaded builds from the v18.0.0

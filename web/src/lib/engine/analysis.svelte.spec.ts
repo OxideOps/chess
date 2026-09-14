@@ -42,9 +42,9 @@ beforeAll(() => initChess());
 describe('Analyser', () => {
 	it('asks a multi-threaded engine for its threads, and a single-threaded one for nothing', () => {
 		const multi = setup(4);
-		expect(multi.analyser.threads).toBe(4);
 		multi.engine.take();
 		multi.engine.say('uciok');
+		expect(multi.analyser.threads).toBe(4);
 		expect(multi.engine.take()).toEqual([
 			'setoption name MultiPV value 2',
 			'setoption name Threads value 4',

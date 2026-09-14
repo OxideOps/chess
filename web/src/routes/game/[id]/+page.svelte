@@ -26,7 +26,7 @@
 	<title>Game · Chess</title>
 </svelte:head>
 
-<div class="online">
+<div class="online board-page">
 	<div class="board-column">
 		<Clock
 			ms={online.clockMs(opponent)}
@@ -52,16 +52,14 @@
 
 <style>
 	.online {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1.5rem;
-		align-items: flex-start;
+		/* A clock above and below the board. */
+		--board-around: 7.5rem;
 	}
 
 	.board-column {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		width: min(92vw, 640px);
+		width: var(--board-size);
 	}
 </style>
