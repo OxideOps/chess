@@ -12,7 +12,9 @@ use chess_core::{
 use common::*;
 use server::Config;
 
-const GRACE: Duration = Duration::from_millis(300);
+/// Short enough to keep the tests quick, long enough that a reconnect on a
+/// slow CI runner still lands inside it.
+const GRACE: Duration = Duration::from_millis(1000);
 
 /// A game with both seats taken and both players connected.
 async fn seated_game() -> Option<(String, String, Socket, String, Socket, String)> {

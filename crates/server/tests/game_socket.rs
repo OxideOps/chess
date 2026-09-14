@@ -158,19 +158,24 @@ async fn the_server_flags_a_player_who_runs_out_of_time() {
     send(&mut white, &mv("e2e4")).await;
     recv_game(&mut white).await;
     recv_game(&mut black).await;
+    // White's 300 ms start when the server takes Black's move, which is
+    // after this instant, so the flag can't come less than 300 ms from it.
+    // (Timing from when the test *sees* the move instead would include CI
+    // scheduling delays and wrongly call the flag early.)
+    let start = std::time::Instant::now();
     send(&mut black, &mv("e7e5")).await;
     recv_game(&mut white).await;
     recv_game(&mut black).await;
 
-    let start = std::time::Instant::now();
     let msg = recv_game(&mut black).await;
     assert!(matches!(
         msg,
         ServerMessage::GameOver { end } if end.result == GameResult::BlackWins && end.reason == GameOverReason::Timeout
     ));
     assert!(
-        start.elapsed() >= Duration::from_millis(250),
-        "flagged too early"
+        start.elapsed() >= Duration::from_millis(300),
+        "flagged too early: {:?}",
+        start.elapsed()
     );
     assert!(matches!(
         recv_game(&mut white).await,
