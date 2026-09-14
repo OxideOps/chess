@@ -4,8 +4,10 @@ import type { GameListing } from '$lib/generated/GameListing';
 
 const base: GameListing = {
 	id: 'g',
-	players: { white: { username: 'alice' }, black: { username: null } },
+	players: { white: { username: 'alice', rating: null }, black: { username: null, rating: null } },
 	your_color: 'white',
+	rated: false,
+	rating_diffs: null,
 	ended: null,
 	moves: 4,
 	updated_at: '2026-09-13T12:00:00Z'
@@ -14,8 +16,8 @@ const base: GameListing = {
 describe('listing helpers', () => {
 	it("names seats and opponents from the caller's side", () => {
 		expect(seatName(null)).toBe('Open seat');
-		expect(seatName({ username: null })).toBe('Guest');
-		expect(seatName({ username: 'bob' })).toBe('bob');
+		expect(seatName({ username: null, rating: null })).toBe('Guest');
+		expect(seatName({ username: 'bob', rating: null })).toBe('bob');
 		expect(opponentName(base)).toBe('Guest');
 		expect(opponentName({ ...base, your_color: 'black' })).toBe('alice');
 		expect(matchup({ ...base, your_color: 'black' })).toBe('You (Black) vs alice');

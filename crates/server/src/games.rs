@@ -30,7 +30,9 @@ use axum::{
 };
 use chess_core::{
     Color,
-    protocol::{ClientMessage, PlayerInfo, Players, ServerMessage},
+    protocol::{
+        Category, ClientMessage, PlayerInfo, PlayerRating, Players, RatingDiffs, ServerMessage,
+    },
 };
 use futures_util::{SinkExt as _, StreamExt as _};
 use serde::{Deserialize, Serialize};
@@ -57,21 +59,15 @@ pub fn router() -> Router<AppState> {
 pub struct Seat {
     pub user_id: String,
     pub username: Option<String>,
+    /// Their rating in the game's category when they sat down; `None` for guests.
+    pub rating: Option<PlayerRating>,
 }
 
 impl Seat {
     fn info(&self) -> PlayerInfo {
         PlayerInfo {
             username: self.username.clone(),
-        }
-    }
-}
-
-impl From<&User> for Seat {
-    fn from(u: &User) -> Self {
-        Seat {
-            user_id: u.id.clone(),
-            username: u.username.clone(),
+            rating: self.rating,
         }
     }
 }
@@ -108,6 +104,9 @@ struct GameEntry {
     /// Fan-out of broadcast messages to every connection on this game.
     tx: broadcast::Sender<ServerMessage>,
     db: Option<Db>,
+    rated: bool,
+    /// Set once a rated game's ratings have been updated.
+    rating_diffs: Mutex<Option<RatingDiffs>>,
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -116,6 +115,16 @@ pub struct CreateGame {
     pub initial_ms: Option<u64>,
     /// Milliseconds added after each move; default 0.
     pub increment_ms: Option<u64>,
+    /// Whether the result changes ratings; needs an account. Default casual.
+    #[serde(default)]
+    pub rated: bool,
+}
+
+#[derive(Debug)]
+pub enum CreateError {
+    /// Rated games are for registered accounts.
+    NeedsAccount,
+    Db(sqlx::Error),
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -144,6 +153,9 @@ pub struct GameListing {
     #[serde(with = "chess_core::protocol::color")]
     #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\""))]
     pub your_color: Color,
+    pub rated: bool,
+    /// For rated games, once the ratings have been updated.
+    pub rating_diffs: Option<RatingDiffs>,
     pub ended: Option<chess_core::protocol::GameEnd>,
     pub moves: u32,
     /// ISO 8601.
@@ -156,6 +168,8 @@ pub enum JoinError {
     /// The caller already sits on the other side.
     OwnGame,
     SeatTaken,
+    /// A rated game, and the caller is a guest.
+    NeedsAccount,
     Db(sqlx::Error),
 }
 
@@ -174,24 +188,59 @@ impl Games {
         self
     }
 
+    /// A seat for `user`, with their rating in `category` if they have an account.
+    async fn seat(&self, user: &User, category: Category) -> Result<Seat, sqlx::Error> {
+        let rating = match (&self.db, user.is_guest) {
+            (Some(db), false) => {
+                let rating = db.rating(&user.id, category).await?;
+                Some(PlayerRating {
+                    value: rating.shown(),
+                    provisional: rating.provisional(),
+                })
+            }
+            _ => None,
+        };
+        Ok(Seat {
+            user_id: user.id.clone(),
+            username: user.username.clone(),
+            rating,
+        })
+    }
+
     /// Create a game with `white` in the White seat.
     pub async fn create(
         &self,
         white: &User,
         time_control: TimeControl,
-    ) -> Result<CreatedGame, sqlx::Error> {
-        let id = uuid::Uuid::new_v4().to_string();
-        let seats = [Some(Seat::from(white)), None];
-        if let Some(db) = &self.db {
-            db.insert(&id, &seats, time_control).await?;
+        rated: bool,
+    ) -> Result<CreatedGame, CreateError> {
+        if rated && white.is_guest {
+            return Err(CreateError::NeedsAccount);
         }
-        self.insert(&id, seats, Room::new(time_control));
+        let id = uuid::Uuid::new_v4().to_string();
+        let room = Room::new(time_control);
+        let seat = self
+            .seat(white, room.category())
+            .await
+            .map_err(CreateError::Db)?;
+        let seats = [Some(seat), None];
+        if let Some(db) = &self.db {
+            db.insert(&id, &seats, time_control, rated)
+                .await
+                .map_err(CreateError::Db)?;
+        }
+        self.insert(&id, seats, room, rated, None);
         Ok(CreatedGame { id })
     }
 
     /// Take the open Black seat.
     pub async fn join(&self, id: &str, user: &User) -> Result<Players, JoinError> {
         let entry = self.get(id).await.ok_or(JoinError::NotFound)?;
+        if entry.rated && user.is_guest {
+            return Err(JoinError::NeedsAccount);
+        }
+        let category = entry.room.lock().unwrap().category();
+        let seat = self.seat(user, category).await.map_err(JoinError::Db)?;
         let players = {
             let mut seats = entry.seats.lock().unwrap();
             if seats[0].as_ref().is_some_and(|s| s.user_id == user.id) {
@@ -201,12 +250,12 @@ impl Games {
                 // Already seated: nothing changes, nobody needs telling.
                 Some(s) if s.user_id == user.id => return Ok(players_of(&seats)),
                 Some(_) => return Err(JoinError::SeatTaken),
-                None => seats[1] = Some(Seat::from(user)),
+                None => seats[1] = Some(seat.clone()),
             }
             players_of(&seats)
         };
         if let Some(db) = &self.db {
-            db.set_black(id, &user.id).await.map_err(JoinError::Db)?;
+            db.set_black(id, &seat).await.map_err(JoinError::Db)?;
         }
         let _ = entry.tx.send(ServerMessage::PlayersChanged {
             players: players.clone(),
@@ -214,7 +263,14 @@ impl Games {
         Ok(players)
     }
 
-    fn insert(&self, id: &str, seats: [Option<Seat>; 2], room: Room) -> Arc<GameEntry> {
+    fn insert(
+        &self,
+        id: &str,
+        seats: [Option<Seat>; 2],
+        room: Room,
+        rated: bool,
+        rating_diffs: Option<RatingDiffs>,
+    ) -> Arc<GameEntry> {
         let (tx, _) = broadcast::channel(64);
         let entry = Arc::new(GameEntry {
             id: id.to_string(),
@@ -224,6 +280,8 @@ impl Games {
             abandon_after: self.abandon_after,
             tx,
             db: self.db.clone(),
+            rated,
+            rating_diffs: Mutex::new(rating_diffs),
         });
         self.inner
             .lock()
@@ -253,9 +311,14 @@ impl Games {
                 return None;
             }
         };
-        let entry = self.insert(id, stored.seats, room);
-        // A restored game may already be past its deadline.
+        let over = room.is_over();
+        let entry = self.insert(id, stored.seats, room, stored.rated, stored.rating_diffs);
+        // A restored game may already be past its deadline, or have ended
+        // without its ratings applied (the server stopped in between).
         entry.arm_flag_timer();
+        if over {
+            entry.apply_ratings().await;
+        }
         Some(entry)
     }
 }
@@ -327,6 +390,27 @@ impl GameEntry {
         };
         if let Err(e) = db.save_snapshot(&self.id, &snapshot).await {
             tracing::error!("saving game {}: {e}", self.id);
+            return;
+        }
+        if snapshot.ended.is_some() {
+            self.apply_ratings().await;
+        }
+    }
+
+    /// For a finished rated game, update the players' ratings (once; the
+    /// database makes repeats no-ops) and tell everyone watching.
+    async fn apply_ratings(&self) {
+        let Some(db) = &self.db else { return };
+        if !self.rated {
+            return;
+        }
+        match db.apply_ratings(&self.id).await {
+            Ok(Some(diffs)) => {
+                *self.rating_diffs.lock().unwrap() = Some(diffs);
+                let _ = self.tx.send(ServerMessage::RatingsChanged { diffs });
+            }
+            Ok(None) => {}
+            Err(e) => tracing::error!("rating game {}: {e}", self.id),
         }
     }
 
@@ -403,9 +487,14 @@ async fn create_game(
         initial: Duration::from_millis(body.initial_ms.unwrap_or(5 * 60 * 1000)),
         increment: Duration::from_millis(body.increment_ms.unwrap_or(0)),
     };
-    match games.create(&user, tc).await {
+    match games.create(&user, tc, body.rated).await {
         Ok(created) => (StatusCode::CREATED, Json(created)).into_response(),
-        Err(e) => {
+        Err(CreateError::NeedsAccount) => (
+            StatusCode::FORBIDDEN,
+            "rated games need an account: sign up or log in",
+        )
+            .into_response(),
+        Err(CreateError::Db(e)) => {
             tracing::error!("creating game: {e}");
             StatusCode::SERVICE_UNAVAILABLE.into_response()
         }
@@ -426,6 +515,11 @@ async fn join_game(
         )
             .into_response(),
         Err(JoinError::SeatTaken) => (StatusCode::CONFLICT, "that seat is taken").into_response(),
+        Err(JoinError::NeedsAccount) => (
+            StatusCode::FORBIDDEN,
+            "this is a rated game: sign up or log in to play it",
+        )
+            .into_response(),
         Err(JoinError::Db(e)) => {
             tracing::error!("joining game {id}: {e}");
             StatusCode::SERVICE_UNAVAILABLE.into_response()
@@ -579,6 +673,7 @@ impl GameEntry {
                 ended,
                 draw_offer,
                 away,
+                category,
                 ..
             } => ServerMessage::Sync {
                 start_fen,
@@ -589,6 +684,9 @@ impl GameEntry {
                 draw_offer,
                 players,
                 away,
+                rated: self.rated,
+                category,
+                rating_diffs: *self.rating_diffs.lock().unwrap(),
             },
             other => other,
         }

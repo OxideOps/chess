@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import Board from '$lib/components/Board.svelte';
 	import Clock from '$lib/components/Clock.svelte';
 	import GameSidebar from '$lib/components/GameSidebar.svelte';
@@ -20,6 +21,17 @@
 		const seat = online.players[side];
 		return seat === null ? null : seatName(seat);
 	};
+	const clockProps = (side: Side) => {
+		const seat = online.players[side];
+		return {
+			side,
+			name: name(side),
+			href: seat?.username ? resolve('/players/[username]', { username: seat.username }) : null,
+			rating: seat?.rating ?? null,
+			diff: online.ratingDiffs?.[side] ?? null,
+			active: online.running === side
+		};
+	};
 </script>
 
 <svelte:head>
@@ -28,24 +40,14 @@
 
 <div class="online board-page">
 	<div class="board-column">
-		<Clock
-			ms={online.clockMs(opponent)}
-			side={opponent}
-			name={name(opponent)}
-			active={online.running === opponent}
-		/>
+		<Clock ms={online.clockMs(opponent)} {...clockProps(opponent)} />
 		<Board
 			{game}
 			{orientation}
 			playAs={online.yourColor ?? 'both'}
 			onmove={(from, to, promotion) => online.tryMove(from, to, promotion)}
 		/>
-		<Clock
-			ms={online.clockMs(orientation)}
-			side={orientation}
-			name={name(orientation)}
-			active={online.running === orientation}
-		/>
+		<Clock ms={online.clockMs(orientation)} {...clockProps(orientation)} />
 	</div>
 	<GameSidebar {id} {online} />
 </div>

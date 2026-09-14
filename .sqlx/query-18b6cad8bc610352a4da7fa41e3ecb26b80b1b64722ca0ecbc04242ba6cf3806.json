@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT category, rating, deviation, volatility, games,\n                      EXTRACT(EPOCH FROM now() - last_game_at)::float8 AS \"idle_s!\"\n               FROM ratings WHERE user_id = $1 AND games > 0",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "category",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "category"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "rating",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "deviation",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "deviation"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "volatility",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "volatility"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "games",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "games"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "idle_s!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "18b6cad8bc610352a4da7fa41e3ecb26b80b1b64722ca0ecbc04242ba6cf3806"
+}

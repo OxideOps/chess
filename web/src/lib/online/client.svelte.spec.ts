@@ -60,13 +60,16 @@ describe('OnlineGame', () => {
 		socket().say({
 			type: 'sync',
 			away: null,
+			rated: false,
+			category: 'blitz',
+			rating_diffs: null,
 			start_fen: START,
 			moves: ['e2e4', 'e7e5'],
 			clocks: clocks(60_000, 58_000),
 			your_color: 'white',
 			ended: null,
 			draw_offer: 'black',
-			players: { white: { username: 'dan' }, black: null }
+			players: { white: { username: 'dan', rating: null }, black: null }
 		});
 		expect(online.players.white?.username).toBe('dan');
 		expect(online.canJoin).toBe(false); // we hold White
@@ -84,13 +87,16 @@ describe('OnlineGame', () => {
 		socket().say({
 			type: 'sync',
 			away: null,
+			rated: false,
+			category: 'blitz',
+			rating_diffs: null,
 			start_fen: START,
 			moves: [],
 			clocks: clocks(60_000, 60_000),
 			your_color: 'white',
 			ended: null,
 			draw_offer: null,
-			players: { white: { username: null }, black: { username: null } }
+			players: { white: { username: null, rating: null }, black: { username: null, rating: null } }
 		});
 		expect(online.tryMove('e7', 'e5')).toBe('illegal'); // not our piece
 		expect(online.tryMove('e2', 'e4')).toBe('ok');
@@ -112,13 +118,16 @@ describe('OnlineGame', () => {
 		socket().say({
 			type: 'sync',
 			away: null,
+			rated: false,
+			category: 'blitz',
+			rating_diffs: null,
 			start_fen: START,
 			moves: ['e2e4', 'e7e5'],
 			clocks: clocks(30_000, 20_000),
 			your_color: null,
 			ended: null,
 			draw_offer: null,
-			players: { white: { username: null }, black: { username: null } }
+			players: { white: { username: null, rating: null }, black: { username: null, rating: null } }
 		});
 		tick(5_000);
 		expect(online.clockMs('white')).toBe(25_000);
@@ -138,13 +147,16 @@ describe('OnlineGame', () => {
 		socket().say({
 			type: 'sync',
 			away: null,
+			rated: false,
+			category: 'blitz',
+			rating_diffs: null,
 			start_fen: START,
 			moves: [],
 			clocks: clocks(60_000, 60_000),
 			your_color: 'black',
 			ended: null,
 			draw_offer: null,
-			players: { white: { username: null }, black: { username: null } }
+			players: { white: { username: null, rating: null }, black: { username: null, rating: null } }
 		});
 		// A move two plies ahead means we missed one: drop and let the server resync.
 		socket().say({ type: 'move_played', ply: 2, uci: 'e7e5', clocks: clocks(60_000, 60_000) });
@@ -167,13 +179,16 @@ describe('OnlineGame', () => {
 		socket().say({
 			type: 'sync',
 			away: { side: 'black', ms: 60_000 },
+			rated: false,
+			category: 'blitz',
+			rating_diffs: null,
 			start_fen: START,
 			moves: ['e2e4', 'e7e5'],
 			clocks: clocks(60_000, 60_000),
 			your_color: 'white',
 			ended: null,
 			draw_offer: null,
-			players: { white: { username: null }, black: { username: null } }
+			players: { white: { username: null, rating: null }, black: { username: null, rating: null } }
 		});
 		// A countdown this fresh could be a reload: not mentioned yet.
 		expect(online.away).toBeNull();
@@ -191,6 +206,36 @@ describe('OnlineGame', () => {
 		socket().say({ type: 'game_over', result: 'white_wins', reason: 'abandoned' });
 		expect(online.away).toBeNull();
 		expect(online.ended).toEqual({ result: 'white_wins', reason: 'abandoned' });
+		online.dispose();
+	});
+
+	it('knows whether the game is rated and what it did to the ratings', () => {
+		const { online, socket } = setup();
+		socket().open();
+		socket().say({
+			type: 'sync',
+			away: null,
+			rated: true,
+			category: 'rapid',
+			rating_diffs: null,
+			start_fen: START,
+			moves: [],
+			clocks: clocks(600_000, 600_000),
+			your_color: 'white',
+			ended: null,
+			draw_offer: null,
+			players: {
+				white: { username: 'alice', rating: { value: 1500, provisional: true } },
+				black: { username: 'bob', rating: { value: 1623, provisional: false } }
+			}
+		});
+		expect(online.rated).toBe(true);
+		expect(online.category).toBe('rapid');
+		expect(online.players.black?.rating).toEqual({ value: 1623, provisional: false });
+		expect(online.ratingDiffs).toBeNull();
+		socket().say({ type: 'game_over', result: 'white_wins', reason: 'resignation' });
+		socket().say({ type: 'ratings_changed', white: 170, black: -35 });
+		expect(online.ratingDiffs).toEqual({ white: 170, black: -35 });
 		online.dispose();
 	});
 });

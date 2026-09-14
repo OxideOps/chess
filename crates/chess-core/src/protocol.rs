@@ -60,11 +60,30 @@ mod opt_color {
     }
 }
 
-/// Who sits on a side. `username` is `None` for guests.
+/// Who sits on a side. `username` and `rating` are `None` for guests.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub struct PlayerInfo {
     pub username: Option<String>,
+    /// Their rating in the game's category when they sat down.
+    #[serde(default)]
+    pub rating: Option<PlayerRating>,
+}
+
+/// A rating as shown next to a name: rounded, and whether it's still a guess.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct PlayerRating {
+    pub value: i32,
+    pub provisional: bool,
+}
+
+/// What a rated game did to each side's rating.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct RatingDiffs {
+    pub white: i32,
+    pub black: i32,
 }
 
 /// Both seats; `None` while a seat is still open.
@@ -128,6 +147,18 @@ pub enum ServerMessage {
         /// A player who has left and is counting down to losing the game.
         #[serde(default)]
         away: Option<Away>,
+        /// Whether the result changes ratings.
+        #[serde(default)]
+        rated: bool,
+        category: Category,
+        /// Set once a rated game's ratings have been updated.
+        #[serde(default)]
+        rating_diffs: Option<RatingDiffs>,
+    },
+    /// A rated game's ratings were updated (after `GameOver`).
+    RatingsChanged {
+        #[serde(flatten)]
+        diffs: RatingDiffs,
     },
     /// Someone's reconnect countdown started or stopped.
     AwayChanged {
@@ -173,6 +204,51 @@ pub struct Away {
     /// Milliseconds left to reconnect, as of when the message was sent.
     #[cfg_attr(feature = "ts", ts(type = "number"))]
     pub ms: u64,
+}
+
+/// A game's speed, from its estimated duration: the initial time plus 40
+/// increments (Lichess's convention). Ratings are kept per category.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub enum Category {
+    Bullet,
+    Blitz,
+    Rapid,
+    Classical,
+}
+
+impl Category {
+    pub const ALL: [Category; 4] = [
+        Category::Bullet,
+        Category::Blitz,
+        Category::Rapid,
+        Category::Classical,
+    ];
+
+    pub fn of(initial_ms: u64, increment_ms: u64) -> Category {
+        let estimate_s = (initial_ms + 40 * increment_ms) / 1000;
+        match estimate_s {
+            0..180 => Category::Bullet,
+            180..480 => Category::Blitz,
+            480..1500 => Category::Rapid,
+            _ => Category::Classical,
+        }
+    }
+
+    /// The name used in the database and on the wire.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Category::Bullet => "bullet",
+            Category::Blitz => "blitz",
+            Category::Rapid => "rapid",
+            Category::Classical => "classical",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Category> {
+        Category::ALL.into_iter().find(|c| c.as_str() == s)
+    }
 }
 
 /// How a game ended.
@@ -278,6 +354,9 @@ mod tests {
                 side: Color::White,
                 ms: 42_000,
             }),
+            rated: true,
+            category: Category::Blitz,
+            rating_diffs: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         assert!(
@@ -298,6 +377,28 @@ mod tests {
     }
 
     #[test]
+    fn categories_follow_the_estimated_duration() {
+        let of = |min: u64, inc_s: u64| Category::of(min * 60_000, inc_s * 1000);
+        assert_eq!(of(1, 0), Category::Bullet);
+        assert_eq!(of(2, 1), Category::Bullet); // 120 s + 40 × 1 s = 160 s
+        assert_eq!(of(3, 0), Category::Blitz);
+        assert_eq!(of(3, 2), Category::Blitz);
+        assert_eq!(of(5, 0), Category::Blitz);
+        assert_eq!(of(8, 0), Category::Rapid);
+        assert_eq!(of(10, 0), Category::Rapid);
+        assert_eq!(of(15, 10), Category::Rapid); // 900 s + 400 s
+        assert_eq!(of(20, 10), Category::Classical); // 1200 s + 400 s
+        assert_eq!(of(25, 0), Category::Classical);
+        for c in Category::ALL {
+            assert_eq!(Category::parse(c.as_str()), Some(c));
+            assert_eq!(
+                serde_json::to_string(&c).unwrap(),
+                format!("\"{}\"", c.as_str())
+            );
+        }
+    }
+
+    #[test]
     fn away_and_aborted_on_the_wire() {
         let json = serde_json::to_string(&ServerMessage::AwayChanged { away: None }).unwrap();
         assert_eq!(json, r#"{"type":"away_changed","away":null}"#);
@@ -311,12 +412,27 @@ mod tests {
             serde_json::to_string(&end).unwrap(),
             r#"{"type":"game_over","result":"aborted","reason":"abandoned"}"#
         );
-        // Syncs from before `away` existed still parse.
-        let old = r#"{"type":"sync","start_fen":"f","moves":[],"clocks":{"white_ms":1,"black_ms":1},"your_color":null}"#;
+        // Optional fields may be left out.
+        let old = r#"{"type":"sync","start_fen":"f","moves":[],"clocks":{"white_ms":1,"black_ms":1},"your_color":null,"category":"rapid"}"#;
         assert!(matches!(
             serde_json::from_str::<ServerMessage>(old).unwrap(),
-            ServerMessage::Sync { away: None, .. }
+            ServerMessage::Sync {
+                away: None,
+                rated: false,
+                rating_diffs: None,
+                ..
+            }
         ));
+        let json = serde_json::to_string(&ServerMessage::RatingsChanged {
+            diffs: RatingDiffs {
+                white: 12,
+                black: -12,
+            },
+        })
+        .unwrap();
+        assert_eq!(json, r#"{"type":"ratings_changed","white":12,"black":-12}"#);
+        let player: PlayerInfo = serde_json::from_str(r#"{"username":"dan"}"#).unwrap();
+        assert_eq!(player.rating, None);
     }
 
     #[test]

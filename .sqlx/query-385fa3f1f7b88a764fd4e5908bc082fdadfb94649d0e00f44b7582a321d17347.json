@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE games SET rating_applied = true\n               WHERE id = $1 AND rated AND NOT rating_applied\n                 AND result IN ('white_wins', 'black_wins', 'draw')\n                 AND white_user_id IS NOT NULL AND black_user_id IS NOT NULL\n               RETURNING white_user_id AS \"white!\", black_user_id AS \"black!\",\n                         result AS \"result!\", initial_ms, increment_ms",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "white!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "white_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "black!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "black_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "result!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "result"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "initial_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "initial_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "increment_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "increment_ms"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "385fa3f1f7b88a764fd4e5908bc082fdadfb94649d0e00f44b7582a321d17347"
+}

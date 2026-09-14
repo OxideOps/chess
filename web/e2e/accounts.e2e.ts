@@ -9,10 +9,13 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 
 	const a = await (await browser.newContext()).newPage();
 	await signUp(a, alice);
-	await expect(a.getByRole('link', { name: alice })).toBeVisible();
+	await expect(a.locator('#navbar').getByRole('link', { name: alice })).toBeVisible();
 	await expect(a.getByRole('button', { name: 'Log out' })).toBeVisible();
 
 	await a.goto('/online');
+	// Accounts default to rated; this test is about a guest joining, which needs casual.
+	await expect(a.getByLabel('Rated')).toBeChecked();
+	await a.getByLabel('Rated').uncheck();
 	await a.getByRole('button', { name: 'Create game' }).click();
 	await expect(a).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	await expect(a.getByLabel('White clock')).toContainText(alice);
@@ -38,7 +41,7 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 	await b.getByRole('button', { name: 'Sign up' }).click();
 	// ...and comes back to the game, signed in.
 	await expect(b).toHaveURL(invite);
-	await expect(b.getByRole('link', { name: bob })).toBeVisible();
+	await expect(b.locator('#navbar').getByRole('link', { name: bob })).toBeVisible();
 	await b.getByRole('button', { name: 'Join as Black' }).click();
 
 	await expect(b.getByLabel('Black clock')).toContainText(bob);
@@ -50,7 +53,7 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 	await expect(b.locator('.move-list button.move')).toHaveText(['e4']);
 
 	// Both lists show the game from their own side.
-	await a.getByRole('link', { name: alice }).click();
+	await a.locator('#navbar').getByRole('link', { name: alice }).click();
 	await expect(a).toHaveURL('/games');
 	const aRow = a.getByRole('link', { name: `You (White) vs ${bob}` });
 	await expect(aRow).toContainText('In progress');
@@ -72,7 +75,7 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 	await b.getByLabel('Password').fill('correct horse battery');
 	await b.getByRole('button', { name: 'Log in' }).click();
 	await expect(b).toHaveURL('/');
-	await expect(b.getByRole('link', { name: bob })).toBeVisible();
+	await expect(b.locator('#navbar').getByRole('link', { name: bob })).toBeVisible();
 
 	// The list survives a reload: the session is a cookie, not page state.
 	await a.reload();

@@ -3,6 +3,7 @@
 	import { session } from '$lib/auth/session.svelte';
 	import { gameEndText } from '$lib/chess/status';
 	import { OUTCOME_TEXT, matchup, outcome, relativeTime } from '$lib/online/listing';
+	import { formatDiff } from '$lib/online/ratings';
 	import type { GameListing } from '$lib/generated/GameListing';
 
 	// Every game the signed-in user has a seat in, newest activity first.
@@ -57,6 +58,12 @@
 						<span class="detail">
 							{#if game.ended}
 								{gameEndText(game.ended)} ·
+							{/if}
+							{#if game.rated}
+								Rated{#if game.rating_diffs}
+									<span data-testid="your-diff"
+										>{formatDiff(game.rating_diffs[game.your_color])}</span
+									>{/if} ·
 							{/if}
 							{game.moves}
 							{game.moves === 1 ? 'ply' : 'plies'} · {relativeTime(game.updated_at)}
