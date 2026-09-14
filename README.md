@@ -24,7 +24,10 @@ Early scaffolding. What works today:
   game over HTTP, play it over a WebSocket. The server validates every move with `chess-core`,
   runs the clocks and flags on time, and handles resignation and draw offers. With
   `DATABASE_URL` set, every change is written through to Postgres and games survive restarts
-  (clocks included); without it they live in memory.
+  (clocks included); without it they live in memory. A player who disconnects has 60 s to come
+  back (`CHESS_ABANDON_AFTER_SECS`) while their opponent is there: then the game is aborted
+  if both sides hadn't moved yet, or lost by abandonment. Both players see the countdown;
+  reconnecting cancels it.
 - `server`: accounts. Guests are created on demand (no signup needed to play), can upgrade to
   a username + password (argon2id) and keep their games; sessions are server-side rows behind
   an `HttpOnly` cookie. Games have seats: the creator is White, the first person to join is

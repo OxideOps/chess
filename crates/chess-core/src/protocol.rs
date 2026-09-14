@@ -125,6 +125,13 @@ pub enum ServerMessage {
         draw_offer: Option<Color>,
         #[serde(default)]
         players: Players,
+        /// A player who has left and is counting down to losing the game.
+        #[serde(default)]
+        away: Option<Away>,
+    },
+    /// Someone's reconnect countdown started or stopped.
+    AwayChanged {
+        away: Option<Away>,
     },
     /// A seat was taken (or, later, vacated).
     PlayersChanged {
@@ -152,6 +159,20 @@ pub enum ServerMessage {
         message: String,
     },
     Pong,
+}
+
+/// A seated player with no connection while their opponent is there. If
+/// they don't come back within `ms`, the game ends: aborted if both sides
+/// hadn't moved yet, otherwise lost by abandonment.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct Away {
+    #[serde(with = "color")]
+    #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\""))]
+    pub side: Color,
+    /// Milliseconds left to reconnect, as of when the message was sent.
+    #[cfg_attr(feature = "ts", ts(type = "number"))]
+    pub ms: u64,
 }
 
 /// How a game ended.
@@ -187,6 +208,8 @@ pub enum GameResult {
     WhiteWins,
     BlackWins,
     Draw,
+    /// No result: the game was called off before both sides had moved.
+    Aborted,
 }
 
 impl GameResult {
@@ -251,8 +274,16 @@ mod tests {
             ended: None,
             draw_offer: None,
             players: Players::default(),
+            away: Some(Away {
+                side: Color::White,
+                ms: 42_000,
+            }),
         };
         let json = serde_json::to_string(&msg).unwrap();
+        assert!(
+            json.contains(r#""away":{"side":"white","ms":42000}"#),
+            "{json}"
+        );
         assert!(json.contains(r#""your_color":"black""#), "{json}");
         assert!(json.contains(r#""ended":null"#), "{json}");
         assert_eq!(serde_json::from_str::<ServerMessage>(&json).unwrap(), msg);
@@ -263,6 +294,28 @@ mod tests {
                 your_color: None,
                 ..
             }
+        ));
+    }
+
+    #[test]
+    fn away_and_aborted_on_the_wire() {
+        let json = serde_json::to_string(&ServerMessage::AwayChanged { away: None }).unwrap();
+        assert_eq!(json, r#"{"type":"away_changed","away":null}"#);
+        let end = ServerMessage::GameOver {
+            end: GameEnd {
+                result: GameResult::Aborted,
+                reason: GameOverReason::Abandoned,
+            },
+        };
+        assert_eq!(
+            serde_json::to_string(&end).unwrap(),
+            r#"{"type":"game_over","result":"aborted","reason":"abandoned"}"#
+        );
+        // Syncs from before `away` existed still parse.
+        let old = r#"{"type":"sync","start_fen":"f","moves":[],"clocks":{"white_ms":1,"black_ms":1},"your_color":null}"#;
+        assert!(matches!(
+            serde_json::from_str::<ServerMessage>(old).unwrap(),
+            ServerMessage::Sync { away: None, .. }
         ));
     }
 

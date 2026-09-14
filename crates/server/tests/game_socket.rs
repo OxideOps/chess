@@ -22,7 +22,7 @@ async fn two_players_and_a_spectator() {
 
     // Before anyone joins, the creator is White and the other seat is open.
     let mut white = connect(&base, &game.id, Some(&white_session)).await;
-    match recv(&mut white).await {
+    match recv_game(&mut white).await {
         ServerMessage::Sync {
             your_color,
             moves,
@@ -43,7 +43,7 @@ async fn two_players_and_a_spectator() {
     assert_eq!(join(&base, &white_session, &game.id).await.status, 400);
     assert_eq!(join(&base, &black_session, &game.id).await.status, 200);
     assert!(matches!(
-        recv(&mut white).await,
+        recv_game(&mut white).await,
         ServerMessage::PlayersChanged { players } if players.black.is_some()
     ));
     // Joining again is idempotent; a third person is refused.
@@ -54,7 +54,7 @@ async fn two_players_and_a_spectator() {
 
     let mut black = connect(&base, &game.id, Some(&black_session)).await;
     assert!(matches!(
-        recv(&mut black).await,
+        recv_game(&mut black).await,
         ServerMessage::Sync {
             your_color: Some(Color::Black),
             ..
@@ -62,7 +62,7 @@ async fn two_players_and_a_spectator() {
     ));
     let mut watcher = connect(&base, &game.id, None).await;
     assert!(matches!(
-        recv(&mut watcher).await,
+        recv_game(&mut watcher).await,
         ServerMessage::Sync {
             your_color: None,
             ..
@@ -72,11 +72,11 @@ async fn two_players_and_a_spectator() {
     // Black can't move first; the spectator can't move at all.
     send(&mut black, &mv("e7e5")).await;
     assert!(
-        matches!(recv(&mut black).await, ServerMessage::Rejected { message } if message == "it is not your turn")
+        matches!(recv_game(&mut black).await, ServerMessage::Rejected { message } if message == "it is not your turn")
     );
     send(&mut watcher, &mv("e2e4")).await;
     assert!(matches!(
-        recv(&mut watcher).await,
+        recv_game(&mut watcher).await,
         ServerMessage::Rejected { .. }
     ));
 
@@ -84,7 +84,7 @@ async fn two_players_and_a_spectator() {
     send(&mut white, &mv("e2e4")).await;
     for s in [&mut white, &mut black, &mut watcher] {
         assert!(matches!(
-            recv(s).await,
+            recv_game(s).await,
             ServerMessage::MovePlayed { ply: 1, uci, .. } if uci.to_string() == "e2e4"
         ));
     }
@@ -92,16 +92,16 @@ async fn two_players_and_a_spectator() {
     // Garbage is rejected without dropping the connection.
     white.send(Message::Text("not json".into())).await.unwrap();
     assert!(
-        matches!(recv(&mut white).await, ServerMessage::Rejected { message } if message.starts_with("bad message"))
+        matches!(recv_game(&mut white).await, ServerMessage::Rejected { message } if message.starts_with("bad message"))
     );
     send(&mut white, &ClientMessage::Ping).await;
-    assert_eq!(recv(&mut white).await, ServerMessage::Pong);
+    assert_eq!(recv_game(&mut white).await, ServerMessage::Pong);
 
     // A reconnecting player gets the game so far and keeps their seat.
     drop(black);
     let mut black = connect(&base, &game.id, Some(&black_session)).await;
     assert!(matches!(
-        recv(&mut black).await,
+        recv_game(&mut black).await,
         ServerMessage::Sync { your_color: Some(Color::Black), ref moves, .. } if moves.len() == 1
     ));
 
@@ -109,13 +109,13 @@ async fn two_players_and_a_spectator() {
     send(&mut black, &ClientMessage::Resign).await;
     for s in [&mut white, &mut black, &mut watcher] {
         assert!(matches!(
-            recv(s).await,
+            recv_game(s).await,
             ServerMessage::GameOver { end } if end.result == GameResult::WhiteWins && end.reason == GameOverReason::Resignation
         ));
     }
     send(&mut white, &mv("d2d4")).await;
     assert!(matches!(
-        recv(&mut white).await,
+        recv_game(&mut white).await,
         ServerMessage::Rejected { .. }
     ));
 
@@ -153,19 +153,19 @@ async fn the_server_flags_a_player_who_runs_out_of_time() {
     join(&base, &bs, &game.id).await;
     let mut white = connect(&base, &game.id, Some(&ws)).await;
     let mut black = connect(&base, &game.id, Some(&bs)).await;
-    recv(&mut white).await;
-    recv(&mut black).await;
+    recv_game(&mut white).await;
+    recv_game(&mut black).await;
 
     // Clocks start after both have moved; then White lets theirs run out.
     send(&mut white, &mv("e2e4")).await;
-    recv(&mut white).await;
-    recv(&mut black).await;
+    recv_game(&mut white).await;
+    recv_game(&mut black).await;
     send(&mut black, &mv("e7e5")).await;
-    recv(&mut white).await;
-    recv(&mut black).await;
+    recv_game(&mut white).await;
+    recv_game(&mut black).await;
 
     let start = std::time::Instant::now();
-    let msg = recv(&mut black).await;
+    let msg = recv_game(&mut black).await;
     assert!(matches!(
         msg,
         ServerMessage::GameOver { end } if end.result == GameResult::BlackWins && end.reason == GameOverReason::Timeout
@@ -175,7 +175,7 @@ async fn the_server_flags_a_player_who_runs_out_of_time() {
         "flagged too early"
     );
     assert!(matches!(
-        recv(&mut white).await,
+        recv_game(&mut white).await,
         ServerMessage::GameOver { .. }
     ));
 }

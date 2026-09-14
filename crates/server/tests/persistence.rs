@@ -23,14 +23,14 @@ async fn a_restarted_server_serves_the_same_game() {
     join(&base, &bs, &game.id).await;
     let mut white = connect(&base, &game.id, Some(&ws)).await;
     let mut black = connect(&base, &game.id, Some(&bs)).await;
-    recv(&mut white).await;
-    recv(&mut black).await;
+    recv_game(&mut white).await;
+    recv_game(&mut black).await;
     send(&mut white, &mv("e2e4")).await;
-    recv(&mut white).await;
-    recv(&mut black).await;
+    recv_game(&mut white).await;
+    recv_game(&mut black).await;
     send(&mut black, &mv("e7e5")).await;
-    recv(&mut white).await;
-    recv(&mut black).await;
+    recv_game(&mut white).await;
+    recv_game(&mut black).await;
     drop((white, black));
 
     // The row has the seats and the moves.
@@ -44,7 +44,7 @@ async fn a_restarted_server_serves_the_same_game() {
     // same session cookie still identifies White.
     let base2 = serve(db.clone()).await;
     let mut white = connect(&base2, &game.id, Some(&ws)).await;
-    match recv(&mut white).await {
+    match recv_game(&mut white).await {
         ServerMessage::Sync {
             moves,
             your_color,
@@ -68,7 +68,7 @@ async fn a_restarted_server_serves_the_same_game() {
     // And it keeps going: resign, and the end is persisted.
     send(&mut white, &ClientMessage::Resign).await;
     assert!(matches!(
-        recv(&mut white).await,
+        recv_game(&mut white).await,
         ServerMessage::GameOver { end } if end.result == GameResult::BlackWins && end.reason == GameOverReason::Resignation
     ));
     let mut stored = None;
@@ -90,7 +90,7 @@ async fn a_restarted_server_serves_the_same_game() {
     let base3 = serve(db.clone()).await;
     let mut watcher = connect(&base3, &game.id, None).await;
     assert!(matches!(
-        recv(&mut watcher).await,
+        recv_game(&mut watcher).await,
         ServerMessage::Sync {
             ended: Some(_),
             your_color: None,

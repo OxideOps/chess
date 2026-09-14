@@ -28,10 +28,15 @@ export function statusText(view: Pick<GameView, 'status' | 'turn' | 'winner'>): 
 
 /** "Black wins by resignation", "Draw by agreement": how an online game ended. */
 export function gameEndText(end: GameEnd): string {
-	const who =
-		end.result === 'draw'
-			? 'Draw'
-			: `${sideName(end.result === 'white_wins' ? 'white' : 'black')} wins`;
+	// Every result listed, so a new one is a type error here rather than a wrong winner.
+	const who: Record<GameEnd['result'], string | null> = {
+		white_wins: 'White wins',
+		black_wins: 'Black wins',
+		draw: 'Draw',
+		aborted: null
+	};
+	const outcome = who[end.result];
+	if (outcome === null) return 'Game aborted: a player left before both had moved';
 	const reason: Record<GameEnd['reason'], string> = {
 		checkmate: 'by checkmate',
 		resignation: 'by resignation',
@@ -43,5 +48,23 @@ export function gameEndText(end: GameEnd): string {
 		fifty_moves: 'by the fifty-move rule',
 		abandoned: 'by abandonment'
 	};
-	return `${who} ${reason[end.reason]}`;
+	return `${outcome} ${reason[end.reason]}`;
+}
+
+/**
+ * What to say while a player who left is counting down to losing the game:
+ * to their opponent, what happens if they don't return; to anyone else, who
+ * left and how long they have.
+ */
+export function awayText(
+	away: { side: Side; ms: number },
+	yourColor: Side | null,
+	plies: number
+): string {
+	const seconds = `${Math.ceil(away.ms / 1000)} s`;
+	if (yourColor !== null && yourColor !== away.side) {
+		const then = plies < 2 ? 'the game is aborted' : 'you win';
+		return `Your opponent left. Unless they come back, ${then} in ${seconds}.`;
+	}
+	return `${sideName(away.side)} left: ${seconds} to come back.`;
 }

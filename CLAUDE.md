@@ -29,8 +29,9 @@ Successor to the archived `OxideOps/chess-v1`.
 - `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
   prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
   isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:
-  `room.rs` is the pure game state (rules via `chess-core`, clocks, draw offers, timeouts;
-  takes `now` as a parameter so it is unit-tested without a runtime), `games.rs` the
+  `room.rs` is the pure game state (rules via `chess-core`, clocks, draw offers, timeouts,
+  the away countdown and abandonment; takes `now` as a parameter so it is unit-tested without
+  a runtime; the registry counts each seat's open sockets and tells it who is present), `games.rs` the
   in-memory registry and the `/api/games` HTTP + WebSocket endpoints (the creator holds
   White, `join` fills the Black seat, sockets authenticate from the session cookie,
   `/api/me/games` lists the caller's games; the upgrade is refused for a foreign `Origin`,

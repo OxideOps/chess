@@ -1,6 +1,7 @@
 import { Game } from '$lib/chess/wasm';
 import { GameStore, type Promotion } from '$lib/chess/game.svelte';
 import type { PlayResult } from '$lib/chess/wasm';
+import type { Away } from '$lib/generated/Away';
 import type { ClientMessage } from '$lib/generated/ClientMessage';
 import type { Clocks } from '$lib/generated/Clocks';
 import type { GameEnd } from '$lib/generated/GameEnd';
@@ -33,6 +34,10 @@ interface ServerClocks {
 	at: number;
 }
 
+/** How long a countdown must have run before it is shown: a player reloading
+ * the page drops their socket for a moment, and that isn't news. */
+export const AWAY_NOTICE_DELAY_MS = 2000;
+
 /**
  * A game played on the server. Mirrors the server's `Room` on the client:
  * the `GameStore` holds the moves so far, and everything else here is what
@@ -48,7 +53,11 @@ export class OnlineGame {
 	players: Players = $state({ white: null, black: null });
 	/** The most recent rejection from the server, for a status line. */
 	rejection: string | null = $state(null);
+	/** Whether the server's first Sync has arrived: until then nothing is known. */
+	synced = $state(false);
 	#clocks: ServerClocks = $state({ whiteMs: 0, blackMs: 0, at: 0 });
+	/** A player counting down to losing the game for leaving, and when we heard. */
+	#away: (Away & { at: number }) | null = $state(null);
 	#tick = $state(0);
 
 	readonly #id: string;
@@ -72,7 +81,21 @@ export class OnlineGame {
 
 	/** The Black seat is open and we don't hold White. */
 	get canJoin(): boolean {
-		return this.players.black === null && this.yourColor === null && !this.ended;
+		return this.synced && this.players.black === null && this.yourColor === null && !this.ended;
+	}
+
+	/**
+	 * A player who left and how long they have to come back, counting down
+	 * locally; `null` when nobody is away, the game is over, or the countdown
+	 * is too fresh to mention (see `AWAY_NOTICE_DELAY_MS`).
+	 */
+	get away(): Away | null {
+		void this.#tick; // re-evaluate while the ticker runs
+		const a = this.#away;
+		if (a === null || this.ended) return null;
+		const elapsed = this.#now() - a.at;
+		if (elapsed < AWAY_NOTICE_DELAY_MS) return null;
+		return { side: a.side, ms: Math.max(0, a.ms - elapsed) };
 	}
 
 	/** Take the open Black seat, then reconnect so the server seats us. */
@@ -178,11 +201,17 @@ export class OnlineGame {
 				this.ended = msg.ended;
 				this.drawOffer = msg.draw_offer;
 				this.players = msg.players;
+				this.synced = true;
+				this.#setAway(msg.away);
 				this.#setClocks(msg.clocks);
 				break;
 			}
 			case 'players_changed':
 				this.players = msg.players;
+				break;
+			case 'away_changed':
+				this.#setAway(msg.away);
+				this.#updateTicker();
 				break;
 			case 'move_played': {
 				const ply = this.game.view.plyCount;
@@ -214,6 +243,7 @@ export class OnlineGame {
 				};
 				this.ended = { result: msg.result, reason: msg.reason };
 				this.drawOffer = null;
+				this.#away = null;
 				this.#stopTicker();
 				break;
 			case 'rejected':
@@ -232,7 +262,16 @@ export class OnlineGame {
 
 	#setClocks(clocks: Clocks): void {
 		this.#clocks = { whiteMs: clocks.white_ms, blackMs: clocks.black_ms, at: this.#now() };
-		if (this.running) this.#startTicker();
+		this.#updateTicker();
+	}
+
+	#setAway(away: Away | null): void {
+		this.#away = away === null ? null : { ...away, at: this.#now() };
+	}
+
+	/** Tick while something counts down: a running clock or an away player. */
+	#updateTicker(): void {
+		if (this.running || (this.#away !== null && !this.ended)) this.#startTicker();
 		else this.#stopTicker();
 	}
 

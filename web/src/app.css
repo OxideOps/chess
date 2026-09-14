@@ -6,6 +6,8 @@
 	--text: #e8e6e3;
 	--text-muted: #9f9a93;
 	--accent: #629924;
+	/* Attention without alarm, e.g. an opponent who has left. */
+	--warning: #e5c07b;
 	--square-light: #f0d9b5;
 	--square-dark: #b58863;
 	--highlight-last-move: rgba(155, 199, 0, 0.41);

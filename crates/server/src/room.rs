@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use chess_core::{
     Color, Game, GameError,
     protocol::{
-        ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, Players, ServerMessage,
+        Away, ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, Players, ServerMessage,
     },
 };
 
@@ -66,6 +66,10 @@ pub struct Room {
     clock_since: Option<Instant>,
     draw_offer: Option<Color>,
     ended: Option<GameEnd>,
+    /// A player who left while their opponent is here, and when they lose
+    /// the game for it. Not persisted: after a restart, presence is rebuilt
+    /// from whoever reconnects.
+    away: Option<(Color, Instant)>,
 }
 
 fn idx(color: Color) -> usize {
@@ -81,6 +85,7 @@ impl Room {
             clock_since: None,
             draw_offer: None,
             ended: None,
+            away: None,
         }
     }
 
@@ -138,6 +143,7 @@ impl Room {
             clock_since,
             draw_offer: snapshot.draw_offer,
             ended: snapshot.ended,
+            away: None,
         })
     }
 
@@ -179,7 +185,75 @@ impl Room {
             draw_offer: self.draw_offer,
             // Seats are the registry's business; it fills them in.
             players: Players::default(),
+            away: self.away_at(now),
         }
+    }
+
+    /// Tell the room who is connected. A countdown runs for a seated player
+    /// with no connection while the other player is connected, both seats
+    /// are taken, and the game is on; `grace` is how long it lasts. It keeps
+    /// its deadline across calls, stops when they return (or when nobody is
+    /// left to claim the game), and restarts from `grace` next time.
+    /// Returns the broadcast when the countdown starts or stops.
+    pub fn set_presence(
+        &mut self,
+        connected: [bool; 2],
+        seated: [bool; 2],
+        grace: Duration,
+        now: Instant,
+    ) -> Option<Outgoing> {
+        let gone = if self.is_over() || !(seated[0] && seated[1]) {
+            None
+        } else {
+            match connected {
+                [false, true] => Some(Color::White),
+                [true, false] => Some(Color::Black),
+                _ => None,
+            }
+        };
+        let next = match (self.away, gone) {
+            (Some((side, deadline)), Some(g)) if side == g => Some((side, deadline)),
+            (_, Some(g)) => Some((g, now + grace)),
+            (_, None) => None,
+        };
+        if next == self.away {
+            return None;
+        }
+        self.away = next;
+        Some(Outgoing::Broadcast(ServerMessage::AwayChanged {
+            away: self.away_at(now),
+        }))
+    }
+
+    /// When the away player's countdown runs out, if one is running.
+    pub fn away_deadline(&self) -> Option<Instant> {
+        self.away.map(|(_, deadline)| deadline)
+    }
+
+    fn away_at(&self, now: Instant) -> Option<Away> {
+        self.away.map(|(side, deadline)| Away {
+            side,
+            ms: deadline.saturating_duration_since(now).as_millis() as u64,
+        })
+    }
+
+    /// End the game if the away player's countdown has run out: aborted if
+    /// both sides hadn't moved yet, otherwise won by the player who stayed.
+    /// A no-op before the deadline (or if they came back).
+    pub fn check_abandonment(&mut self, now: Instant) -> Option<Outgoing> {
+        let (side, deadline) = self.away?;
+        if now < deadline || self.is_over() {
+            return None;
+        }
+        let result = if self.game.moves().len() < 2 {
+            GameResult::Aborted
+        } else {
+            GameResult::from_winner(Some(!side))
+        };
+        Some(self.end(GameEnd {
+            result,
+            reason: GameOverReason::Abandoned,
+        }))
     }
 
     /// Flag the side to move if its clock has run out. Call this whenever
@@ -298,6 +372,7 @@ impl Room {
         self.ended = Some(end);
         self.clock_since = None;
         self.draw_offer = None;
+        self.away = None;
         Outgoing::Broadcast(ServerMessage::GameOver { end })
     }
 }
@@ -555,5 +630,120 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    const BOTH: [bool; 2] = [true, true];
+
+    fn away(out: Option<Outgoing>) -> Option<Option<Away>> {
+        match out {
+            Some(Broadcast(ServerMessage::AwayChanged { away })) => Some(away),
+            None => None,
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_countdown_runs_only_for_a_seated_player_whose_opponent_is_here() {
+        let (mut r, t0) = room();
+        let grace = secs(60);
+        // Nobody to blame while the Black seat is open.
+        assert_eq!(
+            r.set_presence([false, false], [true, false], grace, t0),
+            None
+        );
+        assert_eq!(
+            r.set_presence([true, false], [true, false], grace, t0),
+            None
+        );
+        // Both seated, Black not connected: Black's countdown starts.
+        let started = away(r.set_presence([true, false], BOTH, grace, t0)).unwrap();
+        assert_eq!(
+            started,
+            Some(Away {
+                side: Color::Black,
+                ms: 60_000
+            })
+        );
+        assert_eq!(r.away_deadline(), Some(t0 + grace));
+        // Telling the room the same thing again changes nothing, and keeps the deadline.
+        assert_eq!(
+            r.set_presence([true, false], BOTH, grace, t0 + secs(10)),
+            None
+        );
+        assert_eq!(r.away_deadline(), Some(t0 + grace));
+        // Sync reports the time left.
+        match r.sync(Some(Color::White), t0 + secs(15)) {
+            ServerMessage::Sync { away, .. } => assert_eq!(away.unwrap().ms, 45_000),
+            other => panic!("{other:?}"),
+        }
+        // Black comes back: stopped.
+        assert_eq!(
+            away(r.set_presence(BOTH, BOTH, grace, t0 + secs(20))),
+            Some(None)
+        );
+        assert_eq!(r.check_abandonment(t0 + secs(61)), None);
+        // White leaves: a fresh countdown for White.
+        let white = away(r.set_presence([false, true], BOTH, grace, t0 + secs(30))).unwrap();
+        assert_eq!(white.unwrap().side, Color::White);
+        assert_eq!(r.away_deadline(), Some(t0 + secs(90)));
+        // Black leaves too: nobody is here to claim the game, so no countdown.
+        assert_eq!(
+            away(r.set_presence([false, false], BOTH, grace, t0 + secs(40))),
+            Some(None)
+        );
+        assert_eq!(r.away_deadline(), None);
+    }
+
+    #[test]
+    fn leaving_before_both_have_moved_aborts_after_that_it_loses() {
+        let (mut r, t0) = room();
+        let grace = secs(60);
+        r.handle(Some(Color::White), mv("e2e4"), t0);
+        r.set_presence([true, false], BOTH, grace, t0);
+        assert_eq!(r.check_abandonment(t0 + secs(59)), None);
+        assert_eq!(
+            r.check_abandonment(t0 + secs(60)),
+            Some(Broadcast(ServerMessage::GameOver {
+                end: GameEnd {
+                    result: GameResult::Aborted,
+                    reason: GameOverReason::Abandoned
+                }
+            }))
+        );
+        assert_eq!(r.away_deadline(), None);
+        // Over is over: no countdown for a finished game.
+        assert_eq!(
+            r.set_presence([false, true], BOTH, grace, t0 + secs(70)),
+            None
+        );
+
+        let (mut r, t0) = room();
+        r.handle(Some(Color::White), mv("e2e4"), t0);
+        r.handle(Some(Color::Black), mv("e7e5"), t0);
+        r.set_presence([false, true], BOTH, grace, t0 + secs(1));
+        assert_eq!(
+            r.check_abandonment(t0 + secs(61)),
+            Some(Broadcast(ServerMessage::GameOver {
+                end: GameEnd {
+                    result: GameResult::BlackWins,
+                    reason: GameOverReason::Abandoned
+                }
+            }))
+        );
+        // The clock stopped with the game.
+        assert_eq!(r.deadline(), None);
+    }
+
+    #[test]
+    fn a_game_that_ends_otherwise_stops_the_countdown() {
+        let (mut r, t0) = room();
+        r.set_presence([true, false], BOTH, secs(60), t0);
+        r.handle(Some(Color::White), ClientMessage::Resign, t0 + secs(5));
+        assert_eq!(r.away_deadline(), None);
+        assert_eq!(r.check_abandonment(t0 + secs(120)), None);
+        assert_eq!(
+            r.ended().map(|e| e.reason),
+            Some(GameOverReason::Resignation)
+        );
     }
 }

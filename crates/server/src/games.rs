@@ -77,16 +77,34 @@ impl From<&User> for Seat {
 }
 
 /// Everything the endpoints share.
-#[derive(Clone, Default)]
+/// How long a player who disconnects has to come back before the game is
+/// aborted (nobody had moved yet) or lost by abandonment.
+pub const DEFAULT_ABANDON_AFTER: Duration = Duration::from_secs(60);
+
+#[derive(Clone)]
 pub struct Games {
     inner: Arc<Mutex<HashMap<String, Arc<GameEntry>>>>,
     db: Option<Db>,
+    abandon_after: Duration,
+}
+
+impl Default for Games {
+    fn default() -> Self {
+        Games {
+            inner: Arc::default(),
+            db: None,
+            abandon_after: DEFAULT_ABANDON_AFTER,
+        }
+    }
 }
 
 struct GameEntry {
     id: String,
     room: Mutex<Room>,
     seats: Mutex<[Option<Seat>; 2]>,
+    /// Open sockets per seat (a player may have several tabs).
+    connections: Mutex<[u32; 2]>,
+    abandon_after: Duration,
     /// Fan-out of broadcast messages to every connection on this game.
     tx: broadcast::Sender<ServerMessage>,
     db: Option<Db>,
@@ -145,9 +163,15 @@ impl Games {
     /// Games that are also written to Postgres.
     pub fn with_db(db: Db) -> Games {
         Games {
-            inner: Arc::default(),
             db: Some(db),
+            ..Games::default()
         }
+    }
+
+    /// Change how long a disconnected player has to come back.
+    pub fn abandon_after(mut self, grace: Duration) -> Games {
+        self.abandon_after = grace;
+        self
     }
 
     /// Create a game with `white` in the White seat.
@@ -196,6 +220,8 @@ impl Games {
             id: id.to_string(),
             room: Mutex::new(room),
             seats: Mutex::new(seats),
+            connections: Mutex::new([0, 0]),
+            abandon_after: self.abandon_after,
             tx,
             db: self.db.clone(),
         });
@@ -302,6 +328,50 @@ impl GameEntry {
         if let Err(e) = db.save_snapshot(&self.id, &snapshot).await {
             tracing::error!("saving game {}: {e}", self.id);
         }
+    }
+
+    /// A socket for `side` opened (`true`) or closed. Recomputes who is
+    /// away and arms the abandonment timer.
+    fn attendance(self: &Arc<Self>, side: Color, arrived: bool) {
+        let connected = {
+            let mut counts = self.connections.lock().unwrap();
+            let i = if side.is_white() { 0 } else { 1 };
+            counts[i] = if arrived {
+                counts[i] + 1
+            } else {
+                counts[i].saturating_sub(1)
+            };
+            counts.map(|c| c > 0)
+        };
+        let seated = self.seats.lock().unwrap().each_ref().map(Option::is_some);
+        let out = self.room.lock().unwrap().set_presence(
+            connected,
+            seated,
+            self.abandon_after,
+            Instant::now(),
+        );
+        if let Some(out) = out {
+            self.dispatch(vec![out], &mut Vec::new());
+        }
+        self.arm_abandon_timer();
+    }
+
+    /// Wake up when the away player's countdown ends, and end the game then
+    /// if they are still away. Stale timers find nothing to do.
+    fn arm_abandon_timer(self: &Arc<Self>) {
+        let Some(deadline) = self.room.lock().unwrap().away_deadline() else {
+            return;
+        };
+        let entry = Arc::clone(self);
+        tokio::spawn(async move {
+            tokio::time::sleep_until((deadline + Duration::from_millis(1)).into()).await;
+            let out = entry.room.lock().unwrap().check_abandonment(Instant::now());
+            if let Some(out) = out
+                && entry.dispatch(vec![out], &mut Vec::new())
+            {
+                entry.persist().await;
+            }
+        });
     }
 
     /// After a move, wake up when the mover's opponent would flag, and end
@@ -411,9 +481,34 @@ async fn connect(
     ws.on_upgrade(move |socket| session(socket, entry, side))
 }
 
+/// A seated player's open socket, counted while it lives. Dropping it (the
+/// session ending for any reason) counts it out.
+struct Attendance {
+    entry: Arc<GameEntry>,
+    side: Color,
+}
+
+impl Attendance {
+    fn start(entry: &Arc<GameEntry>, side: Color) -> Attendance {
+        entry.attendance(side, true);
+        Attendance {
+            entry: Arc::clone(entry),
+            side,
+        }
+    }
+}
+
+impl Drop for Attendance {
+    fn drop(&mut self) {
+        self.entry.attendance(self.side, false);
+    }
+}
+
 async fn session(socket: WebSocket, entry: Arc<GameEntry>, side: Option<Color>) {
     let (mut sink, mut stream) = socket.split();
     let mut rx = entry.tx.subscribe();
+    // Before the Sync, so it already reflects that this player is back.
+    let _attendance = side.map(|side| Attendance::start(&entry, side));
 
     let sync = entry.sync(side);
     if send(&mut sink, &sync).await.is_err() {
@@ -483,6 +578,7 @@ impl GameEntry {
                 your_color,
                 ended,
                 draw_offer,
+                away,
                 ..
             } => ServerMessage::Sync {
                 start_fen,
@@ -492,6 +588,7 @@ impl GameEntry {
                 ended,
                 draw_offer,
                 players,
+                away,
             },
             other => other,
         }

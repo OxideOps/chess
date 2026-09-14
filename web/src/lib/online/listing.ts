@@ -2,6 +2,7 @@
 // stays markup and these get unit tests.
 import { sideName } from '$lib/chess/status';
 import type { GameListing } from '$lib/generated/GameListing';
+import type { GameResult } from '$lib/generated/GameResult';
 import type { PlayerInfo } from '$lib/generated/PlayerInfo';
 
 /** What to call whoever sits in a seat, or the fact that nobody does. */
@@ -15,21 +16,26 @@ export function opponentName(listing: GameListing): string {
 	return seatName(listing.your_color === 'white' ? listing.players.black : listing.players.white);
 }
 
-export type Outcome = 'won' | 'lost' | 'draw' | 'playing' | 'waiting';
+export type Outcome = 'won' | 'lost' | 'draw' | 'aborted' | 'playing' | 'waiting';
 
 /** How the game stands for the caller. */
 export function outcome(listing: GameListing): Outcome {
 	const { ended, your_color, players } = listing;
 	if (ended === null) return players.black === null ? 'waiting' : 'playing';
-	if (ended.result === 'draw') return 'draw';
-	const winner = ended.result === 'white_wins' ? 'white' : 'black';
-	return winner === your_color ? 'won' : 'lost';
+	const byResult: Record<GameResult, Outcome> = {
+		white_wins: your_color === 'white' ? 'won' : 'lost',
+		black_wins: your_color === 'black' ? 'won' : 'lost',
+		draw: 'draw',
+		aborted: 'aborted'
+	};
+	return byResult[ended.result];
 }
 
 export const OUTCOME_TEXT: Record<Outcome, string> = {
 	won: 'Won',
 	lost: 'Lost',
 	draw: 'Draw',
+	aborted: 'Aborted',
 	playing: 'In progress',
 	waiting: 'Waiting for an opponent'
 };
