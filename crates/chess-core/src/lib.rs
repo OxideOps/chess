@@ -9,6 +9,7 @@
 
 pub mod engine;
 pub mod game;
+pub mod lesson;
 pub mod pgn;
 pub mod protocol;
 pub mod puzzle;

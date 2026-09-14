@@ -506,6 +506,23 @@ pub fn judge_puzzle(
     to_js(&verdict)
 }
 
+/// Every lesson drill (`Drill[]`), easiest first.
+#[wasm_bindgen]
+pub fn drills() -> Result<JsValue, JsError> {
+    to_js(&chess_core::lesson::drills())
+}
+
+/// Where drill `id` stands after `moves` (UCI, both sides): `DrillStatus`.
+#[wasm_bindgen(js_name = assessDrill)]
+pub fn assess_drill(id: &str, moves: Vec<String>) -> Result<JsValue, JsError> {
+    let drill =
+        chess_core::lesson::find(id).ok_or_else(|| JsError::new(&format!("no drill {id:?}")))?;
+    let moves: Vec<&str> = moves.iter().map(String::as_str).collect();
+    let status =
+        chess_core::lesson::assess(&drill, &moves).map_err(|e| JsError::new(&e.to_string()))?;
+    to_js(&status)
+}
+
 /// A principal variation as numbered SAN movetext from the position `fen`.
 #[wasm_bindgen(js_name = pvMovetext)]
 pub fn pv_movetext(fen: &str, pv: Vec<String>) -> Result<String, JsError> {

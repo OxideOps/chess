@@ -10,6 +10,7 @@
 		{ href: resolve('/'), label: 'Play' },
 		{ href: resolve('/online'), label: 'Online' },
 		{ href: resolve('/puzzles'), label: 'Puzzles' },
+		{ href: resolve('/lessons'), label: 'Lessons' },
 		{ href: resolve('/analysis'), label: 'Analysis' }
 	] as const;
 

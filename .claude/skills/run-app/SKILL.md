@@ -67,6 +67,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 
+- Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
+  then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
+  "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
 - Puzzles (`/puzzles`) need puzzles in the database: `cargo run -p server -- import-puzzles
   crates/server/tests/fixtures/puzzles.csv` (Playwright does this at start). The status line
   reads "Find the best move for White/Black.", then "Correct! Find the next move.", "Solved!"
