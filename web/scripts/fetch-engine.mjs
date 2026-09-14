@@ -13,7 +13,7 @@ const RELEASE = 'https://github.com/nmrugg/stockfish.js/releases/download/v18.0.
 const FILES = {
 	'stockfish-18-lite.js': 'f79e667c9d56ee768aca35e8343f91548ceef6a732f67cd82f267cf9eab7f665',
 	'stockfish-18-lite.wasm': 'd50136919dcd90e75eb8df78b255d47d618962b670028b38961343f6eb409174',
-	'stockfish-18-lite-single.js': '5243fd9b276cab7dfe3ad1d43ab9ead73568fac76468c614242977a210c4a391',
+	'stockfish-18-lite-single.js': '2278005057f381491f1c9bb3e44c9f5920b3a00bef9759e33cc6582769a1f1fe',
 	'stockfish-18-lite-single.wasm':
 		'a8fbc05ec6920b56d7485826dcb02c5ffd2826bcbf751cf973046f237a9096f1'
 };
