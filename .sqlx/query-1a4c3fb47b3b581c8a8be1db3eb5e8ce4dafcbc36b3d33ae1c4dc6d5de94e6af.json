@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users SET username = $2, is_guest = false WHERE id = $1 AND is_guest",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1a4c3fb47b3b581c8a8be1db3eb5e8ce4dafcbc36b3d33ae1c4dc6d5de94e6af"
+}

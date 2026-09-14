@@ -33,6 +33,33 @@ struct Args {
     /// (e.g. the public URL when a proxy rewrites `Host`).
     #[arg(long, env = "CHESS_ALLOWED_ORIGINS", value_delimiter = ',')]
     allowed_origins: Vec<String>,
+
+    /// Where browsers reach this server, e.g. `https://chess.example`; used
+    /// for OAuth redirect URLs. Defaults to the request's own host.
+    #[arg(long, env = "CHESS_PUBLIC_URL")]
+    public_url: Option<String>,
+
+    /// Enable "Sign in with Lichess". Any name identifies the app; Lichess
+    /// needs no registration or secret.
+    #[arg(long, env = "CHESS_LICHESS_CLIENT_ID")]
+    lichess_client_id: Option<String>,
+
+    /// Enable "Sign in with Google" (a Google Cloud OAuth client with the
+    /// `/api/auth/google/callback` redirect URL registered).
+    #[arg(
+        long,
+        env = "CHESS_GOOGLE_CLIENT_ID",
+        requires = "google_client_secret"
+    )]
+    google_client_id: Option<String>,
+
+    #[arg(long, env = "CHESS_GOOGLE_CLIENT_SECRET", hide_env_values = true)]
+    google_client_secret: Option<String>,
+
+    /// Enable a built-in fake OAuth provider that signs in as whatever name
+    /// you type. For development and the end-to-end tests only.
+    #[arg(long, env = "CHESS_FAKE_OAUTH", default_value_t = false)]
+    fake_oauth: bool,
 }
 
 #[tokio::main]
@@ -52,10 +79,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into());
     }
 
+    let mut oauth = Vec::new();
+    if let Some(id) = &args.lichess_client_id {
+        oauth.push(server::oauth::Provider::lichess(id.clone()));
+    }
+    if let (Some(id), Some(secret)) = (&args.google_client_id, &args.google_client_secret) {
+        oauth.push(server::oauth::Provider::google(id.clone(), secret.clone()));
+    }
+    if args.fake_oauth {
+        tracing::warn!("the fake OAuth provider is on: anyone can sign in as any name");
+        oauth.push(server::oauth::Provider::fake());
+    }
     let config = server::Config {
         secure_cookies: args.secure_cookies,
         trust_proxy: args.trust_proxy,
         allowed_origins: args.allowed_origins.clone(),
+        public_url: args.public_url.clone(),
+        oauth,
     };
     let state = match &args.database_url {
         Some(url) => {

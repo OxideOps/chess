@@ -9,6 +9,7 @@ pub mod auth;
 pub mod db;
 pub mod games;
 pub mod limit;
+pub mod oauth;
 pub mod origin;
 pub mod room;
 
@@ -46,6 +47,11 @@ pub struct Config {
     /// Origins allowed to open game sockets besides the request's own
     /// host, e.g. the public URL when a proxy rewrites `Host`.
     pub allowed_origins: Vec<String>,
+    /// Where browsers reach this server (`https://chess.example`), for
+    /// OAuth redirect URLs. Without it the request's own host is used.
+    pub public_url: Option<String>,
+    /// OAuth providers users can sign in with.
+    pub oauth: Vec<oauth::Provider>,
 }
 
 /// Everything the handlers share.
@@ -112,6 +118,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .route("/healthz", get(|| async { "ok" }))
         .merge(games::router())
         .merge(auth::router())
+        .merge(oauth::router())
         .with_state(state)
         .fallback_service(files)
         .layer(middleware::from_fn_with_state(

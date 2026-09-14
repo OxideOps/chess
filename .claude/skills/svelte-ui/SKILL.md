@@ -18,7 +18,9 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   by the root layout from `GET /api/me`; `ensure()` makes a guest on demand; `signup`,
   `login`, `logout`; injectable fetch for tests). `next.ts` validates `?next=` return paths
   and types them as `ResolvedPathname`, which is what the `no-navigation-without-resolve`
-  lint rule accepts for an `href` or `goto()` built from a string.
+  lint rule accepts for an `href` or `goto()` built from a string. `providers.ts` lists the
+  OAuth providers (`GET /api/auth/providers`) and builds their start URLs; those links are
+  plain `<a rel="external">` (full-page navigation to an API URL, which the same rule allows).
 - `src/lib/online/` — `client.svelte.ts` (`OnlineGame`: the server's game mirrored on the
   client over the WebSocket; injectable socket and clock for tests), `clock.ts` (formatting,
   time controls), `invites.ts` (the game link), `listing.ts` (pure helpers for the my-games

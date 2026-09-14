@@ -183,6 +183,10 @@ impl Auth {
         }
     }
 
+    pub(crate) fn db(&self) -> &Db {
+        &self.db
+    }
+
     /// One hit against `limit` for `key`; `TooManyAttempts` when over.
     fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
         self.limiter
@@ -354,7 +358,7 @@ impl Auth {
         }))
     }
 
-    async fn create_session(&self, user_id: &str) -> Result<String, AuthError> {
+    pub(crate) async fn create_session(&self, user_id: &str) -> Result<String, AuthError> {
         let id = new_id();
         sqlx::query!(
             "INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, now() + make_interval(days => $3))",
@@ -367,7 +371,7 @@ impl Auth {
         Ok(id)
     }
 
-    fn cookie(&self, session: String) -> Cookie<'static> {
+    pub(crate) fn cookie(&self, session: String) -> Cookie<'static> {
         Cookie::build((SESSION_COOKIE, session))
             .path("/")
             .http_only(true)
@@ -405,7 +409,7 @@ pub fn spawn_cleanup(auth: Auth) {
 /// username doesn't exist so both paths cost the same.
 const DUMMY_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHRzb21lc2FsdA$Q0MaFhcx9wWTdyeoCxyvXVtQlq3AjVxx58W4RIYpPhk";
 
-fn unique_to_taken(e: sqlx::Error) -> AuthError {
+pub(crate) fn unique_to_taken(e: sqlx::Error) -> AuthError {
     match &e {
         sqlx::Error::Database(db) if db.is_unique_violation() => AuthError::UsernameTaken,
         _ => AuthError::Db(e),

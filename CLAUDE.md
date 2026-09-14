@@ -32,8 +32,11 @@ Successor to the archived `OxideOps/chess-v1`.
   see `origin.rs`), `auth.rs` users + sessions (guests, argon2id passwords, DB sessions in an
   `HttpOnly` cookie; `CurrentUser`/`RequireUser`/`ClientIp` extractors; rate limits from
   `limit.rs` on login/signup/guest; an hourly sweep of expired sessions and idle guests),
-  `Config` in `lib.rs` for the deployment flags (`--secure-cookies`, `--trust-proxy`,
-  `--allowed-origins`), `db.rs` the
+  `oauth.rs` sign-in with Lichess/Google (`/api/auth/{provider}/start` → provider →
+  `/callback`; `state` + PKCE verifier in a 10-minute cookie; `identities(provider, subject)`
+  → `users`; a built-in fake provider behind `--fake-oauth` for dev and tests, in-process,
+  no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
+  `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;
   migrations embedded and applied on start). After changing SQL or migrations run
