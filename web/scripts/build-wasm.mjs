@@ -1,4 +1,5 @@
-// Build crates/chess-core-wasm with wasm-pack into src/lib/wasm.
+// Build crates/chess-core-wasm with wasm-pack into src/lib/wasm, after
+// making sure the Stockfish builds are in static/engine.
 // Usage: node scripts/build-wasm.mjs [--dev]
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +9,11 @@ const web = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const crate = path.join(web, '..', 'crates', 'chess-core-wasm');
 const outDir = path.join(web, 'src', 'lib', 'wasm');
 const dev = process.argv.includes('--dev');
+
+const fetched = spawnSync(process.execPath, [path.join(web, 'scripts', 'fetch-engine.mjs')], {
+	stdio: 'inherit'
+});
+if (fetched.status !== 0) process.exit(fetched.status ?? 1);
 
 const args = [
 	'build',

@@ -53,7 +53,9 @@ Early scaffolding. What works today:
   signs in as any name you type, for development and the e2e suite; never in production.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
-- `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval
+- `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker (the
+  multi-threaded build with one thread per spare core when the page is cross-origin
+  isolated, which the server arranges; single-threaded otherwise), an eval
   bar, the top three lines (click one to play it), a best-move arrow, FEN/PGN import, PGN
   export, and playing from any point in the history.
 
@@ -65,8 +67,8 @@ Early scaffolding. What works today:
    [variations](https://github.com/OxideOps/chess/issues/3),
    [responsive layout and PWA](https://github.com/OxideOps/chess/issues/9))
 3. [Server](https://github.com/OxideOps/chess/issues/5) (axum + Postgres) that owns games:
-   validation, clocks, reconnects, persistence (done; accounts are the next roadmap item)
-4. [Accounts and sessions](https://github.com/OxideOps/chess/issues/6)
+   validation, clocks, reconnects, persistence (done; reconnect grace and abandonment remain)
+4. ~~Accounts and sessions~~ (guests, passwords, Lichess and Google sign-in; #6 closed)
 5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7): ratings,
    then puzzles (Lichess's CC0 puzzle database), then lessons and an AI coach that explains
    engine analysis in plain language
@@ -158,6 +160,10 @@ Code is MIT (see `LICENSE`). Piece images in `web/static/pieces/cburnett` are by
 Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 
 The engine in `web/static/engine` is [Stockfish.js](https://github.com/nmrugg/stockfish.js)
-(Stockfish 18, lite single-threaded build), GPLv3 — see `COPYING.txt` there. It runs as a
-separate Web Worker program that the app talks to over UCI text; it is not linked into the
-MIT-licensed code. Redistributing the site means redistributing that build under the GPL.
+(Stockfish 18, the lite multi-threaded and lite single-threaded builds from the v18.0.0
+release), GPLv3 — see `COPYING.txt` there. It runs as a separate Web Worker program that the
+app talks to over UCI text; it is not linked into the MIT-licensed code. Redistributing the
+site means redistributing those builds under the GPL. The multi-threaded build runs when the
+page is cross-origin isolated (the Rust server and the Vite dev server send the COOP/COEP
+headers), with one search thread per spare core, up to 8; otherwise the single-threaded build
+is used.

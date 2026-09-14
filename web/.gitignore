@@ -29,3 +29,7 @@ playwright-report
 
 # wasm-pack output (built by `pnpm build:wasm`)
 /src/lib/wasm
+
+# Stockfish.js builds (fetched by `pnpm build:wasm` via scripts/fetch-engine.mjs)
+/static/engine/*.js
+/static/engine/*.wasm

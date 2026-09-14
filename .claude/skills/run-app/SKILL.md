@@ -43,7 +43,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   ArrowLeft: status flips to "White to move".
 - Promotion: FEN `k7/4P3/8/8/8/8/8/K7 w - - 0 1` via the analysis import, then `e7 e8` opens
   the picker (`button[title=knight]` etc).
-- Analysis (`/analysis`): within a few seconds `.engine .name` reads "Stockfish 18 Lite WASM",
+- Analysis (`/analysis`): within a few seconds `.engine .name` reads "Stockfish 18 Lite WASM"
+  and `.engine .threads` reads "N threads" (N = min(8, cores − 1); absent when N is 1 or the
+  page isn't cross-origin isolated, in which case the single-threaded build is running),
   `.engine .summary` reads `Depth N…`, there are 3 `.engine .lines li`, one
   `.board .arrows line`, and `[data-testid=eval-bar] .white` has a height other than 50%.
   Clicking a line plays its first move; moving while in history truncates (`#export-pgn`).

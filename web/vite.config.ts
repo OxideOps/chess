@@ -17,6 +17,11 @@ const apiProxy = {
 	}
 };
 
+const isolationHeaders = {
+	'Cross-Origin-Opener-Policy': 'same-origin',
+	'Cross-Origin-Embedder-Policy': 'require-corp'
+};
+
 export default defineConfig({
 	plugins: [
 		sveltekit({
@@ -35,7 +40,10 @@ export default defineConfig({
 	],
 	// In development the Rust server (`cargo run -p server`) answers the API
 	// and game sockets on 8080; Vite serves the client and proxies to it.
-	server: { proxy: apiProxy },
+	// The isolation headers are what the production server sends too: they
+	// unlock SharedArrayBuffer, and so the multi-threaded engine.
+	server: { proxy: apiProxy, headers: isolationHeaders },
+	preview: { headers: isolationHeaders },
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

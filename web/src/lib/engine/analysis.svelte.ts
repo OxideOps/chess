@@ -30,6 +30,8 @@ export class Analyser {
 	status: EngineStatus = $state('loading');
 	error: string | null = $state(null);
 	name: string | null = $state(null);
+	/** Search threads in use, known once the engine is created. */
+	threads = $state(1);
 	/** The position the lines are for; `null` when idle. */
 	fen: string | null = $state(null);
 	turn: Side = $state('white');
@@ -47,6 +49,7 @@ export class Analyser {
 		this.#multipv = multipv;
 		const create = createEngine ?? ((onEvent) => new Engine(onEvent));
 		this.#engine = create((event) => this.#onEvent(event));
+		this.threads = this.#engine.threads;
 		this.#engine.send('uci');
 	}
 
@@ -103,6 +106,9 @@ export class Analyser {
 		switch (msg.type) {
 			case 'uci_ok':
 				this.#engine.send(`setoption name MultiPV value ${this.#multipv}`);
+				if (this.threads > 1) {
+					this.#engine.send(`setoption name Threads value ${this.threads}`);
+				}
 				this.#engine.send('isready');
 				break;
 			case 'ready_ok':

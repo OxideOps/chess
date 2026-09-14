@@ -35,6 +35,11 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
 - `src/lib/generated/` — TypeScript types generated from Rust by ts-rs. Never edit; run
   `corepack pnpm gen:types` after changing Rust types and commit the output.
 - `static/pieces/cburnett/` (CC BY-SA) and `static/engine/` (Stockfish.js, GPL) are served as-is.
+  The engine binaries are not committed: `scripts/fetch-engine.mjs` (run by `build:wasm`, so by
+  `dev` and `build`) downloads both lite builds from the stockfish.js release and checks their
+  SHA-256; bump the tag and hashes there to upgrade. `src/lib/engine/build.ts` picks the
+  multi-threaded build when the page is cross-origin isolated (the Rust server and the Vite
+  dev server send COOP/COEP; `preview` does too).
 
 ## Conventions
 
