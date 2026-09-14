@@ -11,7 +11,7 @@ Run from the repo root, in this order, and stop at the first failure:
 cargo fmt --all                                    # fixes formatting in place
 cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p chess-core-wasm --target wasm32-unknown-unknown -- -D warnings
-cargo clippy --workspace --all-targets --features chess-core-wasm/ts -- -D warnings
+cargo clippy --workspace --all-targets --features chess-core-wasm/ts,server/ts -- -D warnings
 TEST_DATABASE_URL=postgres://$USER@localhost/chess_test cargo test --workspace
 sqlx migrate run --source crates/server/migrations -D postgres://$USER@localhost/chess_test \
   && cargo sqlx prepare --check --workspace -D postgres://$USER@localhost/chess_test
@@ -38,8 +38,9 @@ Notes:
   `TEST_DATABASE_URL` they print "skipping" and pass, which is not the same as passing.
 - `web/` needs `wasm-pack` (`cargo install wasm-pack --locked`), `corepack pnpm install` once
   and `corepack pnpm browsers` once (Chromium for Vitest browser mode and Playwright). `pnpm`
-  is not on PATH here; go through `corepack`. `test:e2e` builds and previews the site itself
-  and runs the real Stockfish, so it takes ~10 s.
+  is not on PATH here; go through `corepack`. `test:e2e` builds the site, starts the Rust
+  server on the `chess_test` database (online play needs accounts) and runs the real
+  Stockfish, so it takes ~30 s.
 - If `test:e2e` fails with 404s for `_app/immutable/...`, a stale preview server is holding
   the port (it shows up as `vite.js preview`, not `vite preview`): `lsof -ti :4173 | xargs kill`.
 - Report the outcome plainly: which steps passed, and the first error verbatim if one failed.

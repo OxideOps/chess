@@ -20,6 +20,7 @@ pub const SESSION_COOKIE: &str = "session";
 const SESSION_DAYS: i64 = 30;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct User {
     pub id: String,
     /// `None` for guests.

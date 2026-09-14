@@ -3,6 +3,7 @@ import type { Clocks } from "./Clocks";
 import type { GameEnd } from "./GameEnd";
 import type { GameOverReason } from "./GameOverReason";
 import type { GameResult } from "./GameResult";
+import type { Players } from "./Players";
 
 export type ServerMessage = { "type": "sync", start_fen: string, moves: string[], clocks: Clocks, 
 /**
@@ -16,4 +17,4 @@ ended: GameEnd | null,
 /**
  * A draw offer that is still open.
  */
-draw_offer: "white" | "black" | null, } | { "type": "move_played", ply: number, uci: string, clocks: Clocks, } | { "type": "draw_offered", by: "white" | "black", } | { "type": "draw_declined" } | { "type": "game_over", result: GameResult, reason: GameOverReason, } | { "type": "rejected", message: string, } | { "type": "pong" };
+draw_offer: "white" | "black" | null, players: Players, } | { "type": "players_changed", players: Players, } | { "type": "move_played", ply: number, uci: string, clocks: Clocks, } | { "type": "draw_offered", by: "white" | "black", } | { "type": "draw_declined" } | { "type": "game_over", result: GameResult, reason: GameOverReason, } | { "type": "rejected", message: string, } | { "type": "pong" };

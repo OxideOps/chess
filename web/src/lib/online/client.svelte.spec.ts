@@ -31,11 +31,10 @@ class FakeSocket implements SocketLike {
 	}
 }
 
-function setup(token?: string) {
+function setup() {
 	const sockets: FakeSocket[] = [];
 	let now = 1000;
 	const online = new OnlineGame('g1', {
-		token,
 		createSocket: (url) => {
 			const s = new FakeSocket(url);
 			sockets.push(s);
@@ -51,9 +50,9 @@ const clocks = (white_ms: number, black_ms: number) => ({ white_ms, black_ms });
 beforeAll(() => initChess());
 
 describe('OnlineGame', () => {
-	it('connects with the token and builds the game from Sync', () => {
-		const { online, socket } = setup('tok');
-		expect(socket().url).toMatch(/\/api\/games\/g1\/ws\?token=tok$/);
+	it('connects and builds the game from Sync', () => {
+		const { online, socket } = setup();
+		expect(socket().url).toMatch(/\/api\/games\/g1\/ws$/);
 		expect(online.connection).toBe('connecting');
 		socket().open();
 		expect(online.connection).toBe('open');
@@ -65,8 +64,11 @@ describe('OnlineGame', () => {
 			clocks: clocks(60_000, 58_000),
 			your_color: 'white',
 			ended: null,
-			draw_offer: 'black'
+			draw_offer: 'black',
+			players: { white: { username: 'dan' }, black: null }
 		});
+		expect(online.players.white?.username).toBe('dan');
+		expect(online.canJoin).toBe(false); // we hold White
 		expect(online.yourColor).toBe('white');
 		expect(online.game.view.movetext).toBe('1. e4 e5');
 		expect(online.drawOffer).toBe('black');
@@ -76,7 +78,7 @@ describe('OnlineGame', () => {
 	});
 
 	it('plays our move locally, sends it, and ignores the echo', () => {
-		const { online, socket } = setup('tok');
+		const { online, socket } = setup();
 		socket().open();
 		socket().say({
 			type: 'sync',
@@ -85,7 +87,8 @@ describe('OnlineGame', () => {
 			clocks: clocks(60_000, 60_000),
 			your_color: 'white',
 			ended: null,
-			draw_offer: null
+			draw_offer: null,
+			players: { white: { username: null }, black: { username: null } }
 		});
 		expect(online.tryMove('e7', 'e5')).toBe('illegal'); // not our piece
 		expect(online.tryMove('e2', 'e4')).toBe('ok');
@@ -111,7 +114,8 @@ describe('OnlineGame', () => {
 			clocks: clocks(30_000, 20_000),
 			your_color: null,
 			ended: null,
-			draw_offer: null
+			draw_offer: null,
+			players: { white: { username: null }, black: { username: null } }
 		});
 		tick(5_000);
 		expect(online.clockMs('white')).toBe(25_000);
@@ -126,7 +130,7 @@ describe('OnlineGame', () => {
 	});
 
 	it('resyncs after a rejection or a gap, and reconnects when dropped', () => {
-		const { online, sockets, socket } = setup('tok');
+		const { online, sockets, socket } = setup();
 		socket().open();
 		socket().say({
 			type: 'sync',
@@ -135,7 +139,8 @@ describe('OnlineGame', () => {
 			clocks: clocks(60_000, 60_000),
 			your_color: 'black',
 			ended: null,
-			draw_offer: null
+			draw_offer: null,
+			players: { white: { username: null }, black: { username: null } }
 		});
 		// A move two plies ahead means we missed one: drop and let the server resync.
 		socket().say({ type: 'move_played', ply: 2, uci: 'e7e5', clocks: clocks(60_000, 60_000) });

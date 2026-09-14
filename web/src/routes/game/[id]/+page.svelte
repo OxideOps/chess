@@ -1,30 +1,38 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { page } from '$app/state';
-	import { resolve } from '$app/paths';
 	import Board from '$lib/components/Board.svelte';
 	import Clock from '$lib/components/Clock.svelte';
 	import MoveList from '$lib/components/MoveList.svelte';
 	import { sideName, statusText } from '$lib/chess/status';
 	import { OnlineGame } from '$lib/online/client.svelte';
-	import { inviteToken } from '$lib/online/invites';
+	import { inviteLink } from '$lib/online/invites';
+	import { ensureSession } from '$lib/online/session';
 	import type { GameEnd } from '$lib/generated/GameEnd';
 	import type { Side } from '$lib/generated/Side';
 
 	const id = page.params.id!;
-	const token = page.url.searchParams.get('token') ?? undefined;
-	const online = new OnlineGame(id, { token });
+	const online = new OnlineGame(id);
 	const game = online.game;
 	onDestroy(() => online.dispose());
+	let joinError: string | null = $state(null);
+
+	async function join() {
+		joinError = null;
+		try {
+			await ensureSession();
+			await online.join();
+		} catch (e) {
+			joinError = e instanceof Error ? e.message : String(e);
+		}
+	}
 
 	const orientation: Side = $derived(online.yourColor ?? 'white');
 	const opponent: Side = $derived(orientation === 'white' ? 'black' : 'white');
-	const inviteLink = $derived.by(() => {
-		const t = inviteToken(id);
-		return t && online.yourColor === 'white'
-			? `${page.url.origin}${resolve('/game/[id]', { id })}?token=${t}`
-			: null;
-	});
+	// White sees the invite until someone takes the Black seat.
+	const invite = $derived(
+		online.yourColor === 'white' && online.players.black === null ? inviteLink(id) : null
+	);
 	const atStart = $derived(game.view.cursor === 0);
 	const atEnd = $derived(!game.view.viewingHistory);
 
@@ -54,8 +62,8 @@
 	};
 	let copied = $state(false);
 	async function copyInvite() {
-		if (!inviteLink) return;
-		await navigator.clipboard.writeText(inviteLink);
+		if (!invite) return;
+		await navigator.clipboard.writeText(invite);
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
 	}
@@ -91,6 +99,8 @@
 		<p class="status" data-testid="game-status">
 			{#if online.ended}
 				{endText(online.ended)}
+			{:else if online.yourColor && online.players.black === null}
+				Waiting for an opponent to join
 			{:else if online.yourColor}
 				{online.isMyTurn ? 'Your move' : 'Waiting for your opponent'}
 				{#if game.view.status === 'check'}
@@ -102,16 +112,25 @@
 		{#if online.rejection}
 			<p class="rejection" role="alert">{online.rejection}</p>
 		{/if}
-		{#if inviteLink && game.view.plyCount === 0}
+		{#if invite}
 			<div class="invite">
 				<p>Send this link to your opponent. They play Black.</p>
 				<input
 					readonly
-					value={inviteLink}
+					value={invite}
 					data-testid="invite-link"
 					onfocus={(e) => e.currentTarget.select()}
 				/>
 				<button type="button" onclick={copyInvite}>{copied ? 'Copied' : 'Copy link'}</button>
+			</div>
+		{/if}
+		{#if online.canJoin}
+			<div class="invite">
+				<p>The Black seat is open.</p>
+				<button type="button" onclick={join}>Join as Black</button>
+				{#if joinError}
+					<p class="rejection" role="alert">{joinError}</p>
+				{/if}
 			</div>
 		{/if}
 		{#if online.drawOffer && !online.ended}

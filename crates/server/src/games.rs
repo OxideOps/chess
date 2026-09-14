@@ -1,14 +1,16 @@
-//! In-memory games and the HTTP/WebSocket endpoints that expose them.
+//! Games and the HTTP/WebSocket endpoints that expose them.
 //!
-//! - `POST /api/games` creates a game and returns its id plus one secret
-//!   token per side. Whoever connects with a token plays that side; anyone
-//!   else spectates. (Accounts replace tokens later, roadmap 4.)
+//! - `POST /api/games` creates a game; the caller takes White.
+//! - `POST /api/games/{id}/join` takes the open Black seat.
 //! - `GET /api/games/{id}` is a JSON snapshot for debugging and tests.
-//! - `GET /api/games/{id}/ws?token=…` is the game socket: the server sends
-//!   `Sync` first, then every `ServerMessage` the room produces.
+//! - `GET /api/me/games` lists the caller's games, newest first.
+//! - `GET /api/games/{id}/ws` is the game socket, authenticated by the
+//!   session cookie: seat holders play, everyone else spectates. The server
+//!   sends `Sync` first, then every `ServerMessage` the room produces.
 //!
-//! With a database (`Games::with_db`) every change is written through and
-//! games not in memory are loaded on first access, so they survive restarts.
+//! Rooms live in memory while the server runs. With a database
+//! (`Games::with_db`) every change is written through and games not in
+//! memory are loaded on first access, so they survive restarts.
 
 use std::{
     collections::HashMap,
@@ -19,7 +21,7 @@ use std::{
 use axum::{
     Json, Router,
     extract::{
-        Path, Query, State,
+        Path, State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
     http::StatusCode,
@@ -28,7 +30,7 @@ use axum::{
 };
 use chess_core::{
     Color,
-    protocol::{ClientMessage, ServerMessage},
+    protocol::{ClientMessage, PlayerInfo, Players, ServerMessage},
 };
 use futures_util::{SinkExt as _, StreamExt as _};
 use serde::{Deserialize, Serialize};
@@ -36,6 +38,7 @@ use tokio::sync::broadcast;
 
 use crate::{
     AppState,
+    auth::{CurrentUser, RequireUser, User},
     db::Db,
     room::{Outgoing, Room, TimeControl},
 };
@@ -44,7 +47,33 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/games", post(create_game))
         .route("/api/games/{id}", get(snapshot))
+        .route("/api/games/{id}/join", post(join_game))
         .route("/api/games/{id}/ws", get(connect))
+        .route("/api/me/games", get(my_games))
+}
+
+/// Who holds a seat.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Seat {
+    pub user_id: String,
+    pub username: Option<String>,
+}
+
+impl Seat {
+    fn info(&self) -> PlayerInfo {
+        PlayerInfo {
+            username: self.username.clone(),
+        }
+    }
+}
+
+impl From<&User> for Seat {
+    fn from(u: &User) -> Self {
+        Seat {
+            user_id: u.id.clone(),
+            username: u.username.clone(),
+        }
+    }
 }
 
 /// Everything the endpoints share.
@@ -57,7 +86,7 @@ pub struct Games {
 struct GameEntry {
     id: String,
     room: Mutex<Room>,
-    tokens: [String; 2],
+    seats: Mutex<[Option<Seat>; 2]>,
     /// Fan-out of broadcast messages to every connection on this game.
     tx: broadcast::Sender<ServerMessage>,
     db: Option<Db>,
@@ -72,10 +101,9 @@ pub struct CreateGame {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct CreatedGame {
     pub id: String,
-    pub white_token: String,
-    pub black_token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -85,11 +113,28 @@ pub struct GameSnapshot {
     pub movetext: String,
     pub clocks: chess_core::protocol::Clocks,
     pub ended: Option<chess_core::protocol::GameEnd>,
+    pub players: Players,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct WsQuery {
-    token: Option<String>,
+/// One row of `GET /api/me/games`.
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct GameListing {
+    pub id: String,
+    pub players: Players,
+    pub ended: Option<chess_core::protocol::GameEnd>,
+    pub moves: u32,
+    /// ISO 8601.
+    pub updated_at: String,
+}
+
+#[derive(Debug)]
+pub enum JoinError {
+    NotFound,
+    /// The caller already sits on the other side.
+    OwnGame,
+    SeatTaken,
+    Db(sqlx::Error),
 }
 
 impl Games {
@@ -101,29 +146,52 @@ impl Games {
         }
     }
 
-    pub async fn create(&self, time_control: TimeControl) -> Result<CreatedGame, sqlx::Error> {
+    /// Create a game with `white` in the White seat.
+    pub async fn create(
+        &self,
+        white: &User,
+        time_control: TimeControl,
+    ) -> Result<CreatedGame, sqlx::Error> {
         let id = uuid::Uuid::new_v4().to_string();
-        let tokens = [
-            uuid::Uuid::new_v4().to_string(),
-            uuid::Uuid::new_v4().to_string(),
-        ];
+        let seats = [Some(Seat::from(white)), None];
         if let Some(db) = &self.db {
-            db.insert(&id, &tokens, time_control).await?;
+            db.insert(&id, &seats, time_control).await?;
         }
-        self.insert(&id, tokens.clone(), Room::new(time_control));
-        Ok(CreatedGame {
-            id,
-            white_token: tokens[0].clone(),
-            black_token: tokens[1].clone(),
-        })
+        self.insert(&id, seats, Room::new(time_control));
+        Ok(CreatedGame { id })
     }
 
-    fn insert(&self, id: &str, tokens: [String; 2], room: Room) -> Arc<GameEntry> {
+    /// Take the open Black seat.
+    pub async fn join(&self, id: &str, user: &User) -> Result<Players, JoinError> {
+        let entry = self.get(id).await.ok_or(JoinError::NotFound)?;
+        let players = {
+            let mut seats = entry.seats.lock().unwrap();
+            if seats[0].as_ref().is_some_and(|s| s.user_id == user.id) {
+                return Err(JoinError::OwnGame);
+            }
+            match &seats[1] {
+                // Already seated: nothing changes, nobody needs telling.
+                Some(s) if s.user_id == user.id => return Ok(players_of(&seats)),
+                Some(_) => return Err(JoinError::SeatTaken),
+                None => seats[1] = Some(Seat::from(user)),
+            }
+            players_of(&seats)
+        };
+        if let Some(db) = &self.db {
+            db.set_black(id, &user.id).await.map_err(JoinError::Db)?;
+        }
+        let _ = entry.tx.send(ServerMessage::PlayersChanged {
+            players: players.clone(),
+        });
+        Ok(players)
+    }
+
+    fn insert(&self, id: &str, seats: [Option<Seat>; 2], room: Room) -> Arc<GameEntry> {
         let (tx, _) = broadcast::channel(64);
         let entry = Arc::new(GameEntry {
             id: id.to_string(),
             room: Mutex::new(room),
-            tokens,
+            seats: Mutex::new(seats),
             tx,
             db: self.db.clone(),
         });
@@ -155,20 +223,35 @@ impl Games {
                 return None;
             }
         };
-        let entry = self.insert(id, stored.tokens, room);
+        let entry = self.insert(id, stored.seats, room);
         // A restored game may already be past its deadline.
         entry.arm_flag_timer();
         Some(entry)
     }
 }
 
+fn players_of(seats: &[Option<Seat>; 2]) -> Players {
+    Players {
+        white: seats[0].as_ref().map(Seat::info),
+        black: seats[1].as_ref().map(Seat::info),
+    }
+}
+
 impl GameEntry {
-    fn side_for(&self, token: Option<&str>) -> Option<Color> {
-        match token {
-            Some(t) if t == self.tokens[0] => Some(Color::White),
-            Some(t) if t == self.tokens[1] => Some(Color::Black),
-            _ => None,
+    fn side_of(&self, user: Option<&User>) -> Option<Color> {
+        let user = user?;
+        let seats = self.seats.lock().unwrap();
+        if seats[0].as_ref().is_some_and(|s| s.user_id == user.id) {
+            Some(Color::White)
+        } else if seats[1].as_ref().is_some_and(|s| s.user_id == user.id) {
+            Some(Color::Black)
+        } else {
+            None
         }
+    }
+
+    fn players(&self) -> Players {
+        players_of(&self.seats.lock().unwrap())
     }
 
     /// Send what the room produced: broadcasts to everyone, replies to `reply`.
@@ -221,16 +304,41 @@ impl GameEntry {
     }
 }
 
-async fn create_game(State(games): State<Games>, body: Option<Json<CreateGame>>) -> Response {
+async fn create_game(
+    State(games): State<Games>,
+    RequireUser(user): RequireUser,
+    body: Option<Json<CreateGame>>,
+) -> Response {
     let body = body.map(|Json(b)| b).unwrap_or_default();
     let tc = TimeControl {
         initial: Duration::from_millis(body.initial_ms.unwrap_or(5 * 60 * 1000)),
         increment: Duration::from_millis(body.increment_ms.unwrap_or(0)),
     };
-    match games.create(tc).await {
+    match games.create(&user, tc).await {
         Ok(created) => (StatusCode::CREATED, Json(created)).into_response(),
         Err(e) => {
             tracing::error!("creating game: {e}");
+            StatusCode::SERVICE_UNAVAILABLE.into_response()
+        }
+    }
+}
+
+async fn join_game(
+    State(games): State<Games>,
+    RequireUser(user): RequireUser,
+    Path(id): Path<String>,
+) -> Response {
+    match games.join(&id, &user).await {
+        Ok(players) => Json(players).into_response(),
+        Err(JoinError::NotFound) => StatusCode::NOT_FOUND.into_response(),
+        Err(JoinError::OwnGame) => (
+            StatusCode::BAD_REQUEST,
+            "you are already playing White in this game",
+        )
+            .into_response(),
+        Err(JoinError::SeatTaken) => (StatusCode::CONFLICT, "that seat is taken").into_response(),
+        Err(JoinError::Db(e)) => {
+            tracing::error!("joining game {id}: {e}");
             StatusCode::SERVICE_UNAVAILABLE.into_response()
         }
     }
@@ -240,6 +348,7 @@ async fn snapshot(State(games): State<Games>, Path(id): Path<String>) -> Respons
     let Some(entry) = games.get(&id).await else {
         return StatusCode::NOT_FOUND.into_response();
     };
+    let players = entry.players();
     let room = entry.room.lock().unwrap();
     Json(GameSnapshot {
         id,
@@ -247,20 +356,34 @@ async fn snapshot(State(games): State<Games>, Path(id): Path<String>) -> Respons
         movetext: room.game().movetext(),
         clocks: room.clocks(Instant::now()),
         ended: room.ended(),
+        players,
     })
     .into_response()
 }
 
+async fn my_games(State(games): State<Games>, RequireUser(user): RequireUser) -> Response {
+    let Some(db) = &games.db else {
+        return Json(Vec::<GameListing>::new()).into_response();
+    };
+    match db.games_of(&user.id).await {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => {
+            tracing::error!("listing games: {e}");
+            StatusCode::SERVICE_UNAVAILABLE.into_response()
+        }
+    }
+}
+
 async fn connect(
     State(games): State<Games>,
+    CurrentUser(user): CurrentUser,
     Path(id): Path<String>,
-    Query(query): Query<WsQuery>,
     ws: WebSocketUpgrade,
 ) -> Response {
     let Some(entry) = games.get(&id).await else {
         return StatusCode::NOT_FOUND.into_response();
     };
-    let side = entry.side_for(query.token.as_deref());
+    let side = entry.side_of(user.as_ref());
     ws.on_upgrade(move |socket| session(socket, entry, side))
 }
 
@@ -268,7 +391,7 @@ async fn session(socket: WebSocket, entry: Arc<GameEntry>, side: Option<Color>) 
     let (mut sink, mut stream) = socket.split();
     let mut rx = entry.tx.subscribe();
 
-    let sync = entry.room.lock().unwrap().sync(side, Instant::now());
+    let sync = entry.sync(side);
     if send(&mut sink, &sync).await.is_err() {
         return;
     }
@@ -312,7 +435,7 @@ async fn session(socket: WebSocket, entry: Arc<GameEntry>, side: Option<Color>) 
                     }
                     // Fell behind: resync rather than miss a move.
                     Err(broadcast::error::RecvError::Lagged(_)) => {
-                        let sync = entry.room.lock().unwrap().sync(side, Instant::now());
+                        let sync = entry.sync(side);
                         if send(&mut sink, &sync).await.is_err() {
                             return;
                         }
@@ -320,6 +443,33 @@ async fn session(socket: WebSocket, entry: Arc<GameEntry>, side: Option<Color>) 
                     Err(broadcast::error::RecvError::Closed) => break,
                 }
             }
+        }
+    }
+}
+
+impl GameEntry {
+    fn sync(&self, side: Option<Color>) -> ServerMessage {
+        let players = self.players();
+        let room = self.room.lock().unwrap();
+        match room.sync(side, Instant::now()) {
+            ServerMessage::Sync {
+                start_fen,
+                moves,
+                clocks,
+                your_color,
+                ended,
+                draw_offer,
+                ..
+            } => ServerMessage::Sync {
+                start_fen,
+                moves,
+                clocks,
+                your_color,
+                ended,
+                draw_offer,
+                players,
+            },
+            other => other,
         }
     }
 }

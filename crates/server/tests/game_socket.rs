@@ -1,102 +1,66 @@
-//! End-to-end: real TCP, real WebSockets, two players and a spectator.
+//! End-to-end: real TCP, real WebSockets, cookie-authenticated seats.
+
+mod common;
 
 use std::time::Duration;
 
-use chess_core::protocol::{ClientMessage, GameOverReason, GameResult, ServerMessage};
-use futures_util::{SinkExt as _, StreamExt as _};
-use server::games::CreatedGame;
-use tokio::net::TcpStream;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, tungstenite::Message};
-
-type Socket = WebSocketStream<MaybeTlsStream<TcpStream>>;
-
-/// Start the server on an ephemeral port and return its base URL.
-async fn serve() -> String {
-    let dir = tempfile::tempdir().unwrap();
-    std::fs::write(dir.path().join("404.html"), "shell").unwrap();
-    let app = server::app_with(dir.path(), server::AppState::in_memory());
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        // Keep the temp dir alive as long as the server.
-        let _dir = dir;
-        axum::serve(listener, app).await.unwrap();
-    });
-    format!("127.0.0.1:{}", addr.port())
-}
-
-async fn create(base: &str, body: &str) -> CreatedGame {
-    // A minimal HTTP client is enough for one POST.
-    let mut stream = TcpStream::connect(base).await.unwrap();
-    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
-    let req = format!(
-        "POST /api/games HTTP/1.1\r\nHost: {base}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-        body.len()
-    );
-    stream.write_all(req.as_bytes()).await.unwrap();
-    let mut response = String::new();
-    stream.read_to_string(&mut response).await.unwrap();
-    assert!(response.starts_with("HTTP/1.1 201"), "{response}");
-    let json = response.split("\r\n\r\n").nth(1).unwrap();
-    serde_json::from_str(json).unwrap()
-}
-
-async fn connect(base: &str, id: &str, token: Option<&str>) -> Socket {
-    let url = match token {
-        Some(t) => format!("ws://{base}/api/games/{id}/ws?token={t}"),
-        None => format!("ws://{base}/api/games/{id}/ws"),
-    };
-    let (socket, _) = tokio_tungstenite::connect_async(url).await.unwrap();
-    socket
-}
-
-async fn send(socket: &mut Socket, msg: &ClientMessage) {
-    socket
-        .send(Message::Text(serde_json::to_string(msg).unwrap().into()))
-        .await
-        .unwrap();
-}
-
-async fn recv(socket: &mut Socket) -> ServerMessage {
-    let msg = tokio::time::timeout(Duration::from_secs(5), socket.next())
-        .await
-        .expect("timed out waiting for a message")
-        .expect("socket closed")
-        .unwrap();
-    match msg {
-        Message::Text(text) => serde_json::from_str(&text).unwrap(),
-        other => panic!("unexpected frame {other:?}"),
-    }
-}
-
-fn mv(uci: &str) -> ClientMessage {
-    ClientMessage::Move {
-        uci: uci.parse().unwrap(),
-    }
-}
+use chess_core::{
+    Color,
+    protocol::{ClientMessage, GameOverReason, GameResult, ServerMessage},
+};
+use common::*;
+use futures_util::SinkExt as _;
+use tokio_tungstenite::tungstenite::Message;
 
 #[tokio::test]
 async fn two_players_and_a_spectator() {
-    let base = serve().await;
-    let game = create(&base, "{}").await;
+    let Some(db) = db().await else { return };
+    let base = serve(db).await;
+    let white_session = guest(&base).await;
+    let black_session = guest(&base).await;
+    let game = create(&base, &white_session, "{}").await;
 
-    let mut white = connect(&base, &game.id, Some(&game.white_token)).await;
-    let mut black = connect(&base, &game.id, Some(&game.black_token)).await;
-    let mut watcher = connect(&base, &game.id, None).await;
+    // Before anyone joins, the creator is White and the other seat is open.
+    let mut white = connect(&base, &game.id, Some(&white_session)).await;
+    match recv(&mut white).await {
+        ServerMessage::Sync {
+            your_color,
+            moves,
+            clocks,
+            players,
+            ..
+        } => {
+            assert_eq!(your_color, Some(Color::White));
+            assert!(moves.is_empty());
+            assert_eq!(clocks.white_ms, 300_000);
+            assert!(players.white.is_some() && players.black.is_none());
+        }
+        other => panic!("{other:?}"),
+    }
 
-    // Everyone gets a Sync first, telling them who they are.
+    // The creator can't join their own game; the second guest takes Black,
+    // and White hears about it.
+    assert_eq!(join(&base, &white_session, &game.id).await.status, 400);
+    assert_eq!(join(&base, &black_session, &game.id).await.status, 200);
     assert!(matches!(
         recv(&mut white).await,
-        ServerMessage::Sync { your_color: Some(chess_core::Color::White), ref moves, clocks, .. }
-            if moves.is_empty() && clocks.white_ms == 300_000
+        ServerMessage::PlayersChanged { players } if players.black.is_some()
     ));
+    // Joining again is idempotent; a third person is refused.
+    assert_eq!(join(&base, &black_session, &game.id).await.status, 200);
+    let third = guest(&base).await;
+    assert_eq!(join(&base, &third, &game.id).await.status, 409);
+    assert_eq!(join(&base, &third, "no-such-game").await.status, 404);
+
+    let mut black = connect(&base, &game.id, Some(&black_session)).await;
     assert!(matches!(
         recv(&mut black).await,
         ServerMessage::Sync {
-            your_color: Some(chess_core::Color::Black),
+            your_color: Some(Color::Black),
             ..
         }
     ));
+    let mut watcher = connect(&base, &game.id, None).await;
     assert!(matches!(
         recv(&mut watcher).await,
         ServerMessage::Sync {
@@ -133,13 +97,12 @@ async fn two_players_and_a_spectator() {
     send(&mut white, &ClientMessage::Ping).await;
     assert_eq!(recv(&mut white).await, ServerMessage::Pong);
 
-    // A reconnecting player gets the game so far.
+    // A reconnecting player gets the game so far and keeps their seat.
     drop(black);
-    let mut black = connect(&base, &game.id, Some(&game.black_token)).await;
+    let mut black = connect(&base, &game.id, Some(&black_session)).await;
     assert!(matches!(
         recv(&mut black).await,
-        ServerMessage::Sync { your_color: Some(chess_core::Color::Black), ref moves, .. }
-            if moves.len() == 1
+        ServerMessage::Sync { your_color: Some(Color::Black), ref moves, .. } if moves.len() == 1
     ));
 
     // Resigning ends it for everyone; then nothing more is accepted.
@@ -156,17 +119,36 @@ async fn two_players_and_a_spectator() {
         ServerMessage::Rejected { .. }
     ));
 
-    // Unknown game: no upgrade.
+    // The game shows up in both players' lists, not the spectator's.
+    let r = http(&base, "GET", "/api/me/games", Some(&white_session), "").await;
+    assert_eq!(r.status, 200);
+    assert!(
+        r.body.contains(&game.id) && r.body.contains("resignation"),
+        "{}",
+        r.body
+    );
+    let r = http(&base, "GET", "/api/me/games", Some(&third), "").await;
+    assert_eq!(r.body, "[]");
+
+    // No session: no game; unknown game: no upgrade.
+    assert_eq!(
+        http(&base, "POST", "/api/games", None, "{}").await.status,
+        401
+    );
     let err = tokio_tungstenite::connect_async(format!("ws://{base}/api/games/nope/ws")).await;
     assert!(err.is_err());
 }
 
 #[tokio::test]
 async fn the_server_flags_a_player_who_runs_out_of_time() {
-    let base = serve().await;
-    let game = create(&base, r#"{"initial_ms": 300, "increment_ms": 0}"#).await;
-    let mut white = connect(&base, &game.id, Some(&game.white_token)).await;
-    let mut black = connect(&base, &game.id, Some(&game.black_token)).await;
+    let Some(db) = db().await else { return };
+    let base = serve(db).await;
+    let ws = guest(&base).await;
+    let bs = guest(&base).await;
+    let game = create(&base, &ws, r#"{"initial_ms": 300, "increment_ms": 0}"#).await;
+    join(&base, &bs, &game.id).await;
+    let mut white = connect(&base, &game.id, Some(&ws)).await;
+    let mut black = connect(&base, &game.id, Some(&bs)).await;
     recv(&mut white).await;
     recv(&mut black).await;
 

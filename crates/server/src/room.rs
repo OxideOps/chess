@@ -8,7 +8,9 @@ use std::time::{Duration, Instant};
 
 use chess_core::{
     Color, Game, GameError,
-    protocol::{ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, ServerMessage},
+    protocol::{
+        ClientMessage, Clocks, GameEnd, GameOverReason, GameResult, Players, ServerMessage,
+    },
 };
 
 /// Initial time and increment per move.
@@ -175,6 +177,8 @@ impl Room {
             your_color,
             ended: self.ended,
             draw_offer: self.draw_offer,
+            // Seats are the registry's business; it fills them in.
+            players: Players::default(),
         }
     }
 

@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO games (id, white_user_id, black_user_id, initial_ms, increment_ms, white_ms, black_ms)\n             VALUES ($1, $2, $3, $4, $5, $4, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "09564b117996a785e1a3b3aea7895523b1b15a7c32a0eee55177f3d28e78d7ac"
+}

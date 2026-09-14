@@ -1,0 +1,172 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT g.initial_ms, g.increment_ms, g.moves, g.white_ms, g.black_ms,\n                      g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,\n                      g.white_user_id, w.username AS \"white_name?\",\n                      g.black_user_id, b.username AS \"black_name?\"\n               FROM games g\n               LEFT JOIN users w ON w.id = g.white_user_id\n               LEFT JOIN users b ON b.id = g.black_user_id\n               WHERE g.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "initial_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "initial_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "increment_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "increment_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "moves",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "moves"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "white_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "white_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "black_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "black_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "clock_since_unix_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "clock_since_unix_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "draw_offer",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "draw_offer"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "result",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "result"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "reason",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "reason"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "white_user_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "white_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "white_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "username"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "black_user_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "black_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "black_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "username"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "98383126920fd40b4573a8bd9d4e68b71e852098daeac46e49c9bb5b18c96b51"
+}
