@@ -22,6 +22,21 @@ const isolationHeaders = {
 	'Cross-Origin-Embedder-Policy': 'require-corp'
 };
 
+// Vitest 5.0.0 injects a browser project's `define` values at runtime a
+// second time, taking SvelteKit's already-stringified values literally, so
+// the base path arrives as '""' and `resolve('/')` as '""#/'. In the browser,
+// Vite already provides the defines, so the upstream fix
+// (vitest-dev/vitest#11198) gives browser projects no runtime defines; this
+// does the same after Vitest has resolved the project's config. Remove it
+// once Vitest is past 5.0.0; without it the Nav component tests fail.
+const vitest500BrowserDefines = {
+	name: 'vitest-5.0.0-browser-defines',
+	enforce: 'post' as const,
+	configResolved(config: { test?: { browser?: { enabled?: boolean }; defines?: object } }) {
+		if (config.test?.browser?.enabled) config.test.defines = {};
+	}
+};
+
 export default defineConfig({
 	plugins: [
 		sveltekit({
@@ -50,6 +65,7 @@ export default defineConfig({
 			{
 				extends: './vite.config.ts',
 				server: { proxy: apiProxy },
+				plugins: [vitest500BrowserDefines],
 				test: {
 					name: 'client',
 					browser: {
