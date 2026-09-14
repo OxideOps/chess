@@ -56,6 +56,12 @@ Early scaffolding. What works today:
   themselves, and any checkmate counts as a solution. A wrong move names the right one, with
   "Show solution" to play out the rest. Your first try at each puzzle moves your puzzle rating
   (Glicko-2 against the puzzle's rating), guests included; profiles show it.
+- `server` + `web`: a coach on the analysis board. "Explain this position" asks Claude to talk
+  through Stockfish's best lines in plain language; the server turns the lines into SAN and
+  words and tells the model to explain them, not to invent its own variations. Accounts only,
+  30 fresh explanations per user per hour, answers cached per position. Set
+  `CHESS_ANTHROPIC_API_KEY` to turn it on (`CHESS_COACH_MODEL`, default `claude-opus-5`;
+  `CHESS_COACH_PER_HOUR`); `--fake-coach` gives an offline stand-in for development.
 - `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
   turns on Lichess (a public client: PKCE, no secret, no registration);
   `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register

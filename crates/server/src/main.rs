@@ -64,6 +64,24 @@ struct Args {
     #[arg(long, env = "CHESS_ABANDON_AFTER_SECS", default_value_t = 60)]
     abandon_after_secs: u64,
 
+    /// Anthropic API key: turns on the coach, which explains positions on
+    /// the analysis board in plain language.
+    #[arg(long, env = "CHESS_ANTHROPIC_API_KEY", hide_env_values = true)]
+    anthropic_api_key: Option<String>,
+
+    /// The Claude model the coach uses.
+    #[arg(long, env = "CHESS_COACH_MODEL", default_value = server::coach::DEFAULT_MODEL)]
+    coach_model: String,
+
+    /// Explanations per user per hour (answers from the cache are free).
+    #[arg(long, env = "CHESS_COACH_PER_HOUR", default_value_t = 30)]
+    coach_per_hour: u32,
+
+    /// Turn on an offline stand-in coach that answers from the engine's lines
+    /// alone, without any API. For development and the end-to-end tests.
+    #[arg(long, env = "CHESS_FAKE_COACH", default_value_t = false)]
+    fake_coach: bool,
+
     /// Enable a built-in fake OAuth provider that signs in as whatever name
     /// you type. For development and the end-to-end tests only.
     #[arg(long, env = "CHESS_FAKE_OAUTH", default_value_t = false)]
@@ -169,6 +187,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         public_url: args.public_url.clone(),
         oauth,
         abandon_after: Some(std::time::Duration::from_secs(args.abandon_after_secs)),
+        coach: match (&args.anthropic_api_key, args.fake_coach) {
+            (Some(key), _) => Some(server::coach::CoachConfig {
+                model: args.coach_model.clone(),
+                per_hour: args.coach_per_hour,
+                ..server::coach::CoachConfig::anthropic(key.clone())
+            }),
+            (None, true) => {
+                tracing::warn!("the coach is the offline stand-in (--fake-coach)");
+                Some(server::coach::CoachConfig::fake())
+            }
+            (None, false) => None,
+        },
     };
     let state = match &args.database_url {
         Some(url) => {

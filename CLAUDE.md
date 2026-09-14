@@ -46,7 +46,9 @@ Successor to the archived `OxideOps/chess-v1`.
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
   `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
-  attempt endpoints (only the first try at a puzzle rates),
+  attempt endpoints (only the first try at a puzzle rates), `coach.rs` the coach (Claude
+  Messages API over `reqwest`, prompt built from the engine's lines in SAN, per-user limit,
+  answer cache, `--fake-coach` offline stand-in; tests run against a mock API),
   `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;

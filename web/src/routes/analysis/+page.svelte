@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import Board from '$lib/components/Board.svelte';
+	import CoachPanel from '$lib/components/CoachPanel.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import EnginePanel from '$lib/components/EnginePanel.svelte';
 	import EvalBar from '$lib/components/EvalBar.svelte';
@@ -48,6 +49,7 @@
 	</div>
 	<aside class="sidebar">
 		<EnginePanel {game} {analyser} bind:enabled={engineOn} />
+		<CoachPanel {game} {analyser} />
 		<p class="status">{statusText(game.view)}</p>
 		<MoveList {game} />
 		<Controls {game} bind:orientation />
