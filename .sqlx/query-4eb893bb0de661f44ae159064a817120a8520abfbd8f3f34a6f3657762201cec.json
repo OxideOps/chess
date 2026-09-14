@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE games SET moves = $2, white_ms = $3, black_ms = $4, clock_since_unix_ms = $5,\n                    draw_offer = $6, result = $7, reason = $8, updated_at = now()\n             WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4eb893bb0de661f44ae159064a817120a8520abfbd8f3f34a6f3657762201cec"
+}

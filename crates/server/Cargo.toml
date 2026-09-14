@@ -12,13 +12,17 @@ name = "chess-server"
 path = "src/main.rs"
 
 [dependencies]
+argon2.workspace = true
 axum.workspace = true
+axum-extra.workspace = true
 chess-core.workspace = true
+getrandom.workspace = true
 clap.workspace = true
 futures-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true
+time.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
 tracing.workspace = true

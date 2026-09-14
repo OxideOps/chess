@@ -25,6 +25,9 @@ Early scaffolding. What works today:
   runs the clocks and flags on time, and handles resignation and draw offers. With
   `DATABASE_URL` set, every change is written through to Postgres and games survive restarts
   (clocks included); without it they live in memory.
+- `server`: accounts. Guests are created on demand (no signup needed to play), can upgrade to
+  a username + password (argon2id) and keep their games; sessions are server-side rows behind
+  an `HttpOnly` cookie. The client and the game seats move onto accounts next.
 - `web`: online play (`/online`): pick a time control, create a game, send the invite link;
   the game page shows both clocks counting down, your side only, draw offers, resign, and the
   result; reconnecting resumes; anyone with the plain link spectates.
@@ -73,10 +76,21 @@ cargo run -p server                 # http://127.0.0.1:8080, --bind and --static
 DATABASE_URL=postgres://$USER@localhost/chess cargo run -p server   # …and keep games in Postgres
 ```
 
-The server applies its own migrations (`crates/server/migrations`) on start. The persistence
+The server applies its own migrations (`crates/server/migrations`) on start. The database
 tests need a database they may write to: `createdb chess_test` and
 `TEST_DATABASE_URL=postgres://$USER@localhost/chess_test cargo test -p server`; they skip
 when the variable is unset. (sqlx needs the user in the URL; it doesn't default to yours.)
+
+Queries are checked at compile time (`sqlx::query!`) against the committed `.sqlx` cache, so
+building needs no database. After changing a query or a migration, refresh the cache:
+
+```sh
+sqlx migrate run --source crates/server/migrations -D postgres://$USER@localhost/chess_test
+cargo sqlx prepare --workspace -D postgres://$USER@localhost/chess_test   # commit .sqlx/
+```
+
+(`cargo install sqlx-cli --no-default-features --features postgres,rustls` once.) CI fails if
+the cache is stale.
 
 For online play in development, run the server next to `pnpm dev` (Vite proxies `/api` to
 it): `cargo run -p server` in another terminal, then open http://localhost:5173/online in two

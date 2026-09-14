@@ -13,6 +13,8 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy -p chess-core-wasm --target wasm32-unknown-unknown -- -D warnings
 cargo clippy --workspace --all-targets --features chess-core-wasm/ts -- -D warnings
 TEST_DATABASE_URL=postgres://$USER@localhost/chess_test cargo test --workspace
+sqlx migrate run --source crates/server/migrations -D postgres://$USER@localhost/chess_test \
+  && cargo sqlx prepare --check --workspace -D postgres://$USER@localhost/chess_test
 (cd web && corepack pnpm gen:types && git diff --exit-code -- src/lib/generated \
    && corepack pnpm build:wasm && corepack pnpm format >/dev/null && corepack pnpm lint \
    && corepack pnpm check && corepack pnpm test:unit && corepack pnpm build && corepack pnpm test:e2e)
@@ -27,7 +29,10 @@ Notes:
   `-D warnings`.
 - `git diff --exit-code -- src/lib/generated` fails when Rust types changed but the generated
   TypeScript wasn't committed. Commit the regenerated files; don't hand-edit them.
-- The persistence tests need a Postgres they can write to. The local one is Homebrew's
+- `cargo sqlx prepare --check` fails when a `sqlx::query!` changed but `.sqlx/` wasn't
+  regenerated: run it without `--check` and commit the result. Builds themselves use the
+  cache (`SQLX_OFFLINE=true` in CI; locally either the cache or `DATABASE_URL` works).
+- The database tests need a Postgres they can write to. The local one is Homebrew's
   postgresql@17 with a `chess_test` database (`createdb chess_test` once); the URL must name
   the user (`$USER@localhost`), sqlx connects as "anonymous" otherwise. Without
   `TEST_DATABASE_URL` they print "skipping" and pass, which is not the same as passing.

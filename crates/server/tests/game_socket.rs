@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use chess_core::protocol::{ClientMessage, GameOverReason, GameResult, ServerMessage};
 use futures_util::{SinkExt as _, StreamExt as _};
-use server::games::{CreatedGame, Games};
+use server::games::CreatedGame;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, tungstenite::Message};
 
@@ -14,7 +14,7 @@ type Socket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 async fn serve() -> String {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("404.html"), "shell").unwrap();
-    let app = server::app_with(dir.path(), Games::default());
+    let app = server::app_with(dir.path(), server::AppState::in_memory());
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     tokio::spawn(async move {

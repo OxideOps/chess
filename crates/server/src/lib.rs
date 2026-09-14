@@ -5,6 +5,7 @@
 //! endpoints, [`room`] the rules of a game as the server enforces them.
 //! Games live in memory until persistence arrives.
 
+pub mod auth;
 pub mod db;
 pub mod games;
 pub mod room;
@@ -13,7 +14,7 @@ use std::path::{Path, PathBuf};
 
 use axum::{
     Router,
-    extract::{Request, State},
+    extract::{FromRef, Request, State},
     http::{HeaderName, HeaderValue, StatusCode, Uri, header},
     middleware::{self, Next},
     response::Response,
@@ -28,6 +29,38 @@ use tower_http::{
 /// The name of the file the client build writes for unknown routes.
 pub const FALLBACK_PAGE: &str = "404.html";
 
+/// Everything the handlers share.
+#[derive(Clone)]
+pub struct AppState {
+    pub games: games::Games,
+    /// `None` when running without a database: no accounts.
+    pub auth: Option<auth::Auth>,
+}
+
+impl AppState {
+    /// In-memory games, no accounts.
+    pub fn in_memory() -> AppState {
+        AppState {
+            games: games::Games::default(),
+            auth: None,
+        }
+    }
+
+    /// Games and accounts on a database.
+    pub fn with_db(db: db::Db, secure_cookies: bool) -> AppState {
+        AppState {
+            games: games::Games::with_db(db.clone()),
+            auth: Some(auth::Auth::new(db, secure_cookies)),
+        }
+    }
+}
+
+impl FromRef<AppState> for games::Games {
+    fn from_ref(state: &AppState) -> Self {
+        state.games.clone()
+    }
+}
+
 /// Build the router: the game API plus the static client from `static_dir`
 /// (the output of `pnpm build`).
 ///
@@ -41,11 +74,11 @@ pub const FALLBACK_PAGE: &str = "404.html";
 ///   `SharedArrayBuffer` (and so multi-threaded engines) in browsers.
 /// - `/_app/immutable/*` is content-hashed by the build and cached forever.
 pub fn app(static_dir: impl AsRef<Path>) -> Router {
-    app_with(static_dir, games::Games::default())
+    app_with(static_dir, AppState::in_memory())
 }
 
-/// [`app`] with an explicit game registry (tests share one across requests).
-pub fn app_with(static_dir: impl AsRef<Path>, games: games::Games) -> Router {
+/// [`app`] with explicit state (tests share it across requests).
+pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
     let static_dir = static_dir.as_ref().to_path_buf();
     let fallback = ServeFile::new(static_dir.join(FALLBACK_PAGE));
     let files = ServeDir::new(&static_dir)
@@ -55,7 +88,9 @@ pub fn app_with(static_dir: impl AsRef<Path>, games: games::Games) -> Router {
 
     Router::new()
         .route("/healthz", get(|| async { "ok" }))
-        .merge(games.router())
+        .merge(games::router())
+        .merge(auth::router())
+        .with_state(state)
         .fallback_service(files)
         .layer(middleware::from_fn_with_state(
             static_dir,
