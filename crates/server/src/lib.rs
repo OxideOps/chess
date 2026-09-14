@@ -52,6 +52,9 @@ pub struct Config {
     pub public_url: Option<String>,
     /// OAuth providers users can sign in with.
     pub oauth: Vec<oauth::Provider>,
+    /// How long a disconnected player has to come back; `None` for
+    /// [`games::DEFAULT_ABANDON_AFTER`].
+    pub abandon_after: Option<std::time::Duration>,
 }
 
 /// Everything the handlers share.
@@ -76,7 +79,8 @@ impl AppState {
     /// Games and accounts on a database.
     pub fn with_db(db: db::Db, config: Config) -> AppState {
         AppState {
-            games: games::Games::with_db(db.clone()),
+            games: games::Games::with_db(db.clone())
+                .abandon_after(config.abandon_after.unwrap_or(games::DEFAULT_ABANDON_AFTER)),
             auth: Some(auth::Auth::new(db, config.secure_cookies)),
             config: Arc::new(config),
         }

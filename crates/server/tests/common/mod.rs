@@ -176,6 +176,27 @@ pub async fn recv(socket: &mut Socket) -> ServerMessage {
     }
 }
 
+/// The next message that isn't about presence. `AwayChanged` comes and goes
+/// as players' sockets open and close, which most tests don't care about.
+pub async fn recv_game(socket: &mut Socket) -> ServerMessage {
+    loop {
+        match recv(socket).await {
+            ServerMessage::AwayChanged { .. } => continue,
+            other => return other,
+        }
+    }
+}
+
+/// The next message matching `want`, skipping others.
+pub async fn next(socket: &mut Socket, want: impl Fn(&ServerMessage) -> bool) -> ServerMessage {
+    loop {
+        let msg = recv(socket).await;
+        if want(&msg) {
+            return msg;
+        }
+    }
+}
+
 pub fn mv(uci: &str) -> ClientMessage {
     ClientMessage::Move {
         uci: uci.parse().unwrap(),

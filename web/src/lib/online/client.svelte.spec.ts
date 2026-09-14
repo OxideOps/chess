@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { initChess } from '$lib/chess/wasm';
-import { OnlineGame, type SocketLike } from './client.svelte';
+import { AWAY_NOTICE_DELAY_MS, OnlineGame, type SocketLike } from './client.svelte';
 import type { ServerMessage } from '$lib/generated/ServerMessage';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -59,6 +59,7 @@ describe('OnlineGame', () => {
 
 		socket().say({
 			type: 'sync',
+			away: null,
 			start_fen: START,
 			moves: ['e2e4', 'e7e5'],
 			clocks: clocks(60_000, 58_000),
@@ -82,6 +83,7 @@ describe('OnlineGame', () => {
 		socket().open();
 		socket().say({
 			type: 'sync',
+			away: null,
 			start_fen: START,
 			moves: [],
 			clocks: clocks(60_000, 60_000),
@@ -109,6 +111,7 @@ describe('OnlineGame', () => {
 		socket().open();
 		socket().say({
 			type: 'sync',
+			away: null,
 			start_fen: START,
 			moves: ['e2e4', 'e7e5'],
 			clocks: clocks(30_000, 20_000),
@@ -134,6 +137,7 @@ describe('OnlineGame', () => {
 		socket().open();
 		socket().say({
 			type: 'sync',
+			away: null,
 			start_fen: START,
 			moves: [],
 			clocks: clocks(60_000, 60_000),
@@ -153,5 +157,40 @@ describe('OnlineGame', () => {
 		expect(sockets).toHaveLength(1); // the retry is on a timer
 		online.dispose();
 		expect(online.connection).toBe('closed');
+	});
+
+	it('counts an away player down, after a moment, and forgets them when the game ends', () => {
+		const { online, socket, tick } = setup();
+		socket().open();
+		// Nothing is known before the first Sync: no "Join as Black" for the creator.
+		expect(online.canJoin).toBe(false);
+		socket().say({
+			type: 'sync',
+			away: { side: 'black', ms: 60_000 },
+			start_fen: START,
+			moves: ['e2e4', 'e7e5'],
+			clocks: clocks(60_000, 60_000),
+			your_color: 'white',
+			ended: null,
+			draw_offer: null,
+			players: { white: { username: null }, black: { username: null } }
+		});
+		// A countdown this fresh could be a reload: not mentioned yet.
+		expect(online.away).toBeNull();
+		tick(AWAY_NOTICE_DELAY_MS);
+		expect(online.away).toEqual({ side: 'black', ms: 60_000 - AWAY_NOTICE_DELAY_MS });
+		tick(10_000);
+		expect(online.away?.ms).toBe(48_000);
+
+		socket().say({ type: 'away_changed', away: null });
+		expect(online.away).toBeNull();
+		socket().say({ type: 'away_changed', away: { side: 'black', ms: 60_000 } });
+		tick(AWAY_NOTICE_DELAY_MS);
+		expect(online.away?.side).toBe('black');
+
+		socket().say({ type: 'game_over', result: 'white_wins', reason: 'abandoned' });
+		expect(online.away).toBeNull();
+		expect(online.ended).toEqual({ result: 'white_wins', reason: 'abandoned' });
+		online.dispose();
 	});
 });

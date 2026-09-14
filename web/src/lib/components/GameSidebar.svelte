@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import MoveList from '$lib/components/MoveList.svelte';
 	import { session } from '$lib/auth/session.svelte';
-	import { gameEndText, sideName, statusText } from '$lib/chess/status';
+	import { awayText, gameEndText, sideName, statusText } from '$lib/chess/status';
 	import type { OnlineGame } from '$lib/online/client.svelte';
 	import { inviteLink } from '$lib/online/invites';
 	import { withNext } from '$lib/auth/next';
@@ -70,6 +70,11 @@
 			{statusText(game.view)}
 		{/if}
 	</p>
+	{#if online.away}
+		<p class="status away" role="status" data-testid="away">
+			{awayText(online.away, online.yourColor, game.view.plyCount)}
+		</p>
+	{/if}
 	{#if online.rejection}
 		<p class="rejection" role="alert">{online.rejection}</p>
 	{/if}
@@ -141,6 +146,12 @@
 	.connection {
 		color: var(--text-muted);
 		font-weight: 400;
+	}
+
+	.away {
+		border-color: var(--warning);
+		font-weight: 400;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.rejection {

@@ -54,6 +54,38 @@ test('create a game, invite an opponent, play, resign', async ({ browser }) => {
 	await expect(watcher.getByRole('button', { name: 'Join as Black' })).toHaveCount(0);
 });
 
+test('an opponent who leaves gets a countdown, and coming back cancels it', async ({ browser }) => {
+	const white = await (await browser.newContext()).newPage();
+	await white.goto('/online');
+	await white.getByRole('button', { name: 'Create game' }).click();
+	await expect(white).toHaveURL(/\/game\/[0-9a-f-]+$/);
+	const invite = await white.getByTestId('invite-link').inputValue();
+
+	const blackContext = await browser.newContext();
+	let black = await blackContext.newPage();
+	await black.goto(invite);
+	await black.getByRole('button', { name: 'Join as Black' }).click();
+	await expect(black.getByTestId('game-status')).toHaveText('Waiting for your opponent');
+	await sq(white, 'e2').click();
+	await sq(white, 'e4').click();
+	await sq(black, 'e7').click();
+	await sq(black, 'e5').click();
+	await expect(white.getByTestId('game-status')).toHaveText('Your move');
+	await expect(white.getByTestId('away')).toHaveCount(0);
+
+	// Black closes the tab: after a moment White is told, with the time left.
+	await black.close();
+	await expect(white.getByTestId('away')).toHaveText(
+		/^Your opponent left\. Unless they come back, you win in \d+ s\.$/
+	);
+
+	// Black opens the game again (same browser, same session): the notice goes.
+	black = await blackContext.newPage();
+	await black.goto(invite);
+	await expect(black.getByTestId('game-status')).toHaveText('Waiting for your opponent');
+	await expect(white.getByTestId('away')).toHaveCount(0);
+});
+
 function sq(page: Page, name: string) {
 	return page.locator(`[data-square="${name}"]`);
 }

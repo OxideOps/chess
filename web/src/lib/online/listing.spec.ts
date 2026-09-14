@@ -30,6 +30,14 @@ describe('listing helpers', () => {
 			outcome({ ...base, your_color: 'black', ended: { result: 'black_wins', reason: 'timeout' } })
 		).toBe('won');
 		expect(outcome({ ...base, ended: { result: 'draw', reason: 'agreement' } })).toBe('draw');
+		expect(outcome({ ...base, ended: { result: 'aborted', reason: 'abandoned' } })).toBe('aborted');
+		expect(
+			outcome({
+				...base,
+				your_color: 'black',
+				ended: { result: 'white_wins', reason: 'abandoned' }
+			})
+		).toBe('lost');
 	});
 
 	it('formats how long ago', () => {

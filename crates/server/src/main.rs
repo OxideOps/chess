@@ -56,6 +56,11 @@ struct Args {
     #[arg(long, env = "CHESS_GOOGLE_CLIENT_SECRET", hide_env_values = true)]
     google_client_secret: Option<String>,
 
+    /// Seconds a disconnected player has to come back before their game is
+    /// aborted (nobody had moved yet) or lost by abandonment.
+    #[arg(long, env = "CHESS_ABANDON_AFTER_SECS", default_value_t = 60)]
+    abandon_after_secs: u64,
+
     /// Enable a built-in fake OAuth provider that signs in as whatever name
     /// you type. For development and the end-to-end tests only.
     #[arg(long, env = "CHESS_FAKE_OAUTH", default_value_t = false)]
@@ -96,6 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         allowed_origins: args.allowed_origins.clone(),
         public_url: args.public_url.clone(),
         oauth,
+        abandon_after: Some(std::time::Duration::from_secs(args.abandon_after_secs)),
     };
     let state = match &args.database_url {
         Some(url) => {
