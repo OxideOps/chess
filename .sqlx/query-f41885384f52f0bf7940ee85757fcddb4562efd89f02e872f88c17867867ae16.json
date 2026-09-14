@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT g.id, g.moves, g.result, g.reason,\n                      to_char(g.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS \"updated_at!\",\n                      g.white_user_id, w.username AS \"white_name?\",\n                      g.black_user_id, b.username AS \"black_name?\"\n               FROM games g\n               LEFT JOIN users w ON w.id = g.white_user_id\n               LEFT JOIN users b ON b.id = g.black_user_id\n               WHERE g.white_user_id = $1 OR g.black_user_id = $1\n               ORDER BY g.updated_at DESC\n               LIMIT 100",
+  "query": "SELECT g.id AS \"id!\", g.moves AS \"moves!\", g.result, g.reason,\n                      to_char(g.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS \"updated_at!\",\n                      g.white_user_id, w.username AS \"white_name?\",\n                      g.black_user_id, b.username AS \"black_name?\"\n               FROM games g\n               LEFT JOIN users w ON w.id = g.white_user_id\n               LEFT JOIN users b ON b.id = g.black_user_id\n               WHERE g.white_user_id = $1 OR g.black_user_id = $1\n               ORDER BY g.updated_at DESC\n               LIMIT 100",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id!",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -16,7 +16,7 @@
       },
       {
         "ordinal": 1,
-        "name": "moves",
+        "name": "moves!",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -115,5 +115,5 @@
       true
     ]
   },
-  "hash": "192dd40d7e260a5844beb7c80cac9994cc901a4e1f12207711eff42433dc3a6d"
+  "hash": "f41885384f52f0bf7940ee85757fcddb4562efd89f02e872f88c17867867ae16"
 }

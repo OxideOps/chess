@@ -1,13 +1,26 @@
 <script lang="ts">
+	import { sideName } from '$lib/chess/status';
 	import { formatClock } from '$lib/online/clock';
+	import type { Side } from '$lib/generated/Side';
 
-	// One side's remaining time. `active` while that side's clock is running.
-	let { ms, active = false, label }: { ms: number; active?: boolean; label: string } = $props();
+	// One side's remaining time and who is playing it. `active` while that
+	// side's clock is running.
+	interface Props {
+		ms: number;
+		side: Side;
+		/** The player's display name; `null` while the seat is open. */
+		name?: string | null;
+		active?: boolean;
+	}
+	let { ms, side, name = null, active = false }: Props = $props();
 	const low = $derived(ms < 20_000);
 </script>
 
-<div class="clock" class:active class:low aria-label="{label} clock">
-	<span class="label">{label}</span>
+<div class="clock" class:active class:low aria-label="{sideName(side)} clock">
+	<span class="who">
+		<span class="name" class:open={name === null}>{name ?? 'Open seat'}</span>
+		<span class="side">{sideName(side)}</span>
+	</span>
 	<span class="time">{formatClock(ms)}</span>
 </div>
 
@@ -32,9 +45,29 @@
 		border-color: #e06c75;
 	}
 
-	.label {
+	.who {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		min-width: 0;
+	}
+
+	.name {
+		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.name.open {
+		font-weight: 400;
+		font-style: italic;
 		color: var(--text-muted);
-		font-size: 0.85rem;
+	}
+
+	.side {
+		color: var(--text-muted);
+		font-size: 0.75rem;
 	}
 
 	.time {

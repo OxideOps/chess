@@ -14,14 +14,21 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   `GameView` snapshot; `squares.ts` is board geometry; `status.ts` renders the status line.
 - `src/lib/engine/` — `worker.ts` (Stockfish in a Web Worker) and `analysis.svelte.ts`
   (`Analyser`: request a FEN, read `lines`; injectable engine for tests).
+- `src/lib/auth/` — `session.svelte.ts` is the `Session` store (`session.user`, loaded once
+  by the root layout from `GET /api/me`; `ensure()` makes a guest on demand; `signup`,
+  `login`, `logout`; injectable fetch for tests). `next.ts` validates `?next=` return paths
+  and types them as `ResolvedPathname`, which is what the `no-navigation-without-resolve`
+  lint rule accepts for an `href` or `goto()` built from a string.
 - `src/lib/online/` — `client.svelte.ts` (`OnlineGame`: the server's game mirrored on the
   client over the WebSocket; injectable socket and clock for tests), `clock.ts` (formatting,
-  time controls), `invites.ts` (the opponent's token in sessionStorage). Moves are applied
-  locally first (same rules as the server) and sent; a `Rejected` or a gap in plies closes
-  the socket, and the reconnect's `Sync` puts things right.
+  time controls), `invites.ts` (the game link), `listing.ts` (pure helpers for the my-games
+  rows). Moves are applied locally first (same rules as the server) and sent; a `Rejected`
+  or a gap in plies closes the socket, and the reconnect's `Sync` puts things right.
 - `src/lib/components/` — `Board` (props `playAs` and `onmove` for online play),
   `PromotionPicker`, `EvalBar`, `EnginePanel`, `ImportPanel`, `MoveList`, `Controls`,
-  `Clock`, `Nav`. Each has its own scoped `<style>`; shared
+  `Clock` (side + player name), `GameSidebar` (everything beside an online board: status,
+  invite, join, draw offers, controls), `AuthForm` (signup and login), `Nav` (links plus the
+  account area). Each has its own scoped `<style>`; shared
   layout classes (`.sidebar`, `.status`) and the colour variables are in `src/app.css`.
 - `src/lib/generated/` — TypeScript types generated from Rust by ts-rs. Never edit; run
   `corepack pnpm gen:types` after changing Rust types and commit the output.

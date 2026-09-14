@@ -79,7 +79,7 @@ impl Db {
     /// The games a user sits in, newest activity first.
     pub async fn games_of(&self, user_id: &str) -> Result<Vec<GameListing>, sqlx::Error> {
         let rows = sqlx::query!(
-            r#"SELECT g.id, g.moves, g.result, g.reason,
+            r#"SELECT g.id AS "id!", g.moves AS "moves!", g.result, g.reason,
                       to_char(g.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "updated_at!",
                       g.white_user_id, w.username AS "white_name?",
                       g.black_user_id, b.username AS "black_name?"
@@ -102,6 +102,11 @@ impl Db {
                     }),
                     _ => None,
                 };
+                let your_color = if r.white_user_id.as_deref() == Some(user_id) {
+                    Color::White
+                } else {
+                    Color::Black
+                };
                 Ok(GameListing {
                     id: r.id,
                     players: chess_core::protocol::Players {
@@ -112,6 +117,7 @@ impl Db {
                             username: r.black_name,
                         }),
                     },
+                    your_color,
                     ended,
                     moves: r.moves.split_whitespace().count() as u32,
                     updated_at: r.updated_at,
@@ -146,7 +152,11 @@ impl Db {
 
     pub async fn load(&self, id: &str) -> Result<Option<StoredGame>, sqlx::Error> {
         let Some(row) = sqlx::query!(
-            r#"SELECT g.initial_ms, g.increment_ms, g.moves, g.white_ms, g.black_ms,
+            // The `!`s pin the NOT NULL columns: sqlx infers nullability from
+            // the query plan, and with two LEFT JOINs the plan (and so the
+            // inference) changes with the table size.
+            r#"SELECT g.initial_ms AS "initial_ms!", g.increment_ms AS "increment_ms!",
+                      g.moves AS "moves!", g.white_ms AS "white_ms!", g.black_ms AS "black_ms!",
                       g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,
                       g.white_user_id, w.username AS "white_name?",
                       g.black_user_id, b.username AS "black_name?"
