@@ -9,7 +9,8 @@ Successor to the archived `OxideOps/chess-v1`.
 
 - `crates/chess-core` — rules (via `shakmaty`), `Game` history/navigation, PGN reader, UCI
   engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
-  counts), and the client↔server `protocol` types. No UI, no I/O, must compile
+  counts), the lesson drills and their win/loss rules (`lesson.rs`), and the client↔server
+  `protocol` types. No UI, no I/O, must compile
   for `wasm32`. Everything chess-related that both the client and the server need goes here,
   with tests.
 - `crates/chess-core-wasm` — wasm-bindgen wrapper around `chess-core` for the client; the only

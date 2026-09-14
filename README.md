@@ -62,6 +62,12 @@ Early scaffolding. What works today:
   30 fresh explanations per user per hour, answers cached per position. Set
   `CHESS_ANTHROPIC_API_KEY` to turn it on (`CHESS_COACH_MODEL`, default `claude-opus-5`;
   `CHESS_COACH_PER_HOUR`); `--fake-coach` gives an offline stand-in for development.
+- `web`: lessons (`/lessons`): six short drills against Stockfish from set positions, easiest
+  first: a back-rank mate in one, mating with two rooks, with king and queen and with king and
+  rook, winning a king and pawn ending, and holding one to a draw. Each has a move budget and
+  a short explanation of the technique; chess-core judges when a drill is won or lost
+  (stalemate, a lost queen, a promoted pawn, running out of moves). Completed lessons are
+  remembered in the browser.
 - `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
   turns on Lichess (a public client: PKCE, no secret, no registration);
   `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register
@@ -94,11 +100,9 @@ Early scaffolding. What works today:
 3. ~~Server (axum + Postgres) that owns games: validation, clocks, reconnects and abandonment,
    persistence~~
 4. ~~Accounts and sessions: guests, passwords, Lichess and Google sign-in~~
-5. [Ratings, puzzles, lessons, AI coach](https://github.com/OxideOps/chess/issues/7):
-   [ratings](https://github.com/OxideOps/chess/issues/38), then
-   [puzzles](https://github.com/OxideOps/chess/issues/39) (Lichess's CC0 puzzle database), then
-   [lessons and an AI coach](https://github.com/OxideOps/chess/issues/40) that explains engine
-   analysis in plain language
+5. ~~Ratings, puzzles, lessons, AI coach~~: Glicko-2 ratings, puzzles from Lichess's CC0
+   database, drills against Stockfish, and a coach that explains engine analysis in plain
+   language
 
 Open work is tracked in [GitHub issues](https://github.com/OxideOps/chess/issues).
 

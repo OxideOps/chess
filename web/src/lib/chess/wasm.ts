@@ -4,6 +4,8 @@
 // wasm-bindgen types JSON-shaped returns as `any`; the wrappers below give
 // them the ts-rs generated types so nothing else needs a cast.
 import init, * as raw from '$lib/wasm/chess_core';
+import type { Drill } from '$lib/generated/Drill';
+import type { DrillStatus } from '$lib/generated/DrillStatus';
 import type { EngineMessage } from '$lib/generated/EngineMessage';
 import type { EngineScore } from '$lib/generated/EngineScore';
 import type { PuzzleVerdict } from '$lib/generated/PuzzleVerdict';
@@ -47,6 +49,16 @@ export function formatScore(score: EngineScore): string {
  */
 export function judgePuzzle(fen: string, moves: string[], played: string[]): PuzzleVerdict {
 	return raw.judgePuzzle(fen, moves, played) as PuzzleVerdict;
+}
+
+/** Every lesson drill, easiest first. */
+export function drills(): Drill[] {
+	return raw.drills() as Drill[];
+}
+
+/** Where drill `id` stands after `moves` (UCI, both sides, from its FEN). */
+export function assessDrill(id: string, moves: string[]): DrillStatus {
+	return raw.assessDrill(id, moves) as DrillStatus;
 }
 
 /** A principal variation as numbered SAN movetext from the position `fen`. */

@@ -70,6 +70,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - Coach: start the server with `--fake-coach` (Playwright does) or a real
   `CHESS_ANTHROPIC_API_KEY`; on `/analysis` a signed-in account gets "Explain this position"
   once the engine reaches depth 10, guests a sign-up hint, and nothing shows without a coach.
+- Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
+  then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
+  "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
 - Puzzles (`/puzzles`) need puzzles in the database: `cargo run -p server -- import-puzzles
   crates/server/tests/fixtures/puzzles.csv` (Playwright does this at start). The status line
   reads "Find the best move for White/Black.", then "Correct! Find the next move.", "Solved!"
