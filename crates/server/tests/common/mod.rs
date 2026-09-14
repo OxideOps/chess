@@ -106,6 +106,21 @@ pub async fn http_with(
     }
 }
 
+/// `GET /api/me/games` for `session`, retried until `want` holds (or 5 s
+/// pass, then the last body is returned for the assertion to show). The
+/// server broadcasts a game's end before it has finished writing it.
+pub async fn games_list_until(base: &str, session: &str, want: impl Fn(&str) -> bool) -> String {
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    loop {
+        let r = http(base, "GET", "/api/me/games", Some(session), "").await;
+        assert_eq!(r.status, 200, "{}", r.body);
+        if want(&r.body) || tokio::time::Instant::now() >= deadline {
+            return r.body;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+}
+
 /// A fresh guest's session id.
 pub async fn guest(base: &str) -> String {
     let r = http(base, "POST", "/api/auth/guest", None, "").await;
