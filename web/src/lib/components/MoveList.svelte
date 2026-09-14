@@ -81,6 +81,7 @@
 	}
 
 	.move {
+		min-height: min(var(--tap), 40px);
 		padding: 0.25rem 0.5rem;
 		border: none;
 		border-radius: 4px;

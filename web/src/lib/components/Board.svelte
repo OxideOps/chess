@@ -215,8 +215,10 @@
 		position: relative;
 		display: grid;
 		grid-template-columns: repeat(8, 1fr);
-		width: min(92vw, 640px);
+		width: var(--board-size, min(92vw, 640px));
 		aspect-ratio: 1;
+		/* Taps are moves: no double-tap zoom, no delay. */
+		touch-action: manipulation;
 		user-select: none;
 		-webkit-user-select: none;
 		outline: none;
@@ -234,6 +236,7 @@
 	.square {
 		position: relative;
 		aspect-ratio: 1;
+		-webkit-tap-highlight-color: transparent;
 		display: flex;
 		align-items: center;
 		justify-content: center;

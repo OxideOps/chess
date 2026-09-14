@@ -45,7 +45,8 @@ Notes:
   and `corepack pnpm browsers` once (Chromium for Vitest browser mode and Playwright). `pnpm`
   is not on PATH here; go through `corepack`. `test:e2e` builds the site, starts the Rust
   server on the `chess_test` database (online play needs accounts) and runs the real
-  Stockfish, so it takes ~30 s.
+  Stockfish, so it takes ~30 s. It has two Playwright projects: `desktop` (everything but
+  `phone.e2e.ts`) and `phone` (a Pixel 7 sized touch screen, `phone.e2e.ts` only).
 - If `test:e2e` fails with 404s for `_app/immutable/...`, a stale preview server is holding
   the port (it shows up as `vite.js preview`, not `vite preview`): `lsof -ti :4173 | xargs kill`.
 - Report the outcome plainly: which steps passed, and the first error verbatim if one failed.

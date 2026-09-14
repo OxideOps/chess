@@ -36,6 +36,7 @@
 	}
 
 	button {
+		min-height: var(--tap);
 		flex: 1;
 		padding: 0.45rem 0.6rem;
 		border: 1px solid var(--panel-border);

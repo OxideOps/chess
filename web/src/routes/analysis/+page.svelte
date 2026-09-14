@@ -41,7 +41,7 @@
 	<title>Analysis · Chess</title>
 </svelte:head>
 
-<div class="analysis">
+<div class="analysis board-page">
 	<div class="board-with-bar">
 		<EvalBar {score} {orientation} />
 		<Board {game} {orientation} analysis {arrows} />
@@ -57,10 +57,8 @@
 
 <style>
 	.analysis {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1.5rem;
-		align-items: flex-start;
+		/* The eval bar and its gap sit beside the board. */
+		--board-beside: 2rem;
 	}
 
 	.board-with-bar {

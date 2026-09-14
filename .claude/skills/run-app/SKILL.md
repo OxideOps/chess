@@ -67,6 +67,13 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 
+- Phone: `corepack pnpm exec playwright test --project phone` runs the layout checks at Pixel
+  7 size. To look, a Playwright script with `devices['Pixel 7']` and `page.screenshot` beats
+  resizing the developer's Chrome window.
+- Offline: after one visit `/`, `/analysis` and a game link load with the network off (the
+  `pwa.e2e.ts` test does exactly this). A stale page after a rebuild is the service worker
+  keeping the old version until the tabs close; see the `svelte-ui` skill.
+
 With the Chrome tools instead: open the URL in a new tab, screenshot, check the console.
 Click coordinates are in *screenshot* pixels, not DOM pixels: multiply DOM coordinates by
 `screenshotWidth / window.innerWidth` (~0.59 on the developer's 2560px window). The

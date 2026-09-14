@@ -11,6 +11,24 @@
 	--highlight-last-move: rgba(155, 199, 0, 0.41);
 	--highlight-selected: rgba(20, 85, 30, 0.5);
 	--highlight-destination: rgba(0, 0, 0, 0.22);
+
+	/* Space around the page. */
+	--gutter: 1.25rem;
+	--nav-height: 2.75rem;
+	/* Minimum height of things people tap; only enforced on touch screens. */
+	--tap: 0px;
+}
+
+@media (max-width: 700px) {
+	:root {
+		--gutter: 0.75rem;
+	}
+}
+
+@media (pointer: coarse) {
+	:root {
+		--tap: 44px;
+	}
 }
 
 * {
@@ -30,16 +48,50 @@ body {
 }
 
 main {
-	padding: 1.25rem;
+	padding: var(--gutter);
 }
 
-/* Board pages: a board on the left, a column of panels on the right. */
+/*
+ * Pages built around a board. The board is as large as it can be without
+ * being wider than the screen or taller than what's left under the nav,
+ * capped at 640px. Pages say how much room sits beside the board
+ * (`--board-beside`, e.g. the eval bar) and above and below it
+ * (`--board-around`, e.g. clocks). Declared here, on the page wrapper, so
+ * those two resolve per page; the board and its column read `--board-size`.
+ */
+.board-page {
+	--board-size: min(
+		640px,
+		100vw - 2 * var(--gutter) - var(--board-beside, 0px),
+		max(18rem, 100dvh - var(--nav-height) - 2 * var(--gutter) - var(--board-around, 0px))
+	);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem;
+	align-items: flex-start;
+}
+
+/* Board pages: a board on the left, a column of panels on the right; on
+   phones the column goes under the board and takes the full width. */
 .sidebar {
 	flex: 1 1 260px;
 	max-width: 420px;
+	/* Let long unbreakable content (engine lines) truncate instead of widening the page. */
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+}
+
+@media (max-width: 700px) {
+	.board-page {
+		gap: 1rem;
+	}
+
+	.sidebar {
+		flex-basis: 100%;
+		max-width: none;
+	}
 }
 
 .status {

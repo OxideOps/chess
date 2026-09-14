@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { session } from '$lib/auth/session.svelte';
 	import { safeNext, withNext } from '$lib/auth/next';
+	import { installer } from '$lib/pwa/install.svelte';
 
 	const links = [
 		{ href: resolve('/'), label: 'Play' },
@@ -42,6 +43,9 @@
 		</a>
 	{/each}
 	<span class="account">
+		{#if installer.available}
+			<button type="button" onclick={() => installer.install()}>Install app</button>
+		{/if}
 		{#if session.user}
 			<a
 				href={resolve('/games')}
@@ -65,9 +69,11 @@
 <style>
 	#navbar {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 1.25rem;
-		padding: 0.6rem 1.25rem;
+		gap: 0.4rem 1.25rem;
+		min-height: var(--nav-height);
+		padding: 0.5rem var(--gutter);
 		background: var(--panel);
 		border-bottom: 1px solid var(--panel-border);
 	}
@@ -78,8 +84,21 @@
 	}
 
 	a {
+		display: inline-flex;
+		align-items: center;
+		min-height: var(--tap);
 		color: var(--text-muted);
 		text-decoration: none;
+	}
+
+	@media (max-width: 700px) {
+		#navbar {
+			column-gap: 0.9rem;
+		}
+
+		.account {
+			gap: 0.75rem;
+		}
 	}
 
 	a:hover,
@@ -105,6 +124,7 @@
 	}
 
 	button {
+		min-height: var(--tap);
 		padding: 0.3rem 0.7rem;
 		border: 1px solid var(--panel-border);
 		border-radius: 6px;

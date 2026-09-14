@@ -22,7 +22,10 @@ Successor to the archived `OxideOps/chess-v1`.
   synchronously. Stockfish (GPL, `web/static/engine`, never linked in, fetched by
   `scripts/fetch-engine.mjs` with pinned SHA-256s rather than committed) runs in a Web Worker
   behind `src/lib/engine/analysis.svelte.ts`; the multi-threaded build when the page is
-  cross-origin isolated, the single-threaded one otherwise.
+  cross-origin isolated, the single-threaded one otherwise (and as a fallback if the threaded
+  one fails to start). Phones get the same site: `.board-page` in `app.css` sizes the board
+  to the viewport, `--tap` sizes touch targets. `src/service-worker.ts` makes it an offline
+  PWA (manifest and icons in `web/static`); it never touches `/api`.
 - `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
   prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
   isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:

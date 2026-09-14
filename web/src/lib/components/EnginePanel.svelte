@@ -122,7 +122,9 @@
 	}
 
 	.lines button {
+		min-height: var(--tap);
 		display: flex;
+		align-items: center;
 		gap: 0.6rem;
 		width: 100%;
 		padding: 0.4rem 0.8rem;
@@ -146,6 +148,7 @@
 	}
 
 	.moves {
+		min-width: 0;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;

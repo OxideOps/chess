@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 // End-to-end tests run against the real Rust server serving the production
 // build, so the API, the game sockets and the 404 fallback are all exercised.
@@ -18,5 +18,10 @@ export default defineConfig({
 	},
 	testDir: 'e2e',
 	testMatch: '**/*.e2e.{ts,js}',
-	use: { baseURL: 'http://127.0.0.1:4173' }
+	use: { baseURL: 'http://127.0.0.1:4173' },
+	projects: [
+		{ name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: '**/phone.e2e.ts' },
+		// A phone-sized touch screen (Chromium with Pixel 7 metrics).
+		{ name: 'phone', use: { ...devices['Pixel 7'] }, testMatch: '**/phone.e2e.ts' }
+	]
 });
