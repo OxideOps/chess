@@ -98,3 +98,64 @@ async fn a_restarted_server_serves_the_same_game() {
         }
     ));
 }
+
+/// Every way a game can end must fit in its row. The matches make adding a
+/// result or reason without revisiting the schema a compile error here.
+#[tokio::test]
+async fn every_result_and_reason_can_be_stored() {
+    use GameOverReason::*;
+    use GameResult::*;
+    use chess_core::protocol::GameEnd;
+    use server::room::{Snapshot, TimeControl};
+
+    let Some(db) = db().await else { return };
+    let results = [WhiteWins, BlackWins, Draw, Aborted];
+    for r in &results {
+        match r {
+            WhiteWins | BlackWins | Draw | Aborted => {}
+        }
+    }
+    let reasons = [
+        Checkmate,
+        Resignation,
+        Timeout,
+        Stalemate,
+        InsufficientMaterial,
+        Agreement,
+        Repetition,
+        FiftyMoves,
+        Abandoned,
+    ];
+    for r in &reasons {
+        match r {
+            Checkmate | Resignation | Timeout | Stalemate | InsufficientMaterial | Agreement
+            | Repetition | FiftyMoves | Abandoned => {}
+        }
+    }
+    let ends = results
+        .iter()
+        .map(|&result| (result, Abandoned))
+        .chain(reasons.iter().map(|&reason| (Draw, reason)));
+    for (result, reason) in ends {
+        let id = uuid::Uuid::new_v4().to_string();
+        db.insert(&id, &[None, None], TimeControl::default())
+            .await
+            .unwrap();
+        let end = GameEnd { result, reason };
+        let snapshot = Snapshot {
+            initial_ms: 300_000,
+            increment_ms: 0,
+            moves: vec![],
+            white_ms: 300_000,
+            black_ms: 300_000,
+            clock_running_for_ms: None,
+            draw_offer: None,
+            ended: Some(end),
+        };
+        db.save_snapshot(&id, &snapshot)
+            .await
+            .unwrap_or_else(|e| panic!("{end:?}: {e}"));
+        let stored = db.load(&id).await.unwrap().unwrap();
+        assert_eq!(stored.snapshot.ended, Some(end));
+    }
+}
