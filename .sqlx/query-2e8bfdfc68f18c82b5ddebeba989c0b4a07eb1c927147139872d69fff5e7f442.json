@@ -1,0 +1,148 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT white_token, black_token, initial_ms, increment_ms, moves, white_ms, black_ms,\n                    clock_since_unix_ms, draw_offer, result, reason\n             FROM games WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "white_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "white_token"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "black_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "black_token"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "initial_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "initial_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "increment_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "increment_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "moves",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "moves"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "white_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "white_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "black_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "black_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "clock_since_unix_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "clock_since_unix_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "draw_offer",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "draw_offer"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "result",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "result"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "reason",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "reason"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "2e8bfdfc68f18c82b5ddebeba989c0b4a07eb1c927147139872d69fff5e7f442"
+}

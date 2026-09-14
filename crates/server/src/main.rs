@@ -15,9 +15,14 @@ struct Args {
     #[arg(long, env = "CHESS_BIND", default_value = "127.0.0.1:8080")]
     bind: SocketAddr,
 
-    /// Postgres connection URL. Without it games live in memory only.
+    /// Postgres connection URL. Without it games live in memory only and
+    /// there are no accounts.
     #[arg(long, env = "DATABASE_URL")]
     database_url: Option<String>,
+
+    /// Mark the session cookie `Secure`. Turn on when serving over https.
+    #[arg(long, env = "CHESS_SECURE_COOKIES", default_value_t = false)]
+    secure_cookies: bool,
 }
 
 #[tokio::main]
@@ -37,15 +42,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into());
     }
 
-    let games = match &args.database_url {
+    let state = match &args.database_url {
         Some(url) => {
             let db = server::db::Db::connect(url).await?;
-            tracing::info!("games are persisted to Postgres");
-            server::games::Games::with_db(db)
+            tracing::info!("games and accounts are in Postgres");
+            server::AppState::with_db(db, args.secure_cookies)
         }
         None => {
-            tracing::warn!("no DATABASE_URL: games are kept in memory only");
-            server::games::Games::default()
+            tracing::warn!("no DATABASE_URL: games are kept in memory only, no accounts");
+            server::AppState::in_memory()
         }
     };
 
@@ -55,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         args.static_dir.display(),
         args.bind
     );
-    axum::serve(listener, server::app_with(&args.static_dir, games))
+    axum::serve(listener, server::app_with(&args.static_dir, state))
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;
             tracing::info!("shutting down");

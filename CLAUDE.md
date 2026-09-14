@@ -27,8 +27,12 @@ Successor to the archived `OxideOps/chess-v1`.
   `room.rs` is the pure game state (rules via `chess-core`, clocks, draw offers, timeouts;
   takes `now` as a parameter so it is unit-tested without a runtime), `games.rs` the
   in-memory registry and the `/api/games` HTTP + WebSocket endpoints (one secret token per
-  side until accounts exist), `db.rs` the Postgres layer (sqlx 0.9, runtime queries, one row
-  per game holding the room's `Snapshot`; migrations embedded and applied on start). The
+  side until phase B of #6), `auth.rs` users + sessions (guests, argon2id passwords, DB
+  sessions in an `HttpOnly` cookie; `CurrentUser`/`RequireUser` extractors), `db.rs` the
+  Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
+  cache, so builds need no database; one row per game holding the room's `Snapshot`;
+  migrations embedded and applied on start). After changing SQL or migrations run
+  `cargo sqlx prepare --workspace -D $TEST_DATABASE_URL` (migrate first) and commit `.sqlx`. The
   registry writes through after every change and loads games not in memory on first access;
   `DATABASE_URL` is optional. Static tests use `tower::ServiceExt::oneshot`; socket tests run
   a real listener with `tokio-tungstenite`; persistence tests need `TEST_DATABASE_URL`

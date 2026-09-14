@@ -11,7 +11,7 @@ use chess_core::{
     Color,
     protocol::{GameEnd, GameOverReason, GameResult},
 };
-use sqlx::{PgPool, Row as _, postgres::PgPoolOptions};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::room::{Snapshot, TimeControl};
 
@@ -38,21 +38,25 @@ impl Db {
         Ok(Db { pool })
     }
 
+    pub(crate) fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+
     pub async fn insert(
         &self,
         id: &str,
         tokens: &[String; 2],
         time_control: TimeControl,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
+        sqlx::query!(
             "INSERT INTO games (id, white_token, black_token, initial_ms, increment_ms, white_ms, black_ms)
              VALUES ($1, $2, $3, $4, $5, $4, $4)",
+            id,
+            tokens[0],
+            tokens[1],
+            time_control.initial.as_millis() as i64,
+            time_control.increment.as_millis() as i64,
         )
-        .bind(id)
-        .bind(&tokens[0])
-        .bind(&tokens[1])
-        .bind(time_control.initial.as_millis() as i64)
-        .bind(time_control.increment.as_millis() as i64)
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -64,49 +68,46 @@ impl Db {
         let clock_since = snapshot
             .clock_running_for_ms
             .map(|running| unix_ms_now() as i64 - running as i64);
-        sqlx::query(
+        sqlx::query!(
             "UPDATE games SET moves = $2, white_ms = $3, black_ms = $4, clock_since_unix_ms = $5,
                     draw_offer = $6, result = $7, reason = $8, updated_at = now()
              WHERE id = $1",
+            id,
+            snapshot.moves.join(" "),
+            snapshot.white_ms as i64,
+            snapshot.black_ms as i64,
+            clock_since,
+            snapshot.draw_offer.map(color_str),
+            snapshot.ended.map(|e| result_str(e.result)),
+            snapshot.ended.map(|e| reason_str(e.reason)),
         )
-        .bind(id)
-        .bind(snapshot.moves.join(" "))
-        .bind(snapshot.white_ms as i64)
-        .bind(snapshot.black_ms as i64)
-        .bind(clock_since)
-        .bind(snapshot.draw_offer.map(color_str))
-        .bind(snapshot.ended.map(|e| result_str(e.result)))
-        .bind(snapshot.ended.map(|e| reason_str(e.reason)))
         .execute(&self.pool)
         .await?;
         Ok(())
     }
 
     pub async fn load(&self, id: &str) -> Result<Option<StoredGame>, sqlx::Error> {
-        let Some(row) = sqlx::query(
+        let Some(row) = sqlx::query!(
             "SELECT white_token, black_token, initial_ms, increment_ms, moves, white_ms, black_ms,
                     clock_since_unix_ms, draw_offer, result, reason
              FROM games WHERE id = $1",
+            id
         )
-        .bind(id)
         .fetch_optional(&self.pool)
         .await?
         else {
             return Ok(None);
         };
-        let moves: String = row.get("moves");
-        let clock_since: Option<i64> = row.get("clock_since_unix_ms");
-        let result: Option<String> = row.get("result");
-        let reason: Option<String> = row.get("reason");
-        let ended = match (result, reason) {
+        let clock_since = row.clock_since_unix_ms;
+        let ended = match (row.result, row.reason) {
             (Some(r), Some(why)) => Some(GameEnd {
                 result: parse_result(&r).ok_or_else(|| bad_column("result", &r))?,
                 reason: parse_reason(&why).ok_or_else(|| bad_column("reason", &why))?,
             }),
             _ => None,
         };
-        let draw_offer: Option<String> = row.get("draw_offer");
-        let draw_offer = draw_offer
+        let draw_offer = row
+            .draw_offer
             .map(|c| parse_color(&c).ok_or_else(|| bad_column("draw_offer", &c)))
             .transpose()?;
         // The clock kept running from `clock_since` until now.
@@ -118,13 +119,13 @@ impl Db {
             None => (None, Duration::ZERO),
         };
         Ok(Some(StoredGame {
-            tokens: [row.get("white_token"), row.get("black_token")],
+            tokens: [row.white_token, row.black_token],
             snapshot: Snapshot {
-                initial_ms: row.get::<i64, _>("initial_ms") as u64,
-                increment_ms: row.get::<i64, _>("increment_ms") as u64,
-                moves: moves.split_whitespace().map(str::to_string).collect(),
-                white_ms: row.get::<i64, _>("white_ms") as u64,
-                black_ms: row.get::<i64, _>("black_ms") as u64,
+                initial_ms: row.initial_ms as u64,
+                increment_ms: row.increment_ms as u64,
+                moves: row.moves.split_whitespace().map(str::to_string).collect(),
+                white_ms: row.white_ms as u64,
+                black_ms: row.black_ms as u64,
                 clock_running_for_ms,
                 draw_offer,
                 ended,

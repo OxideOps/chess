@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sessions SET last_seen_at = now(), expires_at = now() + make_interval(days => $2)\n             WHERE id = $1 AND last_seen_at < now() - interval '5 minutes'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "79637dacbf358de8efb29a02ea9edaa3227cf0e7fa16d125e5d3e17a93b69490"
+}

@@ -35,9 +35,17 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
 use crate::{
+    AppState,
     db::Db,
     room::{Outgoing, Room, TimeControl},
 };
+
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .route("/api/games", post(create_game))
+        .route("/api/games/{id}", get(snapshot))
+        .route("/api/games/{id}/ws", get(connect))
+}
 
 /// Everything the endpoints share.
 #[derive(Clone, Default)]
@@ -91,14 +99,6 @@ impl Games {
             inner: Arc::default(),
             db: Some(db),
         }
-    }
-
-    pub fn router(self) -> Router {
-        Router::new()
-            .route("/api/games", post(create_game))
-            .route("/api/games/{id}", get(snapshot))
-            .route("/api/games/{id}/ws", get(connect))
-            .with_state(self)
     }
 
     pub async fn create(&self, time_control: TimeControl) -> Result<CreatedGame, sqlx::Error> {
