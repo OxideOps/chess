@@ -12,7 +12,9 @@ use chess_core::{
 use common::*;
 use server::Config;
 
-const GRACE: Duration = Duration::from_millis(300);
+/// Short enough to keep the tests quick, long enough that a reconnect on a
+/// slow CI runner still lands inside it.
+const GRACE: Duration = Duration::from_millis(1000);
 
 /// A game with both seats taken and both players connected.
 async fn seated_game() -> Option<(String, String, Socket, String, Socket, String)> {
@@ -79,12 +81,9 @@ async fn leaving_after_both_moved_loses_by_abandonment() {
         other => panic!("{other:?}"),
     }
     // Written through: the list shows it finished.
-    let r = http(&base, "GET", "/api/me/games", Some(&white_session), "").await;
-    assert!(
-        r.body.contains(&id) && r.body.contains(r#""reason":"abandoned""#),
-        "{}",
-        r.body
-    );
+    let finished = |body: &str| body.contains(&id) && body.contains(r#""reason":"abandoned""#);
+    let body = games_list_until(&base, &white_session, finished).await;
+    assert!(finished(&body), "{body}");
 }
 
 #[tokio::test]

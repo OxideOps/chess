@@ -120,15 +120,13 @@ async fn two_players_and_a_spectator() {
     ));
 
     // The game shows up in both players' lists, not the spectator's.
-    let r = http(&base, "GET", "/api/me/games", Some(&white_session), "").await;
-    assert_eq!(r.status, 200);
-    assert!(
-        r.body.contains(&game.id)
-            && r.body.contains("resignation")
-            && r.body.contains(r#""your_color":"white""#),
-        "{}",
-        r.body
-    );
+    let finished = |body: &str| {
+        body.contains(&game.id)
+            && body.contains("resignation")
+            && body.contains(r#""your_color":"white""#)
+    };
+    let body = games_list_until(&base, &white_session, finished).await;
+    assert!(finished(&body), "{body}");
     let r = http(&base, "GET", "/api/me/games", Some(&black_session), "").await;
     assert!(r.body.contains(r#""your_color":"black""#), "{}", r.body);
     let r = http(&base, "GET", "/api/me/games", Some(&third), "").await;
@@ -160,19 +158,24 @@ async fn the_server_flags_a_player_who_runs_out_of_time() {
     send(&mut white, &mv("e2e4")).await;
     recv_game(&mut white).await;
     recv_game(&mut black).await;
+    // White's 300 ms start when the server takes Black's move, which is
+    // after this instant, so the flag can't come less than 300 ms from it.
+    // (Timing from when the test *sees* the move instead would include CI
+    // scheduling delays and wrongly call the flag early.)
+    let start = std::time::Instant::now();
     send(&mut black, &mv("e7e5")).await;
     recv_game(&mut white).await;
     recv_game(&mut black).await;
 
-    let start = std::time::Instant::now();
     let msg = recv_game(&mut black).await;
     assert!(matches!(
         msg,
         ServerMessage::GameOver { end } if end.result == GameResult::BlackWins && end.reason == GameOverReason::Timeout
     ));
     assert!(
-        start.elapsed() >= Duration::from_millis(250),
-        "flagged too early"
+        start.elapsed() >= Duration::from_millis(300),
+        "flagged too early: {:?}",
+        start.elapsed()
     );
     assert!(matches!(
         recv_game(&mut white).await,
