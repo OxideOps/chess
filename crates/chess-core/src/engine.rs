@@ -50,6 +50,25 @@ impl Score {
     pub fn bar_fraction(self) -> f64 {
         (1.0 + self.win_chance()) / 2.0
     }
+
+    /// A White-perspective score in words, the way a coach would put it:
+    /// "roughly equal", "Black is slightly better", "White mates in 3".
+    pub fn describe(self) -> String {
+        let side = |white: bool| if white { "White" } else { "Black" };
+        match self {
+            Score::Mate(0) => "checkmate".to_string(),
+            Score::Mate(n) => format!("{} mates in {}", side(n > 0), n.abs()),
+            Score::Cp(cp) => {
+                let how = match cp.abs() {
+                    0..50 => return "roughly equal".to_string(),
+                    50..150 => "slightly better",
+                    150..300 => "clearly better",
+                    _ => "winning",
+                };
+                format!("{} is {how}", side(cp > 0))
+            }
+        }
+    }
 }
 
 /// `+0.35`, `-1.20`, `#3`, `#-3`. Mate in 0 is shown as `#0` (the side is
@@ -206,6 +225,18 @@ mod tests {
 
     fn uci(s: &str) -> UciMove {
         s.parse().unwrap()
+    }
+
+    #[test]
+    fn scores_in_words() {
+        assert_eq!(Score::Cp(20).describe(), "roughly equal");
+        assert_eq!(Score::Cp(-49).describe(), "roughly equal");
+        assert_eq!(Score::Cp(80).describe(), "White is slightly better");
+        assert_eq!(Score::Cp(-200).describe(), "Black is clearly better");
+        assert_eq!(Score::Cp(650).describe(), "White is winning");
+        assert_eq!(Score::Mate(3).describe(), "White mates in 3");
+        assert_eq!(Score::Mate(-2).describe(), "Black mates in 2");
+        assert_eq!(Score::Mate(0).describe(), "checkmate");
     }
 
     #[test]

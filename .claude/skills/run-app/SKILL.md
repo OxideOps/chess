@@ -67,6 +67,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 
+- Coach: start the server with `--fake-coach` (Playwright does) or a real
+  `CHESS_ANTHROPIC_API_KEY`; on `/analysis` a signed-in account gets "Explain this position"
+  once the engine reaches depth 10, guests a sign-up hint, and nothing shows without a coach.
 - Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
   then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
   "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".

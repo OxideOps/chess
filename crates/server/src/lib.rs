@@ -6,6 +6,7 @@
 //! Games live in memory until persistence arrives.
 
 pub mod auth;
+pub mod coach;
 pub mod db;
 pub mod games;
 pub mod limit;
@@ -58,6 +59,8 @@ pub struct Config {
     /// How long a disconnected player has to come back; `None` for
     /// [`games::DEFAULT_ABANDON_AFTER`].
     pub abandon_after: Option<std::time::Duration>,
+    /// The coach, if there is one (an API key, or the offline stand-in).
+    pub coach: Option<coach::CoachConfig>,
 }
 
 /// Everything the handlers share.
@@ -67,6 +70,7 @@ pub struct AppState {
     /// `None` when running without a database: no accounts.
     pub auth: Option<auth::Auth>,
     pub config: Arc<Config>,
+    pub coach: Option<coach::Coach>,
 }
 
 impl AppState {
@@ -76,6 +80,7 @@ impl AppState {
             games: games::Games::default(),
             auth: None,
             config: Arc::default(),
+            coach: None,
         }
     }
 
@@ -85,6 +90,7 @@ impl AppState {
             games: games::Games::with_db(db.clone())
                 .abandon_after(config.abandon_after.unwrap_or(games::DEFAULT_ABANDON_AFTER)),
             auth: Some(auth::Auth::new(db, config.secure_cookies)),
+            coach: config.coach.clone().map(coach::Coach::new),
             config: Arc::new(config),
         }
     }
@@ -128,6 +134,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())
+        .merge(coach::router())
         .with_state(state)
         .fallback_service(files)
         .layer(middleware::from_fn_with_state(

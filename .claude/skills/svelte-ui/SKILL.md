@@ -21,6 +21,9 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   lint rule accepts for an `href` or `goto()` built from a string. `providers.ts` lists the
   OAuth providers (`GET /api/auth/providers`) and builds their start URLs; those links are
   plain `<a rel="external">` (full-page navigation to an API URL, which the same rule allows).
+- `src/lib/coach/` — `coach.svelte.ts` (`Coach`: whether the server has one, explanations per
+  position; injectable fetch). `CoachPanel` shows it under the engine on `/analysis` and hides
+  itself when the server has no coach.
 - `src/lib/lessons/` — `drill.svelte.ts` (`DrillSession`: the student's moves, `assessDrill`
   from the WASM after each, the engine's replies through an `OpponentLike`), `progress.ts`
   (completed lessons in localStorage). `src/lib/engine/opponent.svelte.ts` is Stockfish
