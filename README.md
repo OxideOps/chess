@@ -43,6 +43,14 @@ Early scaffolding. What works today:
   proxy set `CHESS_TRUST_PROXY=1` (client addresses from `X-Forwarded-For`),
   `CHESS_SECURE_COOKIES=1` over https, and `CHESS_ALLOWED_ORIGINS=https://your.host` if the
   proxy rewrites `Host`.
+- `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
+  turns on Lichess (a public client: PKCE, no secret, no registration);
+  `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register
+  `<public url>/api/auth/google/callback` in the Cloud console); `CHESS_PUBLIC_URL` is where
+  browsers reach the server (defaults to the request's host). Provider accounts become users
+  named after them (a suffix if the name is taken), a signed-in guest is upgraded in place, a
+  signed-in account gets the provider linked. `--fake-oauth` adds a built-in provider that
+  signs in as any name you type, for development and the e2e suite; never in production.
 - `web`: a local two-player board with legal-move hints, promotion picker, move list, history
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: an analysis board (`/analysis`) with Stockfish 18 running in a Web Worker, an eval

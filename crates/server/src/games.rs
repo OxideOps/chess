@@ -242,16 +242,31 @@ fn players_of(seats: &[Option<Seat>; 2]) -> Players {
 }
 
 impl GameEntry {
+    /// Which seat `user` holds. The seat's name is refreshed from `user`
+    /// while we're at it: a guest who signed up mid-game comes back with a
+    /// username, and everyone watching hears about it.
     fn side_of(&self, user: Option<&User>) -> Option<Color> {
         let user = user?;
-        let seats = self.seats.lock().unwrap();
-        if seats[0].as_ref().is_some_and(|s| s.user_id == user.id) {
-            Some(Color::White)
-        } else if seats[1].as_ref().is_some_and(|s| s.user_id == user.id) {
-            Some(Color::Black)
-        } else {
-            None
+        let (side, renamed) = {
+            let mut seats = self.seats.lock().unwrap();
+            let (index, side) = if seats[0].as_ref().is_some_and(|s| s.user_id == user.id) {
+                (0, Color::White)
+            } else if seats[1].as_ref().is_some_and(|s| s.user_id == user.id) {
+                (1, Color::Black)
+            } else {
+                return None;
+            };
+            let seat = seats[index].as_mut().expect("checked above");
+            let renamed = seat.username != user.username;
+            if renamed {
+                seat.username = user.username.clone();
+            }
+            (side, renamed.then(|| players_of(&seats)))
+        };
+        if let Some(players) = renamed {
+            let _ = self.tx.send(ServerMessage::PlayersChanged { players });
         }
+        Some(side)
     }
 
     fn players(&self) -> Players {

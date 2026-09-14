@@ -4,6 +4,8 @@
 	import { resolve } from '$app/paths';
 	import { session } from '$lib/auth/session.svelte';
 	import { safeNext, withNext } from '$lib/auth/next';
+	import { listProviders, startUrl } from '$lib/auth/providers';
+	import type { ProviderInfo } from '$lib/generated/ProviderInfo';
 
 	// Sign-up and log-in are the same form with a different verb. On success
 	// the visitor goes back to `?next=` (the game they were about to join) or home.
@@ -14,8 +16,13 @@
 
 	let username = $state('');
 	let password = $state('');
-	let error: string | null = $state(null);
+	// An OAuth round trip that failed comes back here with `?error=`.
+	let error: string | null = $state(page.url.searchParams.get('error'));
 	let busy = $state(false);
+	let providers: ProviderInfo[] = $state([]);
+	$effect(() => {
+		listProviders().then((list) => (providers = list));
+	});
 
 	const verb = $derived(mode === 'signup' ? 'Sign up' : 'Log in');
 	const next = $derived(safeNext(page.url.searchParams.get('next')));
@@ -76,6 +83,16 @@
 	</form>
 	{#if error}
 		<p class="error" role="alert">{error}</p>
+	{/if}
+	{#if providers.length > 0}
+		<div class="providers">
+			<span class="or">or</span>
+			{#each providers as provider (provider.id)}
+				<a class="provider" href={startUrl(provider, next)} rel="external">
+					Continue with {provider.name}
+				</a>
+			{/each}
+		</div>
 	{/if}
 	<p class="switch">
 		{#if mode === 'signup'}
@@ -149,5 +166,30 @@
 
 	a {
 		color: var(--text);
+	}
+
+	.providers {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.or {
+		color: var(--text-muted);
+		font-size: 0.85rem;
+	}
+
+	.provider {
+		padding: 0.45rem 0.8rem;
+		border: 1px solid var(--panel-border);
+		border-radius: 6px;
+		background: var(--panel);
+		color: var(--text);
+		text-decoration: none;
+		text-align: center;
+	}
+
+	.provider:hover {
+		border-color: var(--text-muted);
 	}
 </style>

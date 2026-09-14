@@ -58,6 +58,10 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - Accounts: the nav's right side reads "Log in · Sign up" (nobody), "Guest · Log in · Sign
   up" (a guest) or the username plus "Log out". `/signup` and `/login` return to `?next=`;
   `/games` lists "You (White) vs …" rows linking to the games.
+- OAuth: start the server with `--fake-oauth` (Playwright does) and `/login` shows "Continue
+  with Fake provider", which opens a page with a "Sign in as" box and Continue/Cancel; no
+  network. Real providers need `CHESS_LICHESS_CLIENT_ID` / the Google pair and, in `pnpm dev`,
+  `CHESS_PUBLIC_URL=http://localhost:5173` so the callback comes back through the Vite proxy.
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 
