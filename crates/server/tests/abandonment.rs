@@ -79,12 +79,9 @@ async fn leaving_after_both_moved_loses_by_abandonment() {
         other => panic!("{other:?}"),
     }
     // Written through: the list shows it finished.
-    let r = http(&base, "GET", "/api/me/games", Some(&white_session), "").await;
-    assert!(
-        r.body.contains(&id) && r.body.contains(r#""reason":"abandoned""#),
-        "{}",
-        r.body
-    );
+    let finished = |body: &str| body.contains(&id) && body.contains(r#""reason":"abandoned""#);
+    let body = games_list_until(&base, &white_session, finished).await;
+    assert!(finished(&body), "{body}");
 }
 
 #[tokio::test]

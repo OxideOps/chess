@@ -120,15 +120,13 @@ async fn two_players_and_a_spectator() {
     ));
 
     // The game shows up in both players' lists, not the spectator's.
-    let r = http(&base, "GET", "/api/me/games", Some(&white_session), "").await;
-    assert_eq!(r.status, 200);
-    assert!(
-        r.body.contains(&game.id)
-            && r.body.contains("resignation")
-            && r.body.contains(r#""your_color":"white""#),
-        "{}",
-        r.body
-    );
+    let finished = |body: &str| {
+        body.contains(&game.id)
+            && body.contains("resignation")
+            && body.contains(r#""your_color":"white""#)
+    };
+    let body = games_list_until(&base, &white_session, finished).await;
+    assert!(finished(&body), "{body}");
     let r = http(&base, "GET", "/api/me/games", Some(&black_session), "").await;
     assert!(r.body.contains(r#""your_color":"black""#), "{}", r.body);
     let r = http(&base, "GET", "/api/me/games", Some(&third), "").await;
