@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT g.initial_ms AS \"initial_ms!\", g.increment_ms AS \"increment_ms!\",\n                      g.moves AS \"moves!\", g.white_ms AS \"white_ms!\", g.black_ms AS \"black_ms!\",\n                      g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,\n                      g.white_user_id, w.username AS \"white_name?\",\n                      g.black_user_id, b.username AS \"black_name?\"\n               FROM games g\n               LEFT JOIN users w ON w.id = g.white_user_id\n               LEFT JOIN users b ON b.id = g.black_user_id\n               WHERE g.id = $1",
+  "query": "SELECT g.initial_ms, g.increment_ms, g.moves, g.white_ms, g.black_ms,\n                      g.clock_since_unix_ms, g.draw_offer, g.result, g.reason,\n                      g.white_user_id,\n                      (SELECT username FROM users WHERE id = g.white_user_id) AS \"white_name?\",\n                      g.black_user_id,\n                      (SELECT username FROM users WHERE id = g.black_user_id) AS \"black_name?\"\n               FROM games g\n               WHERE g.id = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "initial_ms!",
+        "name": "initial_ms",
         "type_info": "Int8",
         "origin": {
           "Table": {
@@ -16,7 +16,7 @@
       },
       {
         "ordinal": 1,
-        "name": "increment_ms!",
+        "name": "increment_ms",
         "type_info": "Int8",
         "origin": {
           "Table": {
@@ -27,7 +27,7 @@
       },
       {
         "ordinal": 2,
-        "name": "moves!",
+        "name": "moves",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,7 +38,7 @@
       },
       {
         "ordinal": 3,
-        "name": "white_ms!",
+        "name": "white_ms",
         "type_info": "Int8",
         "origin": {
           "Table": {
@@ -49,7 +49,7 @@
       },
       {
         "ordinal": 4,
-        "name": "black_ms!",
+        "name": "black_ms",
         "type_info": "Int8",
         "origin": {
           "Table": {
@@ -117,12 +117,7 @@
         "ordinal": 10,
         "name": "white_name?",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "username"
-          }
-        }
+        "origin": "Expression"
       },
       {
         "ordinal": 11,
@@ -139,12 +134,7 @@
         "ordinal": 12,
         "name": "black_name?",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "username"
-          }
-        }
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -153,20 +143,20 @@
       ]
     },
     "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
       true,
       true,
       true,
       true,
       true,
+      null,
       true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true
+      null
     ]
   },
-  "hash": "7aaf18071219e1c09e17a91578faf2ed41c47b8d49f03c5406a06c744e78ee65"
+  "hash": "03c964150653d87c89fcab5270ff0c92d06181b676453fb5a62180c54279d01d"
 }

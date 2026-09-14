@@ -32,9 +32,11 @@ Notes:
 - `cargo sqlx prepare --check` fails when a `sqlx::query!` changed but `.sqlx/` wasn't
   regenerated: run it without `--check` and commit the result. Builds themselves use the
   cache (`SQLX_OFFLINE=true` in CI; locally either the cache or `DATABASE_URL` works).
-  If `--check` reports nullability changes you didn't make (`Option<i64> as u64` errors in
-  `db.rs`), it is sqlx inferring nullability from the query plan, which changes with the
-  size of `chess_test`: pin the NOT NULL columns with `AS "col!"` in queries with LEFT JOINs.
+  If `--check` reports a query file differing when you didn't touch it (or `Option<i64> as
+  u64` errors in `db.rs`), sqlx's plan-based nullability inference changed with the size of
+  `chess_test`. `AS "col!"` does not fix the cache (it stores the raw inference); avoid LEFT
+  JOINs in `query!` and use scalar subselects instead, as `Db::load` does. To reproduce CI:
+  `createdb chess_ci_check`, migrate into it, `cargo sqlx prepare --check` against it, drop it.
 - The database tests need a Postgres they can write to. The local one is Homebrew's
   postgresql@17 with a `chess_test` database (`createdb chess_test` once); the URL must name
   the user (`$USER@localhost`), sqlx connects as "anonymous" otherwise. Without
