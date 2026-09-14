@@ -17,6 +17,7 @@
 		"test": "pnpm test:unit && pnpm test:e2e",
 		"browsers": "playwright install --with-deps chromium",
 		"build:wasm": "node scripts/build-wasm.mjs",
+		"fetch:engine": "node scripts/fetch-engine.mjs",
 		"gen:types": "node scripts/gen-types.mjs"
 	},
 	"devDependencies": {

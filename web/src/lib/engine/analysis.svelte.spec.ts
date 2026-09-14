@@ -10,7 +10,10 @@ const AFTER_E4 = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1';
 class FakeEngine implements EngineLike {
 	sent: string[] = [];
 	terminated = false;
-	constructor(private emit: (event: EngineEvent) => void) {}
+	constructor(
+		private emit: (event: EngineEvent) => void,
+		readonly threads = 1
+	) {}
 	send(command: string) {
 		this.sent.push(command);
 	}
@@ -25,11 +28,11 @@ class FakeEngine implements EngineLike {
 	}
 }
 
-function setup() {
+function setup(threads = 1) {
 	let engine!: FakeEngine;
 	const analyser = new Analyser({
 		multipv: 2,
-		createEngine: (onEvent) => (engine = new FakeEngine(onEvent))
+		createEngine: (onEvent) => (engine = new FakeEngine(onEvent, threads))
 	});
 	return { analyser, engine };
 }
@@ -37,6 +40,24 @@ function setup() {
 beforeAll(() => initChess());
 
 describe('Analyser', () => {
+	it('asks a multi-threaded engine for its threads, and a single-threaded one for nothing', () => {
+		const multi = setup(4);
+		expect(multi.analyser.threads).toBe(4);
+		multi.engine.take();
+		multi.engine.say('uciok');
+		expect(multi.engine.take()).toEqual([
+			'setoption name MultiPV value 2',
+			'setoption name Threads value 4',
+			'isready'
+		]);
+
+		const single = setup();
+		expect(single.analyser.threads).toBe(1);
+		single.engine.take();
+		single.engine.say('uciok');
+		expect(single.engine.take()).toEqual(['setoption name MultiPV value 2', 'isready']);
+	});
+
 	it('handshakes, then starts the search that was requested while loading', () => {
 		const { analyser, engine } = setup();
 		expect(engine.take()).toEqual(['uci']);
@@ -132,7 +153,7 @@ describe('Analyser', () => {
 
 	it('reports engine failures and can be disposed', () => {
 		let emit!: (event: EngineEvent) => void;
-		const engine = { send() {}, terminate: () => (disposed = true) };
+		const engine = { send() {}, terminate: () => (disposed = true), threads: 1 };
 		let disposed = false;
 		const analyser = new Analyser({
 			createEngine: (onEvent) => {

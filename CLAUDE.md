@@ -19,8 +19,10 @@ Successor to the archived `OxideOps/chess-v1`.
 - `web` — the SvelteKit client. pnpm via corepack, TS strict, plain CSS with the variables in
   `web/src/app.css`. Static SPA: `ssr = false`, every route prerendered as a shell plus a
   `404.html` fallback; the root layout awaits `initChess()` so pages use the WASM
-  synchronously. Stockfish (GPL, `web/static/engine`, never linked in) runs in a Web Worker
-  behind `src/lib/engine/analysis.svelte.ts`.
+  synchronously. Stockfish (GPL, `web/static/engine`, never linked in, fetched by
+  `scripts/fetch-engine.mjs` with pinned SHA-256s rather than committed) runs in a Web Worker
+  behind `src/lib/engine/analysis.svelte.ts`; the multi-threaded build when the page is
+  cross-origin isolated, the single-threaded one otherwise.
 - `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
   prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
   isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:

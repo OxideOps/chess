@@ -11,6 +11,18 @@ test.describe('analysis board', () => {
 		const sq = (name: string) => page.locator(`[data-square="${name}"]`);
 
 		await expect(page.locator('.engine .name')).toHaveText(/Stockfish/, { timeout: 30_000 });
+		// The server sends the isolation headers, so the multi-threaded build runs
+		// with one thread per spare core (the panel only mentions threads beyond one).
+		const cores = await page.evaluate(
+			() => [crossOriginIsolated, navigator.hardwareConcurrency] as const
+		);
+		expect(cores[0]).toBe(true);
+		const threads = Math.min(8, Math.max(1, cores[1] - 1));
+		if (threads > 1) {
+			await expect(page.locator('.engine .threads')).toHaveText(`${threads} threads`);
+		} else {
+			await expect(page.locator('.engine .threads')).toHaveCount(0);
+		}
 		await expect(summary).toHaveText(/Depth \d+/, { timeout: 30_000 });
 		await expect(lines).toHaveCount(3);
 		await expect(page.locator('.board .arrows line')).toHaveCount(1);

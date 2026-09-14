@@ -46,6 +46,11 @@
 			<span class="name">{name}</span>
 		</label>
 		<span class="summary">{summary}</span>
+		{#if analyser.threads > 1}
+			<span class="threads" title="Multi-threaded build: the page is cross-origin isolated"
+				>{analyser.threads} threads</span
+			>
+		{/if}
 	</header>
 	{#if enabled && lines.length > 0}
 		<ol class="lines">
@@ -91,6 +96,12 @@
 
 	header input {
 		accent-color: var(--accent);
+	}
+
+	.threads {
+		color: var(--text-muted);
+		font-size: 0.8rem;
+		white-space: nowrap;
 	}
 
 	.summary {
