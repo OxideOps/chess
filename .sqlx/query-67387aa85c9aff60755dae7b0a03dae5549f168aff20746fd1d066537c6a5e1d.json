@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO puzzles (id, fen, moves, rating, deviation, popularity, plays, themes)\n         SELECT * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int4[], $5::int4[],\n                              $6::int4[], $7::int4[], $8::text[])\n         ON CONFLICT (id) DO UPDATE SET fen = EXCLUDED.fen, moves = EXCLUDED.moves,\n             rating = EXCLUDED.rating, deviation = EXCLUDED.deviation,\n             popularity = EXCLUDED.popularity, plays = EXCLUDED.plays, themes = EXCLUDED.themes",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "Int4Array",
+        "Int4Array",
+        "Int4Array",
+        "Int4Array",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "67387aa85c9aff60755dae7b0a03dae5549f168aff20746fd1d066537c6a5e1d"
+}

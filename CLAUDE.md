@@ -8,7 +8,8 @@ Successor to the archived `OxideOps/chess-v1`.
 ## Layout
 
 - `crates/chess-core` — rules (via `shakmaty`), `Game` history/navigation, PGN reader, UCI
-  engine-output parsing, and the client↔server `protocol` types. No UI, no I/O, must compile
+  engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
+  counts), and the client↔server `protocol` types. No UI, no I/O, must compile
   for `wasm32`. Everything chess-related that both the client and the server need goes here,
   with tests.
 - `crates/chess-core-wasm` — wasm-bindgen wrapper around `chess-core` for the client; the only
@@ -44,6 +45,8 @@ Successor to the archived `OxideOps/chess-v1`.
   no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
+  `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
+  attempt endpoints (only the first try at a puzzle rates),
   `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;

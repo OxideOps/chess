@@ -1,0 +1,71 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT rating, deviation, volatility, attempts,\n                  EXTRACT(EPOCH FROM now() - last_at)::float8 AS \"idle_s!\"\n           FROM puzzle_ratings WHERE user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rating",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "deviation",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "deviation"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "volatility",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "volatility"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "attempts",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "attempts"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "idle_s!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "5d821e4eeb2b4c4d88d83580f7fd1b4d7779e62e0f7d865c17c2527cc084aa6a"
+}

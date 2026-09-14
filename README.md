@@ -51,6 +51,11 @@ Early scaffolding. What works today:
   initial time + 40 × increment), one update per game, deviation growing back while idle,
   "?" while provisional. Ratings show next to names on the clocks with the change at the end,
   in the games list, and on profile pages (`/players/<name>`).
+- `server` + `web`: puzzles (`/puzzles`) from the Lichess puzzle database. You get one near
+  your puzzle rating that you haven't tried, the opponent's setup and reply moves play
+  themselves, and any checkmate counts as a solution. A wrong move names the right one, with
+  "Show solution" to play out the rest. Your first try at each puzzle moves your puzzle rating
+  (Glicko-2 against the puzzle's rating), guests included; profiles show it.
 - `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
   turns on Lichess (a public client: PKCE, no secret, no registration);
   `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register
@@ -142,6 +147,17 @@ curl -s -b jar -X POST localhost:8080/api/games -H 'content-type: application/js
 # to /api/games/<id>/ws with the cookie and send {"type":"move","uci":"e2e4"}
 ```
 
+Puzzles have to be imported once. For development the test fixture (46 real puzzles) is
+enough; for a real deployment load the Lichess database. By default the import keeps popular,
+often-played puzzles with a settled rating, at most 10 000 per 100 rating points, so every
+level is covered (see `--help` for the filters):
+
+```sh
+DATABASE_URL=… cargo run -p server -- import-puzzles crates/server/tests/fixtures/puzzles.csv
+curl -O https://database.lichess.org/lichess_db_puzzle.csv.zst
+zstd -dc lichess_db_puzzle.csv.zst | DATABASE_URL=… cargo run --release -p server -- import-puzzles -
+```
+
 Checks, same as CI:
 
 ```sh
@@ -176,6 +192,10 @@ Code is MIT (see `LICENSE`). Piece images in `web/static/pieces/cburnett` are by
 Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). The app
 icons (`web/static/icons`, `web/src/lib/assets/favicon.svg`) are his knight on a green square,
 under the same license; `web/scripts/gen-icons.mjs` renders them.
+
+Puzzles come from the [Lichess puzzle database](https://database.lichess.org/#puzzles), which
+is CC0 (public domain); thanks to Lichess and its players for it. The test fixture
+`crates/server/tests/fixtures/puzzles.csv` is a sample of it.
 
 The engine in `web/static/engine` is [Stockfish.js](https://github.com/nmrugg/stockfish.js)
 (Stockfish 18, the lite multi-threaded and lite single-threaded builds from the v18.0.0

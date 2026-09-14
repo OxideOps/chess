@@ -45,6 +45,18 @@
 		<p class="muted">Loading…</p>
 	{:else}
 		<h1>{profile.username}</h1>
+		{#if profile.puzzles}
+			<p class="puzzles" data-testid="profile-puzzles">
+				Puzzles: <strong
+					>{formatRating({
+						value: profile.puzzles.rating,
+						provisional: profile.puzzles.provisional
+					})}</strong
+				>
+				after {profile.puzzles.attempts}
+				{profile.puzzles.attempts === 1 ? 'puzzle' : 'puzzles'}
+			</p>
+		{/if}
 		{#if profile.ratings.length === 0}
 			<p class="muted">No rated games yet.</p>
 		{:else}
@@ -86,6 +98,15 @@
 	.muted {
 		margin: 0;
 		color: var(--text-muted);
+	}
+
+	.puzzles {
+		margin: 0;
+		color: var(--text-muted);
+	}
+
+	.puzzles strong {
+		color: var(--text);
 	}
 
 	.note {

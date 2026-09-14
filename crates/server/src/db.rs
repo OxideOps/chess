@@ -15,7 +15,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::{
     games::{GameListing, Seat},
-    players::{CategoryRating, PlayerProfile},
+    players::{CategoryRating, PlayerProfile, PuzzleRatingSummary},
     rating::{Rating, rate_game},
     room::{Snapshot, TimeControl},
 };
@@ -278,9 +278,15 @@ impl Db {
                 });
             }
         }
+        let (puzzle, attempts) = crate::puzzles::puzzle_rating(self, &user.id).await?;
         Ok(Some(PlayerProfile {
             username: user.username,
             ratings,
+            puzzles: (attempts > 0).then(|| PuzzleRatingSummary {
+                rating: puzzle.shown(),
+                provisional: puzzle.provisional(),
+                attempts,
+            }),
         }))
     }
 

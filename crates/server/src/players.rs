@@ -18,6 +18,16 @@ pub struct PlayerProfile {
     pub username: String,
     /// One entry per category they have played rated games in.
     pub ratings: Vec<CategoryRating>,
+    /// Their puzzle rating, once they have tried a puzzle.
+    pub puzzles: Option<PuzzleRatingSummary>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct PuzzleRatingSummary {
+    pub rating: i32,
+    pub provisional: bool,
+    pub attempts: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
