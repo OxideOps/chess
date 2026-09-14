@@ -41,7 +41,7 @@ impl Db {
         Ok(Db { pool })
     }
 
-    pub(crate) fn pool(&self) -> &PgPool {
+    pub fn pool(&self) -> &PgPool {
         &self.pool
     }
 

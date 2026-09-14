@@ -23,6 +23,16 @@ struct Args {
     /// Mark the session cookie `Secure`. Turn on when serving over https.
     #[arg(long, env = "CHESS_SECURE_COOKIES", default_value_t = false)]
     secure_cookies: bool,
+
+    /// Take client addresses from `X-Forwarded-For`. Turn on only behind a
+    /// reverse proxy that sets it (rate limits are per address).
+    #[arg(long, env = "CHESS_TRUST_PROXY", default_value_t = false)]
+    trust_proxy: bool,
+
+    /// Extra origins allowed to open game sockets, comma-separated
+    /// (e.g. the public URL when a proxy rewrites `Host`).
+    #[arg(long, env = "CHESS_ALLOWED_ORIGINS", value_delimiter = ',')]
+    allowed_origins: Vec<String>,
 }
 
 #[tokio::main]
@@ -42,11 +52,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into());
     }
 
+    let config = server::Config {
+        secure_cookies: args.secure_cookies,
+        trust_proxy: args.trust_proxy,
+        allowed_origins: args.allowed_origins.clone(),
+    };
     let state = match &args.database_url {
         Some(url) => {
             let db = server::db::Db::connect(url).await?;
             tracing::info!("games and accounts are in Postgres");
-            server::AppState::with_db(db, args.secure_cookies)
+            let state = server::AppState::with_db(db, config);
+            // Expired sessions and abandoned guests are swept in the background.
+            server::auth::spawn_cleanup(state.auth.clone().expect("with_db sets auth"));
+            state
         }
         None => {
             tracing::warn!("no DATABASE_URL: games are kept in memory only, no accounts");
@@ -60,7 +78,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         args.static_dir.display(),
         args.bind
     );
-    axum::serve(listener, server::app_with(&args.static_dir, state))
+    // `ConnectInfo` gives the handlers the client address for rate limiting.
+    let app = server::app_with(&args.static_dir, state)
+        .into_make_service_with_connect_info::<SocketAddr>();
+    axum::serve(listener, app)
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;
             tracing::info!("shutting down");

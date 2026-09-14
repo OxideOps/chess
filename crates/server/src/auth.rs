@@ -4,20 +4,42 @@
 //! can play without signing up, and can be upgraded in place. Sessions are
 //! server-side rows; the cookie holds only the random session id.
 
+use std::{
+    net::{IpAddr, SocketAddr},
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use axum::{
     Json, Router,
-    extract::{FromRef, FromRequestParts, State},
-    http::{StatusCode, request::Parts},
+    extract::{ConnectInfo, FromRef, FromRequestParts, State},
+    http::{HeaderValue, StatusCode, header, request::Parts},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use serde::{Deserialize, Serialize};
 
-use crate::{AppState, db::Db};
+use crate::{
+    AppState,
+    db::Db,
+    limit::{Limit, Limiter},
+};
 
 pub const SESSION_COOKIE: &str = "session";
 const SESSION_DAYS: i64 = 30;
+
+// Rate limits. Password guessing is bounded per username (so one address
+// can't work through a list) and per address (so one address can't work
+// through many usernames); signups and guests per address bound account
+// spam. Generous enough that a person never sees them.
+const LOGIN_PER_USER: Limit = Limit::per_minute(10);
+const LOGIN_PER_ADDR: Limit = Limit::per_minute(30);
+const SIGNUP_PER_ADDR: Limit = Limit::per_minute(10);
+const GUEST_PER_ADDR: Limit = Limit::per_minute(30);
+
+/// How often the background sweep runs.
+const CLEANUP_EVERY: Duration = Duration::from_secs(60 * 60);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
@@ -34,6 +56,7 @@ pub struct Auth {
     db: Db,
     /// Mark the cookie `Secure` (only over https). Off for plain-http development.
     secure_cookies: bool,
+    limiter: Arc<Limiter>,
 }
 
 #[derive(Debug)]
@@ -43,6 +66,8 @@ pub enum AuthError {
     WeakPassword,
     InvalidCredentials,
     NotSignedIn,
+    /// Rate limited; try again after this long.
+    TooManyAttempts(Duration),
     /// Accounts need a database and the server was started without one.
     Unavailable,
     Db(sqlx::Error),
@@ -71,6 +96,13 @@ impl IntoResponse for AuthError {
                 "wrong username or password".into(),
             ),
             AuthError::NotSignedIn => (StatusCode::UNAUTHORIZED, "not signed in".into()),
+            AuthError::TooManyAttempts(wait) => (
+                StatusCode::TOO_MANY_REQUESTS,
+                format!(
+                    "too many attempts; try again in {} s",
+                    wait.as_secs().max(1)
+                ),
+            ),
             AuthError::Unavailable => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 "accounts are not available on this server".into(),
@@ -80,7 +112,14 @@ impl IntoResponse for AuthError {
                 (StatusCode::INTERNAL_SERVER_ERROR, "database error".into())
             }
         };
-        (status, Json(serde_json::json!({ "error": message }))).into_response()
+        let mut response = (status, Json(serde_json::json!({ "error": message }))).into_response();
+        if let AuthError::TooManyAttempts(wait) = self {
+            response.headers_mut().insert(
+                header::RETRY_AFTER,
+                HeaderValue::from(wait.as_secs().max(1)),
+            );
+        }
+        response
     }
 }
 
@@ -137,7 +176,40 @@ async fn verify_password(password: String, hash: String) -> bool {
 
 impl Auth {
     pub fn new(db: Db, secure_cookies: bool) -> Auth {
-        Auth { db, secure_cookies }
+        Auth {
+            db,
+            secure_cookies,
+            limiter: Arc::default(),
+        }
+    }
+
+    /// One hit against `limit` for `key`; `TooManyAttempts` when over.
+    fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
+        self.limiter
+            .hit(key, limit, Instant::now())
+            .map_err(AuthError::TooManyAttempts)
+    }
+
+    /// Delete sessions past their expiry, and guests who have no session
+    /// and no game (created for a visit that never played) once they are a
+    /// day old. Returns `(sessions, guests)` removed.
+    pub async fn purge_expired(&self) -> Result<(u64, u64), AuthError> {
+        let sessions = sqlx::query!("DELETE FROM sessions WHERE expires_at < now()")
+            .execute(self.db.pool())
+            .await?
+            .rows_affected();
+        let guests = sqlx::query!(
+            "DELETE FROM users u
+             WHERE u.is_guest
+               AND u.created_at < now() - interval '1 day'
+               AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id)
+               AND NOT EXISTS (SELECT 1 FROM games g
+                               WHERE g.white_user_id = u.id OR g.black_user_id = u.id)"
+        )
+        .execute(self.db.pool())
+        .await?
+        .rows_affected();
+        Ok((sessions, guests))
     }
 
     /// A brand-new guest, signed in.
@@ -310,6 +382,25 @@ impl Auth {
     }
 }
 
+/// Run [`Auth::purge_expired`] now and then every hour, for as long as the
+/// server runs.
+pub fn spawn_cleanup(auth: Auth) {
+    tokio::spawn(async move {
+        loop {
+            match auth.purge_expired().await {
+                Ok((0, 0)) => {}
+                Ok((sessions, guests)) => {
+                    tracing::info!(
+                        "cleanup: removed {sessions} expired sessions, {guests} idle guests"
+                    )
+                }
+                Err(e) => tracing::error!("cleanup: {e:?}"),
+            }
+            tokio::time::sleep(CLEANUP_EVERY).await;
+        }
+    });
+}
+
 /// A valid argon2 hash of nothing in particular, verified against when the
 /// username doesn't exist so both paths cost the same.
 const DUMMY_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHRzb21lc2FsdA$Q0MaFhcx9wWTdyeoCxyvXVtQlq3AjVxx58W4RIYpPhk";
@@ -332,6 +423,52 @@ pub struct RequireUser(pub User);
 
 /// The session id from the cookie, when present.
 pub struct SessionId(pub Option<String>);
+
+/// Where the request came from, for rate limiting: the peer address, or
+/// with `Config::trust_proxy` the rightmost `X-Forwarded-For` entry (the one
+/// the trusted proxy appended). `None` when neither is available (tests
+/// calling the router directly), which shares one bucket.
+pub struct ClientIp(pub Option<IpAddr>);
+
+impl ClientIp {
+    fn key(&self) -> String {
+        match self.0 {
+            Some(ip) => ip.to_string(),
+            None => "unknown".to_string(),
+        }
+    }
+}
+
+impl<S> FromRequestParts<S> for ClientIp
+where
+    S: Send + Sync,
+    AppState: FromRef<S>,
+{
+    type Rejection = std::convert::Infallible;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        if AppState::from_ref(state).config.trust_proxy
+            && let Some(forwarded) = parts
+                .headers
+                .get_all("x-forwarded-for")
+                .iter()
+                .next_back()
+                .and_then(|v| v.to_str().ok())
+            && let Some(ip) = forwarded
+                .rsplit(',')
+                .next()
+                .and_then(|s| s.trim().parse::<IpAddr>().ok())
+        {
+            return Ok(ClientIp(Some(ip)));
+        }
+        Ok(ClientIp(
+            parts
+                .extensions
+                .get::<ConnectInfo<SocketAddr>>()
+                .map(|c| c.0.ip()),
+        ))
+    }
+}
 
 impl<S> FromRequestParts<S> for SessionId
 where
@@ -409,12 +546,14 @@ fn auth(state: &AppState) -> Result<&Auth, AuthError> {
 async fn guest(
     State(state): State<AppState>,
     CurrentUser(current): CurrentUser,
+    ip: ClientIp,
     jar: CookieJar,
 ) -> Result<(CookieJar, Json<User>), AuthError> {
     let auth = auth(&state)?;
     if let Some(user) = current {
         return Ok((jar, Json(user)));
     }
+    auth.limit(&format!("guest:{}", ip.key()), GUEST_PER_ADDR)?;
     let (user, session) = auth.create_guest().await?;
     Ok((jar.add(auth.cookie(session)), Json(user)))
 }
@@ -423,10 +562,12 @@ async fn signup(
     State(state): State<AppState>,
     CurrentUser(current): CurrentUser,
     SessionId(session): SessionId,
+    ip: ClientIp,
     jar: CookieJar,
     Json(creds): Json<Credentials>,
 ) -> Result<(StatusCode, CookieJar, Json<User>), AuthError> {
     let auth = auth(&state)?;
+    auth.limit(&format!("signup:{}", ip.key()), SIGNUP_PER_ADDR)?;
     let current = match (&current, &session) {
         (Some(user), Some(session)) => Some((user, session.as_str())),
         _ => None,
@@ -443,10 +584,16 @@ async fn signup(
 
 async fn login(
     State(state): State<AppState>,
+    ip: ClientIp,
     jar: CookieJar,
     Json(creds): Json<Credentials>,
 ) -> Result<(CookieJar, Json<User>), AuthError> {
     let auth = auth(&state)?;
+    auth.limit(&format!("login:{}", ip.key()), LOGIN_PER_ADDR)?;
+    auth.limit(
+        &format!("login:{}", creds.username.to_lowercase()),
+        LOGIN_PER_USER,
+    )?;
     let (user, session) = auth.login(&creds.username, &creds.password).await?;
     Ok((jar.add(auth.cookie(session)), Json(user)))
 }

@@ -8,9 +8,14 @@
 pub mod auth;
 pub mod db;
 pub mod games;
+pub mod limit;
+pub mod origin;
 pub mod room;
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use axum::{
     Router,
@@ -29,12 +34,27 @@ use tower_http::{
 /// The name of the file the client build writes for unknown routes.
 pub const FALLBACK_PAGE: &str = "404.html";
 
+/// Deployment settings the handlers consult.
+#[derive(Debug, Clone, Default)]
+pub struct Config {
+    /// Mark the session cookie `Secure`. Set when serving over https.
+    pub secure_cookies: bool,
+    /// Take the client address from `X-Forwarded-For` (rightmost entry).
+    /// Only behind a reverse proxy that sets it; otherwise clients could
+    /// pick their own address and sidestep the rate limits.
+    pub trust_proxy: bool,
+    /// Origins allowed to open game sockets besides the request's own
+    /// host, e.g. the public URL when a proxy rewrites `Host`.
+    pub allowed_origins: Vec<String>,
+}
+
 /// Everything the handlers share.
 #[derive(Clone)]
 pub struct AppState {
     pub games: games::Games,
     /// `None` when running without a database: no accounts.
     pub auth: Option<auth::Auth>,
+    pub config: Arc<Config>,
 }
 
 impl AppState {
@@ -43,14 +63,16 @@ impl AppState {
         AppState {
             games: games::Games::default(),
             auth: None,
+            config: Arc::default(),
         }
     }
 
     /// Games and accounts on a database.
-    pub fn with_db(db: db::Db, secure_cookies: bool) -> AppState {
+    pub fn with_db(db: db::Db, config: Config) -> AppState {
         AppState {
             games: games::Games::with_db(db.clone()),
-            auth: Some(auth::Auth::new(db, secure_cookies)),
+            auth: Some(auth::Auth::new(db, config.secure_cookies)),
+            config: Arc::new(config),
         }
     }
 }

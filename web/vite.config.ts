@@ -3,6 +3,20 @@ import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
+// The Rust server (`cargo run -p server`) answers the API and game sockets on
+// 8080; in development Vite serves the client and proxies `/api` to it. The
+// server refuses game sockets whose `Origin` isn't its own host, so the proxy
+// presents itself as that host, the way the production server (which serves
+// the page itself) sees it.
+const apiProxy = {
+	'/api': {
+		target: 'http://127.0.0.1:8080',
+		ws: true,
+		changeOrigin: true, // Host: 127.0.0.1:8080
+		headers: { origin: 'http://127.0.0.1:8080' }
+	}
+};
+
 export default defineConfig({
 	plugins: [
 		sveltekit({
@@ -21,15 +35,13 @@ export default defineConfig({
 	],
 	// In development the Rust server (`cargo run -p server`) answers the API
 	// and game sockets on 8080; Vite serves the client and proxies to it.
-	server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
+	server: { proxy: apiProxy },
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
 			{
 				extends: './vite.config.ts',
-				// In development the Rust server (`cargo run -p server`) answers the API
-				// and game sockets on 8080; Vite serves the client and proxies to it.
-				server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
+				server: { proxy: apiProxy },
 				test: {
 					name: 'client',
 					browser: {
@@ -43,9 +55,7 @@ export default defineConfig({
 			},
 			{
 				extends: './vite.config.ts',
-				// In development the Rust server (`cargo run -p server`) answers the API
-				// and game sockets on 8080; Vite serves the client and proxies to it.
-				server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
+				server: { proxy: apiProxy },
 				test: {
 					name: 'server',
 					environment: 'node',
