@@ -39,6 +39,19 @@ test('guests are invited to sign up; accounts get an explanation', async ({ page
 	await page.getByRole('button', { name: /Back to the explained position/ }).click();
 	await expect(page.getByTestId('coach-text')).toHaveText(said!);
 
+	// Follow-up questions carry the conversation on.
+	const box = page.getByLabel('Ask the coach a follow-up question');
+	await box.fill('Why that move?');
+	await box.press('Enter');
+	const followUps = page.getByTestId('coach-follow-up');
+	await expect(followUps.first()).toContainText('you asked \u201cWhy that move?\u201d');
+	await expect(page.getByText('4 questions left about this answer')).toBeVisible();
+	// A move the engine's lines don't start with: Stockfish looks at it first.
+	await box.fill('What about Nh3?');
+	await box.press('Enter');
+	await expect(followUps.nth(1)).toContainText('Stockfish answers it with', { timeout: 30_000 });
+	await expect(page.getByText('3 questions left about this answer')).toBeVisible();
+
 	// A new position gets its own explanation; going back shows the old one.
 	await page.locator('.engine .lines li button').first().click();
 	await expect(page.getByTestId('coach-text')).toHaveCount(0);

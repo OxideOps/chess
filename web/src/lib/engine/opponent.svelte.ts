@@ -19,6 +19,8 @@ export interface Search {
 	score: EngineScore | null;
 	/** The expected line from the searched position, `best` first. */
 	pv: string[];
+	/** How deep that line was searched, when the engine said. */
+	depth?: number;
 }
 
 /** What a drill needs from an opponent; `Opponent` is the real one. */
@@ -43,7 +45,7 @@ export class Opponent implements OpponentLike {
 	#markReady!: (ok: boolean) => void;
 	#pending: ((search: Search | null) => void) | null = null;
 	/** The deepest main line seen in the current search. */
-	#line: { score: EngineScore; pv: string[] } | null = null;
+	#line: { score: EngineScore; pv: string[]; depth: number } | null = null;
 
 	constructor({ movetime = MOVE_TIME_MS, createEngine }: OpponentOptions = {}) {
 		this.#movetime = movetime;
@@ -101,7 +103,7 @@ export class Opponent implements OpponentLike {
 				break;
 			case 'info':
 				if (this.#pending && msg.line.multipv === 1) {
-					this.#line = { score: msg.line.score, pv: msg.line.pv };
+					this.#line = { score: msg.line.score, pv: msg.line.pv, depth: msg.line.depth };
 				}
 				break;
 			case 'best_move': {
@@ -110,7 +112,8 @@ export class Opponent implements OpponentLike {
 				pending?.({
 					best: msg.best,
 					score: this.#line?.score ?? null,
-					pv: this.#line?.pv ?? (msg.best ? [msg.best] : [])
+					pv: this.#line?.pv ?? (msg.best ? [msg.best] : []),
+					depth: this.#line?.depth
 				});
 				break;
 			}

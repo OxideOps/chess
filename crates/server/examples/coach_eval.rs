@@ -15,15 +15,17 @@
 //! once. What was flagged and whether the rewrite is served are printed with
 //! the answer, for a human to read: the check can't catch every mistake. Every
 //! case is one API call (two when rewritten; about 1¢ each on Opus 5), made in
-//! parallel. `CHESS_COACH_MODEL` picks the model, as for the server.
+//! parallel. Cases with `follow_ups` then ask those on the answer's thread,
+//! with the Stockfish line the client would send for a move one names.
+//! `CHESS_COACH_MODEL` picks the model, as for the server.
 
 use std::time::Instant;
 
 use futures_util::future::join_all;
 use serde::Deserialize;
 use server::coach::{
-    Coach, CoachConfig, DEFAULT_MODEL, ExplainRequest, MistakeRequest, Prompt, mistake_prompt,
-    prompt,
+    Coach, CoachConfig, DEFAULT_MODEL, ExplainRequest, FollowUpReply, MistakeRequest, Probe,
+    Prompt, mistake_prompt, prompt,
 };
 
 #[derive(Deserialize)]
@@ -31,6 +33,16 @@ struct Case {
     name: String,
     #[serde(flatten)]
     ask: Ask,
+    /// Asked in order after the answer, as a student would.
+    #[serde(default)]
+    follow_ups: Vec<FollowUpCase>,
+}
+
+#[derive(Deserialize)]
+struct FollowUpCase {
+    question: String,
+    /// Stockfish's line for the move the question names, as the client sends it.
+    probe: Option<Probe>,
 }
 
 #[derive(Deserialize)]
@@ -80,13 +92,25 @@ async fn main() {
             let prompt = case_prompt(case);
             let started = Instant::now();
             let answer = coach.answer(prompt.clone()).await;
-            (prompt, answer, started.elapsed())
+            let took = started.elapsed();
+            // Then the follow-ups, one after another on the answer's thread.
+            let mut follow_ups = Vec::new();
+            if let Ok(answer) = &answer {
+                let thread = coach.start_thread("eval", &prompt, answer);
+                for f in &case.follow_ups {
+                    let reply = coach
+                        .follow_up(&thread, "eval", &f.question, f.probe.clone())
+                        .await;
+                    follow_ups.push((&f.question, reply));
+                }
+            }
+            (prompt, answer, took, follow_ups)
         }
     });
     let results = join_all(runs).await;
 
     let (mut flagged, mut rewritten, mut still, mut failed) = (0, 0, 0, 0);
-    for (case, (prompt, answer, took)) in cases.iter().zip(results) {
+    for (case, (prompt, answer, took, follow_ups)) in cases.iter().zip(results) {
         let kind = match case.ask {
             Ask::Explain(_) => "explain",
             Ask::Mistake(_) => "mistake",
@@ -122,6 +146,20 @@ async fn main() {
         }
         for p in &answer.problems {
             println!("  !! still: {p}");
+        }
+        for (question, reply) in follow_ups {
+            println!("  > {question}");
+            match reply {
+                Ok(FollowUpReply::Answer { answer, .. }) => println!("  {}", answer.text),
+                Ok(FollowUpReply::Probe { san, .. }) => {
+                    failed += 1;
+                    println!("  !! the fixture needs a probe for {san}");
+                }
+                Err(e) => {
+                    failed += 1;
+                    println!("  !! FAILED {e:?}");
+                }
+            }
         }
         println!();
     }

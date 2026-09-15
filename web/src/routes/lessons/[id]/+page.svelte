@@ -5,8 +5,10 @@
 	import { session as account } from '$lib/auth/session.svelte';
 	import { withNext } from '$lib/auth/next';
 	import { Coach, mistakeKey } from '$lib/coach/coach.svelte';
+	import { Prober } from '$lib/coach/probe';
 	import Board from '$lib/components/Board.svelte';
 	import CoachAnswer, { type Arrow } from '$lib/components/CoachAnswer.svelte';
+	import CoachFollowUps from '$lib/components/CoachFollowUps.svelte';
 	import { drills } from '$lib/chess/wasm';
 	import { sideName } from '$lib/chess/status';
 	import { Opponent } from '$lib/engine/opponent.svelte';
@@ -26,6 +28,9 @@
 	onMount(() => {
 		void coach.load();
 	});
+	// Stockfish for moves a follow-up asks about (not the drill's opponent).
+	const prober = new Prober();
+	onDestroy(() => prober.dispose());
 	const mistake = $derived(session?.mistake ?? null);
 	const key = $derived(mistake ? mistakeKey(mistake) : null);
 	const answer = $derived(key ? coach.answerFor(key) : null);
@@ -94,6 +99,9 @@
 					</p>
 					{#if answer}
 						<CoachAnswer {answer} testid="mistake-coach" onpreview={(a) => (preview = a)} />
+						{#if answer.thread && key}
+							<CoachFollowUps {coach} {key} probe={prober.probe} onpreview={(a) => (preview = a)} />
+						{/if}
 					{:else if coach.available && account.registered}
 						<button
 							type="button"

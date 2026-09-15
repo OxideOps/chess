@@ -59,7 +59,12 @@ Successor to the archived `OxideOps/chess-v1`.
   answer gets one correction turn (the first answer echoed back unchanged, thinking blocks and
   all, then the problems) and the cleaner of the two is served; both are logged;
   `Prompt::parts` marks the moves an answer names with their path from the explained position
-  (`Explanation.parts`, rendered clickable by the client);
+  (`Explanation.parts`, rendered clickable by the client); follow-up questions
+  (`/api/coach/followup`, `Coach::follow_up`) carry on the answer's conversation, kept server-side
+  in memory by thread id (`Explanation.thread`, owned by the user, 1 h, 5 questions, one at a
+  time, lost on restart) so the model's turns can't be forged; a question naming a legal move
+  the lines don't start with gets `FollowUpReply::Probe` back and the client sends Stockfish's
+  line for it (`src/lib/coach/probe.ts`) before the model answers;
   `"fallbacks": "default"` re-runs a request Opus 5's cyber classifier wrongly declines (the
   word "exact" in a prompt set it off); per-user
   limit, answer cache, `--fake-coach` offline stand-in; tests run against a mock API;

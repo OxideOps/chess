@@ -29,6 +29,9 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   on `/analysis` a click plays the path as a variation (`playHereUci`) and the panel keeps
   the answer up with "Back to the explained position". Keep the `{#each}` in `CoachAnswer`
   free of whitespace between parts, or Svelte renders spaces around every move.
+  `CoachFollowUps` sits under an answer: `Coach.followUp(key, question, probe)` posts on the
+  answer's `thread`; on a `probe` reply it runs `Prober.probe` (its own Stockfish, started on
+  first use, 1.5 s) and asks again with the line. One follow-up at a time (`Coach.following`).
 - `src/lib/lessons/` — `drill.svelte.ts` (`DrillSession`: the student's moves, `assessDrill`
   from the WASM after each, the engine's replies through an `OpponentLike`, and `mistake`:
   the engine's score before and after a student move, compared with `isMistake`), `progress.ts`

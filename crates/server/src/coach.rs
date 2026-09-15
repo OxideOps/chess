@@ -28,7 +28,7 @@ use chess_core::{
     Game, Role, Square,
     engine::{Score, pv_movetext},
     facts::{MoveFacts, board_facts, line_facts},
-    shakmaty::{Chess, Position, san::SanPlus, uci::UciMove},
+    shakmaty::{CastlingMode, Chess, Position, san::SanPlus, uci::UciMove},
 };
 use serde::{Deserialize, Serialize};
 
@@ -51,6 +51,13 @@ const MAX_TOKENS: u32 = 4000;
 const MAX_LINES: usize = 3;
 const MAX_PLIES: usize = 10;
 const CACHE_SIZE: usize = 2000;
+/// Follow-up questions per answer.
+pub const MAX_FOLLOW_UPS: u32 = 5;
+const MAX_QUESTION_CHARS: usize = 300;
+/// A conversation untouched this long is gone; so is the oldest one past
+/// `MAX_THREADS`.
+const THREAD_TTL: Duration = Duration::from_secs(3600);
+const MAX_THREADS: usize = 5000;
 
 const SYSTEM_PROMPT: &str = "You are a friendly chess coach for club players. \
 You are given facts computed from the board (where every piece stands, what attacks and \
@@ -104,6 +111,26 @@ pub struct Coach {
     client: reqwest::Client,
     cache: Arc<Mutex<HashMap<String, String>>>,
     limiter: Arc<Limiter>,
+    threads: Arc<Mutex<HashMap<String, Thread>>>,
+}
+
+/// The conversation behind an answer, kept for follow-up questions. In
+/// memory (lost on restart, which the client reports as expired), owned by
+/// the user it was answered for; the client only ever holds its id, so the
+/// model's side of the conversation can't be forged.
+#[derive(Clone)]
+struct Thread {
+    user: String,
+    system: &'static str,
+    /// Every message so far, the model's exactly as they came.
+    messages: Vec<serde_json::Value>,
+    shown: Shown,
+    /// The explained position (FEN).
+    root: String,
+    asked: u32,
+    /// A question is being answered: one at a time.
+    busy: bool,
+    touched: Instant,
 }
 
 impl Coach {
@@ -116,6 +143,7 @@ impl Coach {
                 .expect("an HTTP client"),
             cache: Arc::default(),
             limiter: Arc::default(),
+            threads: Arc::default(),
         }
     }
 }
@@ -166,6 +194,89 @@ pub struct Explanation {
     pub text: String,
     /// The same text, with the moves it names from the engine's lines marked.
     pub parts: Vec<AnswerPart>,
+    /// For follow-up questions (`/api/coach/followup`).
+    pub thread: Option<String>,
+}
+
+/// A follow-up question about an answer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct FollowUpRequest {
+    /// `Explanation::thread` of the answer.
+    pub thread: String,
+    pub question: String,
+    /// Stockfish on the move the question asks about, once the server has
+    /// asked for it (`FollowUpReply::Probe`).
+    #[serde(default)]
+    pub probe: Option<Probe>,
+}
+
+/// Stockfish's look at a move the engine's lines didn't cover.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct Probe {
+    /// The move, from the explained position (UCI).
+    pub uci: String,
+    /// Stockfish's line from the position after it (its score from that
+    /// side to move's view, as the engine gives it).
+    pub line: CoachLine,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub enum FollowUpReply {
+    Answer {
+        answer: Explanation,
+        /// Follow-ups left on this answer.
+        left: u32,
+    },
+    /// The question names a move the engine hasn't looked at: analyse `uci`
+    /// from `fen`, then ask again with a `probe`, so the coach doesn't guess.
+    Probe {
+        fen: String,
+        uci: String,
+        san: String,
+    },
+}
+
+const FOLLOW_UP_RULES: &str = "Answer it in plain language, using only the board facts, lines \
+and evaluations in this conversation. If it asks about a move there is no engine analysis for \
+here, say you would need the engine to judge it rather than guessing. If it isn't about this \
+position or chess, kindly say you can only help with this position. Keep it under 80 words, \
+plain text, no Markdown.";
+
+/// The first legal move from `root` that `question` names and the prompt's
+/// lines don't start with (UCI, SAN): the one Stockfish should look at.
+/// Squares after "on", "to", "from" or "at" are squares, not moves.
+fn asked_move(question: &str, root: &Chess, shown: &Shown) -> Option<(String, String)> {
+    let mut previous = String::new();
+    for raw in question.split_whitespace() {
+        let after_square_word = matches!(previous.as_str(), "on" | "to" | "from" | "at");
+        previous = raw.to_lowercase();
+        let word = raw
+            .trim_matches(|c: char| !c.is_alphanumeric() && !"+#=-".contains(c))
+            .trim_start_matches(|c: char| c.is_ascii_digit())
+            .trim_start_matches(['.', '…']);
+        if after_square_word || word.is_empty() {
+            continue;
+        }
+        let Ok(san) = word.parse::<SanPlus>() else {
+            continue;
+        };
+        let Ok(mv) = san.san.to_move(root) else {
+            continue;
+        };
+        let uci = mv.to_uci(CastlingMode::Standard).to_string();
+        let covered = shown
+            .lines
+            .iter()
+            .any(|m| m.path.len() == 1 && m.path[0] == uci);
+        if !covered {
+            return Some((uci, san.to_string()));
+        }
+    }
+    None
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -187,6 +298,9 @@ pub struct Prompt {
     fake: String,
     /// What the prompt shows, to check the answer against.
     shown: Shown,
+    /// The explained position (for a mistake, the one before the move): what
+    /// follow-up questions are about.
+    root: String,
 }
 
 /// Every move a prompt shows, and every piece on every square it stands on
@@ -338,16 +452,16 @@ const ROLE_NAMES: [(&str, Role); 6] = [
     ("pawn", Role::Pawn),
 ];
 
-impl Prompt {
+impl Shown {
     /// `answer` split into text and the moves it names from the prompt's
     /// lines. A move number before a move picks between equal SAN in
     /// different lines; moves the lines don't hold stay text.
-    pub fn parts(&self, answer: &str) -> Vec<AnswerPart> {
+    fn parts(&self, answer: &str) -> Vec<AnswerPart> {
         let mut parts = Vec::new();
         let mut at = 0;
         for mention in mentions(answer) {
             let san = mention.san.trim_end_matches(['+', '#']);
-            let same = self.shown.lines.iter().filter(|m| m.san == san);
+            let same = self.lines.iter().filter(|m| m.san == san);
             let numbered = same.clone().find(|m| {
                 mention.number.is_none_or(|n| n == m.number)
                     && mention.black.is_none_or(|b| b == m.black)
@@ -378,11 +492,10 @@ impl Prompt {
     /// in its lines, a piece on a square where no such piece ever stands, or
     /// Markdown. Heuristic (it reads SAN and "the knight on f6"), so it can't
     /// catch every mistake; the server logs what it finds.
-    pub fn check(&self, answer: &str) -> Vec<String> {
+    fn check(&self, answer: &str) -> Vec<String> {
         let mut problems = Vec::new();
         for mention in mentions(answer) {
             if !self
-                .shown
                 .moves
                 .contains(mention.san.trim_end_matches(['+', '#']))
             {
@@ -425,7 +538,7 @@ impl Prompt {
                 let Ok(square) = square.parse::<Square>() else {
                     continue;
                 };
-                if !self.shown.pieces.contains(&(role, square)) {
+                if !self.pieces.contains(&(role, square)) {
                     problems.push(format!(
                         "puts a {name} on {square}, where none stands in the position or its lines"
                     ));
@@ -442,6 +555,19 @@ impl Prompt {
         }
         problems.dedup();
         problems
+    }
+}
+
+impl Prompt {
+    /// `answer` split into text and the moves it names from the prompt's
+    /// lines (see `Shown::parts`).
+    pub fn parts(&self, answer: &str) -> Vec<AnswerPart> {
+        self.shown.parts(answer)
+    }
+
+    /// Claims in `answer` that nothing in the prompt backs (see `Shown::check`).
+    pub fn check(&self, answer: &str) -> Vec<String> {
+        self.shown.check(answer)
     }
 }
 
@@ -528,6 +654,7 @@ pub fn prompt(request: &ExplainRequest) -> Result<Prompt, String> {
              {verdict}. With an API key, a real explanation of the ideas behind it appears here."
         ),
         shown,
+        root: request.fen.clone(),
     })
 }
 
@@ -673,6 +800,7 @@ pub fn mistake_prompt(request: &MistakeRequest) -> Result<Prompt, String> {
         key,
         fake,
         shown,
+        root: request.fen.clone(),
     })
 }
 
@@ -743,6 +871,17 @@ pub struct Answer {
     pub problems: Vec<String>,
     /// The text with the moves it names marked (`Prompt::parts`).
     pub parts: Vec<AnswerPart>,
+    /// The conversation that produced it, ending with the served answer (the
+    /// model's turns exactly as they came): where follow-ups carry on.
+    pub conversation: Vec<serde_json::Value>,
+}
+
+fn user_turn(text: &str) -> serde_json::Value {
+    serde_json::json!({ "role": "user", "content": text })
+}
+
+fn assistant_turn(content: serde_json::Value) -> serde_json::Value {
+    serde_json::json!({ "role": "assistant", "content": content })
 }
 
 /// The one correction turn after a flagged answer.
@@ -772,20 +911,27 @@ impl Coach {
     }
 
     async fn answer_text(&self, prompt: &Prompt) -> Result<Answer, CoachError> {
+        // Answered without the model: the conversation is the text alone.
+        let plain = |text: String, cached: bool| Answer {
+            conversation: vec![user_turn(&prompt.user), assistant_turn(text.clone().into())],
+            text,
+            cached,
+            ..Answer::default()
+        };
         if let Some(text) = self.cache.lock().unwrap().get(&prompt.key) {
-            return Ok(Answer {
-                text: text.clone(),
-                cached: true,
-                ..Answer::default()
-            });
+            return Ok(plain(text.clone(), true));
         }
         let answer = if self.config.fake {
-            Answer {
-                text: prompt.fake.clone(),
-                ..Answer::default()
-            }
+            plain(prompt.fake.clone(), false)
         } else {
-            self.checked(prompt).await?
+            self.converse(
+                prompt.system,
+                vec![user_turn(&prompt.user)],
+                &prompt.shown,
+                false,
+                &prompt.key,
+            )
+            .await?
         };
         let mut cache = self.cache.lock().unwrap();
         if cache.len() >= CACHE_SIZE {
@@ -795,33 +941,71 @@ impl Coach {
         Ok(answer)
     }
 
-    /// Ask, check the answer, and when the check flags it, ask the model
-    /// once to correct itself; serve whichever checks cleaner.
-    async fn checked(&self, prompt: &Prompt) -> Result<Answer, CoachError> {
-        let question = serde_json::json!({ "role": "user", "content": prompt.user });
-        let first = self
-            .ask(prompt.system, std::slice::from_ref(&question))
-            .await?;
-        let flagged = prompt.check(&first.text);
+    /// Keep an answer's conversation for follow-up questions; its id.
+    pub fn start_thread(&self, user: &str, prompt: &Prompt, answer: &Answer) -> String {
+        let id = uuid::Uuid::new_v4().simple().to_string();
+        let now = Instant::now();
+        let mut threads = self.threads.lock().unwrap();
+        if threads.len() >= MAX_THREADS {
+            threads.retain(|_, t| now.duration_since(t.touched) < THREAD_TTL);
+            let oldest = threads.iter().min_by_key(|(_, t)| t.touched);
+            if let Some(id) = oldest.map(|(id, _)| id.clone())
+                && threads.len() >= MAX_THREADS
+            {
+                threads.remove(&id);
+            }
+        }
+        threads.insert(
+            id.clone(),
+            Thread {
+                user: user.to_string(),
+                system: prompt.system,
+                messages: answer.conversation.clone(),
+                shown: prompt.shown.clone(),
+                root: prompt.root.clone(),
+                asked: 0,
+                busy: false,
+                touched: now,
+            },
+        );
+        id
+    }
+
+    /// Carry `messages` (ending with a user turn) on: ask, check the answer
+    /// against `shown`, and when the check flags it, ask the model once to
+    /// correct itself; serve whichever checks cleaner. `cache` marks the
+    /// conversation for prompt caching (follow-ups reuse its prefix).
+    async fn converse(
+        &self,
+        system: &str,
+        mut messages: Vec<serde_json::Value>,
+        shown: &Shown,
+        cache: bool,
+        key: &str,
+    ) -> Result<Answer, CoachError> {
+        let first = self.ask(system, &messages, cache).await?;
+        let flagged = shown.check(&first.text);
+        messages.push(assistant_turn(first.content.into()));
         if flagged.is_empty() {
             return Ok(Answer {
                 text: first.text,
+                conversation: messages,
                 ..Answer::default()
             });
         }
         // Append-only: the first answer goes back exactly as it came.
-        let turns = [
-            question,
-            serde_json::json!({ "role": "assistant", "content": first.content }),
-            serde_json::json!({ "role": "user", "content": correction(&flagged) }),
-        ];
-        let rewrite = match self.ask(prompt.system, &turns).await {
+        let mut corrected = messages.clone();
+        corrected.push(user_turn(&correction(&flagged)));
+        let rewrite = match self.ask(system, &corrected, cache).await {
             Ok(second) => {
-                let problems = prompt.check(&second.text);
-                (problems.len() < flagged.len()).then_some((second.text, problems))
+                let problems = shown.check(&second.text);
+                (problems.len() < flagged.len()).then(|| {
+                    corrected.push(assistant_turn(second.content.into()));
+                    (second.text, problems)
+                })
             }
             Err(e) => {
-                tracing::warn!(key = prompt.key, "coach correction failed: {e:?}");
+                tracing::warn!(key, "coach correction failed: {e:?}");
                 None
             }
         };
@@ -831,17 +1015,21 @@ impl Coach {
                 flagged,
                 rewritten: true,
                 problems,
+                conversation: corrected,
                 ..Answer::default()
             },
+            // The correction exchange is dropped from the end: what came
+            // before it is unchanged, so later turns stay valid.
             None => Answer {
                 text: first.text,
                 problems: flagged.clone(),
                 flagged,
+                conversation: messages,
                 ..Answer::default()
             },
         };
         tracing::warn!(
-            key = prompt.key,
+            key,
             rewritten = answer.rewritten,
             "coach answer flagged: {}; still: {}",
             answer.flagged.join("; "),
@@ -854,9 +1042,14 @@ impl Coach {
         Ok(answer)
     }
 
-    async fn ask(&self, system: &str, messages: &[serde_json::Value]) -> Result<Reply, CoachError> {
+    async fn ask(
+        &self,
+        system: &str,
+        messages: &[serde_json::Value],
+        cache: bool,
+    ) -> Result<Reply, CoachError> {
         let key = self.config.api_key.as_deref().unwrap_or_default();
-        let body = serde_json::json!({
+        let mut body = serde_json::json!({
             "model": self.config.model,
             "max_tokens": MAX_TOKENS,
             // Opus 5's safety classifiers can misfire on chess talk ("attacked
@@ -866,6 +1059,9 @@ impl Coach {
             "system": system,
             "messages": messages,
         });
+        if cache {
+            body["cache_control"] = serde_json::json!({ "type": "ephemeral" });
+        }
         let response = self
             .client
             .post(&self.config.api_url)
@@ -923,6 +1119,7 @@ pub fn router() -> Router<AppState> {
         .route("/api/coach", get(status))
         .route("/api/coach/explain", post(explain))
         .route("/api/coach/mistake", post(mistake))
+        .route("/api/coach/followup", post(follow_up))
 }
 
 async fn status(State(state): State<AppState>) -> Json<CoachStatus> {
@@ -987,12 +1184,16 @@ async fn respond(
             &format!("that's all the coach can do for now; try again in {minutes} min"),
         );
     }
-    match coach.answer(prompt).await {
-        Ok(answer) => Json(Explanation {
-            text: answer.text,
-            parts: answer.parts,
-        })
-        .into_response(),
+    match coach.answer(prompt.clone()).await {
+        Ok(answer) => {
+            let thread = coach.start_thread(&user.id, &prompt, &answer);
+            Json(Explanation {
+                text: answer.text,
+                parts: answer.parts,
+                thread: Some(thread),
+            })
+            .into_response()
+        }
         Err(CoachError::BadRequest(message)) => refuse(StatusCode::BAD_REQUEST, &message),
         Err(CoachError::Upstream(detail)) => {
             tracing::error!("coach: {detail}");
@@ -1002,6 +1203,242 @@ async fn respond(
             )
         }
     }
+}
+
+/// Why a follow-up wasn't answered.
+#[derive(Debug)]
+pub enum FollowUpError {
+    /// No such thread for this user, or it expired.
+    NotFound,
+    /// A question on this thread is still being answered.
+    Busy,
+    /// `MAX_FOLLOW_UPS` asked already.
+    Exhausted,
+    BadRequest(String),
+    /// Over the hourly limit; the wait.
+    Limited(Duration),
+    Upstream(String),
+}
+
+impl Coach {
+    /// Ask a follow-up on `thread` for `user`: the conversation goes on with
+    /// the question (and Stockfish's line for a move it names that the lines
+    /// didn't cover), checked like any answer. Counts against the hourly
+    /// limit; at most `MAX_FOLLOW_UPS` per answer.
+    pub async fn follow_up(
+        &self,
+        thread_id: &str,
+        user: &str,
+        question: &str,
+        probe: Option<Probe>,
+    ) -> Result<FollowUpReply, FollowUpError> {
+        let question = question.trim();
+        if question.is_empty() || question.chars().count() > MAX_QUESTION_CHARS {
+            return Err(FollowUpError::BadRequest(format!(
+                "a question of up to {MAX_QUESTION_CHARS} characters"
+            )));
+        }
+        // Take a copy and mark the thread busy, so the lock isn't held while
+        // the model answers.
+        let thread = {
+            let mut threads = self.threads.lock().unwrap();
+            let t = threads
+                .get_mut(thread_id)
+                .filter(|t| t.user == user && t.touched.elapsed() < THREAD_TTL)
+                .ok_or(FollowUpError::NotFound)?;
+            if t.busy {
+                return Err(FollowUpError::Busy);
+            }
+            if t.asked >= MAX_FOLLOW_UPS {
+                return Err(FollowUpError::Exhausted);
+            }
+            t.busy = true;
+            t.clone()
+        };
+        let result = answer_follow_up(self, user, &thread, question, probe).await;
+        let mut threads = self.threads.lock().unwrap();
+        let t = threads.get_mut(thread_id).ok_or(FollowUpError::NotFound)?;
+        t.busy = false;
+        let (reply, update) = result?;
+        if let Some((messages, shown)) = update {
+            t.messages = messages;
+            t.shown = shown;
+            t.asked += 1;
+            t.touched = Instant::now();
+        }
+        Ok(match reply {
+            FollowUpReply::Answer { mut answer, .. } => {
+                answer.thread = Some(thread_id.to_string());
+                FollowUpReply::Answer {
+                    answer,
+                    left: MAX_FOLLOW_UPS - t.asked,
+                }
+            }
+            probe => probe,
+        })
+    }
+}
+
+async fn follow_up(
+    State(state): State<AppState>,
+    RequireUser(user): RequireUser,
+    Json(request): Json<FollowUpRequest>,
+) -> Response {
+    let Some(coach) = &state.coach else {
+        return refuse(StatusCode::NOT_FOUND, "this server has no coach");
+    };
+    if user.is_guest {
+        return refuse(
+            StatusCode::FORBIDDEN,
+            "the coach is for accounts: sign up or log in",
+        );
+    }
+    let reply = coach
+        .follow_up(&request.thread, &user.id, &request.question, request.probe)
+        .await;
+    match reply {
+        Ok(reply) => Json(reply).into_response(),
+        Err(FollowUpError::NotFound) => refuse(
+            StatusCode::NOT_FOUND,
+            "that conversation has expired: ask the coach again",
+        ),
+        Err(FollowUpError::Busy) => refuse(StatusCode::CONFLICT, "one question at a time"),
+        Err(FollowUpError::Exhausted) => refuse(
+            StatusCode::TOO_MANY_REQUESTS,
+            "that's all the questions about this answer",
+        ),
+        Err(FollowUpError::BadRequest(message)) => refuse(StatusCode::BAD_REQUEST, &message),
+        Err(FollowUpError::Limited(wait)) => {
+            let minutes = wait.as_secs().div_ceil(60);
+            refuse(
+                StatusCode::TOO_MANY_REQUESTS,
+                &format!("that's all the coach can do for now; try again in {minutes} min"),
+            )
+        }
+        Err(FollowUpError::Upstream(detail)) => {
+            tracing::error!("coach follow-up: {detail}");
+            refuse(
+                StatusCode::BAD_GATEWAY,
+                "the coach is unavailable right now; try again later",
+            )
+        }
+    }
+}
+
+/// The reply, and when the model answered, the thread's new messages and
+/// what they show.
+type FollowUpTurn = (FollowUpReply, Option<(Vec<serde_json::Value>, Shown)>);
+
+async fn answer_follow_up(
+    coach: &Coach,
+    user: &str,
+    thread: &Thread,
+    question: &str,
+    probe: Option<Probe>,
+) -> Result<FollowUpTurn, FollowUpError> {
+    let root = Game::from_fen(&thread.root)
+        .expect("a thread's position was checked when it was explained")
+        .position()
+        .clone();
+    let probe = match probe {
+        None => {
+            if let Some((uci, san)) = asked_move(question, &root, &thread.shown) {
+                let ask = FollowUpReply::Probe {
+                    fen: thread.root.clone(),
+                    uci,
+                    san,
+                };
+                return Ok((ask, None));
+            }
+            None
+        }
+        Some(p) => {
+            let bad = |m: &str| FollowUpError::BadRequest(format!("{m:?} is not a UCI move"));
+            let mv: UciMove = p.uci.parse().map_err(|_| bad(&p.uci))?;
+            let Ok(legal) = mv.to_move(&root) else {
+                return Err(FollowUpError::BadRequest(
+                    "that move isn't legal in the explained position".to_string(),
+                ));
+            };
+            let pv: Vec<UciMove> = p
+                .line
+                .pv
+                .iter()
+                .take(MAX_PLIES)
+                .map(|m| m.parse().map_err(|_| bad(m)))
+                .collect::<Result<_, _>>()?;
+            Some((mv, legal, pv, p.line))
+        }
+    };
+
+    let hourly = Limit {
+        hits: coach.config.per_hour,
+        window: Duration::from_secs(3600),
+    };
+    coach
+        .limiter
+        .hit(&format!("coach:{user}"), hourly, Instant::now())
+        .map_err(FollowUpError::Limited)?;
+
+    let mut shown = thread.shown.clone();
+    let mut text = format!(
+        "The student asks a follow-up question about this position:\n<question>\n{question}\n\
+         </question>\n"
+    );
+    let mut fake_probe = String::new();
+    if let Some((mv, legal, pv, line)) = &probe {
+        let mut after = root.clone();
+        after.play_unchecked(*legal);
+        shown.walk(&root, std::slice::from_ref(mv), &[]);
+        shown.walk(&after, pv, std::slice::from_ref(mv));
+        let score = Score::from(line.score).for_white(after.turn());
+        let verdict = format!("{} ({score})", score.describe());
+        text.push_str("\nStockfish on the move the student asks about:\n");
+        push_line_facts(&mut text, &root, std::slice::from_ref(mv));
+        text.push_str(&format!(
+            "- The evaluation after it: {verdict}, from White's point of view, at depth {}.\n",
+            line.depth
+        ));
+        let reply = pv_movetext(&after, pv);
+        if !reply.is_empty() {
+            text.push_str("- Stockfish's best reply and line, move by move:\n");
+            push_line_facts(&mut text, &after, pv);
+            fake_probe = format!(" Stockfish answers it with {reply}: {verdict}.");
+        }
+    }
+    text.push('\n');
+    text.push_str(FOLLOW_UP_RULES);
+
+    let mut messages = thread.messages.clone();
+    messages.push(user_turn(&text));
+    let answer = if coach.config.fake {
+        let said = format!(
+            "Practice coach (no AI configured): you asked \u{201c}{question}\u{201d}.{fake_probe}"
+        );
+        messages.push(assistant_turn(said.clone().into()));
+        Answer {
+            text: said,
+            conversation: messages,
+            ..Answer::default()
+        }
+    } else {
+        coach
+            .converse(thread.system, messages, &shown, true, "follow-up")
+            .await
+            .map_err(|e| match e {
+                CoachError::BadRequest(message) => FollowUpError::BadRequest(message),
+                CoachError::Upstream(detail) => FollowUpError::Upstream(detail),
+            })?
+    };
+    let reply = FollowUpReply::Answer {
+        answer: Explanation {
+            parts: shown.parts(&answer.text),
+            text: answer.text,
+            thread: None, // `Coach::follow_up` fills it in
+        },
+        left: 0,
+    };
+    Ok((reply, Some((answer.conversation, shown))))
 }
 
 #[cfg(test)]
@@ -1247,6 +1684,27 @@ mod tests {
         assert_eq!(path_of("Nf3 develops."), ["e2e4", "e7e5", "g1f3"]);
         // Black's moves: "1... d5" is the second line's.
         assert_eq!(path_of("Then 1... d5 is solid."), ["g1f3", "d7d5"]);
+    }
+
+    #[test]
+    fn finds_the_move_a_question_asks_about() {
+        // After 1. e4; the lines start with 1... c5 and 1... e5.
+        let p = prompt(&request()).unwrap();
+        let root = Game::from_fen(&p.root).unwrap().position().clone();
+        let asked = |q: &str| asked_move(q, &root, &p.shown);
+        assert_eq!(asked("Why not Nf6?"), Some(("g8f6".into(), "Nf6".into())));
+        assert_eq!(
+            asked("and what about 1...d5"),
+            Some(("d7d5".into(), "d5".into()))
+        );
+        // Moves the lines start with are covered already.
+        assert_eq!(asked("Why c5?"), None);
+        assert_eq!(asked("Is 1... e5 as good?"), None);
+        // Squares, prose, and moves that aren't legal here.
+        assert_eq!(asked("What about the knight on f6?"), None);
+        assert_eq!(asked("Where should the king go to e7?"), None);
+        assert_eq!(asked("Why is Black fighting for the centre?"), None);
+        assert_eq!(asked("What about Nf3?"), None); // White's move; Black is to play
     }
 
     fn mistake() -> MistakeRequest {
