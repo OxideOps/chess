@@ -10,10 +10,12 @@
 //!
 //! The cases (`tests/fixtures/coach_eval.json`) are positions to explain and
 //! drill mistakes, with real Stockfish lines (Stockfish 17.1, depth 22). Each
-//! answer is checked with `Prompt::check` (moves and pieces the prompt never
-//! showed, Markdown) and printed for a human to read: the check can't catch
-//! every mistake, so read them. Every case is one API call (about 1¢ on Opus
-//! 5), made in parallel. `CHESS_COACH_MODEL` picks the model, as for the server.
+//! is answered the way the server answers: checked with `Prompt::check` (moves
+//! and pieces the prompt never showed, Markdown) and, when flagged, rewritten
+//! once. What was flagged and whether the rewrite is served are printed with
+//! the answer, for a human to read: the check can't catch every mistake. Every
+//! case is one API call (two when rewritten; about 1¢ each on Opus 5), made in
+//! parallel. `CHESS_COACH_MODEL` picks the model, as for the server.
 
 use std::time::Instant;
 
@@ -83,8 +85,7 @@ async fn main() {
     });
     let results = join_all(runs).await;
 
-    let mut flagged = 0;
-    let mut failed = 0;
+    let (mut flagged, mut rewritten, mut still, mut failed) = (0, 0, 0, 0);
     for (case, (prompt, answer, took)) in cases.iter().zip(results) {
         let kind = match case.ask {
             Ask::Explain(_) => "explain",
@@ -94,31 +95,39 @@ async fn main() {
             println!("---- prompt: {}\n{}\n", case.name, prompt.user);
         }
         let answer = match answer {
-            Ok(text) => text,
+            Ok(answer) => answer,
             Err(e) => {
                 failed += 1;
                 println!("== {} ({kind}): FAILED {e:?}\n", case.name);
                 continue;
             }
         };
-        let problems = prompt.check(&answer);
-        if !problems.is_empty() {
-            flagged += 1;
-        }
+        flagged += usize::from(!answer.flagged.is_empty());
+        rewritten += usize::from(answer.rewritten);
+        still += usize::from(!answer.problems.is_empty());
         println!(
-            "== {} ({kind}) · {:.1}s · {} words",
+            "== {} ({kind}) · {:.1}s · {} words{}",
             case.name,
             took.as_secs_f32(),
-            answer.split_whitespace().count()
+            answer.text.split_whitespace().count(),
+            if answer.rewritten {
+                " · rewritten"
+            } else {
+                ""
+            }
         );
-        println!("{answer}");
-        for p in &problems {
-            println!("  !! {p}");
+        println!("{}", answer.text);
+        for p in &answer.flagged {
+            println!("  flagged: {p}");
+        }
+        for p in &answer.problems {
+            println!("  !! still: {p}");
         }
         println!();
     }
     println!(
-        "{} cases: {flagged} with flagged claims, {failed} failed",
+        "{} cases: {flagged} flagged at first, {rewritten} rewritten, {still} still flagged, \
+         {failed} failed",
         cases.len()
     );
 }
