@@ -563,6 +563,16 @@ pub fn bar_fraction(score: JsValue) -> Result<f64, JsError> {
     Ok(score_from_js(score)?.bar_fraction())
 }
 
+/// Whether a move that took the evaluation from `before` to `after` (both
+/// `EngineScore`s from the mover's point of view) was a mistake.
+#[wasm_bindgen(js_name = isMistake)]
+pub fn is_mistake(before: JsValue, after: JsValue) -> Result<bool, JsError> {
+    Ok(Score::is_mistake(
+        score_from_js(before)?,
+        score_from_js(after)?,
+    ))
+}
+
 /// `+0.35`, `-1.20`, `#3`.
 #[wasm_bindgen(js_name = formatScore)]
 pub fn format_score(score: JsValue) -> Result<String, JsError> {

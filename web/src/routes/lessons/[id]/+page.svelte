@@ -1,7 +1,10 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import { session as account } from '$lib/auth/session.svelte';
+	import { withNext } from '$lib/auth/next';
+	import { Coach, mistakeKey } from '$lib/coach/coach.svelte';
 	import Board from '$lib/components/Board.svelte';
 	import { drills } from '$lib/chess/wasm';
 	import { sideName } from '$lib/chess/status';
@@ -16,6 +19,17 @@
 	const session = drill ? new DrillSession(drill, new Opponent()) : null;
 	void session?.start();
 	onDestroy(() => session?.dispose());
+
+	// The coach, for "why was that a mistake?" (hidden if the server has none).
+	const coach = new Coach();
+	onMount(() => {
+		void coach.load();
+	});
+	const mistake = $derived(session?.mistake ?? null);
+	const key = $derived(mistake ? mistakeKey(mistake) : null);
+	const answer = $derived(key ? coach.answerFor(key) : null);
+	const asking = $derived(coach.busy && coach.key === key);
+	const coachError = $derived(key && coach.key === key ? coach.error : null);
 
 	const plural = (n: number) => `${n} ${n === 1 ? 'move' : 'moves'}`;
 	const goal = $derived.by(() => {
@@ -68,6 +82,33 @@
 			{#if session.error}
 				<p class="error" role="alert">{session.error}</p>
 			{/if}
+			{#if mistake && drill}
+				<div class="mistake" data-testid="mistake">
+					<p>
+						<strong>{mistake.playedSan}</strong> was a mistake: Stockfish preferred
+						<strong>{mistake.betterSan}</strong>.
+					</p>
+					{#if answer}
+						<p class="coach-text" data-testid="mistake-coach">{answer}</p>
+					{:else if coach.available && account.registered}
+						<button
+							type="button"
+							disabled={asking}
+							onclick={() => coach.explainMistake(mistake, drill.id)}
+						>
+							{asking ? 'The coach is thinking…' : 'Why was that a mistake?'}
+						</button>
+					{:else if coach.available}
+						<p class="hint">
+							<a href={withNext(resolve('/signup'), page.url.pathname)}>Sign up</a> or
+							<a href={withNext(resolve('/login'), page.url.pathname)}>log in</a> to ask the coach why.
+						</p>
+					{/if}
+					{#if coachError}
+						<p class="error" role="alert">{coachError}</p>
+					{/if}
+				</div>
+			{/if}
 			<div class="actions">
 				<button type="button" onclick={() => session.restart()}>Restart</button>
 				{#if session.status.state === 'won' && next}
@@ -114,6 +155,47 @@
 		margin: 0;
 		color: #e06c75;
 		font-size: 0.85rem;
+	}
+
+	.mistake {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.6rem 0.8rem;
+		background: var(--panel);
+		border: 1px solid var(--warning);
+		border-radius: 6px;
+	}
+
+	.mistake p {
+		margin: 0;
+		line-height: 1.45;
+	}
+
+	.mistake .hint {
+		color: var(--text-muted);
+		font-size: 0.85rem;
+	}
+
+	.mistake .hint a {
+		color: var(--text);
+	}
+
+	.mistake button {
+		align-self: flex-start;
+		min-height: var(--tap);
+		padding: 0.35rem 0.8rem;
+		border: 1px solid var(--accent);
+		border-radius: 6px;
+		background: var(--accent);
+		color: #fff;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.mistake button:disabled {
+		opacity: 0.6;
+		cursor: default;
 	}
 
 	.actions {

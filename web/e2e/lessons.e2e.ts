@@ -46,6 +46,40 @@ test('when you defend, the engine moves first and the board faces you', async ({
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('No such lesson');
 });
 
+test('a blunder is pointed out, and an account can ask the coach why', async ({ page }) => {
+	// A guest sees the better move, and is invited to sign up for the explanation.
+	await page.goto('/lessons/queen-mate');
+	const status = page.getByTestId('drill-status');
+	await expect(status).toHaveText('Your move · 20 moves left', { timeout: 30_000 });
+	await sq(page, 'h2').click();
+	await sq(page, 'e5').click(); // Qe5+?? the king takes the queen
+	const mistake = page.getByTestId('mistake');
+	await expect(mistake).toContainText(/Qe5\+ was a mistake: Stockfish preferred \d+\. \S+\./, {
+		timeout: 30_000
+	});
+	await expect(mistake).toContainText('to ask the coach why');
+	await expect(status).toContainText('insufficient material');
+
+	// Signed up, the same blunder gets an explanation (the offline stand-in coach here).
+	await page.goto('/signup');
+	await page.getByLabel('Username').fill(`drill_${Date.now().toString(36)}`);
+	await page.getByLabel('Password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Sign up' }).click();
+	await expect(page).toHaveURL('/');
+	await page.goto('/lessons/queen-mate');
+	await expect(status).toHaveText('Your move · 20 moves left', { timeout: 30_000 });
+	await sq(page, 'h2').click();
+	await sq(page, 'e5').click();
+	await page.getByRole('button', { name: 'Why was that a mistake?' }).click();
+	const answer = page.getByTestId('mistake-coach');
+	await expect(answer).toContainText('Practice coach');
+	await expect(answer).toContainText('after Qe5+');
+
+	// Restarting clears it.
+	await page.getByRole('button', { name: 'Restart' }).click();
+	await expect(mistake).toHaveCount(0);
+});
+
 function sq(page: Page, name: string) {
 	return page.locator(`[data-square="${name}"]`);
 }

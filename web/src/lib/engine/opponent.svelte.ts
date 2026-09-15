@@ -1,4 +1,5 @@
 import { parseEngineMessage } from '$lib/chess/wasm';
+import type { EngineScore } from '$lib/generated/EngineScore';
 import { Engine, type EngineEvent, type EngineLike } from './worker';
 
 /** How long the engine thinks per move when it plays against you. */
@@ -10,17 +11,27 @@ export interface OpponentOptions {
 	createEngine?: (onEvent: (event: EngineEvent) => void) => EngineLike;
 }
 
+/** What one search found: its move, and how it rates the position it searched. */
+export interface Search {
+	/** The move to play (UCI); `null` if there is none (mate or stalemate). */
+	best: string | null;
+	/** For the side to move in the searched position; `null` if none was reported. */
+	score: EngineScore | null;
+	/** The expected line from the searched position, `best` first. */
+	pv: string[];
+}
+
 /** What a drill needs from an opponent; `Opponent` is the real one. */
 export interface OpponentLike {
-	/** The engine's move (UCI) after `moves` from `fen`; `null` if it has none or failed. */
-	move(fen: string, moves: string[]): Promise<string | null>;
+	/** Search the position after `moves` from `fen`; `null` if replaced or failed. */
+	search(fen: string, moves: string[]): Promise<Search | null>;
 	dispose(): void;
 }
 
 /**
- * Stockfish playing a side: asked for a move, it thinks for `movetime` and
- * answers with its best one. One request at a time; a new request stops the
- * previous search and that one resolves `null`.
+ * Stockfish playing a side: asked about a position, it thinks for `movetime`
+ * and reports its best move with its evaluation and line. One request at a
+ * time; a new request stops the previous search and that one resolves `null`.
  */
 export class Opponent implements OpponentLike {
 	status: 'loading' | 'ready' | 'failed' = $state('loading');
@@ -30,7 +41,9 @@ export class Opponent implements OpponentLike {
 	readonly #movetime: number;
 	readonly #ready: Promise<boolean>;
 	#markReady!: (ok: boolean) => void;
-	#pending: ((uci: string | null) => void) | null = null;
+	#pending: ((search: Search | null) => void) | null = null;
+	/** The deepest main line seen in the current search. */
+	#line: { score: EngineScore; pv: string[] } | null = null;
 
 	constructor({ movetime = MOVE_TIME_MS, createEngine }: OpponentOptions = {}) {
 		this.#movetime = movetime;
@@ -40,7 +53,7 @@ export class Opponent implements OpponentLike {
 		this.#engine.send('uci');
 	}
 
-	async move(fen: string, moves: string[]): Promise<string | null> {
+	async search(fen: string, moves: string[]): Promise<Search | null> {
 		if (!(await this.#ready)) return null;
 		// A newer request replaces an older one: it resolves null, and `stop`
 		// ends its search (its bestmove then arrives with nobody waiting).
@@ -49,6 +62,7 @@ export class Opponent implements OpponentLike {
 			moves.length > 0 ? `position fen ${fen} moves ${moves.join(' ')}` : `position fen ${fen}`;
 		return new Promise((resolve) => {
 			this.#pending = resolve;
+			this.#line = null;
 			this.#engine.send(position);
 			this.#engine.send(`go movetime ${this.#movetime}`);
 		});
@@ -59,12 +73,12 @@ export class Opponent implements OpponentLike {
 		this.#engine.terminate();
 	}
 
-	#settle(uci: string | null): void {
+	#settle(search: Search | null): void {
 		const pending = this.#pending;
 		this.#pending = null;
 		if (pending) {
-			if (uci === null) this.#engine.send('stop');
-			pending(uci);
+			if (search === null) this.#engine.send('stop');
+			pending(search);
 		}
 	}
 
@@ -85,10 +99,19 @@ export class Opponent implements OpponentLike {
 				this.status = 'ready';
 				this.#markReady(true);
 				break;
+			case 'info':
+				if (this.#pending && msg.line.multipv === 1) {
+					this.#line = { score: msg.line.score, pv: msg.line.pv };
+				}
+				break;
 			case 'best_move': {
 				const pending = this.#pending;
 				this.#pending = null;
-				pending?.(msg.best);
+				pending?.({
+					best: msg.best,
+					score: this.#line?.score ?? null,
+					pv: this.#line?.pv ?? (msg.best ? [msg.best] : [])
+				});
 				break;
 			}
 			default:

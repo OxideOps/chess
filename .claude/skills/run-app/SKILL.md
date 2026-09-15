@@ -75,6 +75,8 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
   then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
   "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
+  A blunder (Qh2-e5+ in `/lessons/queen-mate`) shows `[data-testid=mistake]` with Stockfish's
+  better move and, for an account with a coach, "Why was that a mistake?".
 - Puzzles (`/puzzles`) need puzzles in the database: `cargo run -p server -- import-puzzles
   crates/server/tests/fixtures/puzzles.csv` (Playwright does this at start). The status line
   reads "Find the best move for White/Black.", then "Correct! Find the next move.", "Solved!"

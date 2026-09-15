@@ -1,16 +1,18 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { drills, initChess } from '$lib/chess/wasm';
-import type { OpponentLike } from '$lib/engine/opponent.svelte';
+import type { OpponentLike, Search } from '$lib/engine/opponent.svelte';
 import { DrillSession } from './drill.svelte';
 import { completed } from './progress';
 
-/** An opponent that plays the moves it is given, and records what it was asked. */
-function scripted(...replies: string[]) {
+/** An opponent that answers with the searches it is given, and records what it was asked. */
+function scripted(...replies: (Search | string | null)[]) {
 	const asked: string[][] = [];
 	const opponent: OpponentLike = {
-		move: async (_fen, moves) => {
+		search: async (_fen, moves) => {
 			asked.push([...moves]);
-			return replies.shift() ?? null;
+			const reply = replies.shift();
+			if (reply === undefined || reply === null) return null;
+			return typeof reply === 'string' ? { best: reply, score: null, pv: [reply] } : reply;
 		},
 		dispose: () => {}
 	};
@@ -32,7 +34,7 @@ describe('DrillSession', () => {
 		expect(s.canMove).toBe(true);
 		expect(s.tryMove('a1', 'a8')).toBe('ok');
 		expect(s.status).toEqual({ state: 'won', reason: 'Checkmate!' });
-		expect(asked).toEqual([]); // no reply needed after mate
+		expect(asked).toEqual([[]]); // sized up the start; no reply needed after mate
 		expect(completed().has('back-rank-mate')).toBe(true);
 		expect(s.tryMove('a8', 'b8')).toBe('illegal');
 		s.dispose();
@@ -74,5 +76,61 @@ describe('DrillSession', () => {
 		expect(two.error).toBe('The engine could not move.');
 		two.dispose();
 		s.dispose();
+	});
+
+	it('spots a move that throws the win away, and names the better one', async () => {
+		const mate = (n: number) => ({ kind: 'mate' as const, value: n });
+		const { opponent } = scripted(
+			// The start: White (the student) mates in 8, starting with Qe2.
+			{ best: 'h2e2', score: mate(8), pv: ['h2e2', 'd5d4', 'e1d2'] },
+			// After Qe5+?? the engine (Black) sees a dead draw, and takes the queen.
+			{ best: 'd5e5', score: { kind: 'cp', value: 0 }, pv: ['d5e5'] }
+		);
+		const s = new DrillSession(drill('queen-mate'), opponent);
+		await s.start();
+		expect(s.thinking).toBe(false);
+		expect(s.mistake).toBeNull();
+
+		s.tryMove('h2', 'e5');
+		await settle();
+		expect(s.mistake).toEqual({
+			fen: drill('queen-mate').fen,
+			played: 'h2e5',
+			playedSan: 'Qe5+',
+			better: ['h2e2', 'd5d4', 'e1d2'],
+			betterSan: '1. Qe2',
+			before: mate(8),
+			after: { kind: 'cp', value: 0 }
+		});
+		// The engine took the queen: no mating material left.
+		expect(s.status.state).toBe('lost');
+		await s.restart();
+		expect(s.mistake).toBeNull();
+		s.dispose();
+	});
+
+	it("doesn't flag a slower win, and flags a move that loses the drill outright", async () => {
+		const mate = (n: number) => ({ kind: 'mate' as const, value: n });
+		const slower = scripted(
+			{ best: 'h2e2', score: mate(8), pv: ['h2e2', 'd5d4'] },
+			// After Qh5+ the engine still sees mate against it, just later.
+			{ best: 'd5d4', score: mate(-10), pv: ['d5d4', 'h5g4'] }
+		);
+		const s = new DrillSession(drill('queen-mate'), slower.opponent);
+		await s.start();
+		s.tryMove('h2', 'h5');
+		await settle();
+		expect(s.mistake).toBeNull();
+		expect(s.status.state).toBe('going');
+		s.dispose();
+
+		// Wasting the one move of the mate-in-one ends the drill: that's a mistake too.
+		const fatal = scripted({ best: 'a1a8', score: mate(1), pv: ['a1a8'] });
+		const one = new DrillSession(drill('back-rank-mate'), fatal.opponent);
+		await one.start();
+		one.tryMove('a1', 'a7');
+		expect(one.status.state).toBe('lost');
+		expect(one.mistake).toMatchObject({ playedSan: 'Ra7', betterSan: '1. Ra8#', after: null });
+		one.dispose();
 	});
 });

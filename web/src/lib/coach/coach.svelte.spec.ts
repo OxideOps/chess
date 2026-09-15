@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Coach } from './coach.svelte';
+import { Coach, mistakeKey } from './coach.svelte';
 import type { EngineLine } from '$lib/generated/EngineLine';
 
 const FEN = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1';
@@ -55,5 +55,35 @@ describe('Coach', () => {
 		await coach.explain(FEN, null, LINES);
 		expect(coach.text).toBeNull();
 		expect(coach.error).toBe('the coach is for accounts');
+	});
+
+	it('asks about a drill mistake and keeps the answer under its own key', async () => {
+		const { calls, fetchImpl } = server(new Response('{"text":"The queen was hanging."}'));
+		const coach = new Coach(fetchImpl);
+		const mistake = {
+			fen: '8/8/8/3k4/8/8/7Q/4K3 w - - 0 1',
+			played: 'h2e5',
+			playedSan: 'Qe5+',
+			better: ['h2e2', 'd5d4'],
+			betterSan: '1. Qe2',
+			before: { kind: 'mate' as const, value: 8 },
+			after: { kind: 'cp' as const, value: 0 }
+		};
+		await coach.explainMistake(mistake, 'queen-mate');
+		expect(coach.text).toBe('The queen was hanging.');
+		expect(calls[0]).toEqual({
+			url: '/api/coach/mistake',
+			body: {
+				fen: mistake.fen,
+				played: 'h2e5',
+				better: ['h2e2', 'd5d4'],
+				before: { kind: 'mate', value: 8 },
+				after: { kind: 'cp', value: 0 },
+				drill: 'queen-mate'
+			}
+		});
+		expect(coach.answerFor(mistakeKey(mistake))).toBe('The queen was hanging.');
+		// Not mixed up with an explanation of the same position.
+		expect(coach.answerFor(mistake.fen)).toBeNull();
 	});
 });
