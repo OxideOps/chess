@@ -20,6 +20,8 @@ export interface Mistake {
 	/** From the student's side: before the move, and after (`null` if the move ended the drill). */
 	before: EngineScore;
 	after: EngineScore | null;
+	/** The engine's answer to the move and its line (UCI); empty if the move ended the drill. */
+	reply: string[];
 }
 
 /** What the engine expects in the position the student is about to move from. */
@@ -125,10 +127,11 @@ export class DrillSession {
 	}
 
 	#noteMistake(
-		judged: { expected: Expectation | null; played: string; playedSan: string },
+		judged: { expected: Expectation | null; played: string; playedSan: string; reply?: string[] },
 		after: EngineScore | null
 	): void {
 		const { expected, played, playedSan } = judged;
+		const reply = judged.reply ?? [];
 		if (!expected || expected.pv.length === 0 || expected.pv[0] === played) return;
 		if (after !== null && !isMistake(expected.score, after)) return;
 		this.mistake = {
@@ -138,7 +141,8 @@ export class DrillSession {
 			better: expected.pv,
 			betterSan: pvMovetext(expected.fen, [expected.pv[0]]),
 			before: expected.score,
-			after
+			after,
+			reply
 		};
 	}
 
@@ -157,7 +161,7 @@ export class DrillSession {
 		}
 		// The search was from the engine's side, after the student's move.
 		const forStudent = search.score ? flip(search.score) : null;
-		if (judged && forStudent) this.#noteMistake(judged, forStudent);
+		if (judged && forStudent) this.#noteMistake({ ...judged, reply: search.pv }, forStudent);
 		this.game.playUci(search.best);
 		this.#assess();
 		this.#expect =

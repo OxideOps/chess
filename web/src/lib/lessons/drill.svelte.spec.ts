@@ -100,7 +100,8 @@ describe('DrillSession', () => {
 			better: ['h2e2', 'd5d4', 'e1d2'],
 			betterSan: '1. Qe2',
 			before: mate(8),
-			after: { kind: 'cp', value: 0 }
+			after: { kind: 'cp', value: 0 },
+			reply: ['d5e5']
 		});
 		// The engine took the queen: no mating material left.
 		expect(s.status.state).toBe('lost');
@@ -130,7 +131,12 @@ describe('DrillSession', () => {
 		await one.start();
 		one.tryMove('a1', 'a7');
 		expect(one.status.state).toBe('lost');
-		expect(one.mistake).toMatchObject({ playedSan: 'Ra7', betterSan: '1. Ra8#', after: null });
+		expect(one.mistake).toMatchObject({
+			playedSan: 'Ra7',
+			betterSan: '1. Ra8#',
+			after: null,
+			reply: []
+		});
 		one.dispose();
 	});
 });

@@ -12,8 +12,11 @@ import type { Mistake } from '$lib/lessons/drill.svelte';
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-/** Lines shallower than this aren't worth explaining yet. */
-export const MIN_DEPTH = 10;
+/**
+ * Lines shallower than this aren't worth explaining yet: the coach treats the
+ * engine's lines as the truth, so they should be deep enough to be.
+ */
+export const MIN_DEPTH = 16;
 
 /** The key a mistake's explanation is kept under. */
 export const mistakeKey = (m: Pick<Mistake, 'fen' | 'played'>) => `mistake:${m.fen}:${m.played}`;
@@ -67,7 +70,8 @@ export class Coach {
 			better: mistake.better,
 			before: mistake.before,
 			after: mistake.after,
-			drill
+			drill,
+			reply: mistake.reply
 		};
 		return this.#ask(mistakeKey(mistake), '/api/coach/mistake', request);
 	}

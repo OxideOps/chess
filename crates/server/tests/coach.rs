@@ -133,8 +133,10 @@ async fn explains_from_the_engine_lines_and_caches() {
         let (headers, body) = &calls[0];
         assert_eq!(headers["x-api-key"], "test-key");
         assert_eq!(headers["anthropic-version"], "2023-06-01");
+        assert_eq!(headers["anthropic-beta"], "server-side-fallback-2026-07-01");
         assert_eq!(body["model"], "claude-opus-5");
         assert_eq!(body["max_tokens"], 4000);
+        assert_eq!(body["fallbacks"], "default");
         let system = body["system"].as_str().unwrap();
         assert!(system.contains("never invent"), "{system}");
         assert!(system.contains("no Markdown"), "{system}");
@@ -252,7 +254,7 @@ async fn explains_a_drill_mistake() {
     };
     let body = r#"{"fen":"8/8/8/3k4/8/8/7Q/4K3 w - - 0 1","played":"h2e5",
         "better":["h2e2","d5d4"],"before":{"kind":"mate","value":8},
-        "after":{"kind":"cp","value":0},"drill":"queen-mate"}"#;
+        "after":{"kind":"cp","value":0},"drill":"queen-mate","reply":["d5e5"]}"#;
     let guest_session = guest(&base).await;
     let r = http(
         &base,
@@ -272,7 +274,11 @@ async fn explains_a_drill_mistake() {
         let (_, sent) = calls.last().unwrap();
         assert!(sent["system"].as_str().unwrap().contains("made a mistake"));
         let prompt = sent["messages"][0]["content"].as_str().unwrap();
-        assert!(prompt.contains("The student played: Qe5+"), "{prompt}");
+        assert!(prompt.contains("The student played Qe5+:"), "{prompt}");
+        assert!(
+            prompt.contains("- 1... Kxe5: the black king on d5 takes the white queen on e5."),
+            "{prompt}"
+        );
         assert!(prompt.contains("Drill: King and queen."), "{prompt}");
     }
     // Asked again: from the cache.

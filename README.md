@@ -58,8 +58,10 @@ Early scaffolding. What works today:
   (Glicko-2 against the puzzle's rating), guests included; profiles show it.
 - `server` + `web`: a coach on the analysis board. "Explain this position" asks Claude to talk
   through Stockfish's best lines in plain language; the server turns the lines into SAN and
-  words and tells the model to explain them, not to invent its own variations. Accounts only,
-  30 fresh explanations per user per hour, answers cached per position. Set
+  words, spells out the board (what attacks what, pins, where the kings can go) and each move
+  of the best line, and tells the model to explain them, not to invent its own variations.
+  `cargo run -p server --example coach_eval` checks it against a fixed set of positions.
+  Accounts only, 30 fresh explanations per user per hour, answers cached per position. Set
   `CHESS_ANTHROPIC_API_KEY` to turn it on (`CHESS_COACH_MODEL`, default `claude-opus-5`;
   `CHESS_COACH_PER_HOUR`); `--fake-coach` gives an offline stand-in for development.
 - `web`: lessons (`/lessons`): six short drills against Stockfish from set positions, easiest
