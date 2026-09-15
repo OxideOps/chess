@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { session } from '$lib/auth/session.svelte';
 	import { withNext } from '$lib/auth/next';
 	import { Coach, MIN_DEPTH } from '$lib/coach/coach.svelte';
+	import { Prober } from '$lib/coach/probe';
 	import CoachAnswer, { type Arrow } from '$lib/components/CoachAnswer.svelte';
+	import CoachFollowUps from '$lib/components/CoachFollowUps.svelte';
 	import type { GameStore } from '$lib/chess/game.svelte';
 	import type { Analyser } from '$lib/engine/analysis.svelte';
 
@@ -25,6 +27,9 @@
 	onMount(() => {
 		void coach.load();
 	});
+	// Stockfish for moves a follow-up asks about (its own engine, on first use).
+	const prober = new Prober();
+	onDestroy(() => prober.dispose());
 
 	const fen = $derived(game.view.fen);
 	const lastMove = $derived(
@@ -62,6 +67,9 @@
 	<section class="coach" aria-label="Coach">
 		{#if answer}
 			<CoachAnswer {answer} testid="coach-text" {onpreview} onplay={play} />
+			{#if answer.thread}
+				<CoachFollowUps {coach} key={fen} probe={prober.probe} {onpreview} onplay={play} />
+			{/if}
 		{:else if !session.registered}
 			<p class="hint">
 				The coach explains positions in plain language.
@@ -84,6 +92,9 @@
 			<div class="away" data-testid="coach-away">
 				<button type="button" class="back" onclick={back}>↩ Back to the explained position</button>
 				<CoachAnswer answer={away} testid="coach-away-text" {onpreview} onplay={play} />
+				{#if away.thread && origin}
+					<CoachFollowUps {coach} key={origin.fen} probe={prober.probe} {onpreview} onplay={play} />
+				{/if}
 			</div>
 		{/if}
 		{#if error}

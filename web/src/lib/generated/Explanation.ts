@@ -5,4 +5,8 @@ export type Explanation = { text: string,
 /**
  * The same text, with the moves it names from the engine's lines marked.
  */
-parts: Array<AnswerPart>, };
+parts: Array<AnswerPart>, 
+/**
+ * For follow-up questions (`/api/coach/followup`).
+ */
+thread: string | null, };

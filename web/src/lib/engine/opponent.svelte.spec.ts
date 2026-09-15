@@ -40,7 +40,8 @@ describe('Opponent', () => {
 		expect(await reply).toEqual({
 			best: 'e3e4',
 			score: { kind: 'cp', value: 60 },
-			pv: ['e3e4', 'd6e6', 'd4c5']
+			pv: ['e3e4', 'd6e6', 'd4c5'],
+			depth: 14
 		});
 		// No info line (e.g. a position with one legal move): the best move alone.
 		const quick = o.search('8/8/8/8/8/8/8/K6k w - - 0 1', []);

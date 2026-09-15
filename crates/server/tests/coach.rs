@@ -140,9 +140,13 @@ async fn explains_from_the_engine_lines_and_caches() {
     )
     .await;
     assert_eq!(r.status, 200, "{}", r.body);
-    // The text, and the same text with the move from the lines marked.
+    // The text, the same text with the move from the lines marked, and a
+    // thread for follow-ups.
+    let mut body: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+    let thread = body.as_object_mut().unwrap().remove("thread").unwrap();
+    assert_eq!(thread.as_str().unwrap().len(), 32);
     assert_eq!(
-        serde_json::from_str::<serde_json::Value>(&r.body).unwrap(),
+        body,
         serde_json::json!({
             "text": "Black fights for d4 with ...c5.",
             "parts": [
@@ -452,4 +456,217 @@ async fn a_flagged_answer_is_corrected_once() {
     let r = explain("g8f6").await;
     assert_eq!(r.status, 200, "{}", r.body);
     assert_eq!(mock.calls.lock().unwrap().len(), 7);
+}
+
+/// POST a follow-up; the status and the reply.
+async fn follow_up(base: &str, who: &str, body: serde_json::Value) -> (u16, serde_json::Value) {
+    let r = http(
+        base,
+        "POST",
+        "/api/coach/followup",
+        Some(who),
+        &body.to_string(),
+    )
+    .await;
+    let reply = serde_json::from_str(&r.body).unwrap_or(serde_json::Value::Null);
+    (r.status, reply)
+}
+
+#[tokio::test]
+async fn follow_up_questions_carry_the_conversation_on() {
+    let Some((base, mock)) = coached(30).await else {
+        return;
+    };
+    let me = account(&base).await;
+    let r = http(
+        &base,
+        "POST",
+        "/api/coach/explain",
+        Some(&me),
+        &request("c7c5"),
+    )
+    .await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    let explained: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+    let thread = explained["thread"].as_str().unwrap().to_string();
+
+    // A question: the conversation so far, the model's turn exactly as it
+    // came, then the question; cached for the next one.
+    let (status, reply) = follow_up(
+        &base,
+        &me,
+        serde_json::json!({ "thread": thread, "question": "Why is c5 good?" }),
+    )
+    .await;
+    assert_eq!(status, 200, "{reply}");
+    assert_eq!(reply["kind"], "answer");
+    assert_eq!(reply["left"], 4);
+    assert_eq!(reply["answer"]["thread"], thread.as_str());
+    assert_eq!(reply["answer"]["text"], "Black fights for d4 with ...c5.");
+    let turns = messages(&mock, 1);
+    assert_eq!(turns.len(), 3);
+    assert_eq!(turns[0], messages(&mock, 0)[0]);
+    assert_eq!(turns[1]["content"][0]["type"], "thinking");
+    let asked = turns[2]["content"].as_str().unwrap();
+    assert!(
+        asked.contains("<question>\nWhy is c5 good?\n</question>"),
+        "{asked}"
+    );
+    assert!(asked.contains("say you would need the engine"), "{asked}");
+    assert_eq!(
+        mock.calls.lock().unwrap()[1].1["cache_control"]["type"],
+        "ephemeral"
+    );
+
+    // A move the lines don't start with: Stockfish first, no model call.
+    let calls = mock.calls.lock().unwrap().len();
+    let (status, reply) = follow_up(
+        &base,
+        &me,
+        serde_json::json!({ "thread": thread, "question": "Why not Nf6?" }),
+    )
+    .await;
+    assert_eq!(status, 200, "{reply}");
+    assert_eq!(
+        reply,
+        serde_json::json!({
+            "kind": "probe",
+            "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+            "uci": "g8f6",
+            "san": "Nf6",
+        })
+    );
+    assert_eq!(mock.calls.lock().unwrap().len(), calls);
+    // With Stockfish's line, it goes to the model, spelled out; the answer
+    // can name the new moves.
+    mock.script
+        .lock()
+        .unwrap()
+        .push_back(Some("After 1... Nf6 2. e5 the knight is chased."));
+    let (status, reply) = follow_up(
+        &base,
+        &me,
+        serde_json::json!({
+            "thread": thread,
+            "question": "Why not Nf6?",
+            "probe": {
+                "uci": "g8f6",
+                "line": { "depth": 18, "score": { "kind": "cp", "value": 40 }, "pv": ["e4e5", "f6d5"] }
+            }
+        }),
+    )
+    .await;
+    assert_eq!(status, 200, "{reply}");
+    assert_eq!(reply["left"], 3);
+    let turns = messages(&mock, calls);
+    // The thread grew: question 1 and its answer come before this one.
+    assert_eq!(turns.len(), 5);
+    let asked = turns[4]["content"].as_str().unwrap();
+    for fact in [
+        "- 1... Nf6: the black knight on g8 moves to f6, and now attacks the white pawn on e4.",
+        "- 2. e5: the white pawn on e4 moves to e5, and now attacks the black knight on f6.",
+        "from White's point of view, at depth 18",
+    ] {
+        assert!(asked.contains(fact), "{fact}\n\n{asked}");
+    }
+    let parts = reply["answer"]["parts"].as_array().unwrap();
+    let marked: Vec<&str> = parts
+        .iter()
+        .filter(|p| p["kind"] == "move")
+        .map(|p| p["text"].as_str().unwrap())
+        .collect();
+    assert_eq!(marked, ["Nf6", "e5"]);
+
+    // Someone else's thread, a made-up one, a guest, and a bad question.
+    let other = account(&base).await;
+    let (status, _) = follow_up(
+        &base,
+        &other,
+        serde_json::json!({ "thread": thread, "question": "Why?" }),
+    )
+    .await;
+    assert_eq!(status, 404);
+    let (status, _) = follow_up(
+        &base,
+        &me,
+        serde_json::json!({ "thread": "nope", "question": "Why?" }),
+    )
+    .await;
+    assert_eq!(status, 404);
+    let guest_session = guest(&base).await;
+    let (status, _) = follow_up(
+        &base,
+        &guest_session,
+        serde_json::json!({ "thread": thread, "question": "Why?" }),
+    )
+    .await;
+    assert_eq!(status, 403);
+    for question in ["  ", &"why ".repeat(100)] {
+        let (status, _) = follow_up(
+            &base,
+            &me,
+            serde_json::json!({ "thread": thread, "question": question }),
+        )
+        .await;
+        assert_eq!(status, 400);
+    }
+    // An illegal probe is refused.
+    let (status, _) = follow_up(
+        &base,
+        &me,
+        serde_json::json!({
+            "thread": thread, "question": "Why not Nf6?",
+            "probe": { "uci": "e2e4", "line": { "depth": 1, "score": { "kind": "cp", "value": 0 }, "pv": [] } }
+        }),
+    )
+    .await;
+    assert_eq!(status, 400);
+
+    // Five questions per answer.
+    for left in [2, 1, 0] {
+        let (status, reply) = follow_up(
+            &base,
+            &me,
+            serde_json::json!({ "thread": thread, "question": "And then?" }),
+        )
+        .await;
+        assert_eq!(status, 200, "{reply}");
+        assert_eq!(reply["left"], left);
+    }
+    let (status, reply) = follow_up(
+        &base,
+        &me,
+        serde_json::json!({ "thread": thread, "question": "And then?" }),
+    )
+    .await;
+    assert_eq!(status, 429, "{reply}");
+}
+
+#[tokio::test]
+async fn follow_ups_count_against_the_hourly_limit() {
+    let Some((base, _mock)) = coached(2).await else {
+        return;
+    };
+    let me = account(&base).await;
+    let r = http(
+        &base,
+        "POST",
+        "/api/coach/explain",
+        Some(&me),
+        &request("c7c5"),
+    )
+    .await;
+    let thread = serde_json::from_str::<serde_json::Value>(&r.body).unwrap()["thread"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let ask = || {
+        follow_up(
+            &base,
+            &me,
+            serde_json::json!({ "thread": thread, "question": "Why?" }),
+        )
+    };
+    assert_eq!(ask().await.0, 200);
+    assert_eq!(ask().await.0, 429);
 }

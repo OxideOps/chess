@@ -60,6 +60,8 @@ Early scaffolding. What works today:
   through Stockfish's best lines in plain language; the server turns the lines into SAN and
   words, spells out the board (what attacks what, pins, where the kings can go) and each move
   of the best line, and tells the model to explain them, not to invent its own variations.
+  Moves in an answer show on the board and play their line; follow-up questions carry the
+  conversation on, and a move the engine's lines didn't cover gets a Stockfish look first.
   `cargo run -p server --example coach_eval` checks it against a fixed set of positions.
   Accounts only, 30 fresh explanations per user per hour, answers cached per position. Set
   `CHESS_ANTHROPIC_API_KEY` to turn it on (`CHESS_COACH_MODEL`, default `claude-opus-5`;

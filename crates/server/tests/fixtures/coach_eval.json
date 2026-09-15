@@ -54,7 +54,12 @@
      ]
     }
    ]
-  }
+  },
+  "follow_ups": [
+   {
+    "question": "Why can't Black just take my queen with the knight first?"
+   }
+  ]
  },
  {
   "name": "after-e4",
@@ -120,7 +125,37 @@
      ]
     }
    ]
-  }
+  },
+  "follow_ups": [
+   {
+    "question": "Why not 1... d5 instead?",
+    "probe": {
+     "uci": "d7d5",
+     "line": {
+      "depth": 22,
+      "score": {
+       "kind": "cp",
+       "value": 82
+      },
+      "pv": [
+       "e4d5",
+       "g8f6",
+       "g1f3",
+       "f6d5",
+       "d2d4",
+       "c8f5",
+       "f1d3",
+       "f5d3",
+       "d1d3",
+       "e7e6"
+      ]
+     }
+    }
+   },
+   {
+    "question": "Which is better for a beginner?"
+   }
+  ]
  },
  {
   "name": "opera-game-queen-sacrifice",
@@ -377,7 +412,34 @@
      ]
     }
    ]
-  }
+  },
+  "follow_ups": [
+   {
+    "question": "Why not castle with 7... O-O?",
+    "probe": {
+     "uci": "e8g8",
+     "line": {
+      "depth": 22,
+      "score": {
+       "kind": "cp",
+       "value": 60
+      },
+      "pv": [
+       "d4d5",
+       "b4d2",
+       "b1d2",
+       "c6e7",
+       "e1g1",
+       "d7d6",
+       "d1b3",
+       "c7c6",
+       "d5c6",
+       "e7c6"
+      ]
+     }
+    }
+   }
+  ]
  },
  {
   "name": "lucena",
@@ -542,7 +604,34 @@
     "d1e1",
     "d5e5"
    ]
-  }
+  },
+  "follow_ups": [
+   {
+    "question": "What if I had played Qd6+ instead?",
+    "probe": {
+     "uci": "h2d6",
+     "line": {
+      "depth": 22,
+      "score": {
+       "kind": "cp",
+       "value": 0
+      },
+      "pv": [
+       "d5d6",
+       "e1d2",
+       "d6e6",
+       "d2c3",
+       "e6e5",
+       "c3c4",
+       "e5e4",
+       "c4c5",
+       "e4e5",
+       "c5c4"
+      ]
+     }
+    }
+   }
+  ]
  },
  {
   "name": "queen-mate-stalemate",
