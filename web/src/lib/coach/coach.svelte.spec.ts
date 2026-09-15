@@ -67,7 +67,8 @@ describe('Coach', () => {
 			better: ['h2e2', 'd5d4'],
 			betterSan: '1. Qe2',
 			before: { kind: 'mate' as const, value: 8 },
-			after: { kind: 'cp' as const, value: 0 }
+			after: { kind: 'cp' as const, value: 0 },
+			reply: ['d5e5']
 		};
 		await coach.explainMistake(mistake, 'queen-mate');
 		expect(coach.text).toBe('The queen was hanging.');
@@ -79,7 +80,8 @@ describe('Coach', () => {
 				better: ['h2e2', 'd5d4'],
 				before: { kind: 'mate', value: 8 },
 				after: { kind: 'cp', value: 0 },
-				drill: 'queen-mate'
+				drill: 'queen-mate',
+				reply: ['d5e5']
 			}
 		});
 		expect(coach.answerFor(mistakeKey(mistake))).toBe('The queen was hanging.');

@@ -11,7 +11,9 @@ Successor to the archived `OxideOps/chess-v1`.
   linear API walks the current line, so code that never branches sees a plain game), PGN
   reader with nested variations, UCI
   engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
-  counts), the lesson drills and their win/loss rules (`lesson.rs`), and the client↔server
+  counts), the lesson drills and their win/loss rules (`lesson.rs`), board facts for the
+  coach (`facts.rs`: pieces, material, attacked/defended pieces, pins, where each king can go,
+  and what each move of a line does, in words), and the client↔server
   `protocol` types. No UI, no I/O, must compile
   for `wasm32`. Everything chess-related that both the client and the server need goes here,
   with tests.
@@ -51,8 +53,14 @@ Successor to the archived `OxideOps/chess-v1`.
   `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
   attempt endpoints (only the first try at a puzzle rates), `coach.rs` the coach (Claude
   Messages API over `reqwest`; `/api/coach/explain` for a position and `/api/coach/mistake`
-  for a drill mistake, both with prompts built from the engine's lines in SAN; per-user
-  limit, answer cache, `--fake-coach` offline stand-in; tests run against a mock API),
+  for a drill mistake, both with prompts built from the engine's lines in SAN and the board
+  facts from `chess_core::facts`, so the model reads the board instead of picturing it;
+  `Prompt::check` flags answers that mention moves or pieces the prompt never showed (logged);
+  `"fallbacks": "default"` re-runs a request Opus 5's cyber classifier wrongly declines (the
+  word "exact" in a prompt set it off); per-user
+  limit, answer cache, `--fake-coach` offline stand-in; tests run against a mock API;
+  `cargo run -p server --example coach_eval` asks the real API about the fixed positions in
+  `tests/fixtures/coach_eval.json` and checks the answers: run it after changing a prompt),
   `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;

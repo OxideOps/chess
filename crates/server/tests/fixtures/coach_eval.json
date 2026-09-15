@@ -1,0 +1,652 @@
+[
+ {
+  "name": "scholars-mate",
+  "explain": {
+   "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+   "last_move": "Nf6",
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "mate",
+      "value": 1
+     },
+     "pv": [
+      "h5f7"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -172
+     },
+     "pv": [
+      "h5d1",
+      "f6e4",
+      "b1c3",
+      "d8h4",
+      "d1f3",
+      "e4f6",
+      "c4b3",
+      "c6d4",
+      "f3g3",
+      "h4g3"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -202
+     },
+     "pv": [
+      "h5e2",
+      "c6d4",
+      "e2d1",
+      "f6e4",
+      "d2d3",
+      "d7d5",
+      "d3e4",
+      "d5c4",
+      "c1e3",
+      "c8g4"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "after-e4",
+  "explain": {
+   "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+   "last_move": "e4",
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -38
+     },
+     "pv": [
+      "e7e5",
+      "g1f3",
+      "b8c6",
+      "f1b5",
+      "a7a6",
+      "b5a4",
+      "g8f6",
+      "e1g1",
+      "f8e7",
+      "f1e1"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -39
+     },
+     "pv": [
+      "c7c5",
+      "g1f3",
+      "b8c6",
+      "d2d4",
+      "c5d4",
+      "f3d4",
+      "g8f6",
+      "b1c3",
+      "e7e5",
+      "d4b5"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -40
+     },
+     "pv": [
+      "c7c6",
+      "d2d4",
+      "d7d5",
+      "e4e5",
+      "c8f5",
+      "f1e2",
+      "e7e6",
+      "g1f3",
+      "c6c5",
+      "c1e3"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "opera-game-queen-sacrifice",
+  "explain": {
+   "fen": "4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16",
+   "last_move": "Nxd7",
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "mate",
+      "value": 2
+     },
+     "pv": [
+      "b3b8",
+      "d7b8",
+      "d1d8"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 479
+     },
+     "pv": [
+      "b3b7",
+      "f7f6",
+      "b7c8",
+      "e8e7",
+      "g5e3",
+      "g7g5",
+      "c8c7",
+      "e7e8",
+      "a2a4",
+      "f8e7"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 476
+     },
+     "pv": [
+      "b3c3",
+      "f7f6",
+      "c3c8",
+      "e8e7",
+      "g5e3",
+      "g7g5",
+      "c8c7",
+      "e7e8",
+      "a2a4",
+      "f8e7"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "legal-trap",
+  "explain": {
+   "fen": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
+   "last_move": "g6",
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 213
+     },
+     "pv": [
+      "f3e5",
+      "d6e5",
+      "d1g4",
+      "b8c6",
+      "d2d3",
+      "g8f6",
+      "g4f3",
+      "c6d4",
+      "f3d1",
+      "d8d7"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 131
+     },
+     "pv": [
+      "d2d4",
+      "b8c6",
+      "c4b5",
+      "g4f3",
+      "g2f3",
+      "a7a6",
+      "b5c6",
+      "b7c6",
+      "d4e5",
+      "d6e5"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 95
+     },
+     "pv": [
+      "h2h3",
+      "g4f3",
+      "d1f3",
+      "d8d7",
+      "c3e2",
+      "b8c6",
+      "a2a4",
+      "f8g7",
+      "a4a5",
+      "c6d8"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "queens-gambit-pin",
+  "explain": {
+   "fen": "rnbqkb1r/ppp2ppp/4pn2/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR b KQkq - 3 4",
+   "last_move": "Bg5",
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -27
+     },
+     "pv": [
+      "d5c4",
+      "e2e3",
+      "c7c5",
+      "g5f6",
+      "d8f6",
+      "d4d5",
+      "a7a6",
+      "g1f3",
+      "e6d5",
+      "d1d5"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -29
+     },
+     "pv": [
+      "f8e7",
+      "g1f3",
+      "h7h6",
+      "g5h4",
+      "e8g8",
+      "e2e3",
+      "b7b6",
+      "a1c1",
+      "c8b7",
+      "h4f6"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -37
+     },
+     "pv": [
+      "c7c5",
+      "c4d5",
+      "c5d4",
+      "d1d4",
+      "f8e7",
+      "e2e4",
+      "e6d5",
+      "g5f6",
+      "e7f6",
+      "f1b5"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "italian-center",
+  "explain": {
+   "fen": "r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/5N2/PP1B1PPP/RN1QK2R b KQkq - 2 7",
+   "last_move": "Bd2",
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -7
+     },
+     "pv": [
+      "f6e4",
+      "d2b4",
+      "c6b4",
+      "c4f7",
+      "e8f7",
+      "d1b3",
+      "f7f8",
+      "b3b4",
+      "d8e7",
+      "b4e7"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -18
+     },
+     "pv": [
+      "b4d2",
+      "b1d2",
+      "d7d5",
+      "e4d5",
+      "f6d5",
+      "e1g1",
+      "e8g8",
+      "a1c1",
+      "d5b6",
+      "c4b3"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": -32
+     },
+     "pv": [
+      "d7d5",
+      "e4d5",
+      "b4d2",
+      "d1d2",
+      "c6e7",
+      "e1g1",
+      "e8g8",
+      "b1c3",
+      "e7d5",
+      "c3d5"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "lucena",
+  "explain": {
+   "fen": "1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1",
+   "last_move": null,
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 1080
+     },
+     "pv": [
+      "c1c7",
+      "a2a6",
+      "c7c3",
+      "d8d7",
+      "c3d3",
+      "d7e6",
+      "b8c7",
+      "a6a1",
+      "d3d4",
+      "e6e5"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 1074
+     },
+     "pv": [
+      "c1c4",
+      "a2d2",
+      "c4a4",
+      "d2b2",
+      "a4d4",
+      "d8e7",
+      "b8c7",
+      "b2c2",
+      "c7b6",
+      "c2b2"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 956
+     },
+     "pv": [
+      "c1d1",
+      "d8e7",
+      "d1d4",
+      "a2c2",
+      "d4d5",
+      "e7f8",
+      "b8a7",
+      "c2c4",
+      "d5b5",
+      "f8g7"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "king-in-front",
+  "explain": {
+   "fen": "4k3/8/4K3/4P3/8/8/8/8 w - - 0 1",
+   "last_move": null,
+   "lines": [
+    {
+     "depth": 22,
+     "score": {
+      "kind": "mate",
+      "value": 14
+     },
+     "pv": [
+      "e6f6",
+      "e8d7",
+      "e5e6",
+      "d7c6",
+      "e6e7",
+      "c6c5",
+      "f6e5",
+      "c5c6",
+      "e5e6",
+      "c6c5"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "mate",
+      "value": 15
+     },
+     "pv": [
+      "e6d6",
+      "e8f7",
+      "e5e6",
+      "f7f6",
+      "e6e7",
+      "f6g5",
+      "e7e8q",
+      "g5f4",
+      "d6d5",
+      "f4f3"
+     ]
+    },
+    {
+     "depth": 22,
+     "score": {
+      "kind": "cp",
+      "value": 0
+     },
+     "pv": [
+      "e6d5",
+      "e8e7",
+      "d5e4",
+      "e7e6",
+      "e4d4",
+      "e6d7",
+      "d4c3",
+      "d7e6"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "queen-mate-hangs-the-queen",
+  "mistake": {
+   "fen": "8/8/8/3k4/8/8/7Q/4K3 w - - 0 1",
+   "played": "h2e5",
+   "better": [
+    "e1d2",
+    "d5e4",
+    "h2e2",
+    "e4d4",
+    "e2e6",
+    "d4c5",
+    "d2d3",
+    "c5b5",
+    "e6d5",
+    "b5b4"
+   ],
+   "before": {
+    "kind": "mate",
+    "value": 12
+   },
+   "after": {
+    "kind": "cp",
+    "value": 0
+   },
+   "drill": "queen-mate",
+   "reply": [
+    "d5e5",
+    "e1d1",
+    "e5d5",
+    "d1e1",
+    "d5e5"
+   ]
+  }
+ },
+ {
+  "name": "queen-mate-stalemate",
+  "mistake": {
+   "fen": "k7/8/1Q6/8/8/8/8/4K3 w - - 0 1",
+   "played": "b6c7",
+   "better": [
+    "b6b5",
+    "a8a7",
+    "e1e2",
+    "a7a8",
+    "e2d3",
+    "a8a7",
+    "d3c4",
+    "a7a8",
+    "c4d5",
+    "a8a7"
+   ],
+   "before": {
+    "kind": "mate",
+    "value": 7
+   },
+   "after": null,
+   "drill": "queen-mate",
+   "reply": []
+  }
+ },
+ {
+  "name": "king-in-front-gives-up-the-win",
+  "mistake": {
+   "fen": "4k3/8/4K3/4P3/8/8/8/8 w - - 0 1",
+   "played": "e6f5",
+   "better": [
+    "e6d6",
+    "e8f7",
+    "e5e6",
+    "f7g6",
+    "e6e7",
+    "g6g5",
+    "e7e8q",
+    "g5f4",
+    "e8e2",
+    "f4g3"
+   ],
+   "before": {
+    "kind": "mate",
+    "value": 13
+   },
+   "after": {
+    "kind": "cp",
+    "value": 0
+   },
+   "drill": "king-in-front",
+   "reply": [
+    "e8f7",
+    "e5e6",
+    "f7e7",
+    "f5e5",
+    "e7e8",
+    "e5d6",
+    "e8d8",
+    "d6c6",
+    "d8e8"
+   ]
+  }
+ },
+ {
+  "name": "hold-the-draw-loses",
+  "mistake": {
+   "fen": "8/8/4k3/8/5K2/4P3/8/8 b - - 1 1",
+   "played": "e6d7",
+   "better": [
+    "e6f6",
+    "e3e4",
+    "f6e6",
+    "e4e5",
+    "e6e7",
+    "f4f5",
+    "e7f7",
+    "f5e4",
+    "f7e8",
+    "e4d5"
+   ],
+   "before": {
+    "kind": "cp",
+    "value": 0
+   },
+   "after": {
+    "kind": "mate",
+    "value": -24
+   },
+   "drill": "hold-the-draw",
+   "reply": [
+    "f4e5",
+    "d7c6",
+    "e3e4",
+    "c6c5",
+    "e5f5",
+    "c5d4",
+    "e4e5",
+    "d4d5",
+    "f5f6",
+    "d5e4"
+   ]
+  }
+ }
+]

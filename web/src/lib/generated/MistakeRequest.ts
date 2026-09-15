@@ -26,6 +26,11 @@ before: CoachScore,
  */
 after: CoachScore | null, 
 /**
+ * The engine's reply and its line from the position after the move (UCI);
+ * empty when the move ended the drill.
+ */
+reply: Array<string>, 
+/**
  * The drill it happened in (`chess_core::lesson` id), for context.
  */
 drill: string | null, };
