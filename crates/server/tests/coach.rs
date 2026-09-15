@@ -3,7 +3,10 @@
 
 mod common;
 
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
 
 use axum::{
     Json, Router, http::HeaderMap, http::StatusCode, response::IntoResponse, routing::post,
@@ -17,6 +20,8 @@ struct Mock {
     fail: Arc<Mutex<bool>>,
     /// A `stop_reason` other than `end_turn`, e.g. a cut-off answer.
     stop: Arc<Mutex<Option<&'static str>>>,
+    /// The next answers, in order (`None`: a 500); then the usual one.
+    script: Arc<Mutex<VecDeque<Option<&'static str>>>>,
 }
 
 /// A fake `POST /v1/messages`; returns its base URL.
@@ -31,17 +36,28 @@ async fn mock_api(mock: Mock) -> String {
                     if *mock.fail.lock().unwrap() {
                         return (StatusCode::INTERNAL_SERVER_ERROR, "overloaded").into_response();
                     }
+                    let text = match mock.script.lock().unwrap().pop_front() {
+                        Some(Some(text)) => text,
+                        Some(None) => {
+                            return (StatusCode::INTERNAL_SERVER_ERROR, "overloaded")
+                                .into_response();
+                        }
+                        None => "  Black fights for d4 with ...c5.  ",
+                    };
                     let stop = mock.stop.lock().unwrap().unwrap_or("end_turn");
                     Json(serde_json::json!({
-                    "id": "msg_test",
-                    "type": "message",
-                    "role": "assistant",
-                    "model": "claude-opus-5",
-                    "content": [{ "type": "text", "text": "  Black fights for d4 with ...c5.  " }],
-                    "stop_reason": stop,
-                    "usage": { "input_tokens": 10, "output_tokens": 10 }
-                }))
-                .into_response()
+                        "id": "msg_test",
+                        "type": "message",
+                        "role": "assistant",
+                        "model": "claude-opus-5",
+                        "content": [
+                            { "type": "thinking", "thinking": "", "signature": "sig" },
+                            { "type": "text", "text": text }
+                        ],
+                        "stop_reason": stop,
+                        "usage": { "input_tokens": 10, "output_tokens": 10 }
+                    }))
+                    .into_response()
                 }
             },
         ),
@@ -324,4 +340,99 @@ async fn a_cut_off_or_declined_answer_is_an_error() {
     .await;
     assert_eq!(r.status, 200, "{}", r.body);
     assert_eq!(mock.calls.lock().unwrap().len(), 3);
+}
+
+/// The messages of the `n`th call.
+fn messages(mock: &Mock, n: usize) -> Vec<serde_json::Value> {
+    mock.calls.lock().unwrap()[n].1["messages"]
+        .as_array()
+        .unwrap()
+        .clone()
+}
+
+#[tokio::test]
+async fn a_flagged_answer_is_corrected_once() {
+    let Some((base, mock)) = coached(30).await else {
+        return;
+    };
+    let me = account(&base).await;
+    let explain = |first: &'static str| {
+        let base = base.clone();
+        let me = me.clone();
+        async move {
+            http(
+                &base,
+                "POST",
+                "/api/coach/explain",
+                Some(&me),
+                &request(first),
+            )
+            .await
+        }
+    };
+
+    // Qe7 isn't in the lines: flagged, and the rewrite (clean) is served.
+    mock.script.lock().unwrap().extend([
+        Some("Black should answer with Qe7."),
+        Some("Black answers with ...c5, fighting for d4."),
+    ]);
+    let r = explain("c7c5").await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    assert_eq!(
+        r.body,
+        r#"{"text":"Black answers with ...c5, fighting for d4."}"#
+    );
+    assert_eq!(mock.calls.lock().unwrap().len(), 2);
+    // The correction turn: the question, the first answer echoed exactly as
+    // it came (thinking block and all), then what was wrong with it.
+    let turns = messages(&mock, 1);
+    assert_eq!(turns.len(), 3);
+    assert_eq!(turns[0], messages(&mock, 0)[0]);
+    assert_eq!(turns[1]["role"], "assistant");
+    assert_eq!(turns[1]["content"][0]["type"], "thinking");
+    assert_eq!(
+        turns[1]["content"][1]["text"],
+        "Black should answer with Qe7."
+    );
+    assert_eq!(turns[2]["role"], "user");
+    let asked = turns[2]["content"].as_str().unwrap();
+    assert!(
+        asked.contains("- It mentions Qe7, which isn't in the lines it was given."),
+        "{asked}"
+    );
+    // The served rewrite is what's cached.
+    let r = explain("c7c5").await;
+    assert_eq!(
+        r.body,
+        r#"{"text":"Black answers with ...c5, fighting for d4."}"#
+    );
+    assert_eq!(mock.calls.lock().unwrap().len(), 2);
+
+    // A rewrite that's no better: the first answer stands. Only one retry.
+    mock.script.lock().unwrap().extend([
+        Some("Black plays Qe7 here."),
+        Some("Black still plays Qe7."),
+    ]);
+    let r = explain("e7e5").await;
+    assert_eq!(r.body, r#"{"text":"Black plays Qe7 here."}"#);
+    assert_eq!(mock.calls.lock().unwrap().len(), 4);
+
+    // The correction call fails: the first answer still stands.
+    mock.script
+        .lock()
+        .unwrap()
+        .extend([Some("Black plays Qe7 now."), None]);
+    let r = explain("d7d5").await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    assert_eq!(r.body, r#"{"text":"Black plays Qe7 now."}"#);
+    assert_eq!(mock.calls.lock().unwrap().len(), 6);
+
+    // A clean answer is never re-asked.
+    mock.script
+        .lock()
+        .unwrap()
+        .push_back(Some("Black develops the knight on f6."));
+    let r = explain("g8f6").await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    assert_eq!(mock.calls.lock().unwrap().len(), 7);
 }

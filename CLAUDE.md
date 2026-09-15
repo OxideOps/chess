@@ -55,7 +55,9 @@ Successor to the archived `OxideOps/chess-v1`.
   Messages API over `reqwest`; `/api/coach/explain` for a position and `/api/coach/mistake`
   for a drill mistake, both with prompts built from the engine's lines in SAN and the board
   facts from `chess_core::facts`, so the model reads the board instead of picturing it;
-  `Prompt::check` flags answers that mention moves or pieces the prompt never showed (logged);
+  `Prompt::check` flags answers that mention moves or pieces the prompt never showed; a flagged
+  answer gets one correction turn (the first answer echoed back unchanged, thinking blocks and
+  all, then the problems) and the cleaner of the two is served; both are logged;
   `"fallbacks": "default"` re-runs a request Opus 5's cyber classifier wrongly declines (the
   word "exact" in a prompt set it off); per-user
   limit, answer cache, `--fake-coach` offline stand-in; tests run against a mock API;

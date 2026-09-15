@@ -588,51 +588,138 @@ pub enum CoachError {
 
 #[derive(Deserialize)]
 struct MessagesResponse {
-    content: Vec<ContentBlock>,
+    /// Kept as sent, to echo back unchanged (thinking blocks included) when
+    /// the conversation goes on.
+    content: Vec<serde_json::Value>,
     stop_reason: Option<String>,
     /// Why a refusal happened (informational; can be null).
     stop_details: Option<serde_json::Value>,
 }
 
-#[derive(Deserialize)]
-struct ContentBlock {
-    #[serde(rename = "type")]
-    kind: String,
-    text: Option<String>,
+/// One reply from the model: its text, and its content blocks as sent.
+struct Reply {
+    text: String,
+    content: Vec<serde_json::Value>,
+}
+
+/// An answer, and what the check made of it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Answer {
+    pub text: String,
+    /// From the cache: no API call was made.
+    pub cached: bool,
+    /// What the check found in the first answer (empty if it was clean).
+    pub flagged: Vec<String>,
+    /// The model rewrote a flagged answer, and the rewrite is what's served.
+    pub rewritten: bool,
+    /// What the check finds in the served text.
+    pub problems: Vec<String>,
+}
+
+/// The one correction turn after a flagged answer.
+fn correction(problems: &[String]) -> String {
+    let list: Vec<String> = problems.iter().map(|p| format!("- It {p}.")).collect();
+    format!(
+        "Some claims in that explanation aren't backed by the board facts and lines you were \
+         given:\n{}\nRewrite the explanation without them, keeping everything else, the same \
+         length and plain text. Reply with the explanation only.",
+        list.join("\n")
+    )
 }
 
 impl Coach {
     /// Explain a position, from the cache when the same position and lines
     /// were explained before.
-    pub async fn explain(&self, request: &ExplainRequest) -> Result<String, CoachError> {
+    pub async fn explain(&self, request: &ExplainRequest) -> Result<Answer, CoachError> {
         let prompt = prompt(request).map_err(CoachError::BadRequest)?;
         self.answer(prompt).await
     }
 
     /// Answer a prompt, from the cache when it was asked before.
-    pub async fn answer(&self, prompt: Prompt) -> Result<String, CoachError> {
+    pub async fn answer(&self, prompt: Prompt) -> Result<Answer, CoachError> {
         if let Some(text) = self.cache.lock().unwrap().get(&prompt.key) {
-            return Ok(text.clone());
+            return Ok(Answer {
+                text: text.clone(),
+                cached: true,
+                ..Answer::default()
+            });
         }
-        let text = if self.config.fake {
-            prompt.fake.clone()
-        } else {
-            let text = self.ask(&prompt).await?;
-            let problems = prompt.check(&text);
-            if !problems.is_empty() {
-                tracing::warn!(key = prompt.key, "coach answer: {}", problems.join("; "));
+        let answer = if self.config.fake {
+            Answer {
+                text: prompt.fake.clone(),
+                ..Answer::default()
             }
-            text
+        } else {
+            self.checked(&prompt).await?
         };
         let mut cache = self.cache.lock().unwrap();
         if cache.len() >= CACHE_SIZE {
             cache.clear(); // crude, but bounded; a hot position is re-asked once
         }
-        cache.insert(prompt.key, text.clone());
-        Ok(text)
+        cache.insert(prompt.key, answer.text.clone());
+        Ok(answer)
     }
 
-    async fn ask(&self, prompt: &Prompt) -> Result<String, CoachError> {
+    /// Ask, check the answer, and when the check flags it, ask the model
+    /// once to correct itself; serve whichever checks cleaner.
+    async fn checked(&self, prompt: &Prompt) -> Result<Answer, CoachError> {
+        let question = serde_json::json!({ "role": "user", "content": prompt.user });
+        let first = self
+            .ask(prompt.system, std::slice::from_ref(&question))
+            .await?;
+        let flagged = prompt.check(&first.text);
+        if flagged.is_empty() {
+            return Ok(Answer {
+                text: first.text,
+                ..Answer::default()
+            });
+        }
+        // Append-only: the first answer goes back exactly as it came.
+        let turns = [
+            question,
+            serde_json::json!({ "role": "assistant", "content": first.content }),
+            serde_json::json!({ "role": "user", "content": correction(&flagged) }),
+        ];
+        let rewrite = match self.ask(prompt.system, &turns).await {
+            Ok(second) => {
+                let problems = prompt.check(&second.text);
+                (problems.len() < flagged.len()).then_some((second.text, problems))
+            }
+            Err(e) => {
+                tracing::warn!(key = prompt.key, "coach correction failed: {e:?}");
+                None
+            }
+        };
+        let answer = match rewrite {
+            Some((text, problems)) => Answer {
+                text,
+                flagged,
+                rewritten: true,
+                problems,
+                ..Answer::default()
+            },
+            None => Answer {
+                text: first.text,
+                problems: flagged.clone(),
+                flagged,
+                ..Answer::default()
+            },
+        };
+        tracing::warn!(
+            key = prompt.key,
+            rewritten = answer.rewritten,
+            "coach answer flagged: {}; still: {}",
+            answer.flagged.join("; "),
+            if answer.problems.is_empty() {
+                "nothing".to_string()
+            } else {
+                answer.problems.join("; ")
+            }
+        );
+        Ok(answer)
+    }
+
+    async fn ask(&self, system: &str, messages: &[serde_json::Value]) -> Result<Reply, CoachError> {
         let key = self.config.api_key.as_deref().unwrap_or_default();
         let body = serde_json::json!({
             "model": self.config.model,
@@ -641,8 +728,8 @@ impl Coach {
             // by…, not defended"); a declined request is re-run on Anthropic's
             // recommended fallback model instead of failing.
             "fallbacks": "default",
-            "system": prompt.system,
-            "messages": [{ "role": "user", "content": prompt.user }],
+            "system": system,
+            "messages": messages,
         });
         let response = self
             .client
@@ -679,15 +766,18 @@ impl Coach {
         }
         let text: String = parsed
             .content
-            .into_iter()
-            .filter(|b| b.kind == "text")
-            .filter_map(|b| b.text)
+            .iter()
+            .filter(|b| b["type"] == "text")
+            .filter_map(|b| b["text"].as_str())
             .collect::<Vec<_>>()
             .join("");
         if text.trim().is_empty() {
             return Err(CoachError::Upstream("an empty answer".to_string()));
         }
-        Ok(text.trim().to_string())
+        Ok(Reply {
+            text: text.trim().to_string(),
+            content: parsed.content,
+        })
     }
 }
 
@@ -763,7 +853,7 @@ async fn respond(
         );
     }
     match coach.answer(prompt).await {
-        Ok(text) => Json(Explanation { text }).into_response(),
+        Ok(answer) => Json(Explanation { text: answer.text }).into_response(),
         Err(CoachError::BadRequest(message)) => refuse(StatusCode::BAD_REQUEST, &message),
         Err(CoachError::Upstream(detail)) => {
             tracing::error!("coach: {detail}");
