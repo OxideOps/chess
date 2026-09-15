@@ -72,6 +72,8 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - Coach: start the server with `--fake-coach` (Playwright does) or a real
   `CHESS_ANTHROPIC_API_KEY`; on `/analysis` a signed-in account gets "Explain this position"
   once the engine reaches depth 16, guests a sign-up hint, and nothing shows without a coach.
+  Moves in an answer are `.move-ref` buttons: hovering draws the move, clicking plays its line
+  and shows `[data-testid=coach-away]` with "Back to the explained position".
   To judge answer quality, `cargo run -p server --example coach_eval` (real API, ~12¢;
   `-- --dry-run` prints the prompts for free).
 - Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",

@@ -74,6 +74,10 @@ test('a blunder is pointed out, and an account can ask the coach why', async ({ 
 	const answer = page.getByTestId('mistake-coach');
 	await expect(answer).toContainText('Practice coach');
 	await expect(answer).toContainText('after Qe5+');
+	// A move it names shows on the board when tapped (phones have no hover).
+	await expect(page.locator('.board .arrows line')).toHaveCount(0);
+	await answer.locator('.move-ref', { hasText: 'Qe5+' }).click();
+	await expect(page.locator('.board .arrows line')).toHaveCount(1);
 
 	// Restarting clears it.
 	await page.getByRole('button', { name: 'Restart' }).click();

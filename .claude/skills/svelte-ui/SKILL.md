@@ -23,7 +23,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   plain `<a rel="external">` (full-page navigation to an API URL, which the same rule allows).
 - `src/lib/coach/` — `coach.svelte.ts` (`Coach`: whether the server has one, explanations per
   position; injectable fetch). `CoachPanel` shows it under the engine on `/analysis` and hides
-  itself when the server has no coach.
+  itself when the server has no coach. `CoachAnswer` renders an `Explanation`'s `parts`: the
+  server marks the moves an answer names with their UCI path from the explained position, so
+  the client never parses chess out of prose. Hover/focus/tap previews the move as an arrow;
+  on `/analysis` a click plays the path as a variation (`playHereUci`) and the panel keeps
+  the answer up with "Back to the explained position". Keep the `{#each}` in `CoachAnswer`
+  free of whitespace between parts, or Svelte renders spaces around every move.
 - `src/lib/lessons/` — `drill.svelte.ts` (`DrillSession`: the student's moves, `assessDrill`
   from the WASM after each, the engine's replies through an `OpponentLike`, and `mistake`:
   the engine's score before and after a student move, compared with `isMistake`), `progress.ts`

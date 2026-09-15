@@ -26,13 +26,14 @@ export class Coach {
 	available: boolean | null = $state(null);
 	/** What is being (or was last) asked about: a FEN, or a `mistakeKey`. */
 	key: string | null = $state(null);
-	text: string | null = $state(null);
+	/** The answer to `key`, once it has one. */
+	answer: Explanation | null = $state(null);
 	error: string | null = $state(null);
 	busy = $state(false);
 
 	readonly #fetch: FetchLike;
 	/** Reactive, so views of other questions update when an answer lands. */
-	readonly #answers = new SvelteMap<string, string>();
+	readonly #answers = new SvelteMap<string, Explanation>();
 
 	constructor(fetchImpl?: FetchLike) {
 		this.#fetch = fetchImpl ?? ((input, init) => fetch(input, init));
@@ -48,7 +49,7 @@ export class Coach {
 	}
 
 	/** What has been said about `key`, if anything. */
-	answerFor(key: string): string | null {
+	answerFor(key: string): Explanation | null {
 		return this.#answers.get(key) ?? null;
 	}
 
@@ -81,10 +82,10 @@ export class Coach {
 		this.error = null;
 		const known = this.#answers.get(key);
 		if (known) {
-			this.text = known;
+			this.answer = known;
 			return;
 		}
-		this.text = null;
+		this.answer = null;
 		this.busy = true;
 		try {
 			const response = await this.#fetch(url, {
@@ -102,9 +103,9 @@ export class Coach {
 				}
 				throw new Error(message);
 			}
-			const { text } = (await response.json()) as Explanation;
-			this.#answers.set(key, text);
-			if (this.key === key) this.text = text;
+			const answer = (await response.json()) as Explanation;
+			this.#answers.set(key, answer);
+			if (this.key === key) this.answer = answer;
 		} catch (e) {
 			if (this.key === key) this.error = e instanceof Error ? e.message : String(e);
 		} finally {

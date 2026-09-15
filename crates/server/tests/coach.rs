@@ -140,7 +140,18 @@ async fn explains_from_the_engine_lines_and_caches() {
     )
     .await;
     assert_eq!(r.status, 200, "{}", r.body);
-    assert_eq!(r.body, r#"{"text":"Black fights for d4 with ...c5."}"#);
+    // The text, and the same text with the move from the lines marked.
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&r.body).unwrap(),
+        serde_json::json!({
+            "text": "Black fights for d4 with ...c5.",
+            "parts": [
+                { "kind": "text", "text": "Black fights for d4 with ..." },
+                { "kind": "move", "text": "c5", "path": ["c7c5"] },
+                { "kind": "text", "text": "." },
+            ]
+        })
+    );
 
     // What the API was sent: the key, the version, the model, a grounded prompt.
     {
@@ -342,6 +353,12 @@ async fn a_cut_off_or_declined_answer_is_an_error() {
     assert_eq!(mock.calls.lock().unwrap().len(), 3);
 }
 
+/// The `text` of an explanation.
+fn text_of(body: &str) -> String {
+    let v: serde_json::Value = serde_json::from_str(body).unwrap();
+    v["text"].as_str().unwrap().to_string()
+}
+
 /// The messages of the `n`th call.
 fn messages(mock: &Mock, n: usize) -> Vec<serde_json::Value> {
     mock.calls.lock().unwrap()[n].1["messages"]
@@ -379,8 +396,8 @@ async fn a_flagged_answer_is_corrected_once() {
     let r = explain("c7c5").await;
     assert_eq!(r.status, 200, "{}", r.body);
     assert_eq!(
-        r.body,
-        r#"{"text":"Black answers with ...c5, fighting for d4."}"#
+        text_of(&r.body),
+        "Black answers with ...c5, fighting for d4."
     );
     assert_eq!(mock.calls.lock().unwrap().len(), 2);
     // The correction turn: the question, the first answer echoed exactly as
@@ -403,8 +420,8 @@ async fn a_flagged_answer_is_corrected_once() {
     // The served rewrite is what's cached.
     let r = explain("c7c5").await;
     assert_eq!(
-        r.body,
-        r#"{"text":"Black answers with ...c5, fighting for d4."}"#
+        text_of(&r.body),
+        "Black answers with ...c5, fighting for d4."
     );
     assert_eq!(mock.calls.lock().unwrap().len(), 2);
 
@@ -414,7 +431,7 @@ async fn a_flagged_answer_is_corrected_once() {
         Some("Black still plays Qe7."),
     ]);
     let r = explain("e7e5").await;
-    assert_eq!(r.body, r#"{"text":"Black plays Qe7 here."}"#);
+    assert_eq!(text_of(&r.body), "Black plays Qe7 here.");
     assert_eq!(mock.calls.lock().unwrap().len(), 4);
 
     // The correction call fails: the first answer still stands.
@@ -424,7 +441,7 @@ async fn a_flagged_answer_is_corrected_once() {
         .extend([Some("Black plays Qe7 now."), None]);
     let r = explain("d7d5").await;
     assert_eq!(r.status, 200, "{}", r.body);
-    assert_eq!(r.body, r#"{"text":"Black plays Qe7 now."}"#);
+    assert_eq!(text_of(&r.body), "Black plays Qe7 now.");
     assert_eq!(mock.calls.lock().unwrap().len(), 6);
 
     // A clean answer is never re-asked.
