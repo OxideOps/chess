@@ -90,9 +90,11 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   component tests still pass.
 
 - The service worker (`src/service-worker.ts`) serves the prerendered pages and built assets
-  from its cache. After a rebuild, an open tab keeps the old version until every tab of the
-  site closes (no `skipWaiting`, so an old page never loads a half-new app); in Chrome,
-  DevTools → Application → Service workers → "Update on reload" skips that while testing.
+  from its cache. After a rebuild, an open tab keeps the old version (no automatic
+  `skipWaiting`, so an old page never loads a half-new app) and shows the `UpdateBanner`;
+  its Reload asks the waiting worker to take over (`src/lib/pwa/updates.svelte.ts`). In
+  Chrome, DevTools → Application → Service workers → "Update on reload" skips all that while
+  testing. `e2e/update.e2e.ts` simulates a deploy on its own server over a copy of `build`.
 - Engine files must be answered with a newly built `Response`, not the cached one: the
   Stockfish loader reads its role from the URL fragment (`#…wasm,worker` for its threads), a
   worker's URL is its response's URL, and cached responses have no fragment. Getting this

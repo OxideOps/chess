@@ -21,6 +21,7 @@
 // cross-origin isolation headers, so the multi-threaded engine still runs.
 import { build, files, prerendered, version } from '$service-worker';
 import type { CacheRequest } from '$lib/pwa/offline';
+import type { SkipWaiting } from '$lib/pwa/updates.svelte';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -103,7 +104,14 @@ async function networkThenShell(request: Request): Promise<Response> {
 // The page names the engine build it runs (see `keepOffline`); fetch what
 // isn't cached yet so the next visit, online or not, has it.
 sw.addEventListener('message', (event) => {
-	const data = event.data as CacheRequest | undefined;
+	const data = event.data as CacheRequest | SkipWaiting | undefined;
+	// A new version waits until every tab has closed, so a page never runs
+	// half-old, half-new code. The page asks it to take over when the user
+	// chooses to reload (see `src/lib/pwa/updates.svelte.ts`).
+	if (data?.type === 'skip-waiting') {
+		void sw.skipWaiting();
+		return;
+	}
 	if (data?.type !== 'cache-engine') return;
 	event.waitUntil(
 		(async () => {
