@@ -40,7 +40,10 @@ use crate::{
 pub const DEFAULT_MODEL: &str = "claude-opus-5";
 pub const DEFAULT_API_URL: &str = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION: &str = "2023-06-01";
-const MAX_TOKENS: u32 = 400;
+/// Room for the model's thinking as well as the answer: Opus 5 thinks by
+/// default, and thinking counts against this. Answers are ~100 words, so
+/// most of it goes unused (and unbilled).
+const MAX_TOKENS: u32 = 4000;
 /// Lines and moves per line worth sending; more is noise.
 const MAX_LINES: usize = 3;
 const MAX_PLIES: usize = 10;
@@ -52,7 +55,8 @@ Rely only on the engine's lines and evaluations for concrete moves: never invent
 variations, never calculate beyond what is given, and never contradict the engine. \
 Explain the ideas behind the best line in plain language: threats, weaknesses, piece \
 activity, king safety, pawn structure, and what each side should aim for. Write moves in \
-SAN as given. Keep it under 120 words, in two short paragraphs at most, with no headings.";
+SAN as given. Keep it under 120 words, in two short paragraphs at most, with no headings. \
+Write plain text: it is shown as is, so no Markdown (no asterisks or bullets).";
 
 #[derive(Debug, Clone)]
 pub struct CoachConfig {
@@ -267,7 +271,8 @@ made a mistake in a training drill. Using only the engine's evaluations and line
 given, explain in plain language why the student's move was a mistake and what the engine's \
 preferred move does instead. Never invent other variations and never contradict the engine. \
 Write moves in SAN as given. Keep it under 100 words, in one or two short paragraphs, with no \
-headings, and be encouraging.";
+headings, and be encouraging. Write plain text: it is shown as is, so no Markdown (no \
+asterisks or bullets).";
 
 /// Check a mistake report and turn it into a prompt.
 pub fn mistake_prompt(request: &MistakeRequest) -> Result<Prompt, String> {
@@ -357,6 +362,7 @@ pub enum CoachError {
 #[derive(Deserialize)]
 struct MessagesResponse {
     content: Vec<ContentBlock>,
+    stop_reason: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -419,6 +425,16 @@ impl Coach {
             .json()
             .await
             .map_err(|e| CoachError::Upstream(format!("response: {e}")))?;
+        // A cut-off or declined answer is an error, not something to show (or cache).
+        match parsed.stop_reason.as_deref() {
+            Some("max_tokens") => {
+                return Err(CoachError::Upstream("the answer was cut off".to_string()));
+            }
+            Some("refusal") => {
+                return Err(CoachError::Upstream("the model declined".to_string()));
+            }
+            _ => {}
+        }
         let text: String = parsed
             .content
             .into_iter()

@@ -15,6 +15,8 @@ use server::{Config, coach::CoachConfig};
 struct Mock {
     calls: Arc<Mutex<Vec<(HeaderMap, serde_json::Value)>>>,
     fail: Arc<Mutex<bool>>,
+    /// A `stop_reason` other than `end_turn`, e.g. a cut-off answer.
+    stop: Arc<Mutex<Option<&'static str>>>,
 }
 
 /// A fake `POST /v1/messages`; returns its base URL.
@@ -29,13 +31,14 @@ async fn mock_api(mock: Mock) -> String {
                     if *mock.fail.lock().unwrap() {
                         return (StatusCode::INTERNAL_SERVER_ERROR, "overloaded").into_response();
                     }
+                    let stop = mock.stop.lock().unwrap().unwrap_or("end_turn");
                     Json(serde_json::json!({
                     "id": "msg_test",
                     "type": "message",
                     "role": "assistant",
                     "model": "claude-opus-5",
                     "content": [{ "type": "text", "text": "  Black fights for d4 with ...c5.  " }],
-                    "stop_reason": "end_turn",
+                    "stop_reason": stop,
                     "usage": { "input_tokens": 10, "output_tokens": 10 }
                 }))
                 .into_response()
@@ -131,8 +134,10 @@ async fn explains_from_the_engine_lines_and_caches() {
         assert_eq!(headers["x-api-key"], "test-key");
         assert_eq!(headers["anthropic-version"], "2023-06-01");
         assert_eq!(body["model"], "claude-opus-5");
-        assert_eq!(body["max_tokens"], 400);
-        assert!(body["system"].as_str().unwrap().contains("never invent"));
+        assert_eq!(body["max_tokens"], 4000);
+        let system = body["system"].as_str().unwrap();
+        assert!(system.contains("never invent"), "{system}");
+        assert!(system.contains("no Markdown"), "{system}");
         let prompt = body["messages"][0]["content"].as_str().unwrap();
         assert_eq!(body["messages"][0]["role"], "user");
         assert!(prompt.contains("Side to move: Black"), "{prompt}");
@@ -281,4 +286,36 @@ async fn explains_a_drill_mistake() {
     let r = http(&base, "POST", "/api/coach/mistake", Some(&me), &bad).await;
     assert_eq!(r.status, 400, "{}", r.body);
     assert_eq!(mock.calls.lock().unwrap().len(), before);
+}
+
+#[tokio::test]
+async fn a_cut_off_or_declined_answer_is_an_error() {
+    let Some((base, mock)) = coached(30).await else {
+        return;
+    };
+    let me = account(&base).await;
+    for stop in ["max_tokens", "refusal"] {
+        *mock.stop.lock().unwrap() = Some(stop);
+        let r = http(
+            &base,
+            "POST",
+            "/api/coach/explain",
+            Some(&me),
+            &request("c7c5"),
+        )
+        .await;
+        assert_eq!(r.status, 502, "{stop}: {}", r.body);
+    }
+    // Nothing was cached: asked again, the API answers in full.
+    *mock.stop.lock().unwrap() = None;
+    let r = http(
+        &base,
+        "POST",
+        "/api/coach/explain",
+        Some(&me),
+        &request("c7c5"),
+    )
+    .await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    assert_eq!(mock.calls.lock().unwrap().len(), 3);
 }
