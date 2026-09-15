@@ -58,6 +58,8 @@ Successor to the archived `OxideOps/chess-v1`.
   `Prompt::check` flags answers that mention moves or pieces the prompt never showed; a flagged
   answer gets one correction turn (the first answer echoed back unchanged, thinking blocks and
   all, then the problems) and the cleaner of the two is served; both are logged;
+  `Prompt::parts` marks the moves an answer names with their path from the explained position
+  (`Explanation.parts`, rendered clickable by the client);
   `"fallbacks": "default"` re-runs a request Opus 5's cyber classifier wrongly declines (the
   word "exact" in a prompt set it off); per-user
   limit, answer cache, `--fake-coach` offline stand-in; tests run against a mock API;

@@ -5,16 +5,21 @@
 	import { session } from '$lib/auth/session.svelte';
 	import { withNext } from '$lib/auth/next';
 	import { Coach, MIN_DEPTH } from '$lib/coach/coach.svelte';
+	import CoachAnswer, { type Arrow } from '$lib/components/CoachAnswer.svelte';
 	import type { GameStore } from '$lib/chess/game.svelte';
 	import type { Analyser } from '$lib/engine/analysis.svelte';
 
 	// "Explain this position": the coach talks through the engine's lines.
-	// Hidden when the server has no coach.
+	// Moves in the answer preview as an arrow (`onpreview`) and, clicked, play
+	// their line from the explained position as a variation. The answer stays
+	// up while the board is on such a line, with a way back. Hidden when the
+	// server has no coach.
 	interface Props {
 		game: GameStore;
 		analyser: Analyser;
+		onpreview?: (arrow: Arrow | null) => void;
 	}
-	let { game, analyser }: Props = $props();
+	let { game, analyser, onpreview }: Props = $props();
 
 	const coach = new Coach();
 	onMount(() => {
@@ -29,16 +34,34 @@
 	const ready = $derived(
 		analyser.fen === fen && analyser.lines.length > 0 && (analyser.depth ?? 0) >= MIN_DEPTH
 	);
-	const answer = $derived(coach.key === fen ? coach.text : coach.answerFor(fen));
+	const answer = $derived(coach.key === fen ? coach.answer : coach.answerFor(fen));
 	const busy = $derived(coach.busy && coach.key === fen);
 	const error = $derived(coach.key === fen ? coach.error : null);
 	const here = $derived(page.url.pathname);
+
+	/** The explained position a move from its answer was played from. */
+	let origin = $state<{ fen: string; node: number } | null>(null);
+	const away = $derived(!answer && origin ? coach.answerFor(origin.fen) : null);
+
+	function play(path: string[]) {
+		const from = answer ? { fen, node: game.view.node } : origin;
+		if (!from) return;
+		game.goToNode(from.node);
+		for (const uci of path) {
+			if (game.playHereUci(uci) !== 'ok') break;
+		}
+		origin = from;
+	}
+
+	function back() {
+		if (origin) game.goToNode(origin.node);
+	}
 </script>
 
 {#if coach.available}
 	<section class="coach" aria-label="Coach">
 		{#if answer}
-			<p class="text" data-testid="coach-text">{answer}</p>
+			<CoachAnswer {answer} testid="coach-text" {onpreview} onplay={play} />
 		{:else if !session.registered}
 			<p class="hint">
 				The coach explains positions in plain language.
@@ -57,6 +80,12 @@
 				<p class="hint">Available once the engine has looked a little deeper.</p>
 			{/if}
 		{/if}
+		{#if away}
+			<div class="away" data-testid="coach-away">
+				<button type="button" class="back" onclick={back}>↩ Back to the explained position</button>
+				<CoachAnswer answer={away} testid="coach-away-text" {onpreview} onplay={play} />
+			</div>
+		{/if}
 		{#if error}
 			<p class="error" role="alert">{error}</p>
 		{/if}
@@ -74,10 +103,20 @@
 		border-radius: 6px;
 	}
 
-	.text {
-		margin: 0;
-		line-height: 1.45;
-		white-space: pre-line;
+	.away {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		padding-top: 0.5rem;
+		border-top: 1px solid var(--panel-border);
+		color: var(--text-muted);
+	}
+
+	.back {
+		align-self: flex-start;
+		border-color: var(--panel-border);
+		background: none;
+		color: var(--text);
 	}
 
 	.hint {

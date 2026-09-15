@@ -6,6 +6,7 @@
 	import { withNext } from '$lib/auth/next';
 	import { Coach, mistakeKey } from '$lib/coach/coach.svelte';
 	import Board from '$lib/components/Board.svelte';
+	import CoachAnswer, { type Arrow } from '$lib/components/CoachAnswer.svelte';
 	import { drills } from '$lib/chess/wasm';
 	import { sideName } from '$lib/chess/status';
 	import { Opponent } from '$lib/engine/opponent.svelte';
@@ -30,6 +31,8 @@
 	const answer = $derived(key ? coach.answerFor(key) : null);
 	const asking = $derived(coach.busy && coach.key === key);
 	const coachError = $derived(key && coach.key === key ? coach.error : null);
+	// A move in the coach's answer, shown on the board (hovered, or tapped).
+	let preview: Arrow | null = $state(null);
 
 	const plural = (n: number) => `${n} ${n === 1 ? 'move' : 'moves'}`;
 	const goal = $derived.by(() => {
@@ -65,6 +68,7 @@
 			orientation={drill.student}
 			playAs={drill.student}
 			onmove={(from, to, promotion) => session.tryMove(from, to, promotion)}
+			arrows={preview ? [preview] : []}
 		/>
 		<aside class="sidebar">
 			<h1>{drill.title}</h1>
@@ -89,7 +93,7 @@
 						<strong>{mistake.betterSan}</strong>.
 					</p>
 					{#if answer}
-						<p class="coach-text" data-testid="mistake-coach">{answer}</p>
+						<CoachAnswer {answer} testid="mistake-coach" onpreview={(a) => (preview = a)} />
 					{:else if coach.available && account.registered}
 						<button
 							type="button"
@@ -110,7 +114,13 @@
 				</div>
 			{/if}
 			<div class="actions">
-				<button type="button" onclick={() => session.restart()}>Restart</button>
+				<button
+					type="button"
+					onclick={() => {
+						preview = null;
+						void session.restart();
+					}}>Restart</button
+				>
 				{#if session.status.state === 'won' && next}
 					<a class="primary" href={resolve('/lessons/[id]', { id: next.id })} data-sveltekit-reload
 						>Next: {next.title}</a

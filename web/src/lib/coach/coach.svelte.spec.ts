@@ -7,6 +7,10 @@ const LINES: EngineLine[] = [
 	{ depth: 20, multipv: 1, score: { kind: 'cp', value: -30 }, pv: ['c7c5', 'g1f3'] }
 ];
 
+/** An explanation as the server sends it: the text, and its parts. */
+const reply = (text: string) =>
+	new Response(JSON.stringify({ text, parts: [{ kind: 'text', text }] }));
+
 function server(...replies: Response[]) {
 	const calls: { url: string; body: unknown }[] = [];
 	const fetchImpl = async (url: string, init?: RequestInit) => {
@@ -29,10 +33,10 @@ describe('Coach', () => {
 	});
 
 	it('sends the position, the last move and the lines, and remembers the answer', async () => {
-		const { calls, fetchImpl } = server(new Response('{"text":"Black fights for d4."}'));
+		const { calls, fetchImpl } = server(reply('Black fights for d4.'));
 		const coach = new Coach(fetchImpl);
 		await coach.explain(FEN, 'e4', LINES);
-		expect(coach.text).toBe('Black fights for d4.');
+		expect(coach.answer?.text).toBe('Black fights for d4.');
 		expect(coach.busy).toBe(false);
 		expect(calls[0]).toEqual({
 			url: '/api/coach/explain',
@@ -45,7 +49,7 @@ describe('Coach', () => {
 		// Asked again: no request.
 		await coach.explain(FEN, 'e4', LINES);
 		expect(calls).toHaveLength(1);
-		expect(coach.answerFor(FEN)).toBe('Black fights for d4.');
+		expect(coach.answerFor(FEN)?.text).toBe('Black fights for d4.');
 	});
 
 	it("shows the server's reason for a refusal", async () => {
@@ -53,12 +57,12 @@ describe('Coach', () => {
 			server(new Response('{"error":"the coach is for accounts"}', { status: 403 })).fetchImpl
 		);
 		await coach.explain(FEN, null, LINES);
-		expect(coach.text).toBeNull();
+		expect(coach.answer).toBeNull();
 		expect(coach.error).toBe('the coach is for accounts');
 	});
 
 	it('asks about a drill mistake and keeps the answer under its own key', async () => {
-		const { calls, fetchImpl } = server(new Response('{"text":"The queen was hanging."}'));
+		const { calls, fetchImpl } = server(reply('The queen was hanging.'));
 		const coach = new Coach(fetchImpl);
 		const mistake = {
 			fen: '8/8/8/3k4/8/8/7Q/4K3 w - - 0 1',
@@ -71,7 +75,7 @@ describe('Coach', () => {
 			reply: ['d5e5']
 		};
 		await coach.explainMistake(mistake, 'queen-mate');
-		expect(coach.text).toBe('The queen was hanging.');
+		expect(coach.answer?.text).toBe('The queen was hanging.');
 		expect(calls[0]).toEqual({
 			url: '/api/coach/mistake',
 			body: {
@@ -84,7 +88,7 @@ describe('Coach', () => {
 				reply: ['d5e5']
 			}
 		});
-		expect(coach.answerFor(mistakeKey(mistake))).toBe('The queen was hanging.');
+		expect(coach.answerFor(mistakeKey(mistake))?.text).toBe('The queen was hanging.');
 		// Not mixed up with an explanation of the same position.
 		expect(coach.answerFor(mistake.fen)).toBeNull();
 	});

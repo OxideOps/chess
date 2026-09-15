@@ -164,6 +164,8 @@ pub struct ExplainRequest {
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Explanation {
     pub text: String,
+    /// The same text, with the moves it names from the engine's lines marked.
+    pub parts: Vec<AnswerPart>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -193,18 +195,45 @@ pub struct Prompt {
 struct Shown {
     moves: BTreeSet<String>,
     pieces: BTreeSet<(Role, Square)>,
+    /// Each move of the lines, in order (the best line first).
+    lines: Vec<ShownMove>,
+}
+
+/// A move of a line the prompt shows, and how to reach it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ShownMove {
+    /// SAN without `+` or `#`.
+    san: String,
+    number: u32,
+    black: bool,
+    /// UCI moves from the prompt's position, this one last.
+    path: Vec<String>,
 }
 
 impl Shown {
-    fn walk(&mut self, position: &Chess, pv: &[UciMove]) {
+    /// Walk `pv` from `position`, which `prefix` (UCI) reached from the
+    /// prompt's position.
+    fn walk(&mut self, position: &Chess, pv: &[UciMove], prefix: &[UciMove]) {
         let mut position = position.clone();
+        let mut path: Vec<String> = prefix.iter().map(ToString::to_string).collect();
         self.add_pieces(&position);
         for uci in pv {
             let Ok(mv) = uci.to_move(&position) else {
                 break;
             };
-            let san = SanPlus::from_move_and_play_unchecked(&mut position, mv);
-            self.moves.insert(san.san.to_string());
+            let number = position.fullmoves().get();
+            let black = position.turn().is_black();
+            path.push(uci.to_string());
+            let san = SanPlus::from_move_and_play_unchecked(&mut position, mv)
+                .san
+                .to_string();
+            self.moves.insert(san.clone());
+            self.lines.push(ShownMove {
+                san,
+                number,
+                black,
+                path: path.clone(),
+            });
             self.add_pieces(&position);
         }
     }
@@ -214,6 +243,90 @@ impl Shown {
             self.pieces.insert((piece.role, square));
         }
     }
+}
+
+/// A move named in an answer: where it is, its SAN, and the move number
+/// written before it, if any ("4. Qxf7#": 4, White; "3...g6": 3, Black).
+struct Mention<'a> {
+    range: std::ops::Range<usize>,
+    san: &'a str,
+    number: Option<u32>,
+    black: Option<bool>,
+}
+
+/// The moves an answer names: SAN that is clearly a move (a piece letter, a
+/// capture, castling, a move number before it, or straight after another
+/// move as in "1. e4 e5"), not a bare square.
+fn mentions(answer: &str) -> Vec<Mention<'_>> {
+    let offset = |part: &str| part.as_ptr() as usize - answer.as_ptr() as usize;
+    let mut out = Vec::new();
+    // "4." or "3..." standing on its own before the move.
+    let mut pending: Option<(Option<u32>, Option<bool>)> = None;
+    // The last word was a move, not ending a clause: "1. e4 e5" goes on.
+    let mut chained = false;
+    for raw in answer.split_whitespace() {
+        let follows = std::mem::take(&mut chained);
+        let word = raw
+            .trim_start_matches(['(', '"', '\''])
+            .trim_end_matches([',', ';', ':', '!', '?', ')', '"', '\'']);
+        let (mut number, mut black, mut claim) = (None, None, follows);
+        if let Some((n, b)) = pending.take() {
+            (number, black, claim) = (n, b, true);
+        }
+        let mut rest = word;
+        let digits = word.len() - word.trim_start_matches(|c: char| c.is_ascii_digit()).len();
+        if digits > 0 && word[digits..].starts_with(['.', '…']) {
+            number = word[..digits].parse().ok();
+            rest = &word[digits..];
+        }
+        let undotted = rest.trim_start_matches(['.', '…']);
+        if undotted.len() < rest.len() {
+            let dots = &rest[..rest.len() - undotted.len()];
+            black = Some(dots.contains('…') || dots.len() > 1);
+            rest = undotted;
+            claim = true;
+        }
+        if rest.is_empty() {
+            if claim {
+                pending = Some((number, black));
+            }
+            continue;
+        }
+        let san = rest.trim_end_matches('.');
+        claim = claim
+            || san.starts_with(['K', 'Q', 'R', 'B', 'N'])
+            || san.contains('x')
+            || san.starts_with("O-O");
+        if claim && san.parse::<SanPlus>().is_ok() {
+            chained = !raw.ends_with([',', '.', ';', ':', '!', '?', ')']);
+            let at = offset(san);
+            out.push(Mention {
+                range: at..at + san.len(),
+                san,
+                number,
+                black,
+            });
+        }
+    }
+    out
+}
+
+/// A piece of an answer: plain text, or a move from the prompt's lines with
+/// the way to reach it, for the board to show.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub enum AnswerPart {
+    Text {
+        text: String,
+    },
+    Move {
+        /// As the answer wrote it, e.g. `Qxf7#`.
+        text: String,
+        /// UCI moves from the explained position (for a mistake, the
+        /// position before it), this one last.
+        path: Vec<String>,
+    },
 }
 
 const ROLE_NAMES: [(&str, Role); 6] = [
@@ -226,43 +339,57 @@ const ROLE_NAMES: [(&str, Role); 6] = [
 ];
 
 impl Prompt {
+    /// `answer` split into text and the moves it names from the prompt's
+    /// lines. A move number before a move picks between equal SAN in
+    /// different lines; moves the lines don't hold stay text.
+    pub fn parts(&self, answer: &str) -> Vec<AnswerPart> {
+        let mut parts = Vec::new();
+        let mut at = 0;
+        for mention in mentions(answer) {
+            let san = mention.san.trim_end_matches(['+', '#']);
+            let same = self.shown.lines.iter().filter(|m| m.san == san);
+            let numbered = same.clone().find(|m| {
+                mention.number.is_none_or(|n| n == m.number)
+                    && mention.black.is_none_or(|b| b == m.black)
+            });
+            let Some(shown) = numbered.or_else(|| same.clone().next()) else {
+                continue;
+            };
+            if mention.range.start > at {
+                parts.push(AnswerPart::Text {
+                    text: answer[at..mention.range.start].to_string(),
+                });
+            }
+            parts.push(AnswerPart::Move {
+                text: mention.san.to_string(),
+                path: shown.path.clone(),
+            });
+            at = mention.range.end;
+        }
+        if at < answer.len() {
+            parts.push(AnswerPart::Text {
+                text: answer[at..].to_string(),
+            });
+        }
+        parts
+    }
+
     /// Claims in `answer` that nothing in the prompt backs: a move that isn't
     /// in its lines, a piece on a square where no such piece ever stands, or
     /// Markdown. Heuristic (it reads SAN and "the knight on f6"), so it can't
     /// catch every mistake; the server logs what it finds.
     pub fn check(&self, answer: &str) -> Vec<String> {
         let mut problems = Vec::new();
-        // Moves: SAN that is clearly a move (a piece letter, a capture,
-        // castling, or a move number before it), not a bare square.
-        let mut numbered = false;
-        for raw in answer.split_whitespace() {
-            let word = raw
-                .trim_start_matches(['(', '"', '\''])
-                .trim_end_matches([',', ';', ':', '!', '?', ')', '"', '\'']);
-            let digits = word.trim_start_matches(|c: char| c.is_ascii_digit());
-            let after_number = digits.len() < word.len() && digits.starts_with('.');
-            let mut word = if after_number { digits } else { word };
-            let mut claim = std::mem::take(&mut numbered);
-            if word.starts_with('.') || word.starts_with('…') {
-                word = word.trim_start_matches(['.', '…']);
-                claim = true;
-            }
-            if word.is_empty() {
-                numbered = after_number || claim; // "4." or "3..." before the move
-                continue;
-            }
-            let word = word.trim_end_matches('.');
-            claim = claim
-                || word.starts_with(['K', 'Q', 'R', 'B', 'N'])
-                || word.contains('x')
-                || word.starts_with("O-O");
-            if claim && word.parse::<SanPlus>().is_ok() {
-                let san = word.trim_end_matches(['+', '#']);
-                if !self.shown.moves.contains(san) {
-                    problems.push(format!(
-                        "mentions {word}, which isn't in the lines it was given"
-                    ));
-                }
+        for mention in mentions(answer) {
+            if !self
+                .shown
+                .moves
+                .contains(mention.san.trim_end_matches(['+', '#']))
+            {
+                problems.push(format!(
+                    "mentions {}, which isn't in the lines it was given",
+                    mention.san
+                ));
             }
         }
         // Pieces: "the knight on f6", "the f7 pawn", "the e5-pawn".
@@ -356,7 +483,7 @@ pub fn prompt(request: &ExplainRequest) -> Result<Prompt, String> {
         }
         let score = Score::from(line.score).for_white(turn);
         lines.push((movetext, score, line.depth));
-        shown.walk(position, &pv);
+        shown.walk(position, &pv, &[]);
         if best_pv.is_empty() {
             best_pv = pv;
         }
@@ -537,9 +664,9 @@ pub fn mistake_prompt(request: &MistakeRequest) -> Result<Prompt, String> {
         after.as_deref().unwrap_or("a lost drill")
     );
     let mut shown = Shown::default();
-    shown.walk(position, &[played]);
-    shown.walk(&after_position, &reply);
-    shown.walk(position, &better);
+    shown.walk(position, &[played], &[]);
+    shown.walk(&after_position, &reply, &[played]);
+    shown.walk(position, &better, &[]);
     Ok(Prompt {
         system: MISTAKE_PROMPT,
         user,
@@ -614,6 +741,8 @@ pub struct Answer {
     pub rewritten: bool,
     /// What the check finds in the served text.
     pub problems: Vec<String>,
+    /// The text with the moves it names marked (`Prompt::parts`).
+    pub parts: Vec<AnswerPart>,
 }
 
 /// The one correction turn after a flagged answer.
@@ -637,6 +766,12 @@ impl Coach {
 
     /// Answer a prompt, from the cache when it was asked before.
     pub async fn answer(&self, prompt: Prompt) -> Result<Answer, CoachError> {
+        let mut answer = self.answer_text(&prompt).await?;
+        answer.parts = prompt.parts(&answer.text);
+        Ok(answer)
+    }
+
+    async fn answer_text(&self, prompt: &Prompt) -> Result<Answer, CoachError> {
         if let Some(text) = self.cache.lock().unwrap().get(&prompt.key) {
             return Ok(Answer {
                 text: text.clone(),
@@ -650,13 +785,13 @@ impl Coach {
                 ..Answer::default()
             }
         } else {
-            self.checked(&prompt).await?
+            self.checked(prompt).await?
         };
         let mut cache = self.cache.lock().unwrap();
         if cache.len() >= CACHE_SIZE {
             cache.clear(); // crude, but bounded; a hot position is re-asked once
         }
-        cache.insert(prompt.key, answer.text.clone());
+        cache.insert(prompt.key.clone(), answer.text.clone());
         Ok(answer)
     }
 
@@ -853,7 +988,11 @@ async fn respond(
         );
     }
     match coach.answer(prompt).await {
-        Ok(answer) => Json(Explanation { text: answer.text }).into_response(),
+        Ok(answer) => Json(Explanation {
+            text: answer.text,
+            parts: answer.parts,
+        })
+        .into_response(),
         Err(CoachError::BadRequest(message)) => refuse(StatusCode::BAD_REQUEST, &message),
         Err(CoachError::Upstream(detail)) => {
             tracing::error!("coach: {detail}");
@@ -1015,6 +1154,99 @@ mod tests {
             p.check("The king on e8 can go to e7. Box it in.")
                 .is_empty()
         );
+    }
+
+    /// The moves in `parts`, as (text, path).
+    fn moves(parts: &[AnswerPart]) -> Vec<(String, Vec<String>)> {
+        parts
+            .iter()
+            .filter_map(|p| match p {
+                AnswerPart::Move { text, path } => Some((text.clone(), path.clone())),
+                AnswerPart::Text { .. } => None,
+            })
+            .collect()
+    }
+
+    fn joined(parts: &[AnswerPart]) -> String {
+        parts
+            .iter()
+            .map(|p| match p {
+                AnswerPart::Text { text } | AnswerPart::Move { text, .. } => text.as_str(),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn marks_the_moves_an_answer_names_with_the_way_to_reach_them() {
+        let p = prompt(&scholar()).unwrap();
+        let answer = "Black's 3... Nf6 ignored f7, so play 4. Qxf7#; not the quiet 4. Qe2 Bc5.";
+        let parts = p.parts(answer);
+        assert_eq!(joined(&parts), answer);
+        let path = |moves: &[&str]| moves.iter().map(ToString::to_string).collect::<Vec<_>>();
+        assert_eq!(
+            moves(&parts),
+            vec![
+                // Nf6 led here: nothing to play, so it stays text.
+                ("Qxf7#".to_string(), path(&["h5f7"])),
+                ("Qe2".to_string(), path(&["h5e2"])),
+                ("Bc5".to_string(), path(&["h5e2", "f8c5"])),
+            ]
+        );
+        // A reply straight after a move is a move too; after a clause it's a square.
+        let seq = prompt(&request()).unwrap();
+        assert_eq!(
+            moves(&seq.parts("Best is 1... c5 2. Nf3 d6, and e5 is weak."))
+                .iter()
+                .map(|(t, _)| t.as_str())
+                .collect::<Vec<_>>(),
+            ["c5", "Nf3", "d6"]
+        );
+        // A move the lines don't hold stays text; so does prose.
+        assert!(moves(&p.parts("Black could try 3...g6 or Qe7 instead.")).is_empty());
+
+        // A mistake: the reply is reached through the student's move.
+        let m = mistake_prompt(&mistake()).unwrap();
+        let answer = "Qe5+ lets 1... Kxe5 take the queen; 1. Qe2 keeps it safe.";
+        assert_eq!(
+            moves(&m.parts(answer)),
+            vec![
+                ("Qe5+".to_string(), path(&["h2e5"])),
+                ("Kxe5".to_string(), path(&["h2e5", "d5e5"])),
+                ("Qe2".to_string(), path(&["h2e2"])),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_move_number_picks_between_equal_moves() {
+        // Nf3 is White's second move in one line and first in the other.
+        let r = ExplainRequest {
+            fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".into(),
+            last_move: None,
+            lines: vec![
+                CoachLine {
+                    depth: 20,
+                    score: CoachScore::Cp(30),
+                    pv: vec!["e2e4".into(), "e7e5".into(), "g1f3".into()],
+                },
+                CoachLine {
+                    depth: 20,
+                    score: CoachScore::Cp(25),
+                    pv: vec!["g1f3".into(), "d7d5".into()],
+                },
+            ],
+        };
+        let p = prompt(&r).unwrap();
+        let path_of = |answer: &str| moves(&p.parts(answer))[0].1.clone();
+        assert_eq!(
+            path_of("After 2. Nf3 the knight hits e5."),
+            ["e2e4", "e7e5", "g1f3"]
+        );
+        assert_eq!(path_of("Or 1. Nf3 first."), ["g1f3"]);
+        // No number: the best line's.
+        assert_eq!(path_of("Nf3 develops."), ["e2e4", "e7e5", "g1f3"]);
+        // Black's moves: "1... d5" is the second line's.
+        assert_eq!(path_of("Then 1... d5 is solid."), ["g1f3", "d7d5"]);
     }
 
     fn mistake() -> MistakeRequest {

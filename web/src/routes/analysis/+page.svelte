@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import Board from '$lib/components/Board.svelte';
 	import CoachPanel from '$lib/components/CoachPanel.svelte';
+	import type { Arrow } from '$lib/components/CoachAnswer.svelte';
 	import Controls from '$lib/components/Controls.svelte';
 	import EnginePanel from '$lib/components/EnginePanel.svelte';
 	import EvalBar from '$lib/components/EvalBar.svelte';
@@ -33,8 +34,14 @@
 	// Only decorate the board with lines that are about the position it shows.
 	const best = $derived(analyser.fen === game.view.fen ? analyser.best : undefined);
 	const score = $derived(best ? scoreForWhite(best.score, analyser.turn) : null);
+	// A move hovered in the coach's answer takes the arrow's place.
+	let preview: Arrow | null = $state(null);
 	const arrows = $derived(
-		best?.pv[0] ? [{ from: best.pv[0].slice(0, 2), to: best.pv[0].slice(2, 4) }] : []
+		preview
+			? [preview]
+			: best?.pv[0]
+				? [{ from: best.pv[0].slice(0, 2), to: best.pv[0].slice(2, 4) }]
+				: []
 	);
 </script>
 
@@ -49,7 +56,7 @@
 	</div>
 	<aside class="sidebar">
 		<EnginePanel {game} {analyser} bind:enabled={engineOn} />
-		<CoachPanel {game} {analyser} />
+		<CoachPanel {game} {analyser} onpreview={(a) => (preview = a)} />
 		<p class="status">{statusText(game.view)}</p>
 		<MoveList {game} />
 		<div class="variation-actions">
