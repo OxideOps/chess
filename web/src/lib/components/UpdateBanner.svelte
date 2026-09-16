@@ -36,16 +36,16 @@
 		padding: 0.4rem var(--gutter);
 		background: var(--panel);
 		border-bottom: 1px solid var(--accent);
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 
 	button {
 		min-height: var(--tap);
 		padding: 0.25rem 0.8rem;
 		border: 1px solid var(--accent);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--accent);
-		color: #fff;
+		color: var(--on-accent);
 		font: inherit;
 		cursor: pointer;
 	}

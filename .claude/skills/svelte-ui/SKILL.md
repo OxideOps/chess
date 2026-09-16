@@ -73,7 +73,13 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   (`GameStore`, `Analyser`); components use `$props()`, `$derived`, `$bindable()`.
 - Props are typed with an `interface Props`; callbacks are plain function props (`onpick`),
   not events.
-- Plain CSS, scoped per component, colours only through the variables in `app.css`.
+- Plain CSS, scoped per component. Colours, font sizes, radii and shadows come only from the
+  variables in `app.css`; never write a hex value or a rem font size in a component. Text the
+  game itself produced (moves, clocks, evaluations, ratings, FENs) is set in `--font-mono`
+  with `tabular-nums`; everything else is `--font`. Buttons are `class="btn"`, and the one
+  action a screen is asking for is `class="btn primary"` — one per screen. Pages that aren't
+  built around a board open with a `.page-header` (an `h1` and one line on what the page is
+  for). Form controls are styled globally in `app.css`, so a bare `<input>` is already right.
 - Layout works down to phone width (Playwright's `phone` project checks it). Pages built
   around a board put `board-page` on their wrapper; the board and anything that should match
   it use `width: var(--board-size)`, and the page sets `--board-beside` / `--board-around`

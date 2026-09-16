@@ -23,7 +23,13 @@ Successor to the archived `OxideOps/chess-v1`.
   feature; `pnpm gen:types` writes them to `web/src/lib/generated` (committed, CI checks
   freshness). `pnpm build:wasm` runs wasm-pack into `web/src/lib/wasm` (gitignored).
 - `web` — the SvelteKit client. pnpm via corepack, TS strict, plain CSS with the variables in
-  `web/src/app.css`. Static SPA: `ssr = false`, every route prerendered as a shell plus a
+  `web/src/app.css`, which is the whole visual vocabulary: a warm charcoal palette with brass
+  as the one accent (the board keeps its own green for the last move, the selected square and
+  the arrows), IBM Plex Sans for the interface and IBM Plex Mono for everything the game
+  wrote — moves, clocks, evaluations, ratings, FENs — a type scale, and the shared `.panel`,
+  `.btn`/`.btn.primary` and `.page-header` classes. Components use those variables and never
+  hard-code a colour or a size. `web/src/lib/components/Logo.svelte` is the mark (a rook in
+  the board's right angles); `web/scripts/gen-icons.mjs` renders the app icons from it. Static SPA: `ssr = false`, every route prerendered as a shell plus a
   `404.html` fallback; the root layout awaits `initChess()` so pages use the WASM
   synchronously. Stockfish (GPL, `web/static/engine`, never linked in, fetched by
   `scripts/fetch-engine.mjs` with pinned SHA-256s rather than committed) runs in a Web Worker

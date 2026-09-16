@@ -74,7 +74,7 @@
 	.engine {
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius);
 		overflow: hidden;
 	}
 
@@ -100,13 +100,15 @@
 
 	.threads {
 		color: var(--text-muted);
-		font-size: 0.8rem;
+		font-size: var(--type-xs);
 		white-space: nowrap;
 	}
 
 	.summary {
 		color: var(--text-muted);
-		font-size: 0.85rem;
+		font-family: var(--font-mono);
+		font-size: var(--type-sm);
+		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
 	}
 
@@ -121,6 +123,7 @@
 		border-top: 1px solid var(--panel-border);
 	}
 
+	/* An engine line is notation: mono, so the moves line up between lines. */
 	.lines button {
 		min-height: var(--tap);
 		display: flex;
@@ -131,19 +134,19 @@
 		border: none;
 		background: none;
 		color: var(--text);
-		font: inherit;
-		font-size: 0.85rem;
+		font-family: var(--font-mono);
+		font-size: var(--type-sm);
 		text-align: left;
 		cursor: pointer;
 	}
 
 	.lines button:hover {
-		background: rgba(255, 255, 255, 0.06);
+		background: var(--panel-raised);
 	}
 
 	.score {
 		flex: 0 0 3.2rem;
-		font-weight: 700;
+		font-weight: 500;
 		font-variant-numeric: tabular-nums;
 	}
 

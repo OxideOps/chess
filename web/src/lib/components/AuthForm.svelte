@@ -79,7 +79,7 @@
 				maxlength="128"
 			/>
 		</label>
-		<button type="submit" disabled={busy}>{busy ? `${verb}…` : verb}</button>
+		<button type="submit" class="btn primary" disabled={busy}>{busy ? `${verb}…` : verb}</button>
 	</form>
 	{#if error}
 		<p class="error" role="alert">{error}</p>
@@ -119,7 +119,7 @@
 	.switch {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 
 	form {
@@ -132,37 +132,23 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 		color: var(--text-muted);
 	}
 
-	input,
-	button {
-		min-height: var(--tap);
-		padding: 0.45rem 0.8rem;
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
-		background: var(--panel);
-		color: var(--text);
-		font: inherit;
-	}
-
-	button {
+	.btn {
 		align-self: flex-start;
-		cursor: pointer;
-		background: var(--accent);
-		border-color: var(--accent);
-		color: #fff;
 	}
 
-	button:disabled {
-		opacity: 0.6;
-		cursor: default;
+	input {
+		align-self: flex-start;
+		width: 100%;
+		max-width: 22rem;
 	}
 
 	.error {
 		margin: 0;
-		color: #e06c75;
+		color: var(--danger);
 	}
 
 	a {
@@ -177,14 +163,14 @@
 
 	.or {
 		color: var(--text-muted);
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
 	.provider {
 		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
 		text-decoration: none;

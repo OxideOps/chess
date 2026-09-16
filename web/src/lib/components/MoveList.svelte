@@ -31,6 +31,9 @@
 {/snippet}
 
 <ol class="move-list">
+	{#if blocks.length === 0}
+		<li class="none">No moves yet</li>
+	{/if}
 	{#each blocks as block, i (keyOf(i))}
 		{#if block.kind === 'row'}
 			<li>
@@ -74,7 +77,9 @@
 		overflow-y: auto;
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius);
+		font-family: var(--font-mono);
+		font-size: var(--type-sm);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -82,6 +87,14 @@
 		display: grid;
 		grid-template-columns: 3rem 1fr 1fr;
 		align-items: center;
+	}
+
+	/* An empty list would otherwise be a bare sliver of panel. */
+	li.none {
+		display: block;
+		padding: 0.25rem 0.8rem;
+		color: var(--text-muted);
+		font-family: var(--font);
 	}
 
 	.number {
@@ -103,13 +116,13 @@
 
 	.move:hover,
 	.var-move:hover {
-		background: rgba(255, 255, 255, 0.06);
+		background: var(--panel-raised);
 	}
 
 	.move.current,
 	.var-move.current {
 		background: var(--accent);
-		color: #fff;
+		color: var(--on-accent);
 	}
 
 	.move.empty {
@@ -132,7 +145,7 @@
 		column-gap: 0.3rem;
 		margin: 0.1rem 0;
 		line-height: 1.7;
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 		color: var(--text-muted);
 	}
 

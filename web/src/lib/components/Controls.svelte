@@ -10,7 +10,8 @@
 	const atEnd = $derived(!game.view.viewingHistory);
 </script>
 
-<div class="controls">
+<!-- Stepping through the game is one control, so the four buttons are one bar. -->
+<div class="history" role="group" aria-label="Move through the game">
 	<button type="button" title="First move" disabled={atStart} onclick={() => game.goToStart()}
 		>⏮</button
 	>
@@ -22,37 +23,56 @@
 	>
 	<button type="button" title="Last move" disabled={atEnd} onclick={() => game.goToEnd()}>⏭</button>
 </div>
-<div class="controls">
-	<button type="button" onclick={() => (orientation = orientation === 'white' ? 'black' : 'white')}>
+<div class="actions">
+	<button
+		type="button"
+		class="btn"
+		onclick={() => (orientation = orientation === 'white' ? 'black' : 'white')}
+	>
 		Flip board
 	</button>
-	<button type="button" onclick={() => game.replace(new Game())}>New game</button>
+	<button type="button" class="btn" onclick={() => game.replace(new Game())}>New game</button>
 </div>
 
 <style>
-	.controls {
+	.history {
 		display: flex;
-		gap: 0.5rem;
+		border: 1px solid var(--panel-border);
+		border-radius: var(--radius-sm);
+		overflow: hidden;
 	}
 
-	button {
-		min-height: var(--tap);
+	.history button {
 		flex: 1;
+		min-height: var(--tap);
 		padding: 0.45rem 0.6rem;
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border: none;
+		border-left: 1px solid var(--panel-border);
 		background: var(--panel);
 		color: var(--text);
 		font: inherit;
 		cursor: pointer;
 	}
 
-	button:hover:not(:disabled) {
-		border-color: var(--text-muted);
+	.history button:first-child {
+		border-left: none;
 	}
 
-	button:disabled {
+	.history button:hover:not(:disabled) {
+		background: var(--panel-raised);
+	}
+
+	.history button:disabled {
 		opacity: 0.4;
 		cursor: default;
+	}
+
+	.actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.actions .btn {
+		flex: 1;
 	}
 </style>

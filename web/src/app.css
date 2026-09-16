@@ -1,22 +1,123 @@
-/* Shared palette and base styles. Components use these variables only. */
+/*
+ * The site's whole visual vocabulary: colour, type, spacing, and the handful
+ * of shared classes pages build from. Components style themselves with these
+ * variables and never hard-code a colour or a font size.
+ *
+ * Two ideas hold it together.
+ *
+ * The board keeps its own language. Wood squares, green for the last move,
+ * the selected square and the arrows: that is the chess set, and it is not
+ * the site's palette. Everything around the board is a warm charcoal that
+ * belongs with the wood, with brass — the colour of a chess clock — as the
+ * one accent, so chrome and board never compete for the same green.
+ *
+ * The site speaks in notation. Moves, clocks, evaluations, ratings and FENs
+ * are the game's own written language and most of what is on screen, so they
+ * are set in the mono face with tabular figures, and the interface around
+ * them stays quiet.
+ */
+
+/* IBM Plex, latin subset, self-hosted so the offline PWA has its type too. */
+@font-face {
+	font-family: 'IBM Plex Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/plex-sans-400.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'IBM Plex Sans';
+	font-style: italic;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/plex-sans-400-italic.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'IBM Plex Sans';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/plex-sans-600.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'IBM Plex Mono';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/plex-mono-400.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'IBM Plex Mono';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/plex-mono-500.woff2') format('woff2');
+}
+
 :root {
-	--bg: #161512;
-	--panel: #262421;
-	--panel-border: #3a3733;
-	--text: #e8e6e3;
-	--text-muted: #9f9a93;
-	--accent: #629924;
+	/* Surfaces, darkest first. Warm, so they sit with the wooden board. */
+	--bg: #14120f;
+	--panel: #1e1b17;
+	/* A panel that is hovered, selected, or one layer further forward. */
+	--panel-raised: #292520;
+	--panel-border: #332e27;
+
+	--text: #ece7df;
+	--text-muted: #a49a8c;
+
+	/* Brass: a chess clock, not a highlighter. Used sparingly — the current
+	   page, focus rings, the one primary button on a screen. */
+	--accent: #c99b3f;
+	--accent-bright: #e2b45c;
+	/* Text on top of --accent. */
+	--on-accent: #17130b;
+
+	--good: #8fae52;
+	--danger: #d4694f;
 	/* Attention without alarm, e.g. an opponent who has left. */
 	--warning: #e5c07b;
+
+	/* The chess set. Not part of the palette above: these are the pieces and
+	   the board, and they stay put when the site's colours change. */
 	--square-light: #f0d9b5;
 	--square-dark: #b58863;
 	--highlight-last-move: rgba(155, 199, 0, 0.41);
 	--highlight-selected: rgba(20, 85, 30, 0.5);
 	--highlight-destination: rgba(0, 0, 0, 0.22);
+	/* The two sides, for anything that shows White against Black (the eval bar). */
+	--piece-white: #f0f0f0;
+	--piece-black: #403d39;
+
+	--font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	/* Notation, clocks, evaluations, ratings, FENs. */
+	--font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+	/* Type scale. Body text is 1rem; nothing routine is smaller than --type-sm. */
+	--type-xs: 0.75rem;
+	--type-sm: 0.875rem;
+	--type-base: 1rem;
+	--type-lg: 1.125rem;
+	--type-xl: 1.5rem;
+	--type-2xl: 2rem;
+
+	/* Radii carry hierarchy: controls are crisper than the surfaces holding them. */
+	--radius-sm: 4px;
+	--radius: 8px;
+	--radius-lg: 14px;
+
+	--shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 
 	/* Space around the page. */
 	--gutter: 1.25rem;
-	--nav-height: 2.75rem;
+	--nav-height: 3.25rem;
+	/* How wide a page's content may grow before it stops. */
+	--content: 74rem;
+	/* A comfortable line length for prose. */
+	--measure: 66ch;
 	/* Minimum height of things people tap; only enforced on touch screens. */
 	--tap: 0px;
 }
@@ -41,16 +142,156 @@ body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--text);
-	font-family:
-		system-ui,
-		-apple-system,
-		'Segoe UI',
-		Roboto,
-		sans-serif;
+	font-family: var(--font);
+	font-size: var(--type-base);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
 }
 
 main {
+	max-width: var(--content);
+	margin: 0 auto;
 	padding: var(--gutter);
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	font-weight: 600;
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+}
+
+h1 {
+	font-size: var(--type-2xl);
+}
+
+h2 {
+	font-size: var(--type-xl);
+}
+
+h3 {
+	font-size: var(--type-lg);
+}
+
+a {
+	color: var(--accent);
+}
+
+/* One focus ring everywhere, drawn outside the element so it is never clipped. */
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+::selection {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+
+/*
+ * The block at the top of a page that isn't built around a board: what this
+ * page is, and one line on what it is for.
+ */
+.page-header {
+	max-width: var(--measure);
+	margin-bottom: 1.5rem;
+}
+
+.page-header p {
+	margin: 0.5rem 0 0;
+	color: var(--text-muted);
+}
+
+/* A surface holding content. */
+.panel {
+	padding: 0.75rem 0.9rem;
+	background: var(--panel);
+	border: 1px solid var(--panel-border);
+	border-radius: var(--radius);
+}
+
+/*
+ * Buttons. `.btn` is the ordinary one; `.btn.primary` is the single action a
+ * screen is asking for, and there should only be one in view.
+ */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	min-height: var(--tap);
+	padding: 0.45rem 0.9rem;
+	border: 1px solid var(--panel-border);
+	border-radius: var(--radius-sm);
+	background: var(--panel);
+	color: var(--text);
+	font: inherit;
+	font-size: var(--type-sm);
+	cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+	background: var(--panel-raised);
+	border-color: var(--text-muted);
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.btn.primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+	font-weight: 600;
+}
+
+.btn.primary:hover:not(:disabled) {
+	background: var(--accent-bright);
+	border-color: var(--accent-bright);
+}
+
+/*
+ * Form controls. Styled on the element, so a field is never a raw white box
+ * on a dark page just because a form forgot to dress it.
+ */
+input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color']),
+select,
+textarea {
+	min-height: var(--tap);
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--panel-border);
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	font-size: var(--type-sm);
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: var(--text-muted);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+	border-color: var(--text-muted);
+}
+
+/* Checkboxes and radios only need their tick to join the palette. */
+input[type='checkbox'],
+input[type='radio'] {
+	accent-color: var(--accent);
+}
+
+/* Anything the game itself wrote: moves, clocks, scores, ratings, FENs. */
+.notation {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
 }
 
 /*
@@ -96,11 +337,18 @@ main {
 	}
 }
 
+/*
+ * The line above a board saying whose move it is or how the game ended. It
+ * is the loudest thing in the sidebar because it answers the question a
+ * player has every time they look up.
+ */
 .status {
 	margin: 0;
 	padding: 0.6rem 0.8rem;
 	background: var(--panel);
 	border: 1px solid var(--panel-border);
-	border-radius: 6px;
+	border-left: 3px solid var(--accent);
+	border-radius: var(--radius);
+	font-size: var(--type-lg);
 	font-weight: 600;
 }

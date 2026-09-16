@@ -37,10 +37,10 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
-		background: #403d39;
+		background: var(--piece-black);
 		border-radius: 4px;
 		overflow: hidden;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+		box-shadow: var(--shadow);
 	}
 
 	.eval-bar.flipped {
@@ -49,7 +49,7 @@
 
 	.white {
 		width: 100%;
-		background: #f0f0f0;
+		background: var(--piece-white);
 		transition: height 0.4s ease;
 	}
 
@@ -58,6 +58,7 @@
 		left: 0;
 		right: 0;
 		text-align: center;
+		font-family: var(--font-mono);
 		font-size: 0.6rem;
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
@@ -68,12 +69,12 @@
 	/* The label sits at the winning side's end of the bar. */
 	.label.for-white {
 		bottom: 0;
-		color: #403d39;
+		color: var(--piece-black);
 	}
 
 	.label.for-black {
 		top: 0;
-		color: #f0f0f0;
+		color: var(--piece-white);
 	}
 
 	.flipped .label.for-white {

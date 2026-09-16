@@ -158,7 +158,7 @@
 	.kind {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
 	.connection {
@@ -174,8 +174,8 @@
 
 	.rejection {
 		margin: 0;
-		color: #e06c75;
-		font-size: 0.85rem;
+		color: var(--danger);
+		font-size: var(--type-sm);
 	}
 
 	.invite {
@@ -185,8 +185,8 @@
 		padding: 0.6rem 0.8rem;
 		background: var(--panel);
 		border: 1px solid var(--accent);
-		border-radius: 6px;
-		font-size: 0.85rem;
+		border-radius: var(--radius-sm);
+		font-size: var(--type-sm);
 	}
 
 	.invite p {
@@ -197,11 +197,11 @@
 		width: 100%;
 		padding: 0.4rem 0.5rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--bg);
 		color: var(--text);
-		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		font-size: 0.8rem;
+		font-family: var(--font-mono);
+		font-size: var(--type-xs);
 	}
 
 	.hint {
@@ -220,8 +220,8 @@
 		padding: 0.5rem 0.8rem;
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
-		font-size: 0.9rem;
+		border-radius: var(--radius-sm);
+		font-size: var(--type-sm);
 	}
 
 	.controls {
@@ -234,7 +234,7 @@
 		flex: 1;
 		padding: 0.45rem 0.6rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
 		font: inherit;
@@ -255,7 +255,7 @@
 	}
 
 	button.danger:hover {
-		border-color: #e06c75;
-		color: #e06c75;
+		border-color: var(--danger);
+		color: var(--danger);
 	}
 </style>
