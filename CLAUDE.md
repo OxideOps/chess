@@ -13,7 +13,8 @@ Successor to the archived `OxideOps/chess-v1`.
   engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
   counts), the lesson drills and their win/loss rules (`lesson.rs`), board facts for the
   coach (`facts.rs`: pieces, material, attacked/defended pieces, pins, where each king can go,
-  and what each move of a line does, in words), and the client↔server
+  the pawn structure and how far each side's pieces are out, and what each move of a line does,
+  in words — with the material after a capture and, after a check, what can legally reply), and the client↔server
   `protocol` types. No UI, no I/O, must compile
   for `wasm32`. Everything chess-related that both the client and the server need goes here,
   with tests.

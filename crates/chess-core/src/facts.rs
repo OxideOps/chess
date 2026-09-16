@@ -8,8 +8,8 @@
 //! [`BoardFacts::describe`] and [`MoveFacts::describe`] put it in words.
 
 use shakmaty::{
-    Bitboard, CastlingSide, Chess, Color, Piece, Position, Role, Square, attacks, san::SanPlus,
-    uci::UciMove,
+    Bitboard, CastlingSide, Chess, Color, File, Piece, Position, Rank, Role, Square, attacks,
+    san::SanPlus, uci::UciMove,
 };
 
 /// A piece and where it stands.
@@ -73,6 +73,32 @@ pub struct KingRoom {
     pub around: Vec<(Square, Around)>,
 }
 
+/// The pawns that stand out, and the files they leave open.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Structure {
+    /// No enemy pawn ahead of it on its file or either neighbour.
+    pub passed: Vec<Placed>,
+    /// No friendly pawn on either neighbouring file.
+    pub isolated: Vec<Placed>,
+    /// Another friendly pawn on the same file.
+    pub doubled: Vec<Placed>,
+    /// No pawns of either colour.
+    pub open_files: Vec<File>,
+    /// No pawns of that colour, but some of the other's; White first.
+    pub half_open: [Vec<File>; 2],
+}
+
+/// How far a side has got its pieces out.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Development {
+    pub color: Color,
+    /// Knights and bishops still on the square they started on.
+    pub at_home: Vec<Placed>,
+    pub king: Square,
+    /// The king can still castle one way or the other.
+    pub can_castle: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BoardFacts {
     pub turn: Color,
@@ -87,6 +113,9 @@ pub struct BoardFacts {
     pub pins: Vec<Pin>,
     /// White's king first.
     pub kings: Vec<KingRoom>,
+    pub structure: Structure,
+    /// White first.
+    pub development: Vec<Development>,
 }
 
 const ROLES: [Role; 6] = [
@@ -107,14 +136,7 @@ pub fn board_facts(pos: &Chess) -> BoardFacts {
     let all = |bb: Bitboard| -> Vec<Placed> { sorted(bb.into_iter().filter_map(placed).collect()) };
 
     let pieces = all(occupied);
-    let material = COLORS.map(|color| {
-        board
-            .by_color(color)
-            .into_iter()
-            .filter_map(|sq| board.piece_at(sq))
-            .map(|p| value(p.role))
-            .sum()
-    });
+    let material = material_of(board);
     let checkers = all(pos.checkers());
 
     let mut targets = Vec::new();
@@ -182,6 +204,59 @@ pub fn board_facts(pos: &Chess) -> BoardFacts {
         kings.push(KingRoom { king, around });
     }
 
+    let mut structure = Structure::default();
+    for file in File::ALL {
+        let on_file = |color: Color| board.pawns() & board.by_color(color) & Bitboard::from(file);
+        let (white, black) = (on_file(Color::White), on_file(Color::Black));
+        match (white.is_empty(), black.is_empty()) {
+            (true, true) => structure.open_files.push(file),
+            (true, false) => structure.half_open[0].push(file),
+            (false, true) => structure.half_open[1].push(file),
+            (false, false) => {}
+        }
+    }
+    for p in pieces.iter().filter(|p| p.piece.role == Role::Pawn) {
+        let color = p.piece.color;
+        let pawns = |c: Color| board.pawns() & board.by_color(c);
+        let files = |file: File| Bitboard::from(file);
+        let neighbours = [p.square.file().offset(-1), p.square.file().offset(1)]
+            .into_iter()
+            .flatten()
+            .fold(Bitboard::EMPTY, |bb, f| bb | files(f));
+        if (pawns(color) & neighbours).is_empty() {
+            structure.isolated.push(*p);
+        }
+        if (pawns(color) & files(p.square.file())).count() > 1 {
+            structure.doubled.push(*p);
+        }
+        let ahead = ranks_ahead(p.square.rank(), color);
+        if ((neighbours | files(p.square.file())) & ahead & pawns(!color)).is_empty() {
+            structure.passed.push(*p);
+        }
+    }
+
+    let development = COLORS
+        .iter()
+        .filter_map(|&color| {
+            let back = color.fold_wb(Rank::First, Rank::Eighth);
+            let at_home = sorted(
+                pieces
+                    .iter()
+                    .filter(|p| p.piece.color == color)
+                    .filter(|p| matches!(p.piece.role, Role::Knight | Role::Bishop))
+                    .filter(|p| p.square.rank() == back && home_square(p.piece.role, p.square))
+                    .copied()
+                    .collect(),
+            );
+            Some(Development {
+                color,
+                at_home,
+                king: board.king_of(color)?,
+                can_castle: pos.castles().has_color(color),
+            })
+        })
+        .collect();
+
     BoardFacts {
         turn: pos.turn(),
         pieces,
@@ -190,6 +265,28 @@ pub fn board_facts(pos: &Chess) -> BoardFacts {
         targets,
         pins,
         kings,
+        structure,
+        development,
+    }
+}
+
+/// The squares on the ranks in front of `rank`, from `color`'s point of view.
+fn ranks_ahead(rank: Rank, color: Color) -> Bitboard {
+    Rank::ALL
+        .iter()
+        .filter(|r| match color {
+            Color::White => **r > rank,
+            Color::Black => **r < rank,
+        })
+        .fold(Bitboard::EMPTY, |bb, r| bb | Bitboard::from(*r))
+}
+
+/// Whether a knight or bishop stands where its kind starts.
+fn home_square(role: Role, square: Square) -> bool {
+    match role {
+        Role::Knight => matches!(square.file(), File::B | File::G),
+        Role::Bishop => matches!(square.file(), File::C | File::F),
+        _ => false,
     }
 }
 
@@ -226,14 +323,7 @@ impl BoardFacts {
             ));
         }
         let [white, black] = self.material;
-        let balance = match white.cmp(&black) {
-            std::cmp::Ordering::Equal => "level".to_string(),
-            std::cmp::Ordering::Greater => format!("White is {} up", white - black),
-            std::cmp::Ordering::Less => format!("Black is {} up", black - white),
-        };
-        out.push(format!(
-            "Material: White {white}, Black {black} ({balance})."
-        ));
+        out.push(format!("Material: {}.", balance(white, black)));
         out
     }
 
@@ -274,7 +364,86 @@ impl BoardFacts {
         for room in &self.kings {
             out.push(room.describe());
         }
+        if let Some(line) = self.structure.describe() {
+            out.push(line);
+        }
+        for side in &self.development {
+            out.push(side.describe());
+        }
         out
+    }
+}
+
+impl Structure {
+    /// "Pawns: passed e5 (White); isolated d4 (White); open file d; …", or
+    /// nothing when the pawns hold no such feature.
+    pub fn describe(&self) -> Option<String> {
+        let squares = |pawns: &[Placed]| -> String {
+            pawns
+                .iter()
+                .map(|p| format!("{} ({})", p.square, color_name(p.piece.color)))
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        let files = |files: &[File]| -> String {
+            files
+                .iter()
+                .map(|f| f.char().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        let mut parts = Vec::new();
+        for (name, pawns) in [
+            ("passed", &self.passed),
+            ("isolated", &self.isolated),
+            ("doubled", &self.doubled),
+        ] {
+            if !pawns.is_empty() {
+                parts.push(format!("{name}: {}", squares(pawns)));
+            }
+        }
+        if !self.open_files.is_empty() {
+            parts.push(format!("open files: {}", files(&self.open_files)));
+        }
+        for (color, half) in COLORS.iter().zip(&self.half_open) {
+            if !half.is_empty() {
+                parts.push(format!(
+                    "half-open for {}: {}",
+                    capitalized(color_name(*color)),
+                    files(half)
+                ));
+            }
+        }
+        (!parts.is_empty()).then(|| format!("Pawns — {}.", parts.join("; ")))
+    }
+}
+
+impl Development {
+    /// "White: king on g1, can still castle; knights and bishops still at
+    /// home: b1, c1."
+    pub fn describe(&self) -> String {
+        let home = if self.at_home.is_empty() {
+            "every knight and bishop has moved".to_string()
+        } else {
+            format!(
+                "still at home: {}",
+                self.at_home
+                    .iter()
+                    .map(|p| format!("{} {}", role_name(p.piece.role), p.square))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        };
+        format!(
+            "{}: king on {}, {}; {home}.",
+            capitalized(color_name(self.color)),
+            self.king,
+            if self.can_castle {
+                "can still castle"
+            } else {
+                "can no longer castle"
+            }
+        )
     }
 }
 
@@ -337,6 +506,13 @@ pub struct MoveFacts {
     pub stalemate: bool,
     /// Enemy pieces (not the king) that the moved piece attacks from its new square.
     pub attacks: Vec<Placed>,
+    /// The material after the move, when it changed it (a capture or a
+    /// promotion): White's points, then Black's.
+    pub material: Option<[u32; 2]>,
+    /// What the other side can play next, when there is little choice (a
+    /// check, or a position with at most three legal moves): the count, and
+    /// the moves in SAN.
+    pub replies: Option<(usize, Vec<String>)>,
 }
 
 /// What each move of `pv` does, stopping at the first move that isn't legal.
@@ -388,6 +564,20 @@ pub fn line_facts(pos: &Chess, pv: &[UciMove]) -> Vec<MoveFacts> {
                     .collect(),
             )
         };
+        // After mate or stalemate the count is beside the point.
+        let over = pos.is_checkmate() || pos.is_stalemate();
+        let changed = (mv.is_capture() || mv.promotion().is_some()) && !over;
+        let material = changed.then(|| material_of(pos.board()));
+        // After a check, or when there is next to no choice, what can follow.
+        let legal = pos.legal_moves();
+        let replies = (!legal.is_empty() && (pos.is_check() || legal.len() <= 3)).then(|| {
+            let moves = legal
+                .iter()
+                .take(4)
+                .map(|m| SanPlus::from_move(pos.clone(), *m).to_string())
+                .collect();
+            (legal.len(), moves)
+        });
         out.push(MoveFacts {
             label,
             piece,
@@ -399,6 +589,8 @@ pub fn line_facts(pos: &Chess, pv: &[UciMove]) -> Vec<MoveFacts> {
             checkmate: pos.is_checkmate(),
             stalemate: pos.is_stalemate(),
             attacks,
+            material,
+            replies,
         });
     }
     out
@@ -438,8 +630,31 @@ impl MoveFacts {
                 what.push_str(&format!(", and now attacks {}", names(&self.attacks)));
             }
         }
-        format!("{}: {what}.", self.label)
+        let mut out = format!("{}: {what}.", self.label);
+        if let Some([white, black]) = self.material {
+            out.push_str(&format!(" Material now {}.", balance(white, black)));
+        }
+        if let Some((count, moves)) = &self.replies {
+            out.push_str(&match (count, moves.as_slice()) {
+                (1, [only]) => format!(" The only legal reply is {only}."),
+                (n, moves) if *n <= 4 => format!(" The legal replies are {}.", moves.join(", ")),
+                (n, _) => format!(" There are {n} legal replies."),
+            });
+        }
+        out
     }
+}
+
+/// The points each side holds: White's, then Black's.
+fn material_of(board: &shakmaty::Board) -> [u32; 2] {
+    COLORS.map(|color| {
+        board
+            .by_color(color)
+            .into_iter()
+            .filter_map(|sq| board.piece_at(sq))
+            .map(|p| value(p.role))
+            .sum()
+    })
 }
 
 fn value(role: Role) -> u32 {
@@ -458,6 +673,16 @@ fn value_of(p: &Placed) -> u32 {
         Role::King => u32::MAX,
         role => value(role),
     }
+}
+
+/// "White 39, Black 36 (White is 3 up)".
+fn balance(white: u32, black: u32) -> String {
+    let who = match white.cmp(&black) {
+        std::cmp::Ordering::Equal => "level".to_string(),
+        std::cmp::Ordering::Greater => format!("White is {} up", white - black),
+        std::cmp::Ordering::Less => format!("Black is {} up", black - white),
+    };
+    format!("White {white}, Black {black} ({who})")
 }
 
 fn role_name(role: Role) -> &'static str {
@@ -659,6 +884,86 @@ mod tests {
     }
 
     #[test]
+    fn reads_the_pawn_structure_and_how_far_the_pieces_are_out() {
+        // A middlegame with the c-file open and every minor piece out.
+        let facts = board_facts(&pos(
+            "r2q1rk1/pp3ppp/2n1pn2/3p4/3P4/2NBPN2/PP3PPP/R2Q1RK1 w - - 0 1",
+        ));
+        let text = facts.describe();
+        let line = |start: &str| text.iter().find(|l| l.starts_with(start)).cloned();
+        assert_eq!(line("Pawns — "), Some("Pawns — open files: c.".to_string()));
+        assert_eq!(
+            line("White: king"),
+            Some(
+                "White: king on g1, can no longer castle; every knight and bishop has moved."
+                    .to_string()
+            )
+        );
+
+        // Passed, isolated and doubled pawns, and the half-open files.
+        let facts = board_facts(&pos("4k3/5p2/8/3P4/8/2P5/P1P5/4K3 w - - 0 1"));
+        let squares = |pawns: &[Placed]| {
+            pawns
+                .iter()
+                .map(|p| p.square.to_string())
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        let s = &facts.structure;
+        // Black has one pawn, so most of White's are passed.
+        assert_eq!(squares(&s.passed), "a2 c2 c3 d5 f7");
+        assert_eq!(squares(&s.isolated), "a2 f7");
+        assert_eq!(squares(&s.doubled), "c2 c3");
+        assert_eq!(s.open_files.len(), 4); // b, e, g, h
+        let pawns = s.describe().unwrap();
+        assert!(pawns.contains("half-open for White: f"), "{pawns}");
+        assert!(pawns.contains("half-open for Black: a, c, d"), "{pawns}");
+
+        // Nothing to say about the pawns at the start; every piece is home.
+        let start = board_facts(&pos(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        ));
+        assert_eq!(start.structure.describe(), None);
+        assert_eq!(
+            start.development[0].describe(),
+            "White: king on e1, can still castle; still at home: bishop c1, bishop f1, \
+             knight b1, knight g1."
+        );
+    }
+
+    #[test]
+    fn counts_the_material_a_move_wins_and_what_can_answer_it() {
+        // A capture says what the material became, and a check what can reply.
+        let line = line_facts(
+            &pos("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4"),
+            &uci(&["h5e5"]),
+        );
+        let said = line[0].describe();
+        assert!(
+            said.contains("Material now White 39, Black 38 (White is 1 up)."),
+            "{said}"
+        );
+        assert!(said.contains("legal replies"), "{said}");
+
+        // With one way out, the reply is named.
+        let line = line_facts(&pos("7k/6p1/8/8/8/8/8/R5K1 w - - 0 1"), &uci(&["a1a8"]));
+        let said = line[0].describe();
+        assert!(said.contains("The only legal reply is Kh7."), "{said}");
+
+        // A quiet move says neither; mate says neither (the game is over).
+        let quiet = line_facts(&pos("4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"), &uci(&["e2e4"]));
+        assert_eq!(
+            quiet[0].describe(),
+            "1. e4: the white pawn on e2 moves to e4."
+        );
+        let mate = line_facts(&pos("7k/6pp/8/8/8/8/8/R5K1 w - - 0 1"), &uci(&["a1a8"]));
+        assert_eq!(
+            mate[0].describe(),
+            "1. Ra8#: the white rook on a1 moves to a8, checkmate."
+        );
+    }
+
+    #[test]
     fn describes_castling_en_passant_promotion_and_stalemate() {
         let castle = line_facts(
             &pos("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"),
@@ -673,13 +978,15 @@ mod tests {
         let ep = line_facts(&pos("4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 2"), &uci(&["e5d6"]));
         assert_eq!(
             ep[0].describe(),
-            "2. exd6: the white pawn on e5 takes the black pawn on d5 en passant, landing on d6."
+            "2. exd6: the white pawn on e5 takes the black pawn on d5 en passant, landing on d6. \
+             Material now White 1, Black 0 (White is 1 up)."
         );
 
         let promote = line_facts(&pos("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), &uci(&["e7e8q"]));
         assert_eq!(
             promote[0].describe(),
-            "1. e8=Q: the white pawn on e7 moves to e8 and promotes to a queen."
+            "1. e8=Q: the white pawn on e7 moves to e8 and promotes to a queen. Material now \
+             White 9, Black 0 (White is 9 up)."
         );
 
         let stalemate = line_facts(&pos("k7/8/1Q6/8/8/8/8/4K3 w - - 0 1"), &uci(&["b6c7"]));
