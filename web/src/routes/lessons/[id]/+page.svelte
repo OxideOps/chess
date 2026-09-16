@@ -166,13 +166,13 @@
 	}
 
 	.status.lost {
-		border-color: #e06c75;
+		border-color: var(--danger);
 	}
 
 	.error {
 		margin: 0;
-		color: #e06c75;
-		font-size: 0.85rem;
+		color: var(--danger);
+		font-size: var(--type-sm);
 	}
 
 	.mistake {
@@ -182,7 +182,7 @@
 		padding: 0.6rem 0.8rem;
 		background: var(--panel);
 		border: 1px solid var(--warning);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 	}
 
 	.mistake p {
@@ -192,7 +192,7 @@
 
 	.mistake .hint {
 		color: var(--text-muted);
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
 	.mistake .hint a {
@@ -204,9 +204,9 @@
 		min-height: var(--tap);
 		padding: 0.35rem 0.8rem;
 		border: 1px solid var(--accent);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--accent);
-		color: #fff;
+		color: var(--on-accent);
 		font: inherit;
 		cursor: pointer;
 	}
@@ -231,7 +231,7 @@
 		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
 		font: inherit;
@@ -242,11 +242,11 @@
 	.actions a.primary {
 		background: var(--accent);
 		border-color: var(--accent);
-		color: #fff;
+		color: var(--on-accent);
 	}
 
 	.back {
 		color: var(--text-muted);
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 </style>

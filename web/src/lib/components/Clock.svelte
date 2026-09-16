@@ -63,7 +63,7 @@
 		padding: 0.5rem 0.8rem;
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		opacity: 0.7;
 	}
 
@@ -73,7 +73,7 @@
 	}
 
 	.clock.active.low {
-		border-color: #e06c75;
+		border-color: var(--danger);
 	}
 
 	.who {
@@ -105,23 +105,24 @@
 
 	.rating {
 		color: var(--text-muted);
-		font-size: 0.85rem;
+		font-family: var(--font-mono);
+		font-size: var(--type-sm);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.diff {
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		color: var(--text-muted);
 	}
 
 	.diff.up {
-		color: var(--accent);
+		color: var(--good);
 	}
 
 	.diff.down {
-		color: #e06c75;
+		color: var(--danger);
 	}
 
 	.name.open {
@@ -132,16 +133,18 @@
 
 	.side {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--type-xs);
+		letter-spacing: 0.01em;
 	}
 
 	.time {
-		font-size: 1.4rem;
-		font-weight: 700;
+		font-family: var(--font-mono);
+		font-size: var(--type-xl);
+		font-weight: 500;
 		font-variant-numeric: tabular-nums;
 	}
 
 	.low .time {
-		color: #e06c75;
+		color: var(--danger);
 	}
 </style>

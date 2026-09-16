@@ -32,8 +32,11 @@
 	<title>My games · Chess</title>
 </svelte:head>
 
-<section class="games">
+<div class="page-header">
 	<h1>My games</h1>
+</div>
+
+<section class="games">
 	{#if !session.user}
 		<p class="empty">
 			<a href={resolve('/login')}>Log in</a> to see your games, or
@@ -77,14 +80,10 @@
 
 <style>
 	.games {
-		max-width: 40rem;
+		max-width: var(--measure);
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-	}
-
-	h1 {
-		margin: 0;
 	}
 
 	.empty {
@@ -94,32 +93,32 @@
 
 	.error {
 		margin: 0;
-		color: #e06c75;
+		color: var(--danger);
 	}
 
 	ul {
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		border-top: 1px solid var(--panel-border);
+	}
+
+	li {
+		border-bottom: 1px solid var(--panel-border);
 	}
 
 	li a {
 		display: grid;
 		grid-template-columns: 1fr auto;
 		gap: 0.15rem 1rem;
-		padding: 0.6rem 0.8rem;
-		background: var(--panel);
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		min-height: var(--tap);
+		padding: 0.7rem 0.5rem;
 		color: var(--text);
 		text-decoration: none;
 	}
 
 	li a:hover {
-		border-color: var(--text-muted);
+		background: var(--panel);
 	}
 
 	.matchup {
@@ -129,20 +128,21 @@
 	.outcome {
 		grid-row: span 2;
 		align-self: center;
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 		color: var(--text-muted);
 	}
 
 	.outcome.won {
-		color: var(--accent);
+		color: var(--good);
 	}
 
 	.outcome.lost {
-		color: #e06c75;
+		color: var(--danger);
 	}
 
 	.detail {
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
+		font-variant-numeric: tabular-nums;
 		color: var(--text-muted);
 	}
 

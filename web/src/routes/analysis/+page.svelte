@@ -62,12 +62,14 @@
 		<div class="variation-actions">
 			<button
 				type="button"
+				class="btn"
 				disabled={game.view.mainLine}
 				onclick={() => game.promoteVariation()}
 				title="Make this variation the main line (one level at a time)">Promote variation</button
 			>
 			<button
 				type="button"
+				class="btn"
 				disabled={game.view.node === 0}
 				onclick={() => game.deleteFromHere()}
 				title="Delete this move and everything after it">Delete from here</button
@@ -93,28 +95,14 @@
 		gap: 0.5rem;
 	}
 
-	.variation-actions button {
+	.variation-actions .btn {
 		flex: 1;
-		min-height: var(--tap);
-		padding: 0.35rem 0.6rem;
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
-		background: var(--panel);
-		color: var(--text);
-		font: inherit;
-		font-size: 0.9rem;
-		cursor: pointer;
-	}
-
-	.variation-actions button:disabled {
-		opacity: 0.4;
-		cursor: default;
 	}
 
 	.keys {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8rem;
+		font-size: var(--type-xs);
 	}
 
 	.board-with-bar {

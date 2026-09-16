@@ -34,7 +34,7 @@
 				spellcheck="false"
 				bind:value={fenText}
 			/>
-			<button type="submit">Load</button>
+			<button type="submit" class="btn">Load</button>
 		</div>
 	</form>
 	<form
@@ -51,7 +51,7 @@
 			spellcheck="false"
 			bind:value={pgnText}></textarea>
 		<div class="row">
-			<button type="submit">Load</button>
+			<button type="submit" class="btn">Load</button>
 		</div>
 	</form>
 	{#if error}
@@ -66,7 +66,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		font-size: 0.8rem;
+		font-size: var(--type-xs);
 		color: var(--text-muted);
 	}
 
@@ -91,31 +91,16 @@
 		width: 100%;
 		padding: 0.4rem 0.5rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
-		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		font-size: 0.8rem;
+		font-family: var(--font-mono);
+		font-size: var(--type-xs);
 		resize: vertical;
-	}
-
-	button {
-		min-height: var(--tap);
-		padding: 0.4rem 0.8rem;
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
-		background: var(--panel);
-		color: var(--text);
-		font: inherit;
-		cursor: pointer;
-	}
-
-	button:hover {
-		border-color: var(--text-muted);
 	}
 
 	.error {
 		margin: 0;
-		color: #e06c75;
+		color: var(--danger);
 	}
 </style>

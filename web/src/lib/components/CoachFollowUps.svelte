@@ -88,18 +88,18 @@
 		min-height: var(--tap);
 		padding: 0.4rem 0.5rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 
 	button {
 		min-height: var(--tap);
 		padding: 0.4rem 0.8rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
 		font: inherit;
@@ -114,12 +114,12 @@
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8rem;
+		font-size: var(--type-xs);
 	}
 
 	.error {
 		margin: 0;
-		color: #e06c75;
-		font-size: 0.85rem;
+		color: var(--danger);
+		font-size: var(--type-sm);
 	}
 </style>

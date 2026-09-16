@@ -111,7 +111,7 @@
 		padding: 0.6rem 0.8rem;
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 	}
 
 	.away {
@@ -133,7 +133,7 @@
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
 	.hint a {
@@ -142,17 +142,17 @@
 
 	.error {
 		margin: 0;
-		color: #e06c75;
-		font-size: 0.85rem;
+		color: var(--danger);
+		font-size: var(--type-sm);
 	}
 
 	button {
 		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--accent);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--accent);
-		color: #fff;
+		color: var(--on-accent);
 		font: inherit;
 		cursor: pointer;
 	}

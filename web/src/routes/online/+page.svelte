@@ -44,9 +44,12 @@
 	<title>Play online · Chess</title>
 </svelte:head>
 
-<section class="lobby">
+<div class="page-header">
 	<h1>Play online</h1>
 	<p>Create a game, then send the link to whoever you want to play. You play White.</p>
+</div>
+
+<section class="lobby">
 	<form
 		onsubmit={(event) => {
 			event.preventDefault();
@@ -65,7 +68,9 @@
 			<input type="checkbox" bind:checked={rated} disabled={!session.registered} />
 			Rated
 		</label>
-		<button type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create game'}</button>
+		<button type="submit" class="btn primary" disabled={busy}
+			>{busy ? 'Creating…' : 'Create game'}</button
+		>
 	</form>
 	{#if !session.registered}
 		<p class="hint">
@@ -88,10 +93,6 @@
 		gap: 0.75rem;
 	}
 
-	h1 {
-		margin: 0;
-	}
-
 	.check {
 		flex-direction: row;
 		align-items: center;
@@ -99,7 +100,7 @@
 		min-height: var(--tap);
 		align-self: center;
 		color: var(--text);
-		font-size: 0.95rem;
+		font-size: var(--type-base);
 	}
 
 	.check.disabled {
@@ -109,7 +110,7 @@
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 
 	.hint a {
@@ -127,35 +128,22 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 		color: var(--text-muted);
 	}
 
-	select,
-	button {
+	select {
 		min-height: var(--tap);
 		padding: 0.45rem 0.8rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
 		font: inherit;
 	}
 
-	button {
-		cursor: pointer;
-		background: var(--accent);
-		border-color: var(--accent);
-		color: #fff;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: default;
-	}
-
 	.error {
 		margin: 0;
-		color: #e06c75;
+		color: var(--danger);
 	}
 </style>

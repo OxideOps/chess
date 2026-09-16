@@ -12,7 +12,11 @@ test('the app is installable: manifest, icons, theme colour', async ({ page, req
 	for (const icon of manifest.icons) {
 		expect((await request.get(icon.src)).status(), icon.src).toBe(200);
 	}
-	await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#262421');
+	// The shell and the manifest must agree, whatever the colour is.
+	await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+		'content',
+		manifest.theme_color
+	);
 });
 
 // The service worker caches the shell on install and the engine build the page

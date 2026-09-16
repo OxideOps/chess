@@ -10,92 +10,100 @@
 	onMount(() => {
 		done = completed();
 	});
+	const finished = $derived(all.filter((drill) => done.has(drill.id)).length);
 </script>
 
 <svelte:head>
 	<title>Lessons · Chess</title>
 </svelte:head>
 
-<section class="lessons">
+<div class="page-header">
 	<h1>Lessons</h1>
-	<p class="intro">
+	<p>
 		Short drills from set positions, played against Stockfish. Each one teaches a technique every
 		player needs: the basic checkmates and the key king and pawn endings.
 	</p>
-	<ol>
-		{#each all as drill (drill.id)}
-			<li>
-				<a href={resolve('/lessons/[id]', { id: drill.id })} data-testid="lesson-{drill.id}">
-					<span class="title">{drill.title}</span>
-					{#if done.has(drill.id)}
-						<span class="done" aria-label="completed">✓ Done</span>
-					{/if}
-					<span class="summary">{drill.summary}</span>
-				</a>
-			</li>
-		{/each}
-	</ol>
-</section>
+</div>
+
+<!-- The drills run easiest first, so they are numbered and read as one route
+     through the material rather than a shelf of separate cards. -->
+<ol class="steps">
+	{#each all as drill, i (drill.id)}
+		<li class:done={done.has(drill.id)}>
+			<a href={resolve('/lessons/[id]', { id: drill.id })} data-testid="lesson-{drill.id}">
+				<span class="index notation" aria-hidden="true">{i + 1}</span>
+				<span class="title">{drill.title}</span>
+				<span class="summary">{drill.summary}</span>
+				{#if done.has(drill.id)}
+					<span class="tick" aria-label="completed">Done</span>
+				{/if}
+			</a>
+		</li>
+	{/each}
+</ol>
+
+<p class="progress notation">{finished} of {all.length} done</p>
 
 <style>
-	.lessons {
-		max-width: 40rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	h1 {
-		margin: 0;
-	}
-
-	.intro {
-		margin: 0;
-		color: var(--text-muted);
-	}
-
-	ol {
+	.steps {
+		max-width: var(--measure);
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		border-top: 1px solid var(--panel-border);
+	}
+
+	li {
+		border-bottom: 1px solid var(--panel-border);
 	}
 
 	a {
 		display: grid;
-		grid-template-columns: 1fr auto;
-		gap: 0.15rem 1rem;
-		padding: 0.7rem 0.9rem;
+		grid-template-columns: 2.25rem 1fr auto;
+		align-items: baseline;
+		gap: 0.15rem 0.75rem;
 		min-height: var(--tap);
-		background: var(--panel);
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		padding: 0.85rem 0.5rem;
 		color: var(--text);
 		text-decoration: none;
 	}
 
 	a:hover {
-		border-color: var(--text-muted);
+		background: var(--panel);
+	}
+
+	/* The step's place in the sequence, not decoration: the drills are ordered. */
+	.index {
+		grid-row: 1 / span 2;
+		color: var(--text-muted);
+		font-size: var(--type-sm);
+	}
+
+	li.done .index {
+		color: var(--accent);
 	}
 
 	.title {
-		grid-column: 1;
 		font-weight: 600;
 	}
 
-	.done {
+	.summary {
 		grid-column: 2;
+		color: var(--text-muted);
+		font-size: var(--type-sm);
+	}
+
+	.tick {
+		grid-column: 3;
 		grid-row: 1 / span 2;
 		align-self: center;
 		color: var(--accent);
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
-	.summary {
-		grid-column: 1;
+	.progress {
+		margin: 1rem 0 0;
 		color: var(--text-muted);
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 </style>

@@ -110,19 +110,19 @@
 	}
 
 	.note {
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
 	.error {
 		margin: 0;
-		color: #e06c75;
+		color: var(--danger);
 	}
 
 	table {
 		border-collapse: collapse;
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		overflow: hidden;
 	}
 
@@ -136,7 +136,7 @@
 	th {
 		color: var(--text-muted);
 		font-weight: 400;
-		font-size: 0.85rem;
+		font-size: var(--type-sm);
 	}
 
 	tr:last-child td {

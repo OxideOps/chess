@@ -5,6 +5,7 @@
 	import { session } from '$lib/auth/session.svelte';
 	import { safeNext, withNext } from '$lib/auth/next';
 	import { installer } from '$lib/pwa/install.svelte';
+	import Logo from '$lib/components/Logo.svelte';
 
 	const links = [
 		{ href: resolve('/'), label: 'Play' },
@@ -38,7 +39,10 @@
 </script>
 
 <nav id="navbar">
-	<span class="brand">Chess</span>
+	<a class="brand" href={resolve('/')} aria-label="Chess, home">
+		<Logo size={20} />
+		<span>Chess</span>
+	</a>
 	{#each links as link (link.href)}
 		<a href={link.href} aria-current={page.url.pathname === link.href ? 'page' : undefined}>
 			{link.label}
@@ -81,8 +85,21 @@
 	}
 
 	.brand {
-		font-weight: 700;
-		letter-spacing: 0.02em;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-right: 0.5rem;
+		color: var(--accent);
+		font-family: var(--font-mono);
+		font-size: var(--type-base);
+		font-weight: 500;
+		letter-spacing: -0.02em;
+		text-decoration: none;
+	}
+
+	/* The wordmark stays readable on the dark bar; only the mark is brass. */
+	.brand span {
+		color: var(--text);
 	}
 
 	a {
@@ -90,7 +107,18 @@
 		align-items: center;
 		min-height: var(--tap);
 		color: var(--text-muted);
+		font-size: var(--type-sm);
 		text-decoration: none;
+	}
+
+	a:hover {
+		color: var(--text);
+	}
+
+	/* The current page is the one place the nav uses the accent. */
+	a[aria-current='page'] {
+		color: var(--text);
+		box-shadow: inset 0 -2px 0 var(--accent);
 	}
 
 	@media (max-width: 700px) {
@@ -98,14 +126,14 @@
 			column-gap: 0.9rem;
 		}
 
+		/* The mark alone identifies the site; the wordmark costs a row here. */
+		.brand span {
+			display: none;
+		}
+
 		.account {
 			gap: 0.75rem;
 		}
-	}
-
-	a:hover,
-	a[aria-current='page'] {
-		color: var(--text);
 	}
 
 	.account {
@@ -129,10 +157,11 @@
 		min-height: var(--tap);
 		padding: 0.3rem 0.7rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: transparent;
 		color: var(--text-muted);
 		font: inherit;
+		font-size: var(--type-sm);
 		cursor: pointer;
 	}
 

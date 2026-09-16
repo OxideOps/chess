@@ -227,13 +227,13 @@
 		outline: none;
 		border-radius: 4px;
 		overflow: hidden;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+		box-shadow: var(--shadow);
 	}
 
 	.board:focus-visible {
 		box-shadow:
 			0 0 0 3px var(--accent),
-			0 8px 24px rgba(0, 0, 0, 0.45);
+			var(--shadow);
 	}
 
 	.square {

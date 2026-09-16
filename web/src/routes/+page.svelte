@@ -35,17 +35,17 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-		font-size: 0.8rem;
+		font-size: var(--type-xs);
 		color: var(--text-muted);
 	}
 
 	.fen input {
 		padding: 0.4rem 0.5rem;
 		border: 1px solid var(--panel-border);
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: var(--panel);
 		color: var(--text);
-		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		font-size: 0.8rem;
+		font-family: var(--font-mono);
+		font-size: var(--type-xs);
 	}
 </style>

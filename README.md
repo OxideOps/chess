@@ -210,8 +210,14 @@ web/                SvelteKit client (pnpm; static SPA, prerendered shells)
 
 Code is MIT (see `LICENSE`). Piece images in `web/static/pieces/cburnett` are by Colin M.L.
 Burnett, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). The app
-icons (`web/static/icons`, `web/src/lib/assets/favicon.svg`) are his knight on a green square,
-under the same license; `web/scripts/gen-icons.mjs` renders them.
+icons (`web/static/icons`, `web/src/lib/assets/favicon.svg`) are the site's own mark — a rook
+drawn in the board's right angles — and are MIT with the rest of the code;
+`web/scripts/gen-icons.mjs` renders them from the same shape as
+`web/src/lib/components/Logo.svelte`.
+
+The interface is set in [IBM Plex](https://github.com/IBM/plex) Sans and Mono, licensed
+[OFL 1.1](https://github.com/IBM/plex/blob/master/LICENSE.txt). `web/static/fonts` holds the
+latin subsets as woff2, self-hosted so the offline PWA has its type too.
 
 Puzzles come from the [Lichess puzzle database](https://database.lichess.org/#puzzles), which
 is CC0 (public domain); thanks to Lichess and its players for it. The test fixture

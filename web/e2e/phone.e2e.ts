@@ -40,7 +40,7 @@ test('the play page stacks, fills the width, and plays by tapping', async ({ pag
 
 	// Buttons are big enough to hit with a thumb.
 	const heights = await page
-		.locator('.controls button')
+		.locator('.history button, .actions .btn')
 		.evaluateAll((buttons) => buttons.map((b) => b.getBoundingClientRect().height));
 	expect(heights.length).toBeGreaterThan(0);
 	for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);

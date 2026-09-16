@@ -91,10 +91,13 @@
 		{/if}
 		<div class="actions">
 			{#if puzzles.phase === 'failed'}
-				<button type="button" onclick={() => puzzles.showSolution()}>Show solution</button>
+				<button type="button" class="btn" onclick={() => puzzles.showSolution()}
+					>Show solution</button
+				>
 			{/if}
 			{#if done || puzzles.phase === 'error'}
-				<button type="button" class="primary" onclick={() => puzzles.next()}>Next puzzle</button>
+				<button type="button" class="btn primary" onclick={() => puzzles.next()}>Next puzzle</button
+				>
 			{/if}
 		</div>
 		<p class="credit">
@@ -111,7 +114,7 @@
 	}
 
 	.status.bad {
-		border-color: #e06c75;
+		border-color: var(--danger);
 	}
 
 	.rating,
@@ -119,7 +122,7 @@
 	.credit {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.9rem;
+		font-size: var(--type-sm);
 	}
 
 	.rating strong {
@@ -137,11 +140,11 @@
 	}
 
 	.diff.down {
-		color: #e06c75;
+		color: var(--danger);
 	}
 
 	.credit {
-		font-size: 0.8rem;
+		font-size: var(--type-xs);
 	}
 
 	.credit a {
@@ -150,8 +153,8 @@
 
 	.error {
 		margin: 0;
-		color: #e06c75;
-		font-size: 0.85rem;
+		color: var(--danger);
+		font-size: var(--type-sm);
 	}
 
 	.actions {
@@ -159,21 +162,7 @@
 		gap: 0.5rem;
 	}
 
-	.actions button {
+	.actions .btn {
 		flex: 1;
-		min-height: var(--tap);
-		padding: 0.45rem 0.8rem;
-		border: 1px solid var(--panel-border);
-		border-radius: 6px;
-		background: var(--panel);
-		color: var(--text);
-		font: inherit;
-		cursor: pointer;
-	}
-
-	.actions button.primary {
-		background: var(--accent);
-		border-color: var(--accent);
-		color: #fff;
 	}
 </style>
