@@ -1,14 +1,16 @@
 <script lang="ts">
 	import type { GameStore, Promotion } from '$lib/chess/game.svelte';
 	import type { PlayResult } from '$lib/chess/wasm';
-	import { centre, isLight, squaresInDrawOrder } from '$lib/chess/squares';
+	import { centre, isLight, squareAt, squaresInDrawOrder } from '$lib/chess/squares';
 	import type { PieceOnSquare } from '$lib/generated/PieceOnSquare';
 	import type { Side } from '$lib/generated/Side';
 	import { pieceImage, pieceName } from './pieces';
 	import PromotionPicker from './PromotionPicker.svelte';
 
 	/**
-	 * An interactive board. Click a piece, then click where it should go.
+	 * An interactive board. Click a piece, then click where it should go, or
+	 * drag it there. Dragging uses pointer events, so it works the same with a
+	 * mouse, a finger or a pen; a press that doesn't travel is still a click.
 	 *
 	 * In play mode the board only accepts moves at the latest position of a
 	 * game that isn't over. In `analysis` mode any position can be played
@@ -39,13 +41,34 @@
 	// A move that needs a promotion piece before it can be played.
 	let promotion: { from: string; to: string } | null = $state(null);
 
+	/** How far (px) a press must travel before it is a drag rather than a click. */
+	const DRAG_THRESHOLD = 4;
+	interface Drag {
+		from: string;
+		pointerId: number;
+		startX: number;
+		startY: number;
+		/** The pointer, relative to the board's top-left corner (px). */
+		x: number;
+		y: number;
+		moved: boolean;
+		/** The square under the pointer, or null off the board. */
+		over: string | null;
+	}
+	let drag = $state<Drag | null>(null);
+	let boardEl: HTMLDivElement | undefined = $state();
+	// A drop is followed by the click the browser sends for the same press;
+	// that click must not be read as a second move.
+	let swallowClick = false;
+
 	const view = $derived(game.view);
 	const interactive = $derived(
 		!view.gameOver &&
 			(analysis || !view.viewingHistory) &&
 			(playAs === 'both' || playAs === view.turn)
 	);
-	const selectedSquare = $derived(interactive ? selected : null);
+	const dragging = $derived(interactive && drag?.moved ? drag : null);
+	const selectedSquare = $derived(interactive ? (dragging?.from ?? selected) : null);
 	const pieceAt = $derived(new Map<string, PieceOnSquare>(view.pieces.map((p) => [p.square, p])));
 	const destinations = $derived.by(() => {
 		// Depends on the position too, not just the selection.
@@ -60,6 +83,10 @@
 			piece: pieceAt.get(square),
 			light: isLight(square),
 			selected: selectedSquare === square,
+			// A piece the player may pick up now.
+			movable: interactive && pieceAt.get(square)?.color === view.turn,
+			lifted: dragging?.from === square,
+			dragOver: dragging !== null && dragging.over === square,
 			lastMove: view.lastMove?.from === square || view.lastMove?.to === square,
 			check: view.checkSquare === square,
 			destination: destinations.has(square),
@@ -92,6 +119,10 @@
 	}
 
 	function onSquareClick(square: string) {
+		if (swallowClick) {
+			swallowClick = false;
+			return;
+		}
 		if (!interactive) return;
 		if (selected === square) {
 			selected = null;
@@ -114,6 +145,73 @@
 		} else if (ownsPiece(square)) {
 			selected = square;
 		}
+	}
+
+	/** Where a pointer event is, relative to the board, and the square under it. */
+	function locate(event: PointerEvent) {
+		const rect = boardEl!.getBoundingClientRect();
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+		const over = squareAt((x / rect.width) * 8, (y / rect.height) * 8, orientation);
+		return { x, y, over };
+	}
+
+	function onPointerDown(event: PointerEvent, square: string) {
+		if (!interactive || !event.isPrimary || event.button !== 0 || !ownsPiece(square)) return;
+		drag = {
+			from: square,
+			pointerId: event.pointerId,
+			startX: event.clientX,
+			startY: event.clientY,
+			...locate(event),
+			moved: false
+		};
+	}
+
+	function onPointerMove(event: PointerEvent) {
+		if (!drag || event.pointerId !== drag.pointerId) return;
+		const travelled = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+		if (!drag.moved && travelled <= DRAG_THRESHOLD) return;
+		Object.assign(drag, locate(event), { moved: true });
+		// Keep the press from selecting text or scrolling while a piece is held.
+		event.preventDefault();
+	}
+
+	function onPointerUp(event: PointerEvent) {
+		if (!drag || event.pointerId !== drag.pointerId) return;
+		const { from, moved } = drag;
+		drag = null;
+		// A press that never travelled is a click, and the click handler has it.
+		if (!moved || !interactive) return;
+		swallowClick = true;
+		// If the browser sends no click (a drop on another square, or a touch), forget it.
+		setTimeout(() => (swallowClick = false));
+		const to = locate(event).over;
+		if (to === null) {
+			selected = null;
+			return;
+		}
+		// Put back where it started: stays picked up, so a click can finish the move.
+		if (to === from) {
+			selected = from;
+			return;
+		}
+		switch (play(from, to)) {
+			case 'ok':
+				selected = null;
+				break;
+			case 'promotion_required':
+				selected = from;
+				promotion = { from, to };
+				break;
+			case 'illegal':
+				selected = null;
+				break;
+		}
+	}
+
+	function onPointerCancel(event: PointerEvent) {
+		if (drag?.pointerId === event.pointerId) drag = null;
 	}
 
 	function onPromotionPick(role: Promotion | null) {
@@ -144,6 +242,7 @@
 			case 'Escape':
 				selected = null;
 				promotion = null;
+				drag = null;
 				break;
 			default:
 				return;
@@ -152,8 +251,22 @@
 	}
 </script>
 
+<svelte:window
+	onpointermove={onPointerMove}
+	onpointerup={onPointerUp}
+	onpointercancel={onPointerCancel}
+/>
+
 <!-- The board is the keyboard target for history navigation; squares are plain click targets. -->
-<div class="board" class:interactive role="grid" tabindex="0" onkeydown={onKeyDown}>
+<div
+	class="board"
+	class:interactive
+	class:dragging={dragging !== null}
+	role="grid"
+	tabindex="0"
+	onkeydown={onKeyDown}
+	bind:this={boardEl}
+>
 	{#each squares as s (s.square)}
 		<button
 			type="button"
@@ -161,11 +274,15 @@
 			class:light={s.light}
 			class:dark={!s.light}
 			class:selected={s.selected}
+			class:movable={s.movable}
+			class:lifted={s.lifted}
+			class:drag-over={s.dragOver}
 			class:last-move={s.lastMove}
 			class:check={s.check}
 			data-square={s.square}
 			aria-label={s.piece ? `${s.square}, ${pieceName(s.piece.color, s.piece.role)}` : s.square}
 			onclick={() => onSquareClick(s.square)}
+			onpointerdown={(event) => onPointerDown(event, s.square)}
 		>
 			{#if s.piece}
 				<img
@@ -186,6 +303,20 @@
 			{/if}
 		</button>
 	{/each}
+
+	{#if dragging}
+		{@const held = pieceAt.get(dragging.from)}
+		{#if held}
+			<img
+				class="held"
+				src={pieceImage(held.color, held.role)}
+				alt=""
+				draggable="false"
+				style:left="{dragging.x}px"
+				style:top="{dragging.y}px"
+			/>
+		{/if}
+	{/if}
 
 	{#if arrowViews.length > 0}
 		<svg class="arrows" viewBox="0 0 8 8" aria-hidden="true">
@@ -259,10 +390,45 @@
 		background: var(--square-dark);
 	}
 
-	.board.interactive .square:has(.piece),
 	.board.interactive .square:has(.move-hint),
 	.board.interactive .square:has(.capture-hint) {
 		cursor: pointer;
+	}
+
+	.board.interactive .square.movable {
+		cursor: grab;
+		/* A finger on a piece picks it up rather than scrolling the page. */
+		touch-action: none;
+	}
+
+	.board.dragging,
+	.board.dragging .square {
+		cursor: grabbing;
+	}
+
+	/* The piece's own square while it is held: a faint ghost of it stays behind. */
+	.square.lifted .piece {
+		opacity: 0.3;
+	}
+
+	/* The square the held piece would land on. */
+	.square.drag-over::after {
+		content: '';
+		position: absolute;
+		z-index: 1;
+		inset: 0;
+		box-shadow: inset 0 0 0 0.25rem rgba(255, 255, 255, 0.65);
+	}
+
+	/* The held piece follows the pointer, a little larger, above everything. */
+	.held {
+		position: absolute;
+		z-index: 5;
+		width: 12.5%;
+		height: 12.5%;
+		transform: translate(-50%, -50%) scale(1.15);
+		pointer-events: none;
+		filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
 	}
 
 	/* Highlights are painted in a pseudo-element so they sit under the piece. */

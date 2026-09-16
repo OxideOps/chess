@@ -37,3 +37,12 @@ export function squaresInDrawOrder(orientation: Side): string[] {
 	const ranks = orientation === 'white' ? [...RANKS].reverse() : [...RANKS];
 	return ranks.flatMap((rank) => files.map((file) => file + rank));
 }
+
+/**
+ * The square under a point on the same 8x8 canvas as `centre` (so `x` and `y`
+ * run from 0 to 8 across the board as drawn), or null off the board.
+ */
+export function squareAt(x: number, y: number, orientation: Side): string | null {
+	if (!(x >= 0 && x < 8 && y >= 0 && y < 8)) return null;
+	return squaresInDrawOrder(orientation)[Math.floor(y) * 8 + Math.floor(x)];
+}

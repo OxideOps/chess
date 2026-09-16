@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { centre, coords, isLight, squaresInDrawOrder } from './squares';
+import { centre, coords, isLight, squareAt, squaresInDrawOrder } from './squares';
 
 describe('squares', () => {
 	it('maps names to coordinates', () => {
@@ -24,5 +24,23 @@ describe('squares', () => {
 		expect(centre('a8', 'white')).toEqual({ x: 0.5, y: 0.5 });
 		expect(centre('a8', 'black')).toEqual({ x: 7.5, y: 7.5 });
 		expect(centre('e2', 'white')).toEqual({ x: 4.5, y: 6.5 });
+	});
+
+	it('finds the square under a point, from either side', () => {
+		expect(squareAt(0.1, 0.1, 'white')).toBe('a8');
+		expect(squareAt(4.5, 6.5, 'white')).toBe('e2');
+		expect(squareAt(7.99, 7.99, 'white')).toBe('h1');
+		expect(squareAt(0.1, 0.1, 'black')).toBe('h1');
+		expect(squareAt(4.5, 6.5, 'black')).toBe('d7');
+		// Every centre maps back to its own square.
+		for (const side of ['white', 'black'] as const) {
+			for (const sq of squaresInDrawOrder(side)) {
+				const { x, y } = centre(sq, side);
+				expect(squareAt(x, y, side)).toBe(sq);
+			}
+		}
+		expect(squareAt(-0.01, 3, 'white')).toBeNull();
+		expect(squareAt(3, 8, 'white')).toBeNull();
+		expect(squareAt(Number.NaN, 3, 'white')).toBeNull();
 	});
 });
