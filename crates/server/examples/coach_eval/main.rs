@@ -8,6 +8,7 @@
 //! cargo run -p server --example coach_eval -- --dry-run  # only the prompts, no API calls
 //! cargo run -p server --example coach_eval -- --no-judge  # answers only, no grading
 //! cargo run -p server --example coach_eval -- --repeat 3   # each case three times
+//! cargo run -p server --example coach_eval -- --regrade target/coach-eval/<run>.json
 //! cargo run -p server --example coach_eval -- --compare target/coach-eval/<run>.json
 //! ```
 //!
@@ -32,6 +33,11 @@
 //! answers and the judge vary from run to run (the same case has scored 2 and
 //! 5 on the same code), so judge a change on `--repeat 3` or more and on the
 //! means, not on one sample.
+//!
+//! `--regrade <run.json>` grades the answers of an earlier run again with
+//! the current judge, and prints how the two judges differ: that is how to
+//! tell whether a cheaper judge agrees with a dearer one, without paying for
+//! new answers.
 
 mod judge;
 
@@ -43,6 +49,7 @@ use std::{
 use futures_util::future::join_all;
 use judge::{DEFAULT_JUDGE_MODEL, Judge, Judgement};
 use serde::{Deserialize, Serialize};
+use server::coach::Usage;
 use server::coach::{
     Coach, CoachConfig, DEFAULT_MODEL, ExplainRequest, FollowUpReply, MistakeRequest, Probe,
     Prompt, mistake_prompt, prompt,
@@ -91,6 +98,10 @@ struct CaseResult {
     judgement: Option<Judgement>,
     follow_ups: Vec<FollowUpResult>,
     error: Option<String>,
+    #[serde(default)]
+    usage: Usage,
+    #[serde(default)]
+    judge_usage: Usage,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -106,6 +117,43 @@ struct Run {
     model: String,
     judge_model: Option<String>,
     cases: Vec<CaseResult>,
+    /// What the run cost: tokens per model, and the price of them.
+    #[serde(default)]
+    spend: Vec<Spend>,
+}
+
+/// Tokens used on one model, and what they cost.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Spend {
+    model: String,
+    input: u32,
+    output: u32,
+    dollars: Option<f64>,
+}
+
+/// Dollars per million tokens, input then output.
+fn price(model: &str) -> Option<(f64, f64)> {
+    Some(match model {
+        "claude-opus-5" | "claude-opus-4-8" => (5.0, 25.0),
+        "claude-sonnet-5" => (2.0, 10.0),
+        "claude-haiku-4-5" => (1.0, 5.0),
+        "claude-fable-5-1" | "claude-fable-5" => (10.0, 50.0),
+        _ => return None,
+    })
+}
+
+impl Spend {
+    fn of(model: &str, usage: Usage) -> Spend {
+        let dollars = price(model).map(|(input, output)| {
+            f64::from(usage.input) * input / 1e6 + f64::from(usage.output) * output / 1e6
+        });
+        Spend {
+            model: model.to_string(),
+            input: usage.input,
+            output: usage.output,
+            dollars,
+        }
+    }
 }
 
 impl Run {
@@ -175,10 +223,16 @@ async fn main() {
         .unwrap_or(1)
         .max(1);
     let compare = flag(&args, "--compare").map(PathBuf::from);
+    let regrade = flag(&args, "--regrade").map(PathBuf::from);
+    let paths: Vec<&str> = [compare.as_deref(), regrade.as_deref()]
+        .into_iter()
+        .flatten()
+        .filter_map(|p| p.to_str())
+        .collect();
     let filters: Vec<&String> = args
         .iter()
         .filter(|a| !a.starts_with("--"))
-        .filter(|a| Some(a.as_str()) != compare.as_deref().and_then(|p| p.to_str()))
+        .filter(|a| !paths.contains(&a.as_str()))
         .filter(|a| a.parse::<usize>().is_err())
         .collect();
 
@@ -210,6 +264,15 @@ async fn main() {
             std::env::var("CHESS_JUDGE_MODEL").unwrap_or_else(|_| DEFAULT_JUDGE_MODEL.to_string());
         std::sync::Arc::new(Judge::new(key, model))
     });
+
+    if let Some(path) = regrade {
+        let Some(judge) = judge else {
+            eprintln!("--regrade needs a judge; drop --no-judge");
+            std::process::exit(2);
+        };
+        regrade_run(&path, &judge, &cases).await;
+        return;
+    }
 
     let times = if repeat > 1 {
         format!(", {repeat} times each")
@@ -269,6 +332,7 @@ async fn main() {
 
     let (mut flagged, mut rewritten, mut still, mut failed) = (0, 0, 0, 0);
     let mut run = Run {
+        spend: Vec::new(),
         when_unix: SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
@@ -295,6 +359,8 @@ async fn main() {
                 run.cases.push(CaseResult {
                     name: case.name.clone(),
                     sample,
+                    usage: Usage::default(),
+                    judge_usage: Usage::default(),
                     kind: kind.to_string(),
                     text: String::new(),
                     words: 0,
@@ -312,13 +378,13 @@ async fn main() {
         flagged += usize::from(!answer.flagged.is_empty());
         rewritten += usize::from(answer.rewritten);
         still += usize::from(!answer.problems.is_empty());
-        let judgement = match judgement {
-            Some(Ok(j)) => Some(j),
+        let (judgement, judge_usage) = match judgement {
+            Some(Ok((j, usage))) => (Some(j), usage),
             Some(Err(e)) => {
                 println!("  !! the judge failed: {e}");
-                None
+                (None, Usage::default())
             }
-            None => None,
+            None => (None, Usage::default()),
         };
         println!(
             "== {}{} ({kind}) · {:.1}s · {} words{}{}",
@@ -387,6 +453,8 @@ async fn main() {
         run.cases.push(CaseResult {
             name: case.name.clone(),
             sample,
+            usage: answer.usage,
+            judge_usage,
             kind: kind.to_string(),
             words: answer.text.split_whitespace().count(),
             text: answer.text,
@@ -405,6 +473,32 @@ async fn main() {
         cases.len(),
         samples.len()
     );
+    let mut answers = Usage::default();
+    let mut grading = Usage::default();
+    for case in &run.cases {
+        answers += case.usage;
+        grading += case.judge_usage;
+    }
+    run.spend.push(Spend::of(&model, answers));
+    if let Some(j) = &judge {
+        run.spend.push(Spend::of(&j.model, grading));
+    }
+    for spend in &run.spend {
+        println!(
+            "{}: {} tokens in, {} out{}",
+            spend.model,
+            spend.input,
+            spend.output,
+            match spend.dollars {
+                Some(d) => format!(" — ${d:.2}"),
+                None => String::new(),
+            }
+        );
+    }
+    let total: f64 = run.spend.iter().filter_map(|s| s.dollars).sum();
+    if total > 0.0 {
+        println!("this run cost about ${total:.2}");
+    }
     if let Some((accuracy, clarity, usefulness)) = run.averages() {
         let claims: usize = run.graded().map(|(_, j)| j.unsupported.len()).sum();
         let cases_with = run
@@ -488,4 +582,89 @@ fn case_prompt(case: &Case) -> Prompt {
         Ask::Mistake(r) => mistake_prompt(r),
     }
     .unwrap_or_else(|e| panic!("{}: {e}", case.name))
+}
+
+/// Grade an earlier run's answers again with this judge, and show how the
+/// two judges see the same answers.
+async fn regrade_run(path: &PathBuf, judge: &Judge, cases: &[Case]) {
+    let before: Run = match std::fs::read_to_string(path)
+        .map_err(|e| e.to_string())
+        .and_then(|text| serde_json::from_str(&text).map_err(|e| e.to_string()))
+    {
+        Ok(run) => run,
+        Err(e) => {
+            eprintln!("could not read {}: {e}", path.display());
+            std::process::exit(2);
+        }
+    };
+    let wanted: Vec<&CaseResult> = before
+        .cases
+        .iter()
+        .filter(|c| c.judgement.is_some() && cases.iter().any(|w| w.name == c.name))
+        .collect();
+    println!(
+        "regrading {} answers from the run of {} with {}\n",
+        wanted.len(),
+        before.when_unix,
+        judge.model
+    );
+    let prompts: Vec<String> = wanted
+        .iter()
+        .map(|c| {
+            let case = cases.iter().find(|w| w.name == c.name).expect("the case");
+            case_prompt(case).user
+        })
+        .collect();
+    let graded = join_all(
+        wanted
+            .iter()
+            .zip(&prompts)
+            .map(|(c, prompt)| judge.grade(prompt, &c.text)),
+    )
+    .await;
+
+    let mut usage = Usage::default();
+    let (mut agreed, mut apart) = (0.0, 0.0);
+    for (case, graded) in wanted.iter().zip(graded) {
+        let old = case.judgement.as_ref().expect("a judgement");
+        match graded {
+            Ok((new, cost)) => {
+                usage += cost;
+                agreed += 1.0;
+                apart += (f64::from(new.accuracy) - f64::from(old.accuracy)).abs();
+                println!(
+                    "  {}: accuracy {} -> {}, clarity {} -> {}, usefulness {} -> {} ({} claims -> {})",
+                    case.name,
+                    old.accuracy,
+                    new.accuracy,
+                    old.clarity,
+                    new.clarity,
+                    old.usefulness,
+                    new.usefulness,
+                    old.unsupported.len(),
+                    new.unsupported.len()
+                );
+            }
+            Err(e) => println!("  {}: the judge failed: {e}", case.name),
+        }
+    }
+    if agreed > 0.0 {
+        println!(
+            "\naccuracy differs by {:.2} on average between {} and {}",
+            apart / agreed,
+            before.judge_model.as_deref().unwrap_or("the old judge"),
+            judge.model
+        );
+    }
+    let spend = Spend::of(&judge.model, usage);
+    println!(
+        "{}: {} tokens in, {} out{}",
+        spend.model,
+        spend.input,
+        spend.output,
+        match spend.dollars {
+            Some(d) => format!(" — ${d:.2}"),
+            None => String::new(),
+        }
+    );
 }

@@ -8,9 +8,22 @@
 //! the run prints its quotes for a human to weigh.
 
 use serde::{Deserialize, Serialize};
+use server::coach::Usage;
 
-/// Graded by the same model family the coach uses, unless told otherwise.
-pub const DEFAULT_JUDGE_MODEL: &str = "claude-opus-5";
+/// Grading is a checking job against material the judge is handed, and most
+/// of its cost is thinking, so it runs at low effort on the middle model:
+/// Haiku 4.5 hands out 5s (it disagreed with Opus by 1.12 on accuracy, Sonnet
+/// by 0.48), and Opus costs more than the answer it grades.
+/// `CHESS_JUDGE_MODEL` picks another.
+pub const DEFAULT_JUDGE_MODEL: &str = "claude-sonnet-5";
+/// Models that take `output_config.effort`; Haiku 4.5 rejects it.
+const EFFORT: &[&str] = &[
+    "claude-opus-5",
+    "claude-opus-4-8",
+    "claude-sonnet-5",
+    "claude-fable-5-1",
+    "claude-fable-5",
+];
 const API_URL: &str = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION: &str = "2023-06-01";
 const FALLBACK_BETA: &str = "server-side-fallback-2026-07-01";
@@ -101,16 +114,24 @@ impl Judge {
     }
 
     /// Grade `answer` against the `prompt` the coach was given.
-    pub async fn grade(&self, prompt: &str, answer: &str) -> Result<Judgement, String> {
+    pub async fn grade(&self, prompt: &str, answer: &str) -> Result<(Judgement, Usage), String> {
         let user = format!(
             "=== What the coach was given ===\n{prompt}\n\n=== The coach's answer ===\n{answer}"
         );
+        let mut output_config = serde_json::json!({
+            "format": { "type": "json_schema", "schema": schema() }
+        });
+        // Grading is checking, not thinking hard: the difference is most of
+        // what a run costs.
+        if EFFORT.contains(&self.model.as_str()) {
+            output_config["effort"] = serde_json::json!("low");
+        }
         let body = serde_json::json!({
             "model": self.model,
             "max_tokens": 4000,
             "fallbacks": "default",
             "system": SYSTEM,
-            "output_config": { "format": { "type": "json_schema", "schema": schema() } },
+            "output_config": output_config,
             "messages": [{ "role": "user", "content": user }],
         });
         let response = self
@@ -144,6 +165,8 @@ impl Judge {
                     .collect()
             })
             .unwrap_or_default();
-        serde_json::from_str(&text).map_err(|e| format!("{e}: {text}"))
+        let usage: Usage = serde_json::from_value(parsed["usage"].clone()).unwrap_or_default();
+        let judgement = serde_json::from_str(&text).map_err(|e| format!("{e}: {text}"))?;
+        Ok((judgement, usage))
     }
 }
