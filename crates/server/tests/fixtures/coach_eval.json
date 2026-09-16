@@ -1,741 +1,1739 @@
 [
- {
-  "name": "scholars-mate",
-  "explain": {
-   "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
-   "last_move": "Nf6",
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "mate",
-      "value": 1
-     },
-     "pv": [
-      "h5f7"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -172
-     },
-     "pv": [
-      "h5d1",
-      "f6e4",
-      "b1c3",
-      "d8h4",
-      "d1f3",
-      "e4f6",
-      "c4b3",
-      "c6d4",
-      "f3g3",
-      "h4g3"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -202
-     },
-     "pv": [
-      "h5e2",
-      "c6d4",
-      "e2d1",
-      "f6e4",
-      "d2d3",
-      "d7d5",
-      "d3e4",
-      "d5c4",
-      "c1e3",
-      "c8g4"
-     ]
-    }
-   ]
-  },
-  "follow_ups": [
-   {
-    "question": "Why can't Black just take my queen with the knight first?"
-   }
-  ]
- },
- {
-  "name": "after-e4",
-  "explain": {
-   "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-   "last_move": "e4",
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -38
-     },
-     "pv": [
-      "e7e5",
-      "g1f3",
-      "b8c6",
-      "f1b5",
-      "a7a6",
-      "b5a4",
-      "g8f6",
-      "e1g1",
-      "f8e7",
-      "f1e1"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -39
-     },
-     "pv": [
-      "c7c5",
-      "g1f3",
-      "b8c6",
-      "d2d4",
-      "c5d4",
-      "f3d4",
-      "g8f6",
-      "b1c3",
-      "e7e5",
-      "d4b5"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -40
-     },
-     "pv": [
-      "c7c6",
-      "d2d4",
-      "d7d5",
-      "e4e5",
-      "c8f5",
-      "f1e2",
-      "e7e6",
-      "g1f3",
-      "c6c5",
-      "c1e3"
-     ]
-    }
-   ]
-  },
-  "follow_ups": [
-   {
-    "question": "Why not 1... d5 instead?",
-    "probe": {
-     "uci": "d7d5",
-     "line": {
-      "depth": 22,
-      "score": {
-       "kind": "cp",
-       "value": 82
-      },
-      "pv": [
-       "e4d5",
-       "g8f6",
-       "g1f3",
-       "f6d5",
-       "d2d4",
-       "c8f5",
-       "f1d3",
-       "f5d3",
-       "d1d3",
-       "e7e6"
+  {
+    "explain": {
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "h5f7"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 1
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "h5d1",
+            "f6e4",
+            "b1c3",
+            "e4f6",
+            "c3d5",
+            "c6a5",
+            "d5f6",
+            "d8f6",
+            "c4d5",
+            "f8c5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -169
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "h5f3",
+            "c6d4",
+            "f3d1",
+            "f6e4",
+            "g1e2",
+            "d7d5",
+            "e2d4",
+            "d5c4",
+            "d4f3",
+            "c8g4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -205
+          }
+        }
       ]
-     }
-    }
-   },
-   {
-    "question": "Which is better for a beginner?"
-   }
-  ]
- },
- {
-  "name": "opera-game-queen-sacrifice",
-  "explain": {
-   "fen": "4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16",
-   "last_move": "Nxd7",
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "mate",
-      "value": 2
-     },
-     "pv": [
-      "b3b8",
-      "d7b8",
-      "d1d8"
-     ]
     },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 479
-     },
-     "pv": [
-      "b3b7",
-      "f7f6",
-      "b7c8",
-      "e8e7",
-      "g5e3",
-      "g7g5",
-      "c8c7",
-      "e7e8",
-      "a2a4",
-      "f8e7"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 476
-     },
-     "pv": [
-      "b3c3",
-      "f7f6",
-      "c3c8",
-      "e8e7",
-      "g5e3",
-      "g7g5",
-      "c8c7",
-      "e7e8",
-      "a2a4",
-      "f8e7"
-     ]
-    }
-   ]
-  }
- },
- {
-  "name": "legal-trap",
-  "explain": {
-   "fen": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
-   "last_move": "g6",
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 213
-     },
-     "pv": [
-      "f3e5",
-      "d6e5",
-      "d1g4",
-      "b8c6",
-      "d2d3",
-      "g8f6",
-      "g4f3",
-      "c6d4",
-      "f3d1",
-      "d8d7"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 131
-     },
-     "pv": [
-      "d2d4",
-      "b8c6",
-      "c4b5",
-      "g4f3",
-      "g2f3",
-      "a7a6",
-      "b5c6",
-      "b7c6",
-      "d4e5",
-      "d6e5"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 95
-     },
-     "pv": [
-      "h2h3",
-      "g4f3",
-      "d1f3",
-      "d8d7",
-      "c3e2",
-      "b8c6",
-      "a2a4",
-      "f8g7",
-      "a4a5",
-      "c6d8"
-     ]
-    }
-   ]
-  }
- },
- {
-  "name": "queens-gambit-pin",
-  "explain": {
-   "fen": "rnbqkb1r/ppp2ppp/4pn2/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR b KQkq - 3 4",
-   "last_move": "Bg5",
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -27
-     },
-     "pv": [
-      "d5c4",
-      "e2e3",
-      "c7c5",
-      "g5f6",
-      "d8f6",
-      "d4d5",
-      "a7a6",
-      "g1f3",
-      "e6d5",
-      "d1d5"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -29
-     },
-     "pv": [
-      "f8e7",
-      "g1f3",
-      "h7h6",
-      "g5h4",
-      "e8g8",
-      "e2e3",
-      "b7b6",
-      "a1c1",
-      "c8b7",
-      "h4f6"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -37
-     },
-     "pv": [
-      "c7c5",
-      "c4d5",
-      "c5d4",
-      "d1d4",
-      "f8e7",
-      "e2e4",
-      "e6d5",
-      "g5f6",
-      "e7f6",
-      "f1b5"
-     ]
-    }
-   ]
-  }
- },
- {
-  "name": "italian-center",
-  "explain": {
-   "fen": "r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/5N2/PP1B1PPP/RN1QK2R b KQkq - 2 7",
-   "last_move": "Bd2",
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -7
-     },
-     "pv": [
-      "f6e4",
-      "d2b4",
-      "c6b4",
-      "c4f7",
-      "e8f7",
-      "d1b3",
-      "f7f8",
-      "b3b4",
-      "d8e7",
-      "b4e7"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -18
-     },
-     "pv": [
-      "b4d2",
-      "b1d2",
-      "d7d5",
-      "e4d5",
-      "f6d5",
-      "e1g1",
-      "e8g8",
-      "a1c1",
-      "d5b6",
-      "c4b3"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": -32
-     },
-     "pv": [
-      "d7d5",
-      "e4d5",
-      "b4d2",
-      "d1d2",
-      "c6e7",
-      "e1g1",
-      "e8g8",
-      "b1c3",
-      "e7d5",
-      "c3d5"
-     ]
-    }
-   ]
+    "follow_ups": [
+      {
+        "question": "Why can't Black just take my queen with the knight first?"
+      }
+    ],
+    "name": "scholars-mate"
   },
-  "follow_ups": [
-   {
-    "question": "Why not castle with 7... O-O?",
-    "probe": {
-     "uci": "e8g8",
-     "line": {
-      "depth": 22,
-      "score": {
-       "kind": "cp",
-       "value": 60
-      },
-      "pv": [
-       "d4d5",
-       "b4d2",
-       "b1d2",
-       "c6e7",
-       "e1g1",
-       "d7d6",
-       "d1b3",
-       "c7c6",
-       "d5c6",
-       "e7c6"
+  {
+    "explain": {
+      "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      "last_move": "e4",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "c7c5",
+            "g1f3",
+            "d7d6",
+            "d2d4",
+            "c5d4",
+            "f3d4",
+            "g8f6",
+            "b1c3",
+            "a7a6",
+            "c1g5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -27
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e7e5",
+            "g1f3",
+            "b8c6",
+            "f1b5",
+            "a7a6",
+            "b5a4",
+            "g8f6",
+            "e1g1",
+            "b7b5",
+            "a4b3"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -38
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e7e6",
+            "d2d4",
+            "d7d5",
+            "b1c3",
+            "g8f6",
+            "e4e5",
+            "f6d7",
+            "f2f4",
+            "c7c5",
+            "g1f3"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -42
+          }
+        }
       ]
-     }
-    }
-   }
-  ]
- },
- {
-  "name": "lucena",
-  "explain": {
-   "fen": "1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1",
-   "last_move": null,
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 1080
-     },
-     "pv": [
-      "c1c7",
-      "a2a6",
-      "c7c3",
-      "d8d7",
-      "c3d3",
-      "d7e6",
-      "b8c7",
-      "a6a1",
-      "d3d4",
-      "e6e5"
-     ]
     },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 1074
-     },
-     "pv": [
-      "c1c4",
-      "a2d2",
-      "c4a4",
-      "d2b2",
-      "a4d4",
-      "d8e7",
-      "b8c7",
-      "b2c2",
-      "c7b6",
-      "c2b2"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 956
-     },
-     "pv": [
-      "c1d1",
-      "d8e7",
-      "d1d4",
-      "a2c2",
-      "d4d5",
-      "e7f8",
-      "b8a7",
-      "c2c4",
-      "d5b5",
-      "f8g7"
-     ]
-    }
-   ]
-  }
- },
- {
-  "name": "king-in-front",
-  "explain": {
-   "fen": "4k3/8/4K3/4P3/8/8/8/8 w - - 0 1",
-   "last_move": null,
-   "lines": [
-    {
-     "depth": 22,
-     "score": {
-      "kind": "mate",
-      "value": 14
-     },
-     "pv": [
-      "e6f6",
-      "e8d7",
-      "e5e6",
-      "d7c6",
-      "e6e7",
-      "c6c5",
-      "f6e5",
-      "c5c6",
-      "e5e6",
-      "c6c5"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "mate",
-      "value": 15
-     },
-     "pv": [
-      "e6d6",
-      "e8f7",
-      "e5e6",
-      "f7f6",
-      "e6e7",
-      "f6g5",
-      "e7e8q",
-      "g5f4",
-      "d6d5",
-      "f4f3"
-     ]
-    },
-    {
-     "depth": 22,
-     "score": {
-      "kind": "cp",
-      "value": 0
-     },
-     "pv": [
-      "e6d5",
-      "e8e7",
-      "d5e4",
-      "e7e6",
-      "e4d4",
-      "e6d7",
-      "d4c3",
-      "d7e6"
-     ]
-    }
-   ]
-  }
- },
- {
-  "name": "queen-mate-hangs-the-queen",
-  "mistake": {
-   "fen": "8/8/8/3k4/8/8/7Q/4K3 w - - 0 1",
-   "played": "h2e5",
-   "better": [
-    "e1d2",
-    "d5e4",
-    "h2e2",
-    "e4d4",
-    "e2e6",
-    "d4c5",
-    "d2d3",
-    "c5b5",
-    "e6d5",
-    "b5b4"
-   ],
-   "before": {
-    "kind": "mate",
-    "value": 12
-   },
-   "after": {
-    "kind": "cp",
-    "value": 0
-   },
-   "drill": "queen-mate",
-   "reply": [
-    "d5e5",
-    "e1d1",
-    "e5d5",
-    "d1e1",
-    "d5e5"
-   ]
+    "follow_ups": [
+      {
+        "probe": {
+          "line": {
+            "depth": 22,
+            "pv": [
+              "e4d5",
+              "g8f6",
+              "g1f3",
+              "f6d5",
+              "d2d4",
+              "c8f5",
+              "f1d3",
+              "f5d3",
+              "d1d3",
+              "e7e6"
+            ],
+            "score": {
+              "kind": "cp",
+              "value": 71
+            }
+          },
+          "uci": "d7d5"
+        },
+        "question": "Why not 1... d5 instead?"
+      },
+      {
+        "question": "Which is better for a beginner?"
+      }
+    ],
+    "name": "after-e4"
   },
-  "follow_ups": [
-   {
-    "question": "What if I had played Qd6+ instead?",
-    "probe": {
-     "uci": "h2d6",
-     "line": {
-      "depth": 22,
-      "score": {
-       "kind": "cp",
-       "value": 0
-      },
-      "pv": [
-       "d5d6",
-       "e1d2",
-       "d6e6",
-       "d2c3",
-       "e6e5",
-       "c3c4",
-       "e5e4",
-       "c4c5",
-       "e4e5",
-       "c5c4"
+  {
+    "explain": {
+      "fen": "4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16",
+      "last_move": "Nxd7",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "b3b8",
+            "d7b8",
+            "d1d8"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 2
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "b3c3",
+            "f7f6",
+            "c3c8",
+            "e8e7",
+            "g5e3",
+            "g7g5",
+            "c8c7",
+            "e7e8",
+            "c1b1",
+            "f8e7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 467
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "b3b7",
+            "f7f6",
+            "b7c8",
+            "e8e7",
+            "g5e3",
+            "g7g5",
+            "c8c7",
+            "e7e8",
+            "c1b1",
+            "f8e7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 452
+          }
+        }
       ]
-     }
-    }
-   }
-  ]
- },
- {
-  "name": "queen-mate-stalemate",
-  "mistake": {
-   "fen": "k7/8/1Q6/8/8/8/8/4K3 w - - 0 1",
-   "played": "b6c7",
-   "better": [
-    "b6b5",
-    "a8a7",
-    "e1e2",
-    "a7a8",
-    "e2d3",
-    "a8a7",
-    "d3c4",
-    "a7a8",
-    "c4d5",
-    "a8a7"
-   ],
-   "before": {
-    "kind": "mate",
-    "value": 7
-   },
-   "after": null,
-   "drill": "queen-mate",
-   "reply": []
+    },
+    "name": "opera-game-queen-sacrifice"
+  },
+  {
+    "explain": {
+      "fen": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
+      "last_move": "g6",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f3e5",
+            "d6e5",
+            "d1g4",
+            "b8c6",
+            "d2d3",
+            "g8f6",
+            "g4g3",
+            "f8d6",
+            "c4b5",
+            "f6h5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 220
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d2d4",
+            "b8c6",
+            "c4b5",
+            "g4f3",
+            "g2f3",
+            "a7a6",
+            "b5c6",
+            "b7c6",
+            "d4e5",
+            "d6e5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 121
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "h2h3",
+            "g4f3",
+            "d1f3",
+            "d8d7",
+            "a2a4",
+            "b8c6",
+            "c3e2",
+            "f8g7",
+            "a4a5",
+            "g8f6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 103
+          }
+        }
+      ]
+    },
+    "name": "legal-trap"
+  },
+  {
+    "explain": {
+      "fen": "rnbqkb1r/ppp2ppp/4pn2/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR b KQkq - 3 4",
+      "last_move": "Bg5",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f8e7",
+            "e2e3",
+            "h7h6",
+            "g5f6",
+            "e7f6",
+            "g1f3",
+            "d5c4",
+            "f1c4",
+            "c7c5",
+            "e1g1"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -32
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d5c4",
+            "e2e3",
+            "c7c5",
+            "g5f6",
+            "d8f6",
+            "d4d5",
+            "a7a6",
+            "g1f3",
+            "e6d5",
+            "d1d5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -40
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c7c6",
+            "e2e3",
+            "f8e7",
+            "g1f3",
+            "h7h6",
+            "g5f4",
+            "e8g8",
+            "d1c2",
+            "c6c5",
+            "d4c5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -40
+          }
+        }
+      ]
+    },
+    "name": "queens-gambit-pin"
+  },
+  {
+    "explain": {
+      "fen": "r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/5N2/PP1B1PPP/RN1QK2R b KQkq - 2 7",
+      "last_move": "Bd2",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f6e4",
+            "d2b4",
+            "c6b4",
+            "c4f7",
+            "e8f7",
+            "d1b3",
+            "f7f8",
+            "b3b4",
+            "d8e7",
+            "b4e7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -11
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "b4d2",
+            "b1d2",
+            "d7d5",
+            "e4d5",
+            "f6d5",
+            "e1g1",
+            "e8g8",
+            "a1c1",
+            "d5f6",
+            "c4b3"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -17
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d7d5",
+            "e4d5",
+            "b4d2",
+            "d1d2",
+            "c6e7",
+            "b1c3",
+            "e8g8",
+            "e1g1",
+            "e7d5",
+            "a1e1"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -28
+          }
+        }
+      ]
+    },
+    "follow_ups": [
+      {
+        "probe": {
+          "line": {
+            "depth": 22,
+            "pv": [
+              "d4d5",
+              "b4d2",
+              "b1d2",
+              "c6e7",
+              "e1g1",
+              "d7d6",
+              "f1e1",
+              "c7c6",
+              "d5c6",
+              "e7c6"
+            ],
+            "score": {
+              "kind": "cp",
+              "value": 58
+            }
+          },
+          "uci": "e8g8"
+        },
+        "question": "Why not castle with 7... O-O?"
+      }
+    ],
+    "name": "italian-center"
+  },
+  {
+    "explain": {
+      "fen": "r1b1kbnr/pp3ppp/1qn1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R w KQkq - 3 6",
+      "last_move": "Qb6",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f1d3",
+            "c5d4",
+            "e1g1",
+            "c8d7",
+            "f1e1",
+            "g8h6",
+            "h2h3",
+            "f8e7",
+            "a2a3",
+            "a8c8"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 41
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "a2a3",
+            "c5c4",
+            "b1d2",
+            "c6a5",
+            "a1b1",
+            "c8d7",
+            "h2h4",
+            "b6c7",
+            "f1e2",
+            "g8e7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 40
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f1e2",
+            "g8h6",
+            "c1h6",
+            "g7h6",
+            "d1d2",
+            "f8g7",
+            "b1a3",
+            "e8g8",
+            "e1g1",
+            "c5d4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 38
+          }
+        }
+      ]
+    },
+    "name": "french-advance"
+  },
+  {
+    "explain": {
+      "fen": "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6",
+      "last_move": "a6",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f2f3",
+            "e7e5",
+            "d4b3",
+            "c8e6",
+            "c1e3",
+            "h7h5",
+            "c3d5",
+            "e6d5",
+            "e4d5",
+            "b8d7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 48
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c1g5",
+            "e7e6",
+            "f2f4",
+            "d8b6",
+            "d1d2",
+            "b6b2",
+            "a1b1",
+            "b2a3",
+            "f4f5",
+            "b8c6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 47
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c1e3",
+            "e7e5",
+            "d4b3",
+            "c8e6",
+            "d1d2",
+            "b8d7",
+            "f2f3",
+            "h7h5",
+            "c3d5",
+            "f6d5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 47
+          }
+        }
+      ]
+    },
+    "follow_ups": [
+      {
+        "question": "What is the point of a6 for Black?"
+      }
+    ],
+    "name": "sicilian-najdorf"
+  },
+  {
+    "explain": {
+      "fen": "r1bq1rk1/ppp1npbp/3p1np1/3Pp3/2P1P3/2N2N2/PP2BPPP/R1BQ1RK1 w - - 1 9",
+      "last_move": "Ne7",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f3e1",
+            "f6e8",
+            "c1e3",
+            "f7f5",
+            "f2f3",
+            "g8h8",
+            "a2a4",
+            "a7a5",
+            "c4c5",
+            "d6c5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 73
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "b2b4",
+            "a7a5",
+            "b4a5",
+            "a8a5",
+            "f3d2",
+            "c7c5",
+            "a2a4",
+            "f6e8",
+            "a1a3",
+            "a5a8"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 68
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c1d2",
+            "a7a5",
+            "f3e1",
+            "f6d7",
+            "a2a3",
+            "f7f5",
+            "f2f3",
+            "d7c5",
+            "d2e3",
+            "b7b6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 56
+          }
+        }
+      ]
+    },
+    "name": "kings-indian-closed"
+  },
+  {
+    "explain": {
+      "fen": "r1bqrnk1/ppp1bppp/5n2/3p2B1/3P4/2NBPN2/PP3PPP/R2Q1RK1 w - - 7 10",
+      "last_move": "Nf8",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f3e5",
+            "c7c6",
+            "f2f4",
+            "f6d7",
+            "g5e7",
+            "d8e7",
+            "g1h1",
+            "d7b6",
+            "d1c2",
+            "f7f6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 62
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d1c2",
+            "c7c6",
+            "h2h3",
+            "g7g6",
+            "f3e5",
+            "f6h5",
+            "g5e7",
+            "e8e7",
+            "a1e1",
+            "h5g7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 58
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "h2h3",
+            "c7c6",
+            "d1c2",
+            "g7g6",
+            "f3e5",
+            "f6h5",
+            "g5e7",
+            "e8e7",
+            "b2b4",
+            "h5g7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 56
+          }
+        }
+      ]
+    },
+    "name": "isolated-queen-pawn"
+  },
+  {
+    "explain": {
+      "fen": "r1bqkb1r/ppp2ppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQK2R w KQkq - 0 6",
+      "last_move": "Nxd5",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "d2d4",
+            "c6d4",
+            "c2c3",
+            "b7b5",
+            "c4d3",
+            "h7h6",
+            "g5f7",
+            "e8f7",
+            "c3d4",
+            "e5d4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 80
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "g5f7",
+            "e8f7",
+            "d1f3",
+            "f7e6",
+            "b1c3",
+            "c6b4",
+            "c4b3",
+            "c7c6",
+            "a2a3",
+            "b4a6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 68
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d2d3",
+            "f7f6",
+            "b1c3",
+            "f8b4",
+            "g5e4",
+            "c8e6",
+            "e1g1",
+            "b4e7",
+            "d1h5",
+            "e6f7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -7
+          }
+        }
+      ]
+    },
+    "name": "two-knights-fried-liver"
+  },
+  {
+    "explain": {
+      "fen": "5r1k/6p1/1Q2pq1p/P2P1r2/8/2P1R3/6PP/4R1K1 b - - 0 39",
+      "last_move": "d5",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f5f1",
+            "e1f1",
+            "f6f1"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 2
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f5f2",
+            "b6b1",
+            "e6d5",
+            "b1d3",
+            "d5d4",
+            "c3d4",
+            "f6g5",
+            "d3e4",
+            "g5a5",
+            "h2h3"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -5
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f5g5",
+            "e3d3",
+            "g5e5",
+            "e1b1",
+            "e5e2",
+            "d3g3",
+            "e6d5",
+            "b6f6",
+            "f8f6",
+            "h2h4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -73
+          }
+        }
+      ]
+    },
+    "name": "tactic-mate-in-two"
+  },
+  {
+    "explain": {
+      "fen": "r4r2/1pp1Nppk/3p4/p3n3/4P3/1PPP2P1/1P1K2P1/3R4 w - - 0 23",
+      "last_move": "Kxh7",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "d1h1"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 1
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e7d5",
+            "c7c6",
+            "d1h1",
+            "h7g6",
+            "d5f4",
+            "g6f6",
+            "f4h5",
+            "f6e7",
+            "h5g7",
+            "f8h8"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -415
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d1f1",
+            "g7g6",
+            "e7d5",
+            "h7g7",
+            "d5c7",
+            "a8c8",
+            "c7b5",
+            "c8d8",
+            "d3d4",
+            "e5g4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -425
+          }
+        }
+      ]
+    },
+    "name": "tactic-anastasia-mate"
+  },
+  {
+    "explain": {
+      "fen": "7r/ppp1k2p/2n5/8/8/2P2pP1/P6P/R1Br1BK1 w - - 0 21",
+      "last_move": "Kxe7",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "c1g5",
+            "e7f7",
+            "a1d1",
+            "h8e8",
+            "g5f4",
+            "c6e5",
+            "h2h3",
+            "e5g6",
+            "f4c1",
+            "h7h5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 538
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c1a3",
+            "d1d6",
+            "a1b1",
+            "b7b6",
+            "b1e1",
+            "e7f6",
+            "a3d6",
+            "c7d6",
+            "f1a6",
+            "c6e5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -13
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c3c4",
+            "e7f7",
+            "c1b2",
+            "h8d8",
+            "a1d1",
+            "d8d1",
+            "b2c3",
+            "d1c1",
+            "c3d2",
+            "c1a1"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -468
+          }
+        }
+      ]
+    },
+    "name": "tactic-discovered-attack"
+  },
+  {
+    "explain": {
+      "fen": "2r5/3Qnk1p/3R4/4B2b/Pp2p3/1P2P3/5PPP/6K1 b - - 4 32",
+      "last_move": "Rd6",
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "c8c1",
+            "d6d1",
+            "c1d1",
+            "d7d1",
+            "h5d1",
+            "a4a5",
+            "e7c6",
+            "e5d6",
+            "f7e6",
+            "d6c5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 374
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f7g8",
+            "d7e6",
+            "g8f8",
+            "e6h6",
+            "f8e8",
+            "h6h5",
+            "e7g6",
+            "d6d1",
+            "c8a8",
+            "e5d4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -1249
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f7f8",
+            "d6f6",
+            "h5f7",
+            "h2h4",
+            "c8c1",
+            "g1h2",
+            "c1d1",
+            "d7d1",
+            "f8e8",
+            "d1d6"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": -10
+          }
+        }
+      ]
+    },
+    "follow_ups": [
+      {
+        "question": "Why can't White just take my rook?"
+      }
+    ],
+    "name": "tactic-fork"
+  },
+  {
+    "explain": {
+      "fen": "3r3r/pQNk1ppp/1qnR1n2/1B6/8/8/PPP3PP/5R1K b - - 0 19",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "d7d6",
+            "b7b6",
+            "a7b6",
+            "c7a6",
+            "c6d4",
+            "c2c4",
+            "f6g4",
+            "a2a4",
+            "g4e3",
+            "f1c1"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 450
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d7e7",
+            "c7d5",
+            "e7d6",
+            "d5b6",
+            "a7b6",
+            "b7c6",
+            "d6e5",
+            "c6c7",
+            "e5e6",
+            "c7b6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -898
+          }
+        }
+      ]
+    },
+    "name": "tactic-hanging-piece"
+  },
+  {
+    "explain": {
+      "fen": "k1r1b3/p1r1nppp/Bp1qpn2/2Np4/1P1P4/PQR1PN2/5PPP/2R3K1 b - - 1 19",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "b6c5",
+            "a6c8",
+            "c5c4",
+            "b3b1",
+            "e7c8",
+            "b4b5",
+            "f6e4",
+            "c3c2",
+            "d6a3",
+            "c2a2"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 371
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c8b8",
+            "c5d3",
+            "c7c3",
+            "b3c3",
+            "f6e4",
+            "c3c7",
+            "e8c6",
+            "c7d6",
+            "e4d6",
+            "d3e5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -8
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c8d8",
+            "b4b5",
+            "g7g5",
+            "f3g5",
+            "b6c5",
+            "d4c5",
+            "d6d7",
+            "c5c6",
+            "d7d6",
+            "a6b7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -235
+          }
+        }
+      ]
+    },
+    "name": "tactic-sacrifice"
+  },
+  {
+    "explain": {
+      "fen": "1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "c1d1",
+            "d8e7",
+            "d1d4",
+            "a2f2",
+            "b8c7",
+            "e7e6",
+            "b7b8q",
+            "f2f1",
+            "b8e8",
+            "e6f6"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 7401
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c1c4",
+            "d8e7",
+            "c4d4",
+            "a2f2",
+            "b8c7",
+            "f2b2",
+            "c7c6",
+            "e7e6",
+            "d4c4",
+            "e6e5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 5804
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "c1c7",
+            "a2e2",
+            "c7f7",
+            "e2b2",
+            "f7g7",
+            "b2a2",
+            "g7g4",
+            "a2a3",
+            "g4d4",
+            "d8e7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 4326
+          }
+        }
+      ]
+    },
+    "name": "lucena"
+  },
+  {
+    "explain": {
+      "fen": "3k4/8/3K4/3P4/8/8/6r1/5R2 b - - 0 1",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "g2g6",
+            "d6c5",
+            "g6a6",
+            "f1f7",
+            "d8c8",
+            "f7h7",
+            "c8d8"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 0
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d8e8",
+            "f1a1",
+            "g2d2",
+            "a1a8",
+            "e8f7",
+            "a8a3",
+            "f7e8",
+            "a3h3",
+            "d2a2",
+            "h3h8"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -2
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "d8c8",
+            "f1f8",
+            "c8b7",
+            "d6d7",
+            "g2g7",
+            "d7e6",
+            "g7g6",
+            "f8f6",
+            "g6g8",
+            "e6d7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": -8
+          }
+        }
+      ]
+    },
+    "name": "philidor-draw"
+  },
+  {
+    "explain": {
+      "fen": "8/8/8/8/8/3k4/3p4/3K1R2 w - - 0 1",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "f1f8",
+            "d3e3",
+            "f8f7",
+            "e3d3",
+            "f7e7",
+            "d3c3",
+            "e7e3",
+            "c3c4",
+            "d1d2",
+            "c4d4"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 22
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f1f7",
+            "d3e3",
+            "f7f8",
+            "e3d3",
+            "f8e8",
+            "d3c3",
+            "e8e3",
+            "c3c4",
+            "d1d2",
+            "c4d4"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 22
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "f1f2",
+            "d3c3",
+            "f2f7",
+            "c3d3",
+            "f7e7",
+            "d3c3",
+            "e7e3",
+            "c3c4",
+            "d1d2",
+            "c4d4"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 22
+          }
+        }
+      ]
+    },
+    "name": "rook-vs-pawn"
+  },
+  {
+    "explain": {
+      "fen": "8/8/4k3/2b5/8/2B5/4P3/4K3 w - - 0 1",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "e1d2",
+            "e6d5",
+            "d2d3",
+            "c5e7",
+            "c3h8",
+            "e7a3",
+            "h8f6",
+            "a3f8",
+            "f6d4",
+            "f8b4"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 25
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e2e4",
+            "c5a7",
+            "e1e2",
+            "a7b6",
+            "c3d2",
+            "b6c7",
+            "e2f3",
+            "c7e5",
+            "d2f4",
+            "e5g7"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 15
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e1f1",
+            "e6f5",
+            "c3e1",
+            "f5e4",
+            "f1g2",
+            "c5f8",
+            "e1f2",
+            "f8d6",
+            "g2h3",
+            "d6b8"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 13
+          }
+        }
+      ]
+    },
+    "name": "opposite-bishops"
+  },
+  {
+    "explain": {
+      "fen": "4k3/8/4K3/4P3/8/8/8/8 w - - 0 1",
+      "last_move": null,
+      "lines": [
+        {
+          "depth": 22,
+          "pv": [
+            "e6d6",
+            "e8f7",
+            "e5e6",
+            "f7g6",
+            "e6e7",
+            "g6g5",
+            "e7e8q",
+            "g5f4",
+            "d6d5",
+            "f4g4"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 12
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e6f6",
+            "e8d7",
+            "e5e6",
+            "d7c6",
+            "e6e7",
+            "c6d7",
+            "f6f7",
+            "d7c6",
+            "f7e6",
+            "c6c5"
+          ],
+          "score": {
+            "kind": "mate",
+            "value": 16
+          }
+        },
+        {
+          "depth": 22,
+          "pv": [
+            "e6d5",
+            "e8d7",
+            "e5e6",
+            "d7e8",
+            "d5e5",
+            "e8e7",
+            "e5f5",
+            "e7e8",
+            "f5e5"
+          ],
+          "score": {
+            "kind": "cp",
+            "value": 0
+          }
+        }
+      ]
+    },
+    "name": "king-in-front"
+  },
+  {
+    "follow_ups": [
+      {
+        "probe": {
+          "line": {
+            "depth": 22,
+            "pv": [
+              "d5d6",
+              "e1e2",
+              "d6e6",
+              "e2d2",
+              "e6e5",
+              "d2d3",
+              "e5d6",
+              "d3e2"
+            ],
+            "score": {
+              "kind": "cp",
+              "value": 0
+            }
+          },
+          "uci": "h2d6"
+        },
+        "question": "What if I had played Qd6+ instead?"
+      }
+    ],
+    "mistake": {
+      "after": {
+        "kind": "cp",
+        "value": 0
+      },
+      "before": {
+        "kind": "mate",
+        "value": 11
+      },
+      "better": [
+        "h2f4",
+        "d5e6",
+        "e1e2",
+        "e6d5",
+        "e2d3",
+        "d5c5",
+        "f4e5",
+        "c5b4",
+        "d3d4",
+        "b4b3"
+      ],
+      "drill": "queen-mate",
+      "fen": "8/8/8/3k4/8/8/7Q/4K3 w - - 0 1",
+      "played": "h2e5",
+      "reply": [
+        "d5e5",
+        "e1d1",
+        "e5d4",
+        "d1d2",
+        "d4e4",
+        "d2e2",
+        "e4d4",
+        "e2d2"
+      ]
+    },
+    "name": "queen-mate-hangs-the-queen"
+  },
+  {
+    "mistake": {
+      "after": null,
+      "before": {
+        "kind": "mate",
+        "value": 7
+      },
+      "better": [
+        "b6b2",
+        "a8a7",
+        "e1e2",
+        "a7a8",
+        "e2d3",
+        "a8a7",
+        "d3c4",
+        "a7a8",
+        "c4c5",
+        "a8a7"
+      ],
+      "drill": "queen-mate",
+      "fen": "k7/8/1Q6/8/8/8/8/4K3 w - - 0 1",
+      "played": "b6c7",
+      "reply": []
+    },
+    "name": "queen-mate-stalemate"
+  },
+  {
+    "mistake": {
+      "after": {
+        "kind": "cp",
+        "value": 684
+      },
+      "before": {
+        "kind": "mate",
+        "value": 1
+      },
+      "better": [
+        "a1a8"
+      ],
+      "drill": "back-rank-mate",
+      "fen": "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+      "played": "a1a7",
+      "reply": [
+        "g7g6",
+        "g1f1",
+        "g8g7",
+        "f1e2",
+        "g7f6",
+        "e2e3",
+        "f6g7",
+        "e3e4",
+        "g7f6",
+        "e4f4"
+      ]
+    },
+    "name": "back-rank-mate-missed"
+  },
+  {
+    "mistake": {
+      "after": {
+        "kind": "cp",
+        "value": 0
+      },
+      "before": {
+        "kind": "mate",
+        "value": 12
+      },
+      "better": [
+        "e6d6",
+        "e8f7",
+        "e5e6",
+        "f7g6",
+        "e6e7",
+        "g6g5",
+        "e7e8q",
+        "g5f4",
+        "e8e5",
+        "f4g4"
+      ],
+      "drill": "king-in-front",
+      "fen": "4k3/8/4K3/4P3/8/8/8/8 w - - 0 1",
+      "played": "e6f5",
+      "reply": [
+        "e8e7",
+        "e5e6",
+        "e7e8",
+        "f5e5",
+        "e8e7"
+      ]
+    },
+    "name": "king-in-front-gives-up-the-win"
+  },
+  {
+    "mistake": {
+      "after": {
+        "kind": "mate",
+        "value": -26
+      },
+      "before": {
+        "kind": "cp",
+        "value": 0
+      },
+      "better": [
+        "e6f6",
+        "e3e4",
+        "f6e6",
+        "f4g4",
+        "e6e5",
+        "g4f3",
+        "e5e6",
+        "f3f2",
+        "e6f6",
+        "f2e2"
+      ],
+      "drill": "hold-the-draw",
+      "fen": "8/8/4k3/8/5K2/4P3/8/8 b - - 1 1",
+      "played": "e6f7",
+      "reply": [
+        "f4e5",
+        "f7e7",
+        "e3e4",
+        "e7d7",
+        "e5f6",
+        "d7c7",
+        "e4e5",
+        "c7c6",
+        "f6e6",
+        "c6c7"
+      ]
+    },
+    "name": "hold-the-draw-loses"
+  },
+  {
+    "mistake": {
+      "after": {
+        "kind": "mate",
+        "value": -1
+      },
+      "before": {
+        "kind": "cp",
+        "value": 0
+      },
+      "better": [
+        "g2g6",
+        "d6c5",
+        "d8c8",
+        "f1a1",
+        "c8d7",
+        "a1a7",
+        "d7c8"
+      ],
+      "drill": null,
+      "fen": "3k4/8/3K4/3P4/8/8/6r1/5R2 b - - 0 1",
+      "played": "g2g1",
+      "reply": [
+        "f1f8"
+      ]
+    },
+    "name": "philidor-loses-the-draw"
+  },
+  {
+    "follow_ups": [
+      {
+        "question": "What should I have played instead?"
+      }
+    ],
+    "mistake": {
+      "after": {
+        "kind": "cp",
+        "value": -337
+      },
+      "before": {
+        "kind": "cp",
+        "value": 29
+      },
+      "better": [
+        "c2c3",
+        "g8f6",
+        "d2d3",
+        "d7d6",
+        "e1g1",
+        "a7a6",
+        "a2a4",
+        "h7h6",
+        "b2b4",
+        "c5a7"
+      ],
+      "drill": null,
+      "fen": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      "played": "f3e5",
+      "reply": [
+        "c6e5",
+        "c4e2",
+        "e5c6",
+        "c2c3",
+        "d7d5",
+        "d2d4",
+        "c5e7",
+        "e4e5",
+        "f7f6",
+        "b2b4"
+      ]
+    },
+    "name": "opening-loses-a-pawn"
   }
- },
- {
-  "name": "king-in-front-gives-up-the-win",
-  "mistake": {
-   "fen": "4k3/8/4K3/4P3/8/8/8/8 w - - 0 1",
-   "played": "e6f5",
-   "better": [
-    "e6d6",
-    "e8f7",
-    "e5e6",
-    "f7g6",
-    "e6e7",
-    "g6g5",
-    "e7e8q",
-    "g5f4",
-    "e8e2",
-    "f4g3"
-   ],
-   "before": {
-    "kind": "mate",
-    "value": 13
-   },
-   "after": {
-    "kind": "cp",
-    "value": 0
-   },
-   "drill": "king-in-front",
-   "reply": [
-    "e8f7",
-    "e5e6",
-    "f7e7",
-    "f5e5",
-    "e7e8",
-    "e5d6",
-    "e8d8",
-    "d6c6",
-    "d8e8"
-   ]
-  }
- },
- {
-  "name": "hold-the-draw-loses",
-  "mistake": {
-   "fen": "8/8/4k3/8/5K2/4P3/8/8 b - - 1 1",
-   "played": "e6d7",
-   "better": [
-    "e6f6",
-    "e3e4",
-    "f6e6",
-    "e4e5",
-    "e6e7",
-    "f4f5",
-    "e7f7",
-    "f5e4",
-    "f7e8",
-    "e4d5"
-   ],
-   "before": {
-    "kind": "cp",
-    "value": 0
-   },
-   "after": {
-    "kind": "mate",
-    "value": -24
-   },
-   "drill": "hold-the-draw",
-   "reply": [
-    "f4e5",
-    "d7c6",
-    "e3e4",
-    "c6c5",
-    "e5f5",
-    "c5d4",
-    "e4e5",
-    "d4d5",
-    "f5f6",
-    "d5e4"
-   ]
-  }
- }
 ]

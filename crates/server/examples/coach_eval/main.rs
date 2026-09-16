@@ -12,7 +12,8 @@
 //! ```
 //!
 //! The cases (`tests/fixtures/coach_eval.json`) are positions to explain and
-//! drill mistakes, with real Stockfish lines (Stockfish 17.1, depth 22). Each
+//! mistakes, with real Stockfish lines; `cargo run -p server --example
+//! coach_cases` rebuilds them from a local Stockfish. Each
 //! is answered the way the server answers: checked with `Prompt::check` (moves
 //! and pieces the prompt never showed, Markdown) and, when flagged, rewritten
 //! once. What was flagged and whether the rewrite is served are printed with
