@@ -37,7 +37,9 @@ build --bind 127.0.0.1:4173` (that is exactly what `pnpm test:e2e` starts).
 Prefer actually exercising the board over trusting a compile. The fastest reliable way is a
 Playwright script run from `web/` (so it can resolve `playwright`), reading state from the DOM:
 
-- Squares are `button[data-square="e2"]`; click one, then the destination.
+- Squares are `button[data-square="e2"]`; click one, then the destination. Or drag: mouse
+  down on the piece, move in a few steps, mouse up on the destination — while held there is
+  one `.board .held` image.
 - Play smoke test: `e2 e4, e7 e5, g1 f3`; `.move-list button.move` reads `e4 e5 Nf3`,
   `.status` reads "Black to move", `.fen input` has the FEN. Focus `.board` and press
   ArrowLeft: status flips to "White to move".

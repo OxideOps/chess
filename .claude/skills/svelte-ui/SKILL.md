@@ -45,7 +45,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   time controls), `invites.ts` (the game link), `listing.ts` (pure helpers for the my-games
   rows). Moves are applied locally first (same rules as the server) and sent; a `Rejected`
   or a gap in plies closes the socket, and the reconnect's `Sync` puts things right.
-- `src/lib/components/` — `Board` (props `playAs` and `onmove` for online play),
+- `src/lib/components/` — `Board` (props `playAs` and `onmove` for online play; moves by click
+  or by drag: pointer events on the squares, `<svelte:window>` for move/up, `squareAt` from
+  `squares.ts` for the drop square, a 4 px threshold so a press that doesn't travel stays a
+  click, and a swallowed click after a drop; `.square.movable` sets `touch-action: none` so a
+  finger on a piece drags instead of scrolling — `phone.e2e.ts` checks that with real touch
+  input over the DevTools protocol, since synthetic events can't),
   `PromotionPicker`, `EvalBar`, `EnginePanel`, `ImportPanel`, `MoveList` (lays out
   `view.tree`, the PGN-shaped tokens of the move tree, with `src/lib/chess/movelist.ts`:
   main-line rows plus variation blocks; `button.move` is a main-line cell, `button.var-move`

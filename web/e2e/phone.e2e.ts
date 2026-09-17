@@ -71,3 +71,32 @@ test('the nav fits and the game page keeps both clocks with the board', async ({
 		expect(Math.round(clock.width)).toBe(Math.round(board.width));
 	}
 });
+
+// Real touch input (Chromium's DevTools protocol), so this checks what a
+// synthetic event can't: a finger on a piece drags it instead of scrolling.
+test('a finger drags a piece without scrolling the page', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.locator('.board')).toBeVisible();
+	const cdp = await page.context().newCDPSession(page);
+	const centre = async (name: string) => {
+		const box = (await page.locator(`[data-square="${name}"]`).boundingBox())!;
+		return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+	};
+	const touch = (type: string, points: { x: number; y: number }[]) =>
+		cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
+
+	const from = await centre('e2');
+	const to = await centre('e4');
+	const scrollBefore = await page.evaluate(() => scrollY);
+	await touch('touchStart', [from]);
+	for (let i = 1; i <= 8; i++) {
+		await touch('touchMove', [
+			{ x: from.x + ((to.x - from.x) * i) / 8, y: from.y + ((to.y - from.y) * i) / 8 }
+		]);
+	}
+	await expect(page.locator('.board .held')).toBeVisible();
+	await touch('touchEnd', []);
+
+	await expect(page.locator('.move-list button.move')).toHaveText(['e4']);
+	expect(await page.evaluate(() => scrollY)).toBe(scrollBefore);
+});
