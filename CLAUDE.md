@@ -75,7 +75,13 @@ Successor to the archived `OxideOps/chess-v1`.
   word "exact" in a prompt set it off); per-user
   limit, answer cache, `--fake-coach` offline stand-in; tests run against a mock API;
   `cargo run -p server --example coach_eval` asks the real API about the fixed positions in
-  `tests/fixtures/coach_eval.json` and checks the answers: run it after changing a prompt),
+  `tests/fixtures/coach_eval.json` (29 of them: openings, tactics from the puzzle fixture,
+  endgame studies, drill and game mistakes; `cargo run -p server --example coach_cases`
+  rebuilds the file from a local Stockfish), checks the answers, and grades each one with a second
+  model call against the same facts (accuracy/clarity/usefulness out of 5, every unsupported
+  claim quoted; `CHESS_JUDGE_MODEL`, `--no-judge`). Runs are saved under `target/coach-eval/`
+  and `--compare <run.json>` puts an earlier one beside it: that is how a prompt change is
+  judged, so run it before and after one),
   `db.rs` the
   Postgres layer (sqlx 0.9, `query!` macros checked against the committed `.sqlx` offline
   cache, so builds need no database; one row per game holding the room's `Snapshot`;

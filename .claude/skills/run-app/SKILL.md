@@ -78,8 +78,12 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   "N questions left"); naming a move the lines don't start with ("What about Nh3?") shows
   "Stockfish is looking at Nh3…" first. With `--fake-coach` the answer echoes the question
   and, after a probe, "Stockfish answers it with …".
-  To judge answer quality, `cargo run -p server --example coach_eval` (real API, ~12¢;
-  `-- --dry-run` prints the prompts for free).
+  To judge answer quality, `cargo run -p server --example coach_eval` (real API, ~25¢ graded;
+  `-- --dry-run` prints the prompts for free, `-- --no-judge` halves the cost). It saves each
+  run under `target/coach-eval/`; `-- --compare target/coach-eval/<run>.json` shows what a
+  prompt change did, case by case. Scores swing between runs on identical code, so judge a
+  change with `-- --repeat 3` (each case answered and graded that many times) and read the
+  means, not one sample.
 - Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
   then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
   "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".

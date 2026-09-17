@@ -849,12 +849,34 @@ struct MessagesResponse {
     stop_reason: Option<String>,
     /// Why a refusal happened (informational; can be null).
     stop_details: Option<serde_json::Value>,
+    #[serde(default)]
+    usage: Usage,
 }
 
-/// One reply from the model: its text, and its content blocks as sent.
+/// What a call cost, in tokens. Thinking counts as output, and on the
+/// Opus models output is five times the price of input, so this is most of
+/// what an answer costs.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+pub struct Usage {
+    #[serde(default, rename = "input_tokens")]
+    pub input: u32,
+    #[serde(default, rename = "output_tokens")]
+    pub output: u32,
+}
+
+impl std::ops::AddAssign for Usage {
+    fn add_assign(&mut self, other: Usage) {
+        self.input += other.input;
+        self.output += other.output;
+    }
+}
+
+/// One reply from the model: its text, its content blocks as sent, and
+/// what it cost.
 struct Reply {
     text: String,
     content: Vec<serde_json::Value>,
+    usage: Usage,
 }
 
 /// An answer, and what the check made of it.
@@ -874,6 +896,8 @@ pub struct Answer {
     /// The conversation that produced it, ending with the served answer (the
     /// model's turns exactly as they came): where follow-ups carry on.
     pub conversation: Vec<serde_json::Value>,
+    /// What it cost, over every call it took (a correction turn included).
+    pub usage: Usage,
 }
 
 fn user_turn(text: &str) -> serde_json::Value {
@@ -984,12 +1008,14 @@ impl Coach {
         key: &str,
     ) -> Result<Answer, CoachError> {
         let first = self.ask(system, &messages, cache).await?;
+        let mut usage = first.usage;
         let flagged = shown.check(&first.text);
         messages.push(assistant_turn(first.content.into()));
         if flagged.is_empty() {
             return Ok(Answer {
                 text: first.text,
                 conversation: messages,
+                usage,
                 ..Answer::default()
             });
         }
@@ -998,6 +1024,7 @@ impl Coach {
         corrected.push(user_turn(&correction(&flagged)));
         let rewrite = match self.ask(system, &corrected, cache).await {
             Ok(second) => {
+                usage += second.usage;
                 let problems = shown.check(&second.text);
                 (problems.len() < flagged.len()).then(|| {
                     corrected.push(assistant_turn(second.content.into()));
@@ -1016,6 +1043,7 @@ impl Coach {
                 rewritten: true,
                 problems,
                 conversation: corrected,
+                usage,
                 ..Answer::default()
             },
             // The correction exchange is dropped from the end: what came
@@ -1025,6 +1053,7 @@ impl Coach {
                 problems: flagged.clone(),
                 flagged,
                 conversation: messages,
+                usage,
                 ..Answer::default()
             },
         };
@@ -1108,6 +1137,7 @@ impl Coach {
         Ok(Reply {
             text: text.trim().to_string(),
             content: parsed.content,
+            usage: parsed.usage,
         })
     }
 }
