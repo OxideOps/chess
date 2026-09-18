@@ -1,0 +1,45 @@
+name: Deploy
+
+# Deploys main to Fly after CI passes. Inert until the repository has a
+# FLY_APP variable and a FLY_API_TOKEN secret, so a fork or a fresh clone
+# doesn't get a red run on every push. See docs/deploy.md.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Never two deploys at once: there is one machine and it holds live games.
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: fly deploy
+    runs-on: ubuntu-latest
+    if: vars.FLY_APP != ''
+    environment:
+      name: production
+      url: ${{ vars.CHESS_PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      # The image is built on Fly's builder, from the Dockerfile in this repo.
+      # Migrations run when the new machine starts.
+      - run: flyctl deploy --remote-only --app "${{ vars.FLY_APP }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      # A deploy that leaves the site down should fail here, not in a report
+      # from whoever tried to play.
+      - name: the site is up
+        run: |
+          url="${{ vars.CHESS_PUBLIC_URL }}"
+          for i in $(seq 1 30); do
+            if [ "$(curl -s -o /dev/null -w '%{http_code}' "$url/healthz")" = "200" ]; then
+              echo "$url is up"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "$url did not come back after the deploy"
+          exit 1
