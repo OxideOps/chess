@@ -47,7 +47,11 @@
 			playAs={online.yourColor ?? 'both'}
 			onmove={(from, to, promotion) => online.tryMove(from, to, promotion)}
 		/>
-		<Clock ms={online.clockMs(orientation)} {...clockProps(orientation)} />
+		<Clock
+			ms={online.clockMs(orientation)}
+			{...clockProps(orientation)}
+			yours={orientation === online.yourColor}
+		/>
 	</div>
 	<GameSidebar {id} {online} />
 </div>

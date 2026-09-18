@@ -37,6 +37,13 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   the engine's score before and after a student move, compared with `isMistake`), `progress.ts`
   (completed lessons in localStorage). `src/lib/engine/opponent.svelte.ts` is Stockfish
   playing a side (`search(fen, moves)` → its best move, score and line after `go movetime`).
+- `src/lib/sound/` — `cue.ts` (pure: a move's SAN and whether the game ended → which sound),
+  `voice.ts` (`WebAudioVoice`: the sounds themselves, synthesised; its constructor takes the
+  audio context, so the tests render each cue through an `OfflineAudioContext` and check it
+  isn't silence), `sounds.svelte.ts` (`Sounds`: the on/off switch in `localStorage`, an
+  injectable `Voice` for tests, and `attach(game)` which sets `GameStore.onmove`). `Board`
+  attaches on mount, so every mode gets sound from having a board — don't wire it per page.
+  A new sound means a new `Cue`, a case in `voice.ts`, and a line in the audible-cues test.
 - `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle, plays the setup
   move and the replies, judges each move with `judgePuzzle` from the WASM, reports the first
   try; injectable fetch and delay for tests).

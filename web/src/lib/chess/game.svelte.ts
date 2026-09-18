@@ -12,6 +12,12 @@ export type Promotion = 'queen' | 'rook' | 'bishop' | 'knight';
 export class GameStore {
 	#game: Game;
 	view: GameView = $state(emptyView());
+	/**
+	 * Called with a move's SAN whenever one is played here, and whether it
+	 * ended the game. Only the `play` methods fire it: walking the history
+	 * or replacing the game is not a move being made. The sounds use it.
+	 */
+	onmove?: (san: string, over: boolean) => void;
 
 	constructor(game: Game = new Game()) {
 		this.#game = game;
@@ -46,7 +52,7 @@ export class GameStore {
 
 	/** Play at the end of the game. */
 	play(from: string, to: string, promotion?: Promotion): PlayResult {
-		return this.#mutate(() => this.#game.playFromTo(from, to, promotion));
+		return this.#played(() => this.#game.playFromTo(from, to, promotion));
 	}
 
 	/**
@@ -54,15 +60,15 @@ export class GameStore {
 	 * followed, a new one starts a variation (see `chess_core::Game`).
 	 */
 	playHere(from: string, to: string, promotion?: Promotion): PlayResult {
-		return this.#mutate(() => this.#game.playHereFromTo(from, to, promotion));
+		return this.#played(() => this.#game.playHereFromTo(from, to, promotion));
 	}
 
 	playUci(uci: string): PlayResult {
-		return this.#mutate(() => this.#game.playUci(uci));
+		return this.#played(() => this.#game.playUci(uci));
 	}
 
 	playHereUci(uci: string): PlayResult {
-		return this.#mutate(() => this.#game.playHereUci(uci));
+		return this.#played(() => this.#game.playHereUci(uci));
 	}
 
 	/** View a move anywhere in the tree; its line becomes current. */
@@ -116,6 +122,16 @@ export class GameStore {
 	#mutate<T>(f: () => T): T {
 		const result = f();
 		this.refresh();
+		return result;
+	}
+
+	/** A move attempt: on success, announce the move that landed. */
+	#played(f: () => PlayResult): PlayResult {
+		const result = this.#mutate(f);
+		if (result !== 'ok') return result;
+		// After a move the cursor sits on it, at the end of the current line.
+		const played = this.view.moves[this.view.cursor - 1];
+		if (played) this.onmove?.(played.san, this.view.gameOver);
 		return result;
 	}
 

@@ -64,3 +64,25 @@ test('moves pieces by dragging them, from either side of the board', async ({ pa
 	await sq('c6').click();
 	await expect(page.locator('.move-list button.move')).toHaveText(['e4', 'c5', 'Nf3', 'Nc6']);
 });
+
+// Sound can't be listened to from here, but the switch and its memory can.
+test('the sound switch stays where it was put', async ({ page }) => {
+	await page.goto('/');
+	const toggle = page.getByRole('button', { name: /Turn sound (on|off)/ });
+	await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+	await toggle.click();
+	await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+	await expect(toggle).toHaveAccessibleName('Turn sound on');
+
+	await page.reload();
+	await expect(page.getByRole('button', { name: 'Turn sound on' })).toHaveAttribute(
+		'aria-pressed',
+		'false'
+	);
+
+	// Moves still play with the sound off.
+	await page.locator('[data-square="e2"]').click();
+	await page.locator('[data-square="e4"]').click();
+	await expect(page.locator('.move-list button.move')).toHaveText(['e4']);
+});
