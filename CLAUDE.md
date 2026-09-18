@@ -38,7 +38,13 @@ Successor to the archived `OxideOps/chess-v1`.
   cross-origin isolated, the single-threaded one otherwise (and as a fallback if the threaded
   one fails to start). Phones get the same site: `.board-page` in `app.css` sizes the board
   to the viewport, `--tap` sizes touch targets. `src/service-worker.ts` makes it an offline
-  PWA (manifest and icons in `web/static`); it never touches `/api`.
+  PWA (manifest and icons in `web/static`); it never touches `/api`. Moves make a sound
+  (`src/lib/sound/`): synthesised with Web Audio rather than played from files, so there is
+  nothing to license or download — `voice.ts` builds every cue from a wooden knock and a
+  tone, `cue.ts` reads what a move did out of its SAN, and `Sounds.attach` hooks
+  `GameStore.onmove`, which only the `play` methods fire, so loading a PGN or stepping
+  through history stays silent. Every board attaches, so play, drills, puzzles and online
+  games all sound the same. The nav has the on/off switch (remembered per browser).
 - `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
   prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
   isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:

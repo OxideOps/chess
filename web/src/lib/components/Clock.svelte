@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { sideName } from '$lib/chess/status';
+	import { sounds } from '$lib/sound/sounds.svelte';
 	import { formatClock } from '$lib/online/clock';
 	import { formatDiff, formatRating } from '$lib/online/ratings';
 	import type { ResolvedPathname } from '$app/types';
@@ -19,6 +20,8 @@
 		/** What the finished game did to their rating. */
 		diff?: number | null;
 		active?: boolean;
+		/** This is the reader's own clock: warn them when it runs low. */
+		yours?: boolean;
 	}
 	let {
 		ms,
@@ -27,10 +30,23 @@
 		href = null,
 		rating = null,
 		diff = null,
-		active = false
+		active = false,
+		yours = false
 	}: Props = $props();
 	const shownRating = $derived(formatRating(rating));
 	const low = $derived(ms < 20_000);
+
+	// Once per spell of being low, and only while it is actually ticking.
+	let warned = $state(false);
+	$effect(() => {
+		if (!(low && active && yours)) {
+			if (!low) warned = false;
+			return;
+		}
+		if (warned) return;
+		warned = true;
+		sounds.play('low-time');
+	});
 </script>
 
 <div class="clock" class:active class:low aria-label="{sideName(side)} clock">

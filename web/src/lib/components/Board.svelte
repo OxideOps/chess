@@ -4,6 +4,7 @@
 	import { centre, isLight, squareAt, squaresInDrawOrder } from '$lib/chess/squares';
 	import type { PieceOnSquare } from '$lib/generated/PieceOnSquare';
 	import type { Side } from '$lib/generated/Side';
+	import { sounds } from '$lib/sound/sounds.svelte';
 	import { pieceImage, pieceName } from './pieces';
 	import PromotionPicker from './PromotionPicker.svelte';
 
@@ -36,6 +37,10 @@
 		playAs = 'both',
 		onmove
 	}: Props = $props();
+
+	// Every mode puts a board on the screen, so this is the one place moves
+	// need to be given a sound.
+	$effect(() => sounds.attach(game));
 
 	let selected: string | null = $state(null);
 	// A move that needs a promotion piece before it can be played.

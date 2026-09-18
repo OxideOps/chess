@@ -6,6 +6,7 @@
 	import { safeNext, withNext } from '$lib/auth/next';
 	import { installer } from '$lib/pwa/install.svelte';
 	import Logo from '$lib/components/Logo.svelte';
+	import { sounds } from '$lib/sound/sounds.svelte';
 
 	const links = [
 		{ href: resolve('/'), label: 'Play' },
@@ -49,6 +50,23 @@
 		</a>
 	{/each}
 	<span class="account">
+		<button
+			type="button"
+			class="sound"
+			aria-pressed={sounds.on}
+			title={sounds.on ? 'Turn sound off' : 'Turn sound on'}
+			aria-label={sounds.on ? 'Turn sound off' : 'Turn sound on'}
+			onclick={() => sounds.toggle()}
+		>
+			<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+				<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" />
+				{#if sounds.on}
+					<path class="waves" d="M15.5 9.2a4 4 0 0 1 0 5.6M18 6.8a7.5 7.5 0 0 1 0 10.4" />
+				{:else}
+					<path class="waves" d="M16 9.8l5 4.4M21 9.8l-5 4.4" />
+				{/if}
+			</svg>
+		</button>
 		{#if installer.available}
 			<button type="button" onclick={() => installer.install()}>Install app</button>
 		{/if}
@@ -151,6 +169,37 @@
 	.who.guest {
 		font-weight: 400;
 		font-style: italic;
+	}
+
+	.sound {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: var(--tap);
+		min-height: var(--tap);
+		padding: 0.25rem;
+		border: none;
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+
+	.sound:hover {
+		color: var(--text);
+	}
+
+	.sound svg {
+		width: 1.15rem;
+		height: 1.15rem;
+		fill: currentColor;
+	}
+
+	/* The bars beside the speaker are strokes, whether sound or a cross. */
+	.sound .waves {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.7;
+		stroke-linecap: round;
 	}
 
 	button {
