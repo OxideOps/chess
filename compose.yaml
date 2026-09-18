@@ -1,0 +1,40 @@
+# The deployed site, on this machine: the image the host runs, against a
+# Postgres, over plain http. For checking a build before it ships and for
+# reproducing something the deployment does that `pnpm dev` doesn't.
+#
+#   docker compose up --build        # http://localhost:8080
+#
+# Not the development loop: use `pnpm dev` in web/ for that (hot reload).
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: chess
+      POSTGRES_USER: chess
+      POSTGRES_DB: chess
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chess']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  server:
+    build: .
+    ports:
+      - '8080:8080'
+    environment:
+      # Migrations run on start, so a fresh database needs nothing done to it.
+      DATABASE_URL: postgres://chess:chess@db/chess
+      CHESS_PUBLIC_URL: http://localhost:8080
+      # http here, so no Secure cookie and no proxy in front: both differ
+      # from a real deployment, which sets CHESS_SECURE_COOKIES=1 and
+      # CHESS_TRUST_PROXY=1. See docs/deploy.md.
+      RUST_LOG: info
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db:
