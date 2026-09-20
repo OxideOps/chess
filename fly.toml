@@ -46,6 +46,8 @@ primary_region = "iad"
   RUST_LOG = "info"
 
 [[vm]]
-  memory = "1gb"
+  # The engine runs in the visitor's browser, not here: this process
+  # validates moves, keeps clocks and relays messages, so it is small.
+  memory = "256mb"
   cpu_kind = "shared"
   cpus = 1
