@@ -110,6 +110,20 @@ Successor to the archived `OxideOps/chess-v1`.
   (local: `postgres://$USER@localhost/chess_test`; CI runs a postgres service) and skip without it;
   CI also curls the real binary.
 
+## Deploying
+
+`Dockerfile` builds the whole site as one image (the WASM, the client build and the server
+binary, in three stages); `compose.yaml` runs that image against a Postgres locally
+(`docker compose up --build`, http://localhost:8080); `fly.toml` and
+`.github/workflows/deploy.yml` deploy it, the workflow staying inert until the repo has a
+`FLY_APP` variable. `docs/deploy.md` is the runbook — read it before changing any of that.
+Two constraints there are load-bearing: **one instance only** (a game in progress lives in
+that process's memory, written through to Postgres and reloaded on access, so two processes
+would each hold their own copy), and nothing in front may strip COOP/COEP or the
+multi-threaded engine silently stops running. Setting `CHESS_E2E_URL` points the Playwright
+suite at a running deployment instead of one it starts itself; the tests needing
+`--fake-oauth` or `--fake-coach` are excluded from that, since a deployment has neither.
+
 ## Working on the UI
 
 **Read the `svelte-ui` skill before adding or editing anything in `web/`.** The short version:

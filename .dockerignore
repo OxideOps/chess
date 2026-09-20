@@ -1,0 +1,18 @@
+# Everything the image doesn't need. Keeping this tight matters: the build
+# context is sent to the daemon before anything runs.
+.git
+.github
+.claude
+target
+**/node_modules
+web/build
+web/.svelte-kit
+web/src/lib/wasm
+web/static/engine
+web/test-results
+web/playwright-report
+docs
+*.md
+!crates/**/*.md
+.env
+.env.*

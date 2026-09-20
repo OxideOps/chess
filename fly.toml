@@ -1,0 +1,51 @@
+# Fly.io deployment. `fly deploy` builds the Dockerfile and runs it.
+#
+# Secrets are NOT here — DATABASE_URL and the Google client secret are set
+# with `fly secrets set`. See docs/deploy.md for the whole runbook.
+
+app = "chess"
+primary_region = "iad"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # A live game is held in the machine's memory (see docs/deploy.md), so the
+  # machine stays up: stopping it would drop games and open sockets.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  # One machine, for the same reason. Two would each hold their own copy of
+  # a game and neither would see the other's moves.
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 400
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[env]
+  # Behind Fly's proxy: https outside, so the session cookie is Secure, and
+  # the client's address comes from X-Forwarded-For (the rate limits are per
+  # address, so this must only be on behind a proxy that sets it).
+  CHESS_SECURE_COOKIES = "1"
+  CHESS_TRUST_PROXY = "1"
+  # Both of these must match the real URL, or OAuth redirects and game
+  # sockets break. Change them together with the app name or a domain.
+  CHESS_PUBLIC_URL = "https://chess.fly.dev"
+  CHESS_ALLOWED_ORIGINS = "https://chess.fly.dev"
+  # Sign in with Lichess needs no registration or secret: any name will do,
+  # and it is shown to the user on the Lichess consent screen.
+  CHESS_LICHESS_CLIENT_ID = "chess.fly.dev"
+  RUST_LOG = "info"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

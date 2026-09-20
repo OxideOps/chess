@@ -116,6 +116,25 @@ Early scaffolding. What works today:
 
 Open work is tracked in [GitHub issues](https://github.com/OxideOps/chess/issues).
 
+## Deploying
+
+The whole site is one container: the Rust server with the client build baked in. Run that
+container here, exactly as a host would, with
+
+```sh
+docker compose up --build        # http://localhost:8080
+```
+
+[`docs/deploy.md`](docs/deploy.md) is the runbook: the first deploy, the secrets and the OAuth
+client, importing the real puzzle database, checking a deploy, rolling a bad one back, and
+backups. Two things there are easy to get wrong and quiet when they are: the site must run as
+**one instance** (a game in progress lives in that process's memory), and whatever sits in
+front of it must not strip the COOP/COEP headers, or every visitor silently drops to the
+single-threaded engine.
+
+Merging to main deploys, once the repository has the `FLY_APP` variable and `FLY_API_TOKEN`
+secret; until then the workflow does nothing.
+
 ## Development
 
 Requirements:
@@ -198,12 +217,16 @@ types, via ts-rs); CI fails if the committed files are stale.
 crates/
   chess-core/       rules, Game (history + navigation), PGN, UCI parsing, client/server protocol — no UI, no I/O
   chess-core-wasm/  wasm-bindgen wrapper around chess-core for web/ (built by `pnpm build:wasm`)
-  server/           axum binary: serves web/build today, will own games (roadmap 3)
+  server/           axum binary: serves web/build, owns games, accounts, ratings, puzzles, the coach
 web/                SvelteKit client (pnpm; static SPA, prerendered shells)
   src/lib/chess/    WASM loader and the reactive GameStore
   src/lib/engine/   Stockfish worker and the Analyser store
   src/lib/generated/  TypeScript types generated from Rust (ts-rs)
   static/engine/    Stockfish.js build loaded as a Web Worker (not linked into the app)
+Dockerfile          the whole site as one image (server + client build)
+compose.yaml        that image plus a Postgres, for running the deployment locally
+fly.toml            the deployment's configuration
+docs/deploy.md      how to deploy it, and what to check afterwards
 ```
 
 ## Licenses
