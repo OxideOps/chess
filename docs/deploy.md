@@ -55,11 +55,16 @@ and the away countdown gives a disconnected player time to come back.
 
 Everything below is done once, by hand, by someone with the accounts.
 
-1. **Create the app and its database.** `fly launch --no-deploy` (it will
-   read `fly.toml`), then create a Postgres and attach it, which sets
-   `DATABASE_URL` as a secret. Check what the provider currently offers for
-   managed Postgres and what it costs before choosing — that choice is also
-   the backup story, below.
+1. **Create the app and its database.** `fly apps create <name>`, then a
+   Postgres, attached to the app (which sets `DATABASE_URL` as a secret).
+
+   **The database is the whole bill.** Fly's *managed* Postgres (`fly mpg
+   create`) starts at $38/month on its cheapest plan; its *unmanaged* one
+   (`fly postgres create --vm-size shared-cpu-1x --volume-size 1
+   --initial-cluster-size 1`) is a 256 MB machine and a 1 GB volume, which
+   is small change or free depending on the organization's allowance. What
+   is deployed today is the unmanaged one — see **Backups**, because that
+   choice is also the backup story.
 2. **Set the name and URL in one place.** If the app is not `chess`, change
    `app`, `CHESS_PUBLIC_URL`, `CHESS_ALLOWED_ORIGINS` and
    `CHESS_LICHESS_CLIENT_ID` in `fly.toml` together. `CHESS_PUBLIC_URL` is
@@ -125,11 +130,23 @@ not). If a migration is the problem, fix forward with another migration.
 
 ## Backups
 
-Accounts, games and ratings are real data the moment someone else plays.
-Whatever the database provider offers, turn it on, and **restore it once into
-a scratch database** — a backup nobody has restored is not a backup. Write
-down here what was set up and when it was last tested, so the next person
-doesn't have to guess.
+**There are none right now.** The deployment uses Fly's unmanaged Postgres,
+which Fly neither supports nor backs up: recovery is the operator's job.
+That is a deliberate trade for a site nobody depends on yet, and it stops
+being acceptable the moment someone else's games and rating live in there.
+
+Before that day, either move to a managed Postgres (`fly mpg create`, then
+attach it and `fly secrets unset DATABASE_URL` from the old one — the app
+needs no change, only the secret), or take dumps on a schedule:
+
+```sh
+fly proxy 5432 -a chess-pg &
+pg_dump "postgres://…@localhost:5432/chess_oxideops" > chess-$(date +%F).sql
+```
+
+Either way, **restore it once into a scratch database** — a backup nobody
+has restored is not a backup. Write down here what was set up and when it
+was last tested, so the next person doesn't have to guess.
 
 ## Secrets
 
@@ -157,3 +174,15 @@ that runs a container and gives it a Postgres works; it needs to:
 
 The image listens on `CHESS_BIND` (`0.0.0.0:8080` by default) and serves the
 client from `CHESS_STATIC_DIR` (`/app/web/build`).
+
+Note that booleans are passed to the binary as `true`/`false`; `1` is
+refused (`invalid value '1' for '--secure-cookies'`) and the container will
+crash-loop on start.
+
+## What it needs to run
+
+One 256 MB machine is enough, which is what is deployed: the engine runs in
+the visitor's browser, so this process only validates moves, keeps clocks
+and relays messages between sockets. Idle WebSocket connections are cheap.
+If it ever runs out of memory, `fly scale memory 512` is the first move —
+but check the logs for an OOM first rather than assuming.
