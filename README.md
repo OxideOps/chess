@@ -77,7 +77,8 @@ Early scaffolding. What works today:
 - `server` + `web`: sign in with Lichess or Google. `CHESS_LICHESS_CLIENT_ID=<any name>`
   turns on Lichess (a public client: PKCE, no secret, no registration);
   `CHESS_GOOGLE_CLIENT_ID` + `CHESS_GOOGLE_CLIENT_SECRET` turn on Google (register
-  `<public url>/api/auth/google/callback` in the Cloud console); `CHESS_PUBLIC_URL` is where
+  `<public url>/api/auth/google/callback` in the Cloud console — `docs/deploy.md` has the
+  whole click-through); `CHESS_PUBLIC_URL` is where
   browsers reach the server (defaults to the request's host). Provider accounts become users
   named after them (a suffix if the name is taken), a signed-in guest is upgraded in place, a
   signed-in account gets the provider linked. `--fake-oauth` adds a built-in provider that
