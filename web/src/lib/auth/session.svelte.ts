@@ -20,8 +20,6 @@ export class Session {
 	/** `null` until `load()` has run, and when there is no session. */
 	user: User | null = $state(null);
 	readonly #fetch: FetchLike;
-	/** The in-flight `load()`, so `ensure()` can wait for it. */
-	#loading: Promise<void> | null = null;
 
 	constructor(fetchImpl?: FetchLike) {
 		this.#fetch = fetchImpl ?? ((input, init) => fetch(input, init));
@@ -39,28 +37,17 @@ export class Session {
 	}
 
 	/** Find out who the cookie belongs to. Never throws: no server, no session. */
-	load(): Promise<void> {
-		this.#loading = (async () => {
-			try {
-				const response = await this.#fetch('/api/me');
-				this.user = response.ok ? ((await response.json()) as User) : null;
-			} catch {
-				this.user = null;
-			}
-		})();
-		return this.#loading;
+	async load(): Promise<void> {
+		try {
+			const response = await this.#fetch('/api/me');
+			this.user = response.ok ? ((await response.json()) as User) : null;
+		} catch {
+			this.user = null;
+		}
 	}
 
-	/**
-	 * The current user, creating a guest if there is nobody yet.
-	 *
-	 * Waits for the first `load()` before deciding. Without that, a click
-	 * in the moment between the page appearing and `GET /api/me` answering
-	 * would make a guest and *replace the signed-in session with it* —
-	 * logging someone out by being quick.
-	 */
+	/** The current user, creating a guest if there is nobody yet. */
 	async ensure(): Promise<User> {
-		if (this.#loading !== null) await this.#loading;
 		return this.user ?? this.#post('/api/auth/guest');
 	}
 

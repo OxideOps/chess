@@ -10,7 +10,6 @@ pub mod coach;
 pub mod db;
 pub mod games;
 pub mod limit;
-pub mod lobby;
 pub mod oauth;
 pub mod origin;
 pub mod players;
@@ -70,9 +69,6 @@ pub struct AppState {
     pub games: games::Games,
     /// `None` when running without a database: no accounts.
     pub auth: Option<auth::Auth>,
-    /// The seek list. `None` without a database, since playing a stranger
-    /// needs at least a guest session to sit in a seat.
-    pub lobby: Option<lobby::Lobby>,
     pub config: Arc<Config>,
     pub coach: Option<coach::Coach>,
 }
@@ -83,7 +79,6 @@ impl AppState {
         AppState {
             games: games::Games::default(),
             auth: None,
-            lobby: None,
             config: Arc::default(),
             coach: None,
         }
@@ -91,11 +86,9 @@ impl AppState {
 
     /// Games and accounts on a database.
     pub fn with_db(db: db::Db, config: Config) -> AppState {
-        let games = games::Games::with_db(db.clone())
-            .abandon_after(config.abandon_after.unwrap_or(games::DEFAULT_ABANDON_AFTER));
         AppState {
-            lobby: Some(lobby::Lobby::new(games.clone())),
-            games,
+            games: games::Games::with_db(db.clone())
+                .abandon_after(config.abandon_after.unwrap_or(games::DEFAULT_ABANDON_AFTER)),
             auth: Some(auth::Auth::new(db, config.secure_cookies)),
             coach: config.coach.clone().map(coach::Coach::new),
             config: Arc::new(config),
@@ -137,7 +130,6 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .merge(games::router())
-        .merge(lobby::router())
         .merge(auth::router())
         .merge(oauth::router())
         .merge(players::router())

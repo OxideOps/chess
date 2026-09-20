@@ -54,13 +54,6 @@ pub fn router() -> Router<AppState> {
         .route("/api/me/games", get(my_games))
 }
 
-/// A fair coin, for drawing colours.
-fn coin_flip() -> bool {
-    let mut byte = [0u8; 1];
-    getrandom::fill(&mut byte).expect("the system random source works");
-    byte[0] & 1 == 1
-}
-
 /// Who holds a seat.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Seat {
@@ -197,30 +190,21 @@ impl Games {
 
     /// A seat for `user`, with their rating in `category` if they have an account.
     async fn seat(&self, user: &User, category: Category) -> Result<Seat, sqlx::Error> {
+        let rating = match (&self.db, user.is_guest) {
+            (Some(db), false) => {
+                let rating = db.rating(&user.id, category).await?;
+                Some(PlayerRating {
+                    value: rating.shown(),
+                    provisional: rating.provisional(),
+                })
+            }
+            _ => None,
+        };
         Ok(Seat {
             user_id: user.id.clone(),
             username: user.username.clone(),
-            rating: self.rating_for(user, category).await?,
+            rating,
         })
-    }
-
-    /// A user's rating in `category`, as it is shown beside their name.
-    /// `None` for guests, who don't have one. The lobby shows it on a seek.
-    pub async fn rating_for(
-        &self,
-        user: &User,
-        category: Category,
-    ) -> Result<Option<PlayerRating>, sqlx::Error> {
-        match (&self.db, user.is_guest) {
-            (Some(db), false) => {
-                let rating = db.rating(&user.id, category).await?;
-                Ok(Some(PlayerRating {
-                    value: rating.shown(),
-                    provisional: rating.provisional(),
-                }))
-            }
-            _ => Ok(None),
-        }
     }
 
     /// Create a game with `white` in the White seat.
@@ -247,44 +231,6 @@ impl Games {
         }
         self.insert(&id, seats, room, rated, None);
         Ok(CreatedGame { id })
-    }
-
-    /// Create a game between two players who have already agreed to play,
-    /// as the lobby's seeks do. Both seats are filled at once and the
-    /// colours are drawn, rather than the creator always holding White.
-    /// Returns the game's id and the colour `a` was given.
-    pub async fn create_between(
-        &self,
-        a: &User,
-        b: &User,
-        time_control: TimeControl,
-        rated: bool,
-    ) -> Result<(String, Color), CreateError> {
-        if rated && (a.is_guest || b.is_guest) {
-            return Err(CreateError::NeedsAccount);
-        }
-        let id = uuid::Uuid::new_v4().to_string();
-        let room = Room::new(time_control);
-        let category = room.category();
-        let a_seat = self.seat(a, category).await.map_err(CreateError::Db)?;
-        let b_seat = self.seat(b, category).await.map_err(CreateError::Db)?;
-        let a_color = if coin_flip() {
-            Color::White
-        } else {
-            Color::Black
-        };
-        let seats = if a_color.is_white() {
-            [Some(a_seat), Some(b_seat)]
-        } else {
-            [Some(b_seat), Some(a_seat)]
-        };
-        if let Some(db) = &self.db {
-            db.insert(&id, &seats, time_control, rated)
-                .await
-                .map_err(CreateError::Db)?;
-        }
-        self.insert(&id, seats, room, rated, None);
-        Ok((id, a_color))
     }
 
     /// Take the open Black seat.

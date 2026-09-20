@@ -1,57 +1,19 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { TIME_CONTROLS } from '$lib/online/clock';
-	import { Lobby } from '$lib/online/lobby.svelte';
-	import { CATEGORY_NAMES, formatRating } from '$lib/online/ratings';
 	import { session } from '$lib/auth/session.svelte';
 	import { withNext } from '$lib/auth/next';
-	import type { SeekInfo } from '$lib/generated/SeekInfo';
 
-	// Two ways to get a game: take someone's seek (or post your own and wait),
-	// or make a private game and send the link to a friend.
+	// Create a game on the server and go to it as White; the page then shows
+	// the link to send to the opponent. A guest session is started if needed.
 	let selected = $state(2); // 5+0
 	// Rated games need an account; offer them to those who have one.
 	let rated = $state(session.registered);
 	let error: string | null = $state(null);
 	let busy = $state(false);
 
-	const lobby = new Lobby({
-		onGame: ({ id }) => goto(resolve('/game/[id]', { id }))
-	});
-	onDestroy(() => lobby.dispose());
-
-	/**
-	 * A seek needs a seat to sit in, so make a guest first if need be. The
-	 * lobby socket said who we were when it connected, so a brand new guest
-	 * needs it opened again before the server will take our word for it.
-	 */
-	async function withSession(act: () => void) {
-		error = null;
-		try {
-			const knownAlready = session.user !== null;
-			await session.ensure();
-			if (!knownAlready) lobby.reauthenticate();
-			act();
-		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
-		}
-	}
-
-	function postSeek() {
-		const tc = TIME_CONTROLS[selected];
-		const wanted = rated && session.registered;
-		withSession(() => lobby.post(tc.initialMs, tc.incrementMs, wanted));
-	}
-
-	function timeControlOf(seek: SeekInfo): string {
-		const minutes = seek.initial_ms / 60_000;
-		return `${minutes % 1 === 0 ? minutes : minutes.toFixed(1)}+${seek.increment_ms / 1000}`;
-	}
-
-	/** Create a game to send a link for: the old way, still here. */
-	async function createPrivate() {
+	async function create() {
 		busy = true;
 		error = null;
 		const tc = TIME_CONTROLS[selected];
@@ -84,81 +46,32 @@
 
 <div class="page-header">
 	<h1>Play online</h1>
-	<p>Take a game someone is offering, or offer one and wait for a taker.</p>
+	<p>Create a game, then send the link to whoever you want to play. You play White.</p>
 </div>
 
-<section class="seeks">
-	<h2>Open games</h2>
-	{#if lobby.others.length === 0}
-		<p class="empty" data-testid="no-seeks">
-			{lobby.state === 'open'
-				? 'Nobody is waiting for a game right now. Offer one below and you will be sent to the board as soon as someone takes it.'
-				: 'Connecting to the lobby…'}
-		</p>
-	{:else}
-		<ul>
-			{#each lobby.others as seek (seek.id)}
-				<li>
-					<button
-						type="button"
-						class="seek"
-						data-testid="seek"
-						disabled={lobby.busy}
-						onclick={() => withSession(() => lobby.accept(seek.id))}
-					>
-						<span class="who">{seek.username ?? 'Guest'}</span>
-						<span class="rating notation">{formatRating(seek.rating) ?? '—'}</span>
-						<span class="time notation">{timeControlOf(seek)}</span>
-						<span class="kind"
-							>{seek.rated ? 'Rated' : 'Casual'} · {CATEGORY_NAMES[seek.category]}</span
-						>
-						<span class="go">Play</span>
-					</button>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</section>
-
-<section class="offer">
-	<h2>Offer a game</h2>
+<section class="lobby">
 	<form
 		onsubmit={(event) => {
 			event.preventDefault();
-			postSeek();
+			create();
 		}}
 	>
 		<label>
 			Time control
-			<select bind:value={selected} disabled={lobby.mine !== null}>
+			<select bind:value={selected}>
 				{#each TIME_CONTROLS as tc, i (tc.label)}
 					<option value={i}>{tc.label}</option>
 				{/each}
 			</select>
 		</label>
 		<label class="check" class:disabled={!session.registered}>
-			<input
-				type="checkbox"
-				bind:checked={rated}
-				disabled={!session.registered || lobby.mine !== null}
-			/>
+			<input type="checkbox" bind:checked={rated} disabled={!session.registered} />
 			Rated
 		</label>
-		{#if lobby.mine === null}
-			<button type="submit" class="btn primary" disabled={lobby.busy} data-testid="post-seek">
-				Offer a game
-			</button>
-		{:else}
-			<button type="button" class="btn" data-testid="cancel-seek" onclick={() => lobby.cancel()}>
-				Cancel
-			</button>
-		{/if}
+		<button type="submit" class="btn primary" disabled={busy}
+			>{busy ? 'Creating…' : 'Create game'}</button
+		>
 	</form>
-	{#if lobby.mine !== null}
-		<p class="waiting" role="status" data-testid="waiting">
-			Waiting for someone to take your game. Leave this page open — the offer goes when you do.
-		</p>
-	{/if}
 	{#if !session.registered}
 		<p class="hint">
 			Rated games need an account: <a href={withNext(resolve('/login'), resolve('/online'))}
@@ -167,107 +80,17 @@
 			or <a href={withNext(resolve('/signup'), resolve('/online'))}>sign up</a>.
 		</p>
 	{/if}
-	<p class="hint">
-		Playing someone you know? <button
-			type="button"
-			class="link"
-			onclick={createPrivate}
-			disabled={busy}>{busy ? 'Creating…' : 'Create a private game'}</button
-		> and send them the link.
-	</p>
-	{#if lobby.rejection}
-		<p class="error" role="alert">{lobby.rejection}</p>
-	{/if}
 	{#if error}
-		<p class="error" role="alert">Could not start the game: {error}</p>
+		<p class="error" role="alert">Could not create the game: {error}</p>
 	{/if}
 </section>
 
 <style>
-	.seeks,
-	.offer {
-		max-width: var(--measure);
-	}
-
-	.offer {
-		margin-top: 2rem;
-	}
-
-	h2 {
-		font-size: var(--type-lg);
-		margin-bottom: 0.5rem;
-	}
-
-	ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		border-top: 1px solid var(--panel-border);
-	}
-
-	li {
-		border-bottom: 1px solid var(--panel-border);
-	}
-
-	/* A row is one button: the whole thing is the target, on a phone too. */
-	.seek {
-		display: grid;
-		grid-template-columns: 1fr auto auto auto;
-		align-items: baseline;
-		gap: 0.15rem 0.75rem;
-		width: 100%;
-		min-height: var(--tap);
-		padding: 0.7rem 0.5rem;
-		border: none;
-		background: none;
-		color: var(--text);
-		font: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-
-	.seek:hover:not(:disabled) {
-		background: var(--panel);
-	}
-
-	.seek:disabled {
-		opacity: 0.5;
-		cursor: default;
-	}
-
-	.who {
-		font-weight: 600;
-	}
-
-	.rating,
-	.time {
-		color: var(--text-muted);
-		font-size: var(--type-sm);
-	}
-
-	.kind {
-		grid-column: 1 / 4;
-		color: var(--text-muted);
-		font-size: var(--type-sm);
-	}
-
-	/* "Play" sits on the right, across both rows of the entry. */
-	.go {
-		grid-column: 4;
-		grid-row: 1 / span 2;
-		align-self: center;
-		color: var(--accent);
-		font-weight: 600;
-	}
-
-	.empty {
-		margin: 0;
-		color: var(--text-muted);
-	}
-
-	.waiting {
-		margin: 0;
-		color: var(--accent);
+	.lobby {
+		max-width: 32rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
 
 	.check {
@@ -290,24 +113,8 @@
 		font-size: var(--type-sm);
 	}
 
-	.hint a,
-	.link {
+	.hint a {
 		color: var(--text);
-	}
-
-	/* A button that reads as part of the sentence it sits in. */
-	.link {
-		padding: 0;
-		border: none;
-		background: none;
-		font: inherit;
-		text-decoration: underline;
-		cursor: pointer;
-	}
-
-	.link:disabled {
-		opacity: 0.6;
-		cursor: default;
 	}
 
 	form {
@@ -315,7 +122,6 @@
 		gap: 0.75rem;
 		align-items: flex-end;
 		flex-wrap: wrap;
-		margin-bottom: 0.75rem;
 	}
 
 	label {

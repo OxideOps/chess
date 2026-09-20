@@ -11,7 +11,7 @@ test('a rated game between two accounts moves both ratings', async ({ browser })
 	await signUp(a, alice);
 	await a.goto('/online');
 	await expect(a.getByLabel('Rated')).toBeChecked();
-	await a.getByRole('button', { name: 'Create a private game' }).click();
+	await a.getByRole('button', { name: 'Create game' }).click();
 	await expect(a).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	await expect(a.getByTestId('game-kind')).toHaveText('Rated · Blitz');
 	await expect(a.getByLabel('White clock').getByTestId('rating')).toHaveText('1500?');
@@ -63,7 +63,7 @@ test('guests can only create casual games', async ({ page }) => {
 	await page.goto('/online');
 	await expect(page.getByLabel('Rated')).toBeDisabled();
 	await expect(page.getByText('Rated games need an account')).toBeVisible();
-	await page.getByRole('button', { name: 'Create a private game' }).click();
+	await page.getByRole('button', { name: 'Create game' }).click();
 	await expect(page.getByTestId('game-kind')).toHaveText('Casual · Blitz');
 	await page.goto('/players/nobody_here_xyz');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('No such player');
