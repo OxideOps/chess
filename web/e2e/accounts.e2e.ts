@@ -97,6 +97,22 @@ test('a guest who signs up keeps their games', async ({ page }) => {
 	);
 });
 
+// Every sign-in method the server is configured with gets a button on the
+// login page. Run against a deployment (CHESS_E2E_URL) this is the check
+// that a provider's credentials actually reached the server: no Google
+// client id, no Google button.
+test('the login page offers every sign-in provider the server has', async ({ page, request }) => {
+	const response = await request.get('/api/auth/providers');
+	expect(response.ok()).toBe(true);
+	const providers = (await response.json()) as { id: string; name: string }[];
+	await page.goto('/login');
+	for (const provider of providers) {
+		await expect(
+			page.getByRole('link', { name: `Continue with ${provider.name}` })
+		).toHaveAttribute('href', new RegExp(`^/api/auth/${provider.id}/start\\?`));
+	}
+});
+
 async function signUp(page: Page, username: string) {
 	await page.goto('/signup');
 	await page.getByLabel('Username').fill(username);

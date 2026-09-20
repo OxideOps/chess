@@ -180,6 +180,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::warn!("the fake OAuth provider is on: anyone can sign in as any name");
         oauth.push(server::oauth::Provider::fake());
     }
+    // Which sign-in methods are live, in the log, so a deploy can be checked
+    // without a browser. Only the provider names: no ids, no secrets.
+    let methods: Vec<&str> = std::iter::once("username and password")
+        .chain(oauth.iter().map(|p| p.name()))
+        .collect();
+    tracing::info!("sign-in: {}", methods.join(", "));
     let config = server::Config {
         secure_cookies: args.secure_cookies,
         trust_proxy: args.trust_proxy,
