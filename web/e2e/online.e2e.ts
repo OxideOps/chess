@@ -68,6 +68,9 @@ test('an opponent who leaves gets a countdown, and coming back cancels it', asyn
 	await expect(black.getByTestId('game-status')).toHaveText('Waiting for your opponent');
 	await sq(white, 'e2').click();
 	await sq(white, 'e4').click();
+	// Wait for the move to reach Black before replying: over a real network
+	// a click made before it arrives is not Black's turn yet, and does nothing.
+	await expect(black.locator('.move-list button.move')).toHaveText(['e4']);
 	await sq(black, 'e7').click();
 	await sq(black, 'e5').click();
 	await expect(white.getByTestId('game-status')).toHaveText('Your move');
