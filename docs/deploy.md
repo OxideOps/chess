@@ -151,8 +151,8 @@ that runs a container and gives it a Postgres works; it needs to:
 - pass WebSocket upgrades through to `/api/games/…`,
 - **not strip `Cross-Origin-Opener-Policy` or `Cross-Origin-Embedder-Policy`**,
   or the multi-threaded engine silently stops running,
-- set `X-Forwarded-For` (with `CHESS_TRUST_PROXY=1`), terminate TLS (with
-  `CHESS_SECURE_COOKIES=1`), and have `CHESS_PUBLIC_URL` and
+- set `X-Forwarded-For` (with `CHESS_TRUST_PROXY=true`), terminate TLS (with
+  `CHESS_SECURE_COOKIES=true`), and have `CHESS_PUBLIC_URL` and
   `CHESS_ALLOWED_ORIGINS` match the public URL.
 
 The image listens on `CHESS_BIND` (`0.0.0.0:8080` by default) and serves the

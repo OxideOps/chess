@@ -29,8 +29,8 @@ services:
       DATABASE_URL: postgres://chess:chess@db/chess
       CHESS_PUBLIC_URL: http://localhost:8080
       # http here, so no Secure cookie and no proxy in front: both differ
-      # from a real deployment, which sets CHESS_SECURE_COOKIES=1 and
-      # CHESS_TRUST_PROXY=1. See docs/deploy.md.
+      # from a real deployment, which sets CHESS_SECURE_COOKIES=true and
+      # CHESS_TRUST_PROXY=true. See docs/deploy.md.
       RUST_LOG: info
     depends_on:
       db:

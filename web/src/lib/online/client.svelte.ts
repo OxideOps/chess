@@ -269,8 +269,31 @@ export class OnlineGame {
 		}
 	}
 
+	/**
+	 * Start a new connection, which the server answers with a fresh `Sync`.
+	 *
+	 * The new socket is opened straight away rather than waiting for the old
+	 * one to finish closing: a close handshake through a proxy took about
+	 * five seconds in the deployed site, and this runs when you take a seat,
+	 * so a player who had just joined a game sat there as a spectator, unable
+	 * to move, until it completed.
+	 */
 	#resync(): void {
-		this.#socket?.close(); // onclose reconnects, and the server Syncs on connect
+		const old = this.#socket;
+		this.#socket = null;
+		if (old) {
+			// Its events are no longer ours: in particular its `onclose` must
+			// not start a second reconnection.
+			old.onopen = null;
+			old.onmessage = null;
+			old.onerror = null;
+			old.onclose = null;
+			old.close();
+		}
+		// Not connected again until the new socket is open; the status line
+		// says so rather than pretending nothing happened.
+		this.connection = 'reconnecting';
+		this.#connect();
 	}
 
 	#setClocks(clocks: Clocks): void {

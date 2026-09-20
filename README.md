@@ -43,8 +43,8 @@ Early scaffolding. What works today:
 - `server`: hardening. Logins are rate limited per username and per client address, signups
   and guest creation per address (429 with `Retry-After`); expired sessions and guests who
   never played are swept hourly; game sockets refuse cross-origin upgrades. Behind a reverse
-  proxy set `CHESS_TRUST_PROXY=1` (client addresses from `X-Forwarded-For`),
-  `CHESS_SECURE_COOKIES=1` over https, and `CHESS_ALLOWED_ORIGINS=https://your.host` if the
+  proxy set `CHESS_TRUST_PROXY=true` (client addresses from `X-Forwarded-For`),
+  `CHESS_SECURE_COOKIES=true` over https, and `CHESS_ALLOWED_ORIGINS=https://your.host` if the
   proxy rewrites `Host`.
 - `server` + `web`: ratings. Games are rated or casual (rated needs an account on both sides;
   aborted games never count). Glicko-2 per category (bullet, blitz, rapid, classical, by

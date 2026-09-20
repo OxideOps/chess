@@ -3,7 +3,7 @@
 # Secrets are NOT here — DATABASE_URL and the Google client secret are set
 # with `fly secrets set`. See docs/deploy.md for the whole runbook.
 
-app = "chess"
+app = "chess-oxideops"
 primary_region = "iad"
 
 [build]
@@ -34,15 +34,15 @@ primary_region = "iad"
   # Behind Fly's proxy: https outside, so the session cookie is Secure, and
   # the client's address comes from X-Forwarded-For (the rate limits are per
   # address, so this must only be on behind a proxy that sets it).
-  CHESS_SECURE_COOKIES = "1"
-  CHESS_TRUST_PROXY = "1"
+  CHESS_SECURE_COOKIES = "true"
+  CHESS_TRUST_PROXY = "true"
   # Both of these must match the real URL, or OAuth redirects and game
   # sockets break. Change them together with the app name or a domain.
-  CHESS_PUBLIC_URL = "https://chess.fly.dev"
-  CHESS_ALLOWED_ORIGINS = "https://chess.fly.dev"
+  CHESS_PUBLIC_URL = "https://chess-oxideops.fly.dev"
+  CHESS_ALLOWED_ORIGINS = "https://chess-oxideops.fly.dev"
   # Sign in with Lichess needs no registration or secret: any name will do,
   # and it is shown to the user on the Lichess consent screen.
-  CHESS_LICHESS_CLIENT_ID = "chess.fly.dev"
+  CHESS_LICHESS_CLIENT_ID = "chess-oxideops.fly.dev"
   RUST_LOG = "info"
 
 [[vm]]

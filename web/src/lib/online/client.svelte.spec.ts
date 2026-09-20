@@ -160,13 +160,17 @@ describe('OnlineGame', () => {
 		});
 		// A move two plies ahead means we missed one: drop and let the server resync.
 		socket().say({ type: 'move_played', ply: 2, uci: 'e7e5', clocks: clocks(60_000, 60_000) });
-		expect(socket().closed).toBe(true);
+		// The replacement is opened at once, rather than waiting for the old
+		// socket's close to come back: through a proxy that takes seconds.
+		expect(sockets[0].closed).toBe(true);
+		expect(sockets).toHaveLength(2);
 		expect(online.connection).toBe('reconnecting');
 		expect(online.game.view.plyCount).toBe(0);
 
+		socket().open();
+		expect(online.connection).toBe('open');
 		socket().say({ type: 'rejected', message: 'it is not your turn' });
 		expect(online.rejection).toBe('it is not your turn');
-		expect(sockets).toHaveLength(1); // the retry is on a timer
 		online.dispose();
 		expect(online.connection).toBe('closed');
 	});
