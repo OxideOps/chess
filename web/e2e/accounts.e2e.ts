@@ -16,7 +16,7 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 	// Accounts default to rated; this test is about a guest joining, which needs casual.
 	await expect(a.getByLabel('Rated')).toBeChecked();
 	await a.getByLabel('Rated').uncheck();
-	await a.getByRole('button', { name: 'Create game' }).click();
+	await a.getByRole('button', { name: 'Create a private game' }).click();
 	await expect(a).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	await expect(a.getByLabel('White clock')).toContainText(alice);
 	await expect(a.getByLabel('Black clock')).toContainText('Open seat');
@@ -84,7 +84,7 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 
 test('a guest who signs up keeps their games', async ({ page }) => {
 	await page.goto('/online');
-	await page.getByRole('button', { name: 'Create game' }).click();
+	await page.getByRole('button', { name: 'Create a private game' }).click();
 	await expect(page).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	await expect(page.getByRole('link', { name: 'Guest' })).toBeVisible();
 	await expect(page.getByLabel('White clock')).toContainText('Guest');

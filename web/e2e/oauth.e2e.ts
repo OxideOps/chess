@@ -6,7 +6,7 @@ test('continue with a provider from the login page and land back where you were'
 }) => {
 	const name = `eve_${Date.now().toString(36)}`;
 	await page.goto('/online');
-	await page.getByRole('button', { name: 'Create game' }).click();
+	await page.getByRole('button', { name: 'Create a private game' }).click();
 	await expect(page).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	const gameUrl = page.url();
 

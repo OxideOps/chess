@@ -5,7 +5,7 @@
 
 use std::time::Duration;
 
-use chess_core::protocol::{ClientMessage, ServerMessage};
+use chess_core::protocol::{ClientMessage, LobbyClientMessage, LobbyServerMessage, ServerMessage};
 use futures_util::{SinkExt as _, StreamExt as _};
 use server::{AppState, Config, db::Db, games::CreatedGame};
 use tokio::{
@@ -216,4 +216,76 @@ pub fn mv(uci: &str) -> ClientMessage {
     ClientMessage::Move {
         uci: uci.parse().unwrap(),
     }
+}
+
+/// Open the lobby socket. `session` is optional: anyone may watch the list.
+pub async fn connect_lobby(base: &str, session: Option<&str>) -> Socket {
+    let mut request = format!("ws://{base}/api/lobby/ws")
+        .into_client_request()
+        .unwrap();
+    if let Some(s) = session {
+        request
+            .headers_mut()
+            .insert("Cookie", format!("session={s}").parse().unwrap());
+    }
+    tokio_tungstenite::connect_async(request)
+        .await
+        .map(|(socket, _)| socket)
+        .unwrap()
+}
+
+pub async fn send_lobby(socket: &mut Socket, msg: &LobbyClientMessage) {
+    socket
+        .send(Message::Text(serde_json::to_string(msg).unwrap().into()))
+        .await
+        .unwrap();
+}
+
+pub async fn recv_lobby(socket: &mut Socket) -> LobbyServerMessage {
+    let msg = tokio::time::timeout(Duration::from_secs(5), socket.next())
+        .await
+        .expect("timed out waiting for a lobby message")
+        .expect("socket closed")
+        .unwrap();
+    match msg {
+        Message::Text(text) => serde_json::from_str(&text).unwrap(),
+        other => panic!("unexpected frame {other:?}"),
+    }
+}
+
+/// The next lobby message matching `want`, skipping others.
+pub async fn next_lobby(
+    socket: &mut Socket,
+    want: impl Fn(&LobbyServerMessage) -> bool,
+) -> LobbyServerMessage {
+    loop {
+        let msg = recv_lobby(socket).await;
+        if want(&msg) {
+            return msg;
+        }
+    }
+}
+
+/// The open seeks, as the next `Seeks` message lists them.
+pub async fn seeks(socket: &mut Socket) -> Vec<chess_core::protocol::SeekInfo> {
+    match next_lobby(socket, |m| matches!(m, LobbyServerMessage::Seeks { .. })).await {
+        LobbyServerMessage::Seeks { seeks } => seeks,
+        _ => unreachable!(),
+    }
+}
+
+/// A new account's session id.
+pub async fn signup(base: &str, name: &str) -> String {
+    let body = format!(r#"{{"username":"{name}","password":"correct horse"}}"#);
+    let r = http(base, "POST", "/api/auth/signup", None, &body).await;
+    assert_eq!(r.status, 201, "{}", r.body);
+    r.cookie.expect("signup gets a session cookie")
+}
+
+/// A name nothing else in the suite will collide with.
+pub fn unique(prefix: &str) -> String {
+    format!(
+        "{prefix}{}",
+        &uuid::Uuid::new_v4().simple().to_string()[..8]
+    )
 }

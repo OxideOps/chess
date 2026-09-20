@@ -91,4 +91,35 @@ describe('Session', () => {
 		expect(err).toBeInstanceOf(AuthError);
 		expect((err as AuthError).message).toBe('the server said 502');
 	});
+
+	it('does not make a guest while it is still finding out who we are', async () => {
+		// `GET /api/me` is slow; the user clicks something in the meantime.
+		let answer: (response: Response) => void = () => {};
+		const pending = new Promise<Response>((resolve) => (answer = resolve));
+		const calls: string[] = [];
+		const session = new Session((input) => {
+			calls.push(input);
+			if (input === '/api/me') return pending;
+			return Promise.resolve(
+				new Response(JSON.stringify({ id: 'g1', username: null, is_guest: true }), {
+					status: 200
+				})
+			);
+		});
+
+		const loading = session.load();
+		const ensuring = session.ensure();
+		answer(
+			new Response(JSON.stringify({ id: 'u1', username: 'dana', is_guest: false }), {
+				status: 200
+			})
+		);
+		await loading;
+		const user = await ensuring;
+
+		// The account that was already signed in, not a new guest over the top.
+		expect(user.username).toBe('dana');
+		expect(session.registered).toBe(true);
+		expect(calls).toEqual(['/api/me']);
+	});
 });
