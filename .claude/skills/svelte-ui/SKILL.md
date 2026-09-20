@@ -47,7 +47,14 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
 - `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle, plays the setup
   move and the replies, judges each move with `judgePuzzle` from the WASM, reports the first
   try; injectable fetch and delay for tests).
-- `src/lib/online/` — `client.svelte.ts` (`OnlineGame`: the server's game mirrored on the
+- `src/lib/online/` — `lobby.svelte.ts` (`Lobby`: the seek list over `/api/lobby/ws`, same
+  injectable-socket shape as `OnlineGame`. The server sends the whole list on every change,
+  so there is nothing to merge; `mine` is our own seek, `others` is what is worth clicking.
+  The socket *is* the seek, so `/online` holds it open and calls `dispose()` when the page
+  goes. A signed-out visitor's socket is anonymous: after `session.ensure()` makes a guest,
+  call `reauthenticate()` before acting, or the server still doesn't know who we are —
+  anything sent meanwhile is queued and goes out on the new socket),
+  `client.svelte.ts` (`OnlineGame`: the server's game mirrored on the
   client over the WebSocket; injectable socket and clock for tests), `clock.ts` (formatting,
   time controls), `invites.ts` (the game link), `listing.ts` (pure helpers for the my-games
   rows). Moves are applied locally first (same rules as the server) and sent; a `Rejected`

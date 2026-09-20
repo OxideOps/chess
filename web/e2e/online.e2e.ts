@@ -5,7 +5,7 @@ test('create a game, invite an opponent, play, resign', async ({ browser }) => {
 	const white = await browser.newPage();
 	await white.goto('/online');
 	await white.getByRole('combobox').selectOption({ label: '3+2 Blitz' });
-	await white.getByRole('button', { name: 'Create game' }).click();
+	await white.getByRole('button', { name: 'Create a private game' }).click();
 	await expect(white).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	await expect(white.getByTestId('game-status')).toHaveText('Waiting for an opponent to join');
 	const invite = await white.getByTestId('invite-link').inputValue();
@@ -57,7 +57,7 @@ test('create a game, invite an opponent, play, resign', async ({ browser }) => {
 test('an opponent who leaves gets a countdown, and coming back cancels it', async ({ browser }) => {
 	const white = await (await browser.newContext()).newPage();
 	await white.goto('/online');
-	await white.getByRole('button', { name: 'Create game' }).click();
+	await white.getByRole('button', { name: 'Create a private game' }).click();
 	await expect(white).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	const invite = await white.getByTestId('invite-link').inputValue();
 
@@ -88,4 +88,94 @@ test('an opponent who leaves gets a countdown, and coming back cancels it', asyn
 
 function sq(page: Page, name: string) {
 	return page.locator(`[data-square="${name}"]`);
+}
+
+// The lobby: two strangers meet without anyone sending a link.
+//
+// The seek list is global and these tests share a server with everything
+// else running at the same time, so they never count the whole list —
+// each poster signs up under a name nothing else uses, and the assertions
+// are about that person's row.
+test('post a seek, someone takes it, and both land in the same game', async ({ browser }) => {
+	const name = seekerName('sk');
+	const poster = await (await browser.newContext()).newPage();
+	const taker = await (await browser.newContext()).newPage();
+	await signUp(poster, name);
+	await poster.goto('/online');
+	await taker.goto('/online');
+
+	await poster.getByRole('combobox').selectOption({ label: '3+2 Blitz' });
+	await poster.getByLabel('Rated').uncheck();
+	await poster.getByTestId('post-seek').click();
+	await expect(poster.getByTestId('waiting')).toBeVisible();
+	// Posting doesn't create a game: the poster is still on the lobby page.
+	await expect(poster).toHaveURL(/\/online$/);
+
+	// The other browser sees it appear, without reloading.
+	const seek = taker.getByTestId('seek').filter({ hasText: name });
+	await expect(seek).toHaveCount(1);
+	await expect(seek).toContainText('3+2');
+	await expect(seek).toContainText('Casual · Blitz');
+	// Our own seek is not offered back to us.
+	await expect(poster.getByTestId('seek').filter({ hasText: name })).toHaveCount(0);
+
+	await seek.click();
+	// Both are sent to the same board, on opposite sides.
+	await expect(taker).toHaveURL(/\/game\/[0-9a-f-]+$/);
+	await expect(poster).toHaveURL(/\/game\/[0-9a-f-]+$/);
+	expect(poster.url()).toBe(taker.url());
+	// Nobody is waiting for anyone to join: both seats were filled at once.
+	await expect(poster.getByTestId('invite-link')).toHaveCount(0);
+	await expect(poster.getByLabel('White clock')).toContainText(/\w/);
+
+	// Colours were drawn, so wait to hear which of them is White before
+	// deciding who plays the first move.
+	const status = poster.getByTestId('game-status');
+	await expect(status).toHaveText(/Your move|Waiting for your opponent/);
+	const postersTurn = (await status.textContent())?.trim() === 'Your move';
+	const mover = postersTurn ? poster : taker;
+	const other = postersTurn ? taker : poster;
+	await sq(mover, 'e2').click();
+	await sq(mover, 'e4').click();
+	await expect(other.locator('.move-list button.move')).toHaveText(['e4']);
+});
+
+test('a seek disappears when the person offering it leaves', async ({ browser }) => {
+	const name = seekerName('lv');
+	const poster = await (await browser.newContext()).newPage();
+	const watcher = await (await browser.newContext()).newPage();
+	await signUp(poster, name);
+	await poster.goto('/online');
+	await watcher.goto('/online');
+	const theirs = watcher.getByTestId('seek').filter({ hasText: name });
+
+	await poster.getByTestId('post-seek').click();
+	await expect(theirs).toHaveCount(1);
+
+	// Cancelling withdraws it...
+	await poster.getByTestId('cancel-seek').click();
+	await expect(theirs).toHaveCount(0);
+
+	// ...and so does closing the tab, so nobody is left clicking a ghost.
+	await poster.getByTestId('post-seek').click();
+	await expect(theirs).toHaveCount(1);
+	await poster.close();
+	await expect(theirs).toHaveCount(0);
+});
+
+async function signUp(page: Page, username: string) {
+	await page.goto('/signup');
+	await page.getByLabel('Username').fill(username);
+	await page.getByLabel('Password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Sign up' }).click();
+	await expect(page).toHaveURL('/');
+}
+
+/** A unique name that fits the 3-20 character limit on usernames. */
+function seekerName(prefix: string): string {
+	const stamp = Date.now().toString(36);
+	const salt = Math.floor(Math.random() * 1e4)
+		.toString()
+		.padStart(4, '0');
+	return `${prefix}_${stamp}${salt}`;
 }

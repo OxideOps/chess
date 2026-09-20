@@ -57,7 +57,15 @@ Successor to the archived `OxideOps/chess-v1`.
   see `origin.rs`), `auth.rs` users + sessions (guests, argon2id passwords, DB sessions in an
   `HttpOnly` cookie; `CurrentUser`/`RequireUser`/`ClientIp` extractors; rate limits from
   `limit.rs` on login/signup/guest; an hourly sweep of expired sessions and idle guests),
-  `oauth.rs` sign-in with Lichess/Google (`/api/auth/{provider}/start` → provider →
+  `lobby.rs` the seek list
+  (`/api/lobby/ws`: a socket that sends every open seek on connect and again whenever the
+  list changes; one seek per connection, posted, cancelled or accepted by the messages in
+  `protocol`). A seek is an offer, not a game: the game is created — with both seats filled
+  and the colours drawn — only when someone accepts, and the accept removes the seek under
+  the lock first, so two people clicking at once cannot both get it. Seeks live in memory and
+  **die with the connection that posted them**, deliberately: a seek whose author has closed
+  their laptop is one nobody can play. Rated seeks refuse guests, as rated games do
+  elsewhere), `oauth.rs` sign-in with Lichess/Google (`/api/auth/{provider}/start` → provider →
   `/callback`; `state` + PKCE verifier in a 10-minute cookie; `identities(provider, subject)`
   → `users`; a built-in fake provider behind `--fake-oauth` for dev and tests, in-process,
   no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,

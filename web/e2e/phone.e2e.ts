@@ -62,7 +62,7 @@ test('the nav fits and the game page keeps both clocks with the board', async ({
 		expect(box!.x + box!.width, name).toBeLessThanOrEqual(width);
 	}
 
-	await page.getByRole('button', { name: 'Create game' }).tap();
+	await page.getByRole('button', { name: 'Create a private game' }).tap();
 	await expect(page).toHaveURL(/\/game\/[0-9a-f-]+$/);
 	await fitsTheScreen(page);
 	const board = (await page.locator('.board').boundingBox())!;
