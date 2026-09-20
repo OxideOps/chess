@@ -242,4 +242,35 @@ describe('OnlineGame', () => {
 		expect(online.ratingDiffs).toEqual({ white: 170, black: -35 });
 		online.dispose();
 	});
+
+	it('holds a move made while the socket is reopening, and sends it when it is', () => {
+		const { online, sockets, socket } = setup();
+		socket().open();
+		socket().say({
+			type: 'sync',
+			away: null,
+			rated: false,
+			category: 'blitz',
+			rating_diffs: null,
+			start_fen: START,
+			moves: [],
+			clocks: clocks(60_000, 60_000),
+			your_color: 'white',
+			ended: null,
+			draw_offer: null,
+			players: { white: { username: null, rating: null }, black: { username: null, rating: null } }
+		});
+		socket().take();
+
+		// A gap drops the socket and opens another; the player moves before it
+		// is up. Sending on a connecting socket throws, so it waits.
+		socket().say({ type: 'move_played', ply: 2, uci: 'e7e5', clocks: clocks(60_000, 60_000) });
+		expect(online.connection).toBe('reconnecting');
+		expect(online.tryMove('e2', 'e4')).toBe('ok');
+		expect(socket().take()).toEqual([]);
+
+		socket().open();
+		expect(socket().take()).toEqual([{ type: 'move', uci: 'e2e4' }]);
+		expect(sockets).toHaveLength(2);
+	});
 });

@@ -74,16 +74,21 @@ test('an opponent who leaves gets a countdown, and coming back cancels it', asyn
 	await expect(white.getByTestId('away')).toHaveCount(0);
 
 	// Black closes the tab: after a moment White is told, with the time left.
+	// Patient on purpose: a proxy in front of the server can take seconds to
+	// report a closed socket, and the client waits `AWAY_NOTICE_DELAY_MS`
+	// after that before saying anything. Against a deployment this is the
+	// difference between passing and failing.
 	await black.close();
 	await expect(white.getByTestId('away')).toHaveText(
-		/^Your opponent left\. Unless they come back, you win in \d+ s\.$/
+		/^Your opponent left\. Unless they come back, you win in \d+ s\.$/,
+		{ timeout: 30_000 }
 	);
 
 	// Black opens the game again (same browser, same session): the notice goes.
 	black = await blackContext.newPage();
 	await black.goto(invite);
 	await expect(black.getByTestId('game-status')).toHaveText('Waiting for your opponent');
-	await expect(white.getByTestId('away')).toHaveCount(0);
+	await expect(white.getByTestId('away')).toHaveCount(0, { timeout: 30_000 });
 });
 
 function sq(page: Page, name: string) {

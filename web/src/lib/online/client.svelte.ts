@@ -72,6 +72,8 @@ export class OnlineGame {
 	readonly #createSocket: (url: string) => SocketLike;
 	readonly #now: () => number;
 	#socket: SocketLike | null = null;
+	/** Messages made while the socket was down, sent when it comes back. */
+	#queued: ClientMessage[] = [];
 	#closedByUs = false;
 	#retryMs = 1000;
 	#ticker: ReturnType<typeof setInterval> | null = null;
@@ -175,6 +177,8 @@ export class OnlineGame {
 		socket.onopen = () => {
 			this.connection = 'open';
 			this.#retryMs = 1000;
+			const queued = this.#queued.splice(0);
+			for (const msg of queued) socket.send(JSON.stringify(msg));
 		};
 		socket.onmessage = (event) => {
 			if (typeof event.data !== 'string') return;
@@ -194,8 +198,20 @@ export class OnlineGame {
 		};
 	}
 
+	/**
+	 * Send, or hold on to it until the socket is open.
+	 *
+	 * A socket that is still connecting throws on `send`, which would apply a
+	 * move on this board and never tell the server about it — the two would
+	 * silently disagree from then on. There is always such a window just
+	 * after taking a seat, since that reconnects.
+	 */
 	#send(msg: ClientMessage): void {
-		this.#socket?.send(JSON.stringify(msg));
+		if (this.#socket === null || this.connection !== 'open') {
+			this.#queued.push(msg);
+			return;
+		}
+		this.#socket.send(JSON.stringify(msg));
 	}
 
 	#handle(msg: ServerMessage): void {
