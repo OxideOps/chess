@@ -1,10 +1,18 @@
 name: Deploy
 
-# Deploys main to Fly after CI passes. Inert until the repository has a
-# FLY_APP variable and a FLY_API_TOKEN secret, so a fork or a fresh clone
-# doesn't get a red run on every push. See docs/deploy.md.
+# Deploys main to Fly after CI passes — really after, not alongside: this
+# runs when the CI workflow *finishes* for a commit on main, and only if it
+# finished green. Triggering on the push instead (as this did until
+# 2026-09-21) races CI, and the site can be live on a commit whose tests are
+# still running, or have already failed.
+#
+# Inert until the repository has a FLY_APP variable and a FLY_API_TOKEN
+# secret, so a fork or a fresh clone doesn't get a red run on every push.
+# See docs/deploy.md.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -17,12 +25,21 @@ jobs:
   deploy:
     name: fly deploy
     runs-on: ubuntu-latest
-    if: vars.FLY_APP != ''
+    # A hand-started run has no CI run behind it and deploys whatever is
+    # asked for; a triggered one only follows a green CI.
+    if: >-
+      vars.FLY_APP != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
     environment:
       name: production
       url: ${{ vars.CHESS_PUBLIC_URL }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The commit CI actually checked, not whatever main has become
+          # since. `flyctl deploy` builds from this working directory.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: superfly/flyctl-actions/setup-flyctl@master
       # The image is built on Fly's builder, from the Dockerfile in this repo.
       # Migrations run when the new machine starts.
