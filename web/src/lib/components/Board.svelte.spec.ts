@@ -64,6 +64,25 @@ async function drop(at: string | { x: number; y: number }, kind: PointerKind = '
 	await tick();
 }
 
+/** Press and hold on `square`, sending nothing else. */
+async function press(square: string, kind: PointerKind = 'mouse') {
+	pointer('pointerdown', square, kind);
+	await tick();
+}
+
+/**
+ * The whole of one press: down, up, and the click the browser sends after
+ * them. (`locator.click()` does the same, so it is a press too, not a bare
+ * click — which matters for anything that behaves differently the second
+ * time.)
+ */
+async function tap(square: string, kind: PointerKind = 'mouse') {
+	await press(square, kind);
+	pointer('pointerup', square, kind);
+	(document.querySelector(`[data-square="${square}"]`) as HTMLElement).click();
+	await tick();
+}
+
 const hasClass = (name: string, cls: string) =>
 	document.querySelector(`[data-square="${name}"]`)!.classList.contains(cls);
 
@@ -83,6 +102,46 @@ describe('Board.svelte', () => {
 
 		// Black's turn: clicking a white piece does nothing.
 		await square('d2').click();
+		expect(document.querySelectorAll('.move-hint')).toHaveLength(0);
+		game.dispose();
+	});
+
+	it('picks the piece up on the press, before the pointer has moved', async () => {
+		const game = new GameStore();
+		render(Board, { game });
+
+		// Pressed and held, with no movement at all.
+		await press('e2');
+		expect(document.querySelector('.held')).not.toBeNull();
+		expect(hasClass('e2', 'lifted')).toBe(true);
+		expect(hasClass('e2', 'selected')).toBe(true);
+		expect(document.querySelectorAll('.move-hint')).toHaveLength(2); // e3, e4
+		// The square under the pointer is the one it came from: no landing ring.
+		expect(hasClass('e2', 'drag-over')).toBe(false);
+
+		// Letting go without moving leaves it selected, ready for a click.
+		pointer('pointerup', 'e2');
+		(document.querySelector('[data-square="e2"]') as HTMLElement).click();
+		await tick();
+		expect(document.querySelector('.held')).toBeNull();
+		expect(hasClass('e2', 'selected')).toBe(true);
+		expect(document.querySelectorAll('.move-hint')).toHaveLength(2);
+
+		await tap('e4');
+		expect(game.view.moves.map((m) => m.san)).toEqual(['e4']);
+		game.dispose();
+	});
+
+	it('puts a piece down when it is pressed a second time', async () => {
+		const game = new GameStore();
+		render(Board, { game });
+
+		await tap('e2');
+		expect(hasClass('e2', 'selected')).toBe(true);
+
+		// The second press on the same square is the one that puts it down.
+		await tap('e2');
+		expect(hasClass('e2', 'selected')).toBe(false);
 		expect(document.querySelectorAll('.move-hint')).toHaveLength(0);
 		game.dispose();
 	});
@@ -234,11 +293,14 @@ describe('Board.svelte', () => {
 		pointer('pointerdown', 'b1');
 		pointer('pointermove', nudge);
 		await tick();
-		expect(document.querySelector('.held')).toBeNull();
+		// Held, as any press is — but a nudge this small is not a drag, so
+		// letting go leaves the piece picked up rather than dropping it.
+		expect(document.querySelector('.held')).not.toBeNull();
 		pointer('pointerup', nudge);
-		await square('b1').click();
+		(document.querySelector('[data-square="b1"]') as HTMLElement).click();
+		await tick();
 		expect(hasClass('b1', 'selected')).toBe(true);
-		await square('c3').click();
+		await tap('c3');
 		expect(game.view.moves.map((m) => m.san)).toEqual(['Nc3']);
 		game.dispose();
 	});
