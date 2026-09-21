@@ -93,7 +93,11 @@ Everything below is done once, by hand, by someone with the accounts.
 6. **Deploy on merge.** Set the repository variables `FLY_APP` and
    `CHESS_PUBLIC_URL`, and the secret `FLY_API_TOKEN` (`fly tokens create
    deploy`). Until `FLY_APP` is set the deploy workflow does nothing, so
-   nothing goes red before it is wanted.
+   nothing goes red before it is wanted. Deploys follow a green CI on main —
+   see **Updating**. Nothing stops a direct push to main from deploying
+   itself: CI still has to pass first, but nobody reviewed it. Branch
+   protection on `main` is the way to require a pull request, and this
+   repository does not have it.
 
 ## Sign in with Google
 
@@ -182,11 +186,27 @@ from a settings page, one person using both buttons ends up as two players.
 
 ## Updating
 
-Merging to main deploys. The service worker caches the shell per deploy, so
-a tab that was open when the deploy landed keeps running the old version and
-shows the update banner; the engine build is kept across deploys rather than
-re-downloaded. Worth watching on the first real deploy that a tab open across
-a deploy offers the banner and reloads cleanly.
+Merging to main deploys — once CI on main is green, not before. The deploy
+workflow is triggered by CI *finishing* (`workflow_run`), not by the push, so
+a commit whose tests fail never reaches the site, and it checks out the exact
+commit CI passed on. Expect roughly CI's five minutes and then the deploy's
+three.
+
+Two things follow from that. A red CI on main means no deploy and a quiet
+failure: nothing goes wrong, the site simply stays where it was, so check the
+Actions tab rather than assuming the deploy is slow. And if two merges land
+close together, the deploys happen in whatever order the CI runs finish; they
+cannot overlap (the `concurrency` group serialises them), but the second one
+to finish is what ends up live. With one person merging this is theory.
+
+`workflow_dispatch` still deploys whatever main is now, with no CI gate — for
+getting the site back when that is what is needed.
+
+The service worker caches the shell per deploy, so a tab that was open when
+the deploy landed keeps running the old version and shows the update banner;
+the engine build is kept across deploys rather than re-downloaded. Worth
+watching on the first real deploy that a tab open across a deploy offers the
+banner and reloads cleanly.
 
 ## When a deploy is bad
 

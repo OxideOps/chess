@@ -125,8 +125,9 @@ Successor to the archived `OxideOps/chess-v1`.
 `Dockerfile` builds the whole site as one image (the WASM, the client build and the server
 binary, in three stages); `compose.yaml` runs that image against a Postgres locally
 (`docker compose up --build`, http://localhost:8080); `fly.toml` and
-`.github/workflows/deploy.yml` deploy it, the workflow staying inert until the repo has a
-`FLY_APP` variable. `docs/deploy.md` is the runbook — read it before changing any of that.
+`.github/workflows/deploy.yml` deploy it: that workflow runs when CI on main *finishes*
+green (`workflow_run`), not when the push lands, so a red commit never reaches the site,
+and it stays inert until the repo has a `FLY_APP` variable. `docs/deploy.md` is the runbook — read it before changing any of that.
 Two constraints there are load-bearing: **one instance only** (a game in progress lives in
 that process's memory, written through to Postgres and reloaded on access, so two processes
 would each hold their own copy), and nothing in front may strip COOP/COEP or the
