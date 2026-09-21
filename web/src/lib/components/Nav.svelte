@@ -4,7 +4,6 @@
 	import { resolve } from '$app/paths';
 	import { session } from '$lib/auth/session.svelte';
 	import { safeNext, withNext } from '$lib/auth/next';
-	import { installer } from '$lib/pwa/install.svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import { sounds } from '$lib/sound/sounds.svelte';
 
@@ -67,9 +66,6 @@
 				{/if}
 			</svg>
 		</button>
-		{#if installer.available}
-			<button type="button" onclick={() => installer.install()}>Install app</button>
-		{/if}
 		{#if session.user}
 			<a
 				href={resolve('/games')}

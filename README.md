@@ -2,7 +2,7 @@
 
 A chess site that is good at teaching you chess and lets you play other people. The rules and
 the server are Rust; the client is SvelteKit, with the Rust rules compiled to WebAssembly. It
-is a web app, on phones too (responsive, installable as a PWA). There is no desktop or native
+is a web app, on phones too (responsive). There is no desktop or native
 mobile build, and none planned unless a store listing becomes worth the cost.
 
 This is the second attempt. The first (`OxideOps/chess-v1`, archived) taught us what not to do:
@@ -87,8 +87,7 @@ Early scaffolding. What works today:
   navigation (buttons and arrow keys), flip, and a FEN readout.
 - `web`: phones get the same site. Below 700px the panels stack under the board, the board is
   sized to the screen (width and height), and buttons are thumb-sized on touch screens. It
-  installs as an app (manifest, icons, an "Install app" button where the browser offers it)
-  and works offline after one visit: a service worker caches the app shell per deploy and the
+  works offline after one visit: a service worker caches the app shell per deploy and the
   engine build the browser runs (kept across deploys). After a deploy, open pages show "A new
   version of the site is available · Reload" (checked when the tab comes back into view and
   every half hour); nothing reloads by itself, and the banner waits during an online game.
