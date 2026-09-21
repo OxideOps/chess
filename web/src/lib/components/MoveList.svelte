@@ -8,6 +8,25 @@
 	let { game }: { game: GameStore } = $props();
 
 	const blocks = $derived(layout(game.view.tree, game.view.startFullmove));
+	let listEl: HTMLOListElement | undefined = $state();
+
+	/**
+	 * Keep the move being shown inside the box. The list is a fixed size, so
+	 * a long game scrolls — and the move you just played is the one you want
+	 * to see. Scrolls the list itself rather than calling `scrollIntoView`,
+	 * which would happily scroll the page as well.
+	 */
+	$effect(() => {
+		void blocks;
+		const list = listEl;
+		const current = list?.querySelector<HTMLElement>('.current');
+		if (!list || !current) return;
+		const top = current.offsetTop;
+		const bottom = top + current.offsetHeight;
+		if (top < list.scrollTop) list.scrollTop = top;
+		else if (bottom > list.scrollTop + list.clientHeight)
+			list.scrollTop = bottom - list.clientHeight;
+	});
 	// Keys for the keyed each: rows by their first move, blocks by position.
 	const keyOf = (i: number) => {
 		const b = blocks[i];
@@ -30,7 +49,7 @@
 	{/if}
 {/snippet}
 
-<ol class="move-list">
+<ol class="move-list" bind:this={listEl}>
 	{#if blocks.length === 0}
 		<li class="none">No moves yet</li>
 	{/if}
@@ -73,8 +92,16 @@
 		margin: 0;
 		padding: 0.4rem 0;
 		list-style: none;
-		max-height: 320px;
+		/*
+		 * A fixed box, sized against the board beside it. Growing with the
+		 * moves meant every move made the page taller: the panels below it
+		 * slid down, and the whole page reflowed under the player's hands
+		 * mid-game. What is in the box scrolls; the box does not move.
+		 */
+		height: clamp(10rem, calc(var(--board-size, 28rem) * 0.45), 20rem);
 		overflow-y: auto;
+		/* So a move's offsetTop is measured against the list (see above). */
+		position: relative;
 		background: var(--panel);
 		border: 1px solid var(--panel-border);
 		border-radius: var(--radius);

@@ -46,7 +46,12 @@
 	// A move that needs a promotion piece before it can be played.
 	let promotion: { from: string; to: string } | null = $state(null);
 
-	/** How far (px) a press must travel before it is a drag rather than a click. */
+	/**
+	 * How far (px) a press must travel before releasing it counts as dropping
+	 * the piece rather than clicking the square. The piece is picked up on
+	 * the press either way — waiting for movement before showing anything
+	 * makes the board feel dead under the hand.
+	 */
 	const DRAG_THRESHOLD = 4;
 	interface Drag {
 		from: string;
@@ -65,6 +70,10 @@
 	// A drop is followed by the click the browser sends for the same press;
 	// that click must not be read as a second move.
 	let swallowClick = false;
+	// The square this press picked up. The click that ends the same press
+	// would otherwise read as "clicked the selected square" and put it down
+	// again, so that one click is ignored.
+	let justSelected: string | null = null;
 
 	const view = $derived(game.view);
 	const interactive = $derived(
@@ -72,7 +81,8 @@
 			(analysis || !view.viewingHistory) &&
 			(playAs === 'both' || playAs === view.turn)
 	);
-	const dragging = $derived(interactive && drag?.moved ? drag : null);
+	// Held from the moment of the press, not from the first movement.
+	const dragging = $derived(interactive && drag ? drag : null);
 	const selectedSquare = $derived(interactive ? (dragging?.from ?? selected) : null);
 	const pieceAt = $derived(new Map<string, PieceOnSquare>(view.pieces.map((p) => [p.square, p])));
 	const destinations = $derived.by(() => {
@@ -91,7 +101,8 @@
 			// A piece the player may pick up now.
 			movable: interactive && pieceAt.get(square)?.color === view.turn,
 			lifted: dragging?.from === square,
-			dragOver: dragging !== null && dragging.over === square,
+			// Where it would land — never the square it came from.
+			dragOver: dragging !== null && dragging.over === square && dragging.over !== dragging.from,
 			lastMove: view.lastMove?.from === square || view.lastMove?.to === square,
 			check: view.checkSquare === square,
 			destination: destinations.has(square),
@@ -129,6 +140,12 @@
 			return;
 		}
 		if (!interactive) return;
+		// The press already picked this piece up; the click ending it is not
+		// a second, putting-it-down click.
+		if (justSelected === square) {
+			justSelected = null;
+			return;
+		}
 		if (selected === square) {
 			selected = null;
 			return;
@@ -171,6 +188,10 @@
 			...locate(event),
 			moved: false
 		};
+		// Select on the press, so the piece is in hand and its moves are
+		// showing before the pointer has gone anywhere.
+		justSelected = selected === square ? null : square;
+		selected = square;
 	}
 
 	function onPointerMove(event: PointerEvent) {
@@ -188,6 +209,7 @@
 		drag = null;
 		// A press that never travelled is a click, and the click handler has it.
 		if (!moved || !interactive) return;
+		justSelected = null;
 		swallowClick = true;
 		// If the browser sends no click (a drop on another square, or a touch), forget it.
 		setTimeout(() => (swallowClick = false));

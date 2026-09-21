@@ -66,6 +66,62 @@ test('moves pieces by dragging them, from either side of the board', async ({ pa
 });
 
 // Sound can't be listened to from here, but the switch and its memory can.
+// The move list used to grow a row every move, pushing everything under it
+// down the page mid-game. It is a fixed box now: what is in it scrolls.
+test('playing moves moves nothing but the pieces', async ({ page }) => {
+	await page.goto('/');
+	await page.waitForSelector('[data-square="e2"]');
+	const layout = () =>
+		page.evaluate(() => {
+			const panels = [...document.querySelector('.sidebar')!.children];
+			return {
+				page: document.documentElement.scrollHeight,
+				list: Math.round(document.querySelector('.move-list')!.getBoundingClientRect().height),
+				bottom: Math.round(panels[panels.length - 1]!.getBoundingClientRect().bottom)
+			};
+		});
+
+	const before = await layout();
+	const moves: [string, string][] = [
+		['e2', 'e4'],
+		['e7', 'e5'],
+		['g1', 'f3'],
+		['b8', 'c6'],
+		['f1', 'c4'],
+		['g8', 'f6'],
+		['d2', 'd3'],
+		['f8', 'c5']
+	];
+	for (const [from, to] of moves) {
+		await page.locator(`[data-square="${from}"]`).click();
+		await page.locator(`[data-square="${to}"]`).click();
+	}
+	await expect(page.locator('.move-list button.move')).toHaveCount(8);
+	expect(await layout()).toEqual(before);
+
+	// A game long enough to overflow the box scrolls the move being shown
+	// into it, rather than leaving it below the fold.
+	for (const [from, to] of [
+		['c1', 'g5'],
+		['h7', 'h6'],
+		['g5', 'f6'],
+		['d8', 'f6'],
+		['c2', 'c3'],
+		['d7', 'd6'],
+		['b1', 'd2'],
+		['c8', 'e6'],
+		['d2', 'e4'],
+		['e8', 'g8'],
+		['e4', 'f6'],
+		['f6', 'g7']
+	] as [string, string][]) {
+		await page.locator(`[data-square="${from}"]`).click();
+		await page.locator(`[data-square="${to}"]`).click();
+	}
+	expect(await layout()).toEqual(before);
+	await expect(page.locator('.move-list button.move.current')).toBeInViewport();
+});
+
 test('the sound switch stays where it was put', async ({ page }) => {
 	await page.goto('/');
 	const toggle = page.getByRole('button', { name: /Turn sound (on|off)/ });
