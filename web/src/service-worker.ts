@@ -126,6 +126,34 @@ sw.addEventListener('message', (event) => {
 	);
 });
 
+/**
+ * Clicking a notification goes to the game it is about: the tab that raised
+ * it if it is still open (usually — the page is holding the lobby socket),
+ * a new window otherwise.
+ *
+ * Only the worker can do this, which is also why it shows the notification
+ * in the first place: on iOS an installed PWA has no `Notification`
+ * constructor, and `registration.showNotification` is the only way in.
+ */
+sw.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const data = event.notification.data as { url?: string } | undefined;
+	const url = new URL(data?.url ?? '/', sw.location.origin);
+	if (url.origin !== sw.location.origin) return;
+	event.waitUntil(
+		(async () => {
+			const open = await sw.clients.matchAll({ type: 'window', includeUncontrolled: true });
+			const here = open.find((client) => new URL(client.url).origin === sw.location.origin);
+			if (here) {
+				await here.focus();
+				if (here.url !== url.href) await here.navigate(url.href).catch(() => {});
+				return;
+			}
+			await sw.clients.openWindow(url.href);
+		})()
+	);
+});
+
 sw.addEventListener('fetch', (event) => {
 	const { request } = event;
 	if (request.method !== 'GET') return;

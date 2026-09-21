@@ -11,6 +11,12 @@ export function formatClock(ms: number): string {
 	return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+/** `5+0`: the clock a game is played on, without the name of its category. */
+export function timeControlLabel(initialMs: number, incrementMs: number): string {
+	const minutes = initialMs / 60_000;
+	return `${minutes % 1 === 0 ? minutes : minutes.toFixed(1)}+${incrementMs / 1000}`;
+}
+
 export interface TimeControl {
 	label: string;
 	initialMs: number;

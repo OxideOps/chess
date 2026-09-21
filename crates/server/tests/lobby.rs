@@ -19,8 +19,9 @@ fn blitz(rated: bool) -> LobbyClientMessage {
 async fn a_seek_is_posted_seen_and_taken() {
     let Some(db) = db().await else { return };
     let base = serve(db).await;
-    let alice = signup(&base, &unique("alice")).await;
-    let bob = signup(&base, &unique("bob")).await;
+    let (alice_name, bob_name) = (unique("alice"), unique("bob"));
+    let alice = signup(&base, &alice_name).await;
+    let bob = signup(&base, &bob_name).await;
 
     let mut poster = connect_lobby(&base, Some(&alice)).await;
     let mut watcher = connect_lobby(&base, Some(&bob)).await;
@@ -55,6 +56,7 @@ async fn a_seek_is_posted_seen_and_taken() {
     let LobbyServerMessage::GameStarted {
         game_id: poster_game,
         your_color: poster_color,
+        opponent: poster_opponent,
     } = next_lobby(&mut poster, started).await
     else {
         unreachable!()
@@ -62,12 +64,16 @@ async fn a_seek_is_posted_seen_and_taken() {
     let LobbyServerMessage::GameStarted {
         game_id: watcher_game,
         your_color: watcher_color,
+        opponent: watcher_opponent,
     } = next_lobby(&mut watcher, started).await
     else {
         unreachable!()
     };
     assert_eq!(poster_game, watcher_game, "one game, not two");
     assert_ne!(poster_color, watcher_color, "opposite colours");
+    // Each side is told who the other is, not who they are themselves.
+    assert_eq!(poster_opponent, Some(bob_name));
+    assert_eq!(watcher_opponent, Some(alice_name));
 
     // The seek is gone: someone arriving now sees an empty list.
     let mut latecomer = connect_lobby(&base, None).await;

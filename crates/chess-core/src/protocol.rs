@@ -255,6 +255,9 @@ pub enum LobbyServerMessage {
         #[serde(with = "color")]
         #[cfg_attr(feature = "ts", ts(type = "\"white\" | \"black\""))]
         your_color: Color,
+        /// Who you are playing; `None` for a guest. Enough to say who it
+        /// is in the notification that fetches someone back to the tab.
+        opponent: Option<String>,
     },
     /// A request was refused. Nothing changed.
     Rejected {

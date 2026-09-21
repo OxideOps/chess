@@ -92,8 +92,9 @@ describe('Lobby', () => {
 		expect(socket().take()).toEqual([{ type: 'accept_seek', id: 'a' }]);
 		expect(lobby.busy).toBe(true);
 
-		socket().say({ type: 'game_started', game_id: 'g7', your_color: 'black' });
-		expect(games).toEqual([{ id: 'g7', yourColor: 'black' }]);
+		socket().say({ type: 'game_started', game_id: 'g7', your_color: 'black', opponent: 'dan' });
+		// Who took it comes with it: the notification says their name.
+		expect(games).toEqual([{ id: 'g7', yourColor: 'black', opponent: 'dan' }]);
 		expect(lobby.busy).toBe(false);
 		expect(lobby.mine).toBe(null);
 	});

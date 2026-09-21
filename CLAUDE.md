@@ -45,6 +45,14 @@ Successor to the archived `OxideOps/chess-v1`.
   `GameStore.onmove`, which only the `play` methods fire, so loading a PGN or stepping
   through history stays silent. Every board attaches, so play, drills, puzzles and online
   games all sound the same. The nav has the on/off switch (remembered per browser).
+  When a game of yours becomes ready while you are in another tab, the site comes and finds
+  you (`src/lib/notify/`): the `ready` cue, the tab's title, and — only when the tab is
+  hidden and permission was given — a notification, shown by the service worker because on
+  iOS an installed PWA has no other way, and clicking it goes to the board. Permission is
+  asked for once, from the click that offers a game: that is the moment it is worth
+  something, and a browser shows the prompt for nothing but a gesture. Nothing is pushed —
+  the page is open and holding the lobby socket, so there is no push server, no VAPID keys
+  and no subscriptions to store.
 - `crates/server` — axum binary (`chess-server`). Serves `web/build` with clean URLs for the
   prerendered pages, `404.html` as the fallback, precompressed assets, and the cross-origin
   isolation headers (COOP/COEP) that multi-threaded Stockfish needs. Hosts games:
@@ -62,7 +70,9 @@ Successor to the archived `OxideOps/chess-v1`.
   list changes; one seek per connection, posted, cancelled or accepted by the messages in
   `protocol`). A seek is an offer, not a game: the game is created — with both seats filled
   and the colours drawn — only when someone accepts, and the accept removes the seek under
-  the lock first, so two people clicking at once cannot both get it. Seeks live in memory and
+  the lock first, so two people clicking at once cannot both get it. Each side is told the
+  game, the colour they drew and who they are playing, which is what the notification that
+  fetches them back to the tab says. Seeks live in memory and
   **die with the connection that posted them**, deliberately: a seek whose author has closed
   their laptop is one nobody can play. Rated seeks refuse guests, as rated games do
   elsewhere), `oauth.rs` sign-in with Lichess/Google (`/api/auth/{provider}/start` → provider →
