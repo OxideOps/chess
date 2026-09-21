@@ -147,6 +147,12 @@ export class WebAudioVoice implements Voice {
 				this.#tone(0.06, { from: 784, to: 784, length: 0.16, gain: 0.14 });
 				this.#tone(0.2, { from: 523, to: 523, length: 0.34, gain: 0.14 });
 				break;
+			// Somebody is waiting for you: two notes going up, warm and
+			// unhurried, so it reads as good news rather than an alarm.
+			case 'ready':
+				this.#tone(0, { from: 659, to: 659, length: 0.16, gain: 0.16 });
+				this.#tone(0.15, { from: 988, to: 988, length: 0.3, gain: 0.16 });
+				break;
 			// Not the board: the clock. Thin and square, so it cuts through.
 			case 'low-time':
 				this.#tone(0, { from: 1320, to: 1320, length: 0.08, gain: 0.12, shape: 'square' });

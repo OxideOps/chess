@@ -7,7 +7,7 @@ import type { SocketLike } from './client.svelte';
 export interface LobbyOptions {
 	createSocket?: (url: string) => SocketLike;
 	/** Called when a seek of ours is taken: go and play. */
-	onGame?: (game: { id: string; yourColor: Side }) => void;
+	onGame?: (game: { id: string; yourColor: Side; opponent: string | null }) => void;
 }
 
 export type LobbyState = 'connecting' | 'open' | 'reconnecting' | 'closed';
@@ -35,7 +35,7 @@ export class Lobby {
 
 	readonly #url: string;
 	readonly #createSocket: (url: string) => SocketLike;
-	readonly #onGame: (game: { id: string; yourColor: Side }) => void;
+	readonly #onGame: (game: { id: string; yourColor: Side; opponent: string | null }) => void;
 	#socket: SocketLike | null = null;
 	#closedByUs = false;
 	#retryMs = 1000;
@@ -151,7 +151,11 @@ export class Lobby {
 			case 'game_started':
 				this.mine = null;
 				this.busy = false;
-				this.#onGame({ id: message.game_id, yourColor: message.your_color });
+				this.#onGame({
+					id: message.game_id,
+					yourColor: message.your_color,
+					opponent: message.opponent
+				});
 				break;
 			case 'rejected':
 				this.rejection = message.message;

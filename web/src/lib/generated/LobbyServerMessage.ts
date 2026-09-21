@@ -4,4 +4,9 @@ import type { SeekInfo } from "./SeekInfo";
 /**
  * Messages the lobby socket sends back.
  */
-export type LobbyServerMessage = { "type": "seeks", seeks: Array<SeekInfo>, } | { "type": "seek_posted", id: string, } | { "type": "game_started", game_id: string, your_color: "white" | "black", } | { "type": "rejected", message: string, } | { "type": "pong" };
+export type LobbyServerMessage = { "type": "seeks", seeks: Array<SeekInfo>, } | { "type": "seek_posted", id: string, } | { "type": "game_started", game_id: string, your_color: "white" | "black", 
+/**
+ * Who you are playing; `None` for a guest. Enough to say who it
+ * is in the notification that fetches someone back to the tab.
+ */
+opponent: string | null, } | { "type": "rejected", message: string, } | { "type": "pong" };

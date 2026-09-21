@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatClock } from './clock';
+import { formatClock, timeControlLabel } from './clock';
 
 describe('formatClock', () => {
 	it('shows minutes and seconds, then tenths under ten seconds', () => {
@@ -11,5 +11,14 @@ describe('formatClock', () => {
 		expect(formatClock(1_050)).toBe('0:01.0');
 		expect(formatClock(0)).toBe('0:00.0');
 		expect(formatClock(-500)).toBe('0:00.0');
+	});
+});
+
+describe('a time control as words', () => {
+	it('is the minutes and the increment, and nothing else', () => {
+		expect(timeControlLabel(300_000, 0)).toBe('5+0');
+		expect(timeControlLabel(180_000, 2000)).toBe('3+2');
+		// Half a minute of bullet still reads as minutes.
+		expect(timeControlLabel(30_000, 1000)).toBe('0.5+1');
 	});
 });

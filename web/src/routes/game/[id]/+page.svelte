@@ -7,6 +7,7 @@
 	import GameSidebar from '$lib/components/GameSidebar.svelte';
 	import { OnlineGame } from '$lib/online/client.svelte';
 	import { seatName } from '$lib/online/listing';
+	import { notifier } from '$lib/notify/notifier.svelte';
 	import type { Side } from '$lib/generated/Side';
 
 	// An online game: the board and clocks, with everything else in the sidebar.
@@ -21,6 +22,30 @@
 		const seat = online.players[side];
 		return seat === null ? null : seatName(seat);
 	};
+	/**
+	 * Someone taking the open seat is news to whoever has been sitting here
+	 * waiting for them — which is the private-game flow: create, send the
+	 * link, go and do something else.
+	 *
+	 * Only after the seat has been seen empty, so a game that was already
+	 * full when the page loaded (one the lobby matched) says nothing.
+	 */
+	let seatWasOpen = false;
+	$effect(() => {
+		if (!online.synced || online.yourColor === null) return;
+		const seat = online.players[opponent];
+		if (seat === null) {
+			seatWasOpen = true;
+			return;
+		}
+		if (!seatWasOpen) return;
+		seatWasOpen = false;
+		void notifier.raise(
+			{ kind: 'opponent-joined', opponent: seat.username },
+			resolve('/game/[id]', { id })
+		);
+	});
+
 	const clockProps = (side: Side) => {
 		const seat = online.players[side];
 		return {

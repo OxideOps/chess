@@ -22,13 +22,14 @@ building and starting their own server:
 ```sh
 cd web
 CHESS_E2E_URL=http://localhost:8080 corepack pnpm exec playwright test --project=desktop \
-  e2e/accounts.e2e.ts e2e/online.e2e.ts e2e/ratings.e2e.ts e2e/board.e2e.ts \
-  e2e/routes.e2e.ts e2e/pwa.e2e.ts
+  e2e/accounts.e2e.ts e2e/online.e2e.ts e2e/notify.e2e.ts e2e/ratings.e2e.ts \
+  e2e/board.e2e.ts e2e/routes.e2e.ts e2e/pwa.e2e.ts
 ```
 
 That covers what a deployment has to get right: two accounts sign up, play a
 rated game and both ratings move; a guest keeps their games after signing up;
-the PWA's manifest and icons resolve; the 404 fallback and clean URLs work.
+a seek taken while the poster is in another tab raises a notification from the
+service worker; the PWA's manifest and icons resolve; the 404 fallback and clean URLs work.
 The tests left out are the ones that need `--fake-oauth` or `--fake-coach`,
 which a real deployment must never have.
 

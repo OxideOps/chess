@@ -75,9 +75,26 @@ enum Event {
     /// them, so nobody learns about anyone else's game.
     Matched {
         game_id: String,
-        white_user: String,
-        black_user: String,
+        white: Seated,
+        black: Seated,
     },
+}
+
+/// Who took a seat: the id the connection matches itself against, and the
+/// name to show the other player.
+#[derive(Debug, Clone)]
+struct Seated {
+    id: String,
+    username: Option<String>,
+}
+
+impl From<&User> for Seated {
+    fn from(user: &User) -> Seated {
+        Seated {
+            id: user.id.clone(),
+            username: user.username.clone(),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -217,15 +234,15 @@ impl Lobby {
             Err(CreateError::NeedsAccount) => return Err(SeekError::NeedsAccount),
             Err(CreateError::Db(e)) => return Err(SeekError::Db(e)),
         };
-        let (white_user, black_user) = if poster_color.is_white() {
-            (seek.user.id.clone(), user.id.clone())
+        let (white, black) = if poster_color.is_white() {
+            (Seated::from(&seek.user), Seated::from(user))
         } else {
-            (user.id.clone(), seek.user.id.clone())
+            (Seated::from(user), Seated::from(&seek.user))
         };
         let _ = self.tx.send(Event::Matched {
             game_id: game_id.clone(),
-            white_user,
-            black_user,
+            white,
+            black,
         });
         Ok((game_id, !poster_color))
     }
@@ -287,16 +304,16 @@ async fn run(socket: WebSocket, lobby: Lobby, user: Option<User>) {
                         break;
                     }
                 }
-                Ok(Event::Matched { game_id, white_user, black_user }) => {
+                Ok(Event::Matched { game_id, white, black }) => {
                     let Some(user) = &user else { continue };
-                    let your_color = if white_user == user.id {
-                        Color::White
-                    } else if black_user == user.id {
-                        Color::Black
+                    let (your_color, opponent) = if white.id == user.id {
+                        (Color::White, black.username.clone())
+                    } else if black.id == user.id {
+                        (Color::Black, white.username.clone())
                     } else {
                         continue;
                     };
-                    let msg = LobbyServerMessage::GameStarted { game_id, your_color };
+                    let msg = LobbyServerMessage::GameStarted { game_id, your_color, opponent };
                     if send(&mut sink, &msg).await.is_err() {
                         break;
                     }

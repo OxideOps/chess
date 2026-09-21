@@ -136,7 +136,7 @@ describe('WebAudioVoice', () => {
 		return peak;
 	}
 
-	const cues: Cue[] = ['move', 'capture', 'castle', 'check', 'promote', 'end', 'low-time'];
+	const cues: Cue[] = ['move', 'capture', 'castle', 'check', 'promote', 'end', 'low-time', 'ready'];
 	for (const cue of cues) {
 		it(`${cue} is audible`, async () => {
 			const peak = await render(cue);

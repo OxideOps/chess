@@ -5,7 +5,16 @@
  * what happened (`x` took something, `+` gave check, `=` promoted, `O-O`
  * castled).
  */
-export type Cue = 'move' | 'capture' | 'castle' | 'check' | 'promote' | 'end' | 'low-time';
+export type Cue =
+	| 'move'
+	| 'capture'
+	| 'castle'
+	| 'check'
+	| 'promote'
+	| 'end'
+	| 'low-time'
+	/** Not a move: a game of yours is ready to play (see `$lib/notify`). */
+	| 'ready';
 
 /**
  * The cue for a move written as `san`, in a game that `over` says has now

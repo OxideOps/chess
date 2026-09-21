@@ -2,8 +2,9 @@
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { TIME_CONTROLS } from '$lib/online/clock';
+	import { TIME_CONTROLS, timeControlLabel } from '$lib/online/clock';
 	import { Lobby } from '$lib/online/lobby.svelte';
+	import { notifier } from '$lib/notify/notifier.svelte';
 	import { CATEGORY_NAMES, formatRating } from '$lib/online/ratings';
 	import { session } from '$lib/auth/session.svelte';
 	import { withNext } from '$lib/auth/next';
@@ -17,8 +18,24 @@
 	let error: string | null = $state(null);
 	let busy = $state(false);
 
+	/**
+	 * The time control of the game we are waiting on, remembered for the
+	 * notification that says what was taken: the server's "your game
+	 * started" says who, not what. Set when we offer or accept one, so it
+	 * is only null if a game arrives without us asking for one.
+	 */
+	let awaiting: string | null = null;
+
 	const lobby = new Lobby({
-		onGame: ({ id }) => goto(resolve('/game/[id]', { id }))
+		onGame: async ({ id, opponent }) => {
+			// Navigate first: the game page sets the title, and the alert
+			// wants to flag the title it leaves behind.
+			await goto(resolve('/game/[id]', { id }));
+			void notifier.raise(
+				{ kind: 'game-ready', opponent, timeControl: awaiting },
+				resolve('/game/[id]', { id })
+			);
+		}
 	});
 	onDestroy(() => lobby.dispose());
 
@@ -41,17 +58,31 @@
 
 	function postSeek() {
 		const tc = TIME_CONTROLS[selected];
+		awaiting = timeControlLabel(tc.initialMs, tc.incrementMs);
 		const wanted = rated && session.registered;
 		withSession(() => lobby.post(tc.initialMs, tc.incrementMs, wanted));
 	}
 
+	/**
+	 * Offering a game is the moment to ask about notifications: it is a
+	 * click (browsers show the prompt for nothing else), and it is the one
+	 * time the answer is worth something, because the next thing that
+	 * happens is waiting. Asked once ever, whatever the answer — see
+	 * `Notifier.ask`. It goes before the awaits in the handlers below: a
+	 * prompt asked for after one is a prompt the browser has already
+	 * decided not to show.
+	 */
+	function askAboutAlerts() {
+		void notifier.ask();
+	}
+
 	function timeControlOf(seek: SeekInfo): string {
-		const minutes = seek.initial_ms / 60_000;
-		return `${minutes % 1 === 0 ? minutes : minutes.toFixed(1)}+${seek.increment_ms / 1000}`;
+		return timeControlLabel(seek.initial_ms, seek.increment_ms);
 	}
 
 	/** Create a game to send a link for: the old way, still here. */
 	async function createPrivate() {
+		askAboutAlerts();
 		busy = true;
 		error = null;
 		const tc = TIME_CONTROLS[selected];
@@ -104,7 +135,10 @@
 						class="seek"
 						data-testid="seek"
 						disabled={lobby.busy}
-						onclick={() => withSession(() => lobby.accept(seek.id))}
+						onclick={() => {
+							awaiting = timeControlOf(seek);
+							withSession(() => lobby.accept(seek.id));
+						}}
 					>
 						<span class="who">{seek.username ?? 'Guest'}</span>
 						<span class="rating notation">{formatRating(seek.rating) ?? '—'}</span>
@@ -125,6 +159,7 @@
 	<form
 		onsubmit={(event) => {
 			event.preventDefault();
+			askAboutAlerts();
 			postSeek();
 		}}
 	>
@@ -157,6 +192,9 @@
 	{#if lobby.mine !== null}
 		<p class="waiting" role="status" data-testid="waiting">
 			Waiting for someone to take your game. Leave this page open — the offer goes when you do.
+			{#if notifier.permission === 'granted'}
+				You can work in another tab; we'll tell you.
+			{/if}
 		</p>
 	{/if}
 	{#if !session.registered}
