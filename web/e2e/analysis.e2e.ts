@@ -7,7 +7,8 @@ test.describe('analysis board', () => {
 	test('engine follows the position, lines are playable, imports work', async ({ page }) => {
 		await page.goto('/analysis');
 		const summary = page.locator('.engine .summary');
-		const lines = page.locator('.engine .lines li');
+		// Lines the engine has actually reported; rows still waiting are `.pending`.
+		const lines = page.locator('.engine .lines li:not(.pending)');
 		const sq = (name: string) => page.locator(`[data-square="${name}"]`);
 
 		await expect(page.locator('.engine .name')).toHaveText(/Stockfish/, { timeout: 30_000 });

@@ -52,6 +52,11 @@ export class Analyser {
 		this.#engine.send('uci');
 	}
 
+	/** How many lines the engine is asked for: the rows a panel should keep room for. */
+	get multipv(): number {
+		return this.#multipv;
+	}
+
 	get best(): EngineLine | undefined {
 		return this.lines[0];
 	}
