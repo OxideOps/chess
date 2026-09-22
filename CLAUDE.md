@@ -81,6 +81,10 @@ Successor to the archived `OxideOps/chess-v1`.
   no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
+  `lessons.rs` an account's finished lessons (`/api/lessons/completed`: GET lists,
+  POST adds a union and returns the lot; guests keep theirs in the browser, and the client
+  merges them in after signup or sign-in; unknown ids are dropped, and drill ids in
+  `chess_core::lesson` are stable forever, so never rename one),
   `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
   attempt endpoints (only the first try at a puzzle rates), `coach.rs` the coach (Claude
   Messages API over `reqwest`; `/api/coach/explain` for a position and `/api/coach/mistake`

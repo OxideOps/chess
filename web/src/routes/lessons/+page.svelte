@@ -1,15 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { session } from '$lib/auth/session.svelte';
+	import { withNext } from '$lib/auth/next';
 	import { drills } from '$lib/chess/wasm';
-	import { completed } from '$lib/lessons/progress';
+	import { lessonProgress } from '$lib/lessons/progress.svelte';
 
 	// Short drills against Stockfish, easiest first.
 	const all = drills();
-	let done: Set<string> = $state(new Set());
+	// An account's progress comes from the server (merging in anything this
+	// browser finished first); a guest's from this browser.
 	onMount(() => {
-		done = completed();
+		void lessonProgress.load();
 	});
+	const done = lessonProgress.done;
 	const finished = $derived(all.filter((drill) => done.has(drill.id)).length);
 </script>
 
@@ -42,7 +46,14 @@
 	{/each}
 </ol>
 
-<p class="progress notation">{finished} of {all.length} done</p>
+<p class="progress notation" data-testid="lessons-done">{finished} of {all.length} done</p>
+{#if !session.registered}
+	<p class="hint">
+		Kept in this browser.
+		<a href={withNext(resolve('/signup'), resolve('/lessons'))}>Sign up</a> or
+		<a href={withNext(resolve('/login'), resolve('/lessons'))}>log in</a> to keep it on every device.
+	</p>
+{/if}
 
 <style>
 	.steps {
@@ -57,7 +68,7 @@
 		border-bottom: 1px solid var(--panel-border);
 	}
 
-	a {
+	.steps a {
 		display: grid;
 		grid-template-columns: 2.25rem 1fr auto;
 		align-items: baseline;
@@ -68,7 +79,7 @@
 		text-decoration: none;
 	}
 
-	a:hover {
+	.steps a:hover {
 		background: var(--panel);
 	}
 
@@ -105,5 +116,15 @@
 		margin: 1rem 0 0;
 		color: var(--text-muted);
 		font-size: var(--type-sm);
+	}
+
+	.hint {
+		margin: 0.35rem 0 0;
+		color: var(--text-muted);
+		font-size: var(--type-sm);
+	}
+
+	.hint a {
+		color: var(--text);
 	}
 </style>

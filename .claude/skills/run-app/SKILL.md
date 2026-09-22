@@ -87,7 +87,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   change with `-- --repeat 3` (each case answered and graded that many times) and read the
   means, not one sample.
 - Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
-  then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
+  then "Next: …" and "✓ Done" on the list; a guest's progress is in localStorage
+  `chess.lessons.done`, an account's comes from `/api/lessons/completed` and survives on
+  another browser). In the others Stockfish answers after
   "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
   A blunder (Qh2-e5+ in `/lessons/queen-mate`) shows `[data-testid=mistake]` with Stockfish's
   better move and, for an account with a coach, "Why was that a mistake?".

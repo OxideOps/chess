@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO lesson_completions (user_id, lesson_id)\n             SELECT $1, lesson_id FROM UNNEST($2::text[]) AS l (lesson_id)\n             ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c2c6ec674a76767b2c022ef22aafa126160f1a3d21e87641a079d29fc4e1f14e"
+}
