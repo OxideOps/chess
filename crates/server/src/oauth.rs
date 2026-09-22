@@ -6,8 +6,12 @@
 //! asks the provider who this is, and finds or creates the matching user:
 //! `identities (provider, subject)` maps onto `users`. A signed-in guest is
 //! upgraded in place, like signup; a signed-in account gets the identity
-//! linked; anyone else becomes a new user named after their provider
-//! account (with a suffix if the name is taken). A built-in fake provider
+//! linked (this is "Connect" on the account page, so its failures go back
+//! there, and an identity that already belongs to someone else is refused
+//! rather than switching accounts); anyone else becomes a new user named
+//! after their provider account (with a suffix if the name is taken). The
+//! provider's label for the account is kept with the identity and refreshed
+//! at each sign-in, for the account page. A built-in fake provider
 //! ([`Provider::fake`]) serves development and the tests without any
 //! network: it signs in as whatever name is typed.
 
@@ -62,6 +66,9 @@ pub struct Identity {
     pub subject: String,
     /// What to call them, before it is made into a valid username.
     pub name: String,
+    /// How the account page shows this identity: the Lichess username, the
+    /// Google email. Empty when the provider gave nothing better.
+    pub label: String,
 }
 
 impl Provider {
@@ -214,17 +221,28 @@ impl Provider {
     fn parse_identity(&self, who: &serde_json::Value) -> Option<Identity> {
         let text = |key: &str| who.get(key).and_then(|v| v.as_str()).map(str::to_string);
         match self.kind {
-            ProviderKind::Lichess => Some(Identity {
-                subject: text("id")?,
-                name: text("username")?,
-            }),
+            ProviderKind::Lichess => {
+                let name = text("username")?;
+                Some(Identity {
+                    subject: text("id")?,
+                    label: name.clone(),
+                    name,
+                })
+            }
             ProviderKind::Google => {
                 let subject = text("sub")?;
-                let name = text("email")
+                let email = text("email");
+                let name = email
+                    .as_deref()
                     .and_then(|e| e.split('@').next().map(str::to_string))
                     .or_else(|| text("name"))
                     .unwrap_or_default();
-                Some(Identity { subject, name })
+                let label = email.or_else(|| text("name")).unwrap_or_default();
+                Some(Identity {
+                    subject,
+                    name,
+                    label,
+                })
             }
             ProviderKind::Fake => None,
         }
@@ -429,6 +447,10 @@ async fn callback(
         (Some(user), Some(session)) => Some((user, session.as_str())),
         _ => None,
     };
+    // For a signed-in account this flow links rather than signs in: it is
+    // connecting another method, which is done (and its failures shown) on
+    // the account page, not the login page.
+    let connecting = current.is_some_and(|(user, _)| !user.is_guest);
     match finish(&state, provider, auth, flow, query, current, &headers).await {
         Ok((user, session)) => {
             tracing::info!(
@@ -440,11 +462,19 @@ async fn callback(
         }
         Err(message) => {
             tracing::warn!("{} sign-in failed: {message}", provider.id());
-            let text = format!("Sign-in with {} failed: {message}", provider.name());
-            let mut url = url::Url::parse("http://relative.invalid/login").expect("static");
-            url.query_pairs_mut()
-                .append_pair("error", &text)
-                .append_pair("next", &next);
+            let text = if connecting {
+                format!("Connecting {} failed: {message}", provider.name())
+            } else {
+                format!("Sign-in with {} failed: {message}", provider.name())
+            };
+            let page = if connecting { "/account" } else { "/login" };
+            let mut url = url::Url::parse("http://relative.invalid/")
+                .and_then(|base| base.join(page))
+                .expect("static");
+            url.query_pairs_mut().append_pair("error", &text);
+            if !connecting {
+                url.query_pairs_mut().append_pair("next", &next);
+            }
             let location = url[url::Position::BeforePath..].to_string();
             (jar, Redirect::to(&location)).into_response()
         }
@@ -482,9 +512,15 @@ async fn finish(
         .await?;
     sign_in(auth, provider.id(), &identity, current)
         .await
-        .map_err(|e| {
-            tracing::error!("oauth sign-in: {e:?}");
-            "database error".to_string()
+        .map_err(|e| match e {
+            AuthError::IdentityTaken => format!(
+                "that {} account already signs in another player here",
+                provider.name()
+            ),
+            e => {
+                tracing::error!("oauth sign-in: {e:?}");
+                "database error".to_string()
+            }
         })
 }
 
@@ -498,6 +534,7 @@ pub async fn sign_in(
     current: Option<(&User, &str)>,
 ) -> Result<(User, String), AuthError> {
     let pool = auth.db().pool();
+    let label = Some(identity.label.as_str()).filter(|l| !l.is_empty());
     let known = sqlx::query!(
         "SELECT u.id, u.username, u.is_guest FROM identities i JOIN users u ON u.id = i.user_id
          WHERE i.provider = $1 AND i.subject = $2",
@@ -512,8 +549,26 @@ pub async fn sign_in(
             username: row.username,
             is_guest: row.is_guest,
         };
-        let session = auth.create_session(&user.id).await?;
-        return Ok((user, session));
+        // Keep the label current: people rename themselves at the provider.
+        sqlx::query!(
+            "UPDATE identities SET label = COALESCE($3, label) WHERE provider = $1 AND subject = $2",
+            provider,
+            identity.subject,
+            label
+        )
+        .execute(pool)
+        .await?;
+        return match current {
+            // Connecting what is already connected: nothing changes.
+            Some((me, session)) if me.id == user.id => Ok((user, session.to_string())),
+            // A signed-in account never silently becomes someone else by
+            // "connecting" an identity that belongs to another player.
+            Some((me, _)) if !me.is_guest => Err(AuthError::IdentityTaken),
+            _ => {
+                let session = auth.create_session(&user.id).await?;
+                Ok((user, session))
+            }
+        };
     }
 
     let (user, session) = match current {
@@ -574,10 +629,11 @@ pub async fn sign_in(
         }
     };
     sqlx::query!(
-        "INSERT INTO identities (provider, subject, user_id) VALUES ($1, $2, $3)",
+        "INSERT INTO identities (provider, subject, user_id, label) VALUES ($1, $2, $3, $4)",
         provider,
         identity.subject,
-        user.id
+        user.id,
+        label
     )
     .execute(pool)
     .await?;
@@ -691,6 +747,7 @@ fn fake_exchange(code: &str, verifier: &str) -> Result<Identity, String> {
     }
     Ok(Identity {
         subject: name.to_lowercase(),
+        label: name.clone(),
         name,
     })
 }
@@ -753,7 +810,8 @@ mod tests {
             lichess.parse_identity(&who).unwrap(),
             Identity {
                 subject: "dan".into(),
-                name: "Dan".into()
+                name: "Dan".into(),
+                label: "Dan".into(),
             }
         );
         assert!(lichess.parse_identity(&serde_json::json!({})).is_none());
@@ -764,11 +822,16 @@ mod tests {
             google.parse_identity(&who).unwrap(),
             Identity {
                 subject: "1234".into(),
-                name: "dillon.r".into()
+                name: "dillon.r".into(),
+                label: "dillon.r@gmail.com".into(),
             }
         );
         let who = serde_json::json!({"sub": "1234", "name": "Dillon"});
-        assert_eq!(google.parse_identity(&who).unwrap().name, "Dillon");
+        let parsed = google.parse_identity(&who).unwrap();
+        assert_eq!(
+            (parsed.name.as_str(), parsed.label.as_str()),
+            ("Dillon", "Dillon")
+        );
     }
 
     #[test]

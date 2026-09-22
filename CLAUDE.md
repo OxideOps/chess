@@ -77,8 +77,13 @@ Successor to the archived `OxideOps/chess-v1`.
   their laptop is one nobody can play. Rated seeks refuse guests, as rated games do
   elsewhere), `oauth.rs` sign-in with Lichess/Google (`/api/auth/{provider}/start` → provider →
   `/callback`; `state` + PKCE verifier in a 10-minute cookie; `identities(provider, subject)`
-  → `users`; a built-in fake provider behind `--fake-oauth` for dev and tests, in-process,
-  no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
+  → `users`, with the provider's label for the account; started while signed in to an account it
+  links instead, and refuses an identity that is someone else's; a built-in fake provider behind
+  `--fake-oauth` for dev and tests, in-process, no network), `account.rs` the account's own
+  sign-in methods (`/api/me/account` lists identities and whether there is a password,
+  `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in,
+  `PUT /api/me/password` sets or changes it — changing needs the current one — and signs out the
+  other sessions), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
   `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and

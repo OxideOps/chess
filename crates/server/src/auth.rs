@@ -33,7 +33,7 @@ const SESSION_DAYS: i64 = 30;
 // can't work through a list) and per address (so one address can't work
 // through many usernames); signups and guests per address bound account
 // spam. Generous enough that a person never sees them.
-const LOGIN_PER_USER: Limit = Limit::per_minute(10);
+pub(crate) const LOGIN_PER_USER: Limit = Limit::per_minute(10);
 const LOGIN_PER_ADDR: Limit = Limit::per_minute(30);
 const SIGNUP_PER_ADDR: Limit = Limit::per_minute(10);
 const GUEST_PER_ADDR: Limit = Limit::per_minute(30);
@@ -66,6 +66,16 @@ pub enum AuthError {
     WeakPassword,
     InvalidCredentials,
     NotSignedIn,
+    /// The provider identity being connected already belongs to another user.
+    IdentityTaken,
+    /// Removing this sign-in method would leave the account no way in.
+    LastWayIn,
+    /// No such sign-in method on this account.
+    NoSuchIdentity,
+    /// Changing a password needs the current one, and this wasn't it.
+    WrongPassword,
+    /// Guests have no account settings; they sign up first.
+    GuestAccount,
     /// Rate limited; try again after this long.
     TooManyAttempts(Duration),
     /// Accounts need a database and the server was started without one.
@@ -96,6 +106,28 @@ impl IntoResponse for AuthError {
                 "wrong username or password".into(),
             ),
             AuthError::NotSignedIn => (StatusCode::UNAUTHORIZED, "not signed in".into()),
+            AuthError::IdentityTaken => (
+                StatusCode::CONFLICT,
+                "that account already signs in another player here".into(),
+            ),
+            AuthError::LastWayIn => (
+                StatusCode::CONFLICT,
+                "this is the only way into your account; set a password or connect another \
+                 sign-in method first"
+                    .into(),
+            ),
+            AuthError::NoSuchIdentity => (
+                StatusCode::NOT_FOUND,
+                "that sign-in method is not connected to your account".into(),
+            ),
+            AuthError::WrongPassword => (
+                StatusCode::FORBIDDEN,
+                "your current password is not that".into(),
+            ),
+            AuthError::GuestAccount => (
+                StatusCode::FORBIDDEN,
+                "guests have no account settings; sign up first".into(),
+            ),
             AuthError::TooManyAttempts(wait) => (
                 StatusCode::TOO_MANY_REQUESTS,
                 format!(
@@ -138,7 +170,7 @@ fn new_id() -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-async fn hash_password(password: String) -> String {
+pub(crate) async fn hash_password(password: String) -> String {
     use argon2::{
         Argon2,
         password_hash::{PasswordHasher, SaltString},
@@ -156,7 +188,7 @@ async fn hash_password(password: String) -> String {
     .expect("hashing task")
 }
 
-async fn verify_password(password: String, hash: String) -> bool {
+pub(crate) async fn verify_password(password: String, hash: String) -> bool {
     use argon2::{
         Argon2,
         password_hash::{PasswordHash, PasswordVerifier},
@@ -188,7 +220,7 @@ impl Auth {
     }
 
     /// One hit against `limit` for `key`; `TooManyAttempts` when over.
-    fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
+    pub(crate) fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
         self.limiter
             .hit(key, limit, Instant::now())
             .map_err(AuthError::TooManyAttempts)

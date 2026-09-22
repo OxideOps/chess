@@ -294,3 +294,199 @@ async fn failures_go_back_to_the_login_page() {
         404
     );
 }
+
+async fn account(base: &str, session: &str) -> server::account::Account {
+    let r = http(base, "GET", "/api/me/account", Some(session), "").await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    serde_json::from_str(&r.body).unwrap()
+}
+
+fn labels(account: &server::account::Account) -> Vec<(String, Option<String>)> {
+    account
+        .identities
+        .iter()
+        .map(|i| (i.provider_name.clone(), i.label.clone()))
+        .collect()
+}
+
+async fn put_password(base: &str, session: &str, body: &str) -> Reply {
+    http(base, "PUT", "/api/me/password", Some(session), body).await
+}
+
+#[tokio::test]
+async fn the_account_page_connects_and_disconnects_but_keeps_a_way_in() {
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+    // Signed up through the provider: no password, one identity.
+    let first = unique("Fran");
+    let r = sign_in(&base, &first, "/", None, false).await;
+    let session = r.cookie.unwrap();
+    let fran = me(&base, &session).await;
+    let username = fran.username.clone().unwrap();
+    let profile_path = format!("/api/players/{username}");
+    let profile = http(&base, "GET", &profile_path, None, "").await.body;
+    let a = account(&base, &session).await;
+    assert_eq!(a.username, username);
+    assert!(!a.has_password);
+    assert_eq!(
+        labels(&a),
+        vec![("Fake provider".to_string(), Some(first.clone()))]
+    );
+    let first_subject = a.identities[0].subject.clone();
+    let path = |subject: &str| format!("/api/me/identities/fake/{subject}");
+
+    // The only way in cannot be removed, and the refusal says why.
+    let r = http(&base, "DELETE", &path(&first_subject), Some(&session), "").await;
+    assert_eq!(r.status, 409, "{}", r.body);
+    assert!(r.body.contains("only way into your account"), "{}", r.body);
+
+    // Connect a second provider account while signed in: same user.
+    let second = unique("FranElsewhere");
+    let r = sign_in(&base, &second, "/account", Some(&session), false).await;
+    assert_eq!(r.status, 303);
+    assert_eq!(r.header("location"), Some("/account"));
+    assert!(
+        r.cookie.as_deref().is_none_or(|c| c == session),
+        "keeps the session: {:?}",
+        r.cookie
+    );
+    assert_eq!(me(&base, &session).await, fran);
+    assert_eq!(
+        labels(&account(&base, &session).await),
+        vec![
+            ("Fake provider".to_string(), Some(first.clone())),
+            ("Fake provider".to_string(), Some(second.clone()))
+        ]
+    );
+    // Connecting it again changes nothing and keeps the session.
+    let r = sign_in(&base, &second, "/account", Some(&session), false).await;
+    assert_eq!(r.header("location"), Some("/account"));
+    assert!(r.cookie.as_deref().is_none_or(|c| c == session));
+    assert_eq!(account(&base, &session).await.identities.len(), 2);
+
+    // Signing in with the new one, signed out, lands on the same player,
+    // with the same ratings; a changed spelling refreshes the label.
+    let r = sign_in(&base, &second.to_uppercase(), "/", None, false).await;
+    let other_session = r.cookie.unwrap();
+    assert_eq!(me(&base, &other_session).await, fran);
+    assert_eq!(
+        http(&base, "GET", &profile_path, None, "").await.body,
+        profile
+    );
+    assert_eq!(
+        account(&base, &session).await.identities[1].label,
+        Some(second.to_uppercase())
+    );
+
+    // Now the first can go, but then the second is the last way in.
+    let r = http(&base, "DELETE", &path(&first_subject), Some(&session), "").await;
+    assert_eq!(r.status, 204, "{}", r.body);
+    let a = account(&base, &session).await;
+    assert_eq!(a.identities.len(), 1);
+    let last = a.identities[0].subject.clone();
+    let r = http(&base, "DELETE", &path(&last), Some(&session), "").await;
+    assert_eq!(r.status, 409, "{}", r.body);
+    let r = http(&base, "DELETE", &path("nobody"), Some(&session), "").await;
+    assert_eq!(r.status, 404, "{}", r.body);
+
+    // A password is another way in: set it (there is none to confirm), and
+    // then the last identity can go too.
+    let r = put_password(&base, &session, r#"{"password":"short"}"#).await;
+    assert_eq!(r.status, 400, "{}", r.body);
+    let r = put_password(&base, &session, r#"{"password":"first password"}"#).await;
+    assert_eq!(r.status, 204, "{}", r.body);
+    assert!(account(&base, &session).await.has_password);
+    assert_eq!(
+        http(&base, "GET", "/api/me", Some(&other_session), "")
+            .await
+            .status,
+        401,
+        "setting a password signs out the other sessions"
+    );
+    let r = http(&base, "DELETE", &path(&last), Some(&session), "").await;
+    assert_eq!(r.status, 204, "{}", r.body);
+    assert!(account(&base, &session).await.identities.is_empty());
+    let creds = format!(r#"{{"username":"{username}","password":"first password"}}"#);
+    let r = http(&base, "POST", "/api/auth/login", None, &creds).await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    let login_session = r.cookie.unwrap();
+
+    // Changing it needs the current one.
+    let r = put_password(&base, &session, r#"{"password":"second password"}"#).await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    let body = r#"{"current":"wrong password","password":"second password"}"#;
+    assert_eq!(put_password(&base, &session, body).await.status, 403);
+    let body = r#"{"current":"first password","password":"second password"}"#;
+    assert_eq!(put_password(&base, &session, body).await.status, 204);
+    assert_eq!(me(&base, &session).await, fran);
+    assert_eq!(
+        http(&base, "GET", "/api/me", Some(&login_session), "")
+            .await
+            .status,
+        401
+    );
+    let creds = format!(r#"{{"username":"{username}","password":"second password"}}"#);
+    assert_eq!(
+        http(&base, "POST", "/api/auth/login", None, &creds)
+            .await
+            .status,
+        200
+    );
+
+    // Guests and nobody have no account page.
+    let guest_session = guest(&base).await;
+    assert_eq!(
+        http(&base, "GET", "/api/me/account", Some(&guest_session), "")
+            .await
+            .status,
+        403
+    );
+    assert_eq!(
+        http(&base, "GET", "/api/me/account", None, "").await.status,
+        401
+    );
+}
+
+#[tokio::test]
+async fn connecting_someone_elses_provider_account_is_refused() {
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+    let theirs = unique("Gil");
+    let r = sign_in(&base, &theirs, "/", None, false).await;
+    let gil = me(&base, &r.cookie.unwrap()).await;
+
+    let name = unique("hana");
+    let creds = format!(r#"{{"username":"{name}","password":"correct horse"}}"#);
+    let session = http(&base, "POST", "/api/auth/signup", None, &creds)
+        .await
+        .cookie
+        .unwrap();
+    let hana = me(&base, &session).await;
+
+    // Hana, signed in, tries to connect Gil's provider account: refused, back
+    // on the account page with the reason, and still Hana.
+    let r = sign_in(&base, &theirs, "/account", Some(&session), false).await;
+    assert_eq!(r.status, 303);
+    let location = r.header("location").unwrap();
+    assert!(
+        location.starts_with("/account?error=Connecting+Fake+provider+failed")
+            && location.contains("already+signs+in+another+player"),
+        "{location}"
+    );
+    assert_eq!(r.cookie, None);
+    assert_eq!(me(&base, &session).await, hana);
+    assert!(account(&base, &session).await.identities.is_empty());
+    // And the provider account still signs Gil in.
+    let r = sign_in(&base, &theirs, "/", None, false).await;
+    assert_eq!(me(&base, &r.cookie.unwrap()).await, gil);
+
+    // Cancelling a connect also comes back to the account page.
+    let r = sign_in(&base, "whoever", "/account", Some(&session), true).await;
+    let location = r.header("location").unwrap();
+    assert!(
+        location.starts_with("/account?error=") && location.contains("cancelled"),
+        "{location}"
+    );
+}

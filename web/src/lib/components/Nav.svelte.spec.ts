@@ -31,13 +31,13 @@ describe('Nav.svelte', () => {
 		await expect.element(page.getByRole('link', { name: 'Sign up' })).toBeVisible();
 	});
 
-	it('shows a registered user by name with a log-out button', async () => {
+	it('shows a registered user by name, linking to their account, with a log-out button', async () => {
 		session.user = { id: 'u', username: 'alice', is_guest: false };
 		await render(Nav);
 
 		await expect
 			.element(page.getByRole('link', { name: 'alice' }))
-			.toHaveAttribute('href', '/games');
+			.toHaveAttribute('href', '/account');
 		await expect.element(page.getByRole('button', { name: 'Log out' })).toBeVisible();
 		await expect.element(page.getByRole('link', { name: 'Sign up' })).not.toBeInTheDocument();
 	});

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO identities (provider, subject, user_id) VALUES ($1, $2, $3)",
+  "query": "DELETE FROM identities WHERE user_id = $1 AND provider = $2 AND subject = $3",
   "describe": {
     "columns": [],
     "parameters": {
@@ -12,5 +12,5 @@
     },
     "nullable": []
   },
-  "hash": "4917da73eedc0868d4e90d4ef408bea8747450c7832fccc1faf4e9211d511536"
+  "hash": "634d011c31054838e9e3a14242c5207aebbb2d87f5e9092fdae7bfe4a0ff9870"
 }

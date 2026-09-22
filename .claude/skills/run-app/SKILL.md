@@ -62,7 +62,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   `[aria-label="White clock"]` gets `.active` once both have moved and shows the player's
   name ("Guest" until they sign up; "Open seat" while nobody holds Black).
 - Accounts: the nav's right side reads "Log in · Sign up" (nobody), "Guest · Log in · Sign
-  up" (a guest) or the username plus "Log out". `/signup` and `/login` return to `?next=`;
+  up" (a guest) or the username plus "Log out"; the username opens `/account` (sign-in methods:
+  "Fake provider — name" rows with Disconnect, "Connect Fake provider", the password form).
+  `/signup` and `/login` return to `?next=`;
   `/games` lists "You (White) vs …" rows linking to the games.
 - OAuth: start the server with `--fake-oauth` (Playwright does) and `/login` shows "Continue
   with Fake provider", which opens a page with a "Sign in as" box and Continue/Cancel; no

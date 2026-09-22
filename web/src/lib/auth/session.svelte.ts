@@ -2,17 +2,9 @@
 // `GET /api/me` and kept in sync by the auth calls below, so the nav and the
 // pages read `session.user` and never poll.
 import type { User } from '$lib/generated/User';
+import { refusal } from './refusal';
 
-/** A refusal from the server, with its message (`{ "error": "..." }`). */
-export class AuthError extends Error {
-	constructor(
-		message: string,
-		readonly status: number
-	) {
-		super(message);
-		this.name = 'AuthError';
-	}
-}
+export { AuthError } from './refusal';
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -89,17 +81,6 @@ export class Session {
 		this.user = (await response.json()) as User;
 		return this.user;
 	}
-}
-
-async function refusal(response: Response): Promise<AuthError> {
-	let message = `the server said ${response.status}`;
-	try {
-		const body = (await response.json()) as { error?: string };
-		if (typeof body.error === 'string') message = body.error;
-	} catch {
-		// not JSON; keep the status text
-	}
-	return new AuthError(message, response.status);
 }
 
 export const session = new Session();

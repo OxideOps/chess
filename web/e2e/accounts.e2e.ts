@@ -53,7 +53,10 @@ test('sign up, play with names, list games, log out and back in', async ({ brows
 	await expect(b.locator('.move-list button.move')).toHaveText(['e4']);
 
 	// Both lists show the game from their own side.
+	// The name in the nav is the account page, which links to the games.
 	await a.locator('#navbar').getByRole('link', { name: alice }).click();
+	await expect(a).toHaveURL('/account');
+	await a.getByRole('link', { name: 'My games' }).click();
 	await expect(a).toHaveURL('/games');
 	const aRow = a.getByRole('link', { name: `You (White) vs ${bob}` });
 	await expect(aRow).toContainText('In progress');

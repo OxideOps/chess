@@ -5,6 +5,7 @@
 //! endpoints, [`room`] the rules of a game as the server enforces them.
 //! Games live in memory until persistence arrives.
 
+pub mod account;
 pub mod auth;
 pub mod coach;
 pub mod db;
@@ -139,6 +140,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(games::router())
         .merge(lobby::router())
         .merge(auth::router())
+        .merge(account::router())
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())
