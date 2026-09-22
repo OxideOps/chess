@@ -15,6 +15,7 @@ pub mod lesson;
 pub mod pgn;
 pub mod protocol;
 pub mod puzzle;
+pub mod review;
 
 pub use game::{Game, GameError, GameStatus, NodeId, PlayedMove, Token};
 pub use shakmaty;

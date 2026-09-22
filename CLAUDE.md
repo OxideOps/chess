@@ -11,7 +11,10 @@ Successor to the archived `OxideOps/chess-v1`.
   linear API walks the current line, so code that never branches sees a plain game), PGN
   reader with nested variations, UCI
   engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
-  counts), the lesson drills and their win/loss rules (`lesson.rs`), board facts for the
+  counts), the lesson drills and their win/loss rules (`lesson.rs`), game review (`review.rs`:
+  a finished game's biggest swings in winning chances from per-position engine evaluations,
+  judged by `Score::is_mistake`, skipping moves made from already-lost positions and the
+  engine's own choice; `with_lines` adds the better lines as variations), board facts for the
   coach (`facts.rs`: pieces, material, attacked/defended pieces, pins, where each king can go,
   the pawn structure and how far each side's pieces are out, and what each move of a line does,
   in words — with the material after a capture and, after a check, what can legally reply), and the client↔server

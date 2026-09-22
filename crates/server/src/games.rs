@@ -2,7 +2,8 @@
 //!
 //! - `POST /api/games` creates a game; the caller takes White.
 //! - `POST /api/games/{id}/join` takes the open Black seat.
-//! - `GET /api/games/{id}` is a JSON snapshot for debugging and tests.
+//! - `GET /api/games/{id}` is a JSON snapshot: the moves so far, the clocks,
+//!   the result and the players. The game review reads a finished game from it.
 //! - `GET /api/me/games` lists the caller's games, newest first.
 //! - `GET /api/games/{id}/ws` is the game socket, authenticated by the
 //!   session cookie: seat holders play, everyone else spectates. The server
@@ -140,7 +141,9 @@ pub struct CreatedGame {
     pub id: String,
 }
 
+/// `GET /api/games/{id}`.
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct GameSnapshot {
     pub id: String,
     pub fen: String,

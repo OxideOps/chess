@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchup, opponentName, outcome, relativeTime, seatName } from './listing';
+import { matchup, opponentName, outcome, relativeTime, reviewable, seatName } from './listing';
 import type { GameListing } from '$lib/generated/GameListing';
 
 const base: GameListing = {
@@ -21,6 +21,15 @@ describe('listing helpers', () => {
 		expect(opponentName(base)).toBe('Guest');
 		expect(opponentName({ ...base, your_color: 'black' })).toBe('alice');
 		expect(matchup({ ...base, your_color: 'black' })).toBe('You (Black) vs alice');
+	});
+
+	it('offers a review only for games that finished with moves', () => {
+		expect(reviewable(base)).toBe(false);
+		const won: GameListing = { ...base, ended: { result: 'white_wins', reason: 'resignation' } };
+		expect(reviewable(won)).toBe(true);
+		expect(reviewable({ ...won, moves: 0 })).toBe(false);
+		expect(reviewable({ ...base, ended: { result: 'aborted', reason: 'abandoned' } })).toBe(false);
+		expect(reviewable({ ...base, ended: { result: 'draw', reason: 'agreement' } })).toBe(true);
 	});
 
 	it('works out the outcome for the caller', () => {
