@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO puzzles (id, fen, moves, rating, deviation, popularity, plays, themes)\n         SELECT id, fen, moves, rating, deviation, popularity, plays,\n                string_to_array(themes, ' ')\n         FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int4[], $5::int4[],\n                     $6::int4[], $7::int4[], $8::text[])\n              AS t(id, fen, moves, rating, deviation, popularity, plays, themes)\n         ON CONFLICT (id) DO UPDATE SET fen = EXCLUDED.fen, moves = EXCLUDED.moves,\n             rating = EXCLUDED.rating, deviation = EXCLUDED.deviation,\n             popularity = EXCLUDED.popularity, plays = EXCLUDED.plays, themes = EXCLUDED.themes",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "Int4Array",
+        "Int4Array",
+        "Int4Array",
+        "Int4Array",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2559a0c8c41c087669c30c6a05f077d7d28041859dbef8cce89c21978fb38c8a"
+}

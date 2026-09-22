@@ -95,6 +95,10 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   crates/server/tests/fixtures/puzzles.csv` (Playwright does this at start). The status line
   reads "Find the best move for White/Black.", then "Correct! Find the next move.", "Solved!"
   or "Not quite: the move was …". `/api/puzzles/next` shows the served puzzle's solution.
+  `[data-testid=puzzle-theme]` picks a theme (the URL becomes `/puzzles?theme=fork`);
+  `[data-testid=puzzle-streak]` / `puzzle-best-streak` show the streak. `/puzzles/daily` is
+  today's daily puzzle (`?date=YYYY-MM-DD` an earlier day's); a second visit shows
+  `[data-testid=puzzle-tried]` and rates nothing.
 - Phone: `corepack pnpm exec playwright test --project phone` runs the layout checks at Pixel
   7 size. To look, a Playwright script with `devices['Pixel 7']` and `page.screenshot` beats
   resizing the developer's Chrome window.
