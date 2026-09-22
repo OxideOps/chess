@@ -6,6 +6,15 @@ import type { LinkedIdentity } from "./LinkedIdentity";
  */
 export type Account = { username: string, has_password: boolean, 
 /**
+ * The verified address password resets go to; `None` means a
+ * forgotten password can't be recovered.
+ */
+email: string | null, 
+/**
+ * An address added or changed to, waiting for its link to be followed.
+ */
+pending_email: string | null, 
+/**
  * Oldest first.
  */
 identities: Array<LinkedIdentity>, };

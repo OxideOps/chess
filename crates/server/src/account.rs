@@ -29,6 +29,11 @@ use crate::{
 pub struct Account {
     pub username: String,
     pub has_password: bool,
+    /// The verified address password resets go to; `None` means a
+    /// forgotten password can't be recovered.
+    pub email: Option<String>,
+    /// An address added or changed to, waiting for its link to be followed.
+    pub pending_email: Option<String>,
     /// Oldest first.
     pub identities: Vec<LinkedIdentity>,
 }
@@ -69,7 +74,7 @@ pub fn router() -> Router<AppState> {
 }
 
 /// Accounts only: a guest has nothing here to change.
-fn registered<'a>(state: &'a AppState, user: &User) -> Result<&'a Auth, AuthError> {
+pub(crate) fn registered<'a>(state: &'a AppState, user: &User) -> Result<&'a Auth, AuthError> {
     let auth = state.auth.as_ref().ok_or(AuthError::Unavailable)?;
     if user.is_guest {
         return Err(AuthError::GuestAccount);
@@ -97,8 +102,21 @@ async fn account(
     RequireUser(user): RequireUser,
 ) -> Result<Json<Account>, AuthError> {
     let auth = registered(&state, &user)?;
-    let has_password = sqlx::query_scalar!(
-        r#"SELECT password_hash IS NOT NULL AS "has!" FROM users WHERE id = $1"#,
+    Ok(Json(load_account(&state, auth, &user).await?))
+}
+
+/// The signed-in account as `GET /api/me/account` shows it.
+pub(crate) async fn load_account(
+    state: &AppState,
+    auth: &Auth,
+    user: &User,
+) -> Result<Account, AuthError> {
+    let row = sqlx::query!(
+        r#"SELECT password_hash IS NOT NULL AS "has_password!", email,
+                  (SELECT t.email FROM email_tokens t
+                   WHERE t.user_id = u.id AND t.purpose = 'verify' AND t.expires_at > now()
+                   ORDER BY t.created_at DESC LIMIT 1) AS pending_email
+           FROM users u WHERE id = $1"#,
         user.id
     )
     .fetch_one(auth.db().pool())
@@ -112,17 +130,19 @@ async fn account(
     .await?
     .into_iter()
     .map(|row| LinkedIdentity {
-        provider_name: provider_name(&state, &row.provider),
+        provider_name: provider_name(state, &row.provider),
         provider: row.provider,
         subject: row.subject,
         label: row.label,
     })
     .collect();
-    Ok(Json(Account {
-        username: user.username.unwrap_or_default(),
-        has_password,
+    Ok(Account {
+        username: user.username.clone().unwrap_or_default(),
+        has_password: row.has_password,
+        email: row.email,
+        pending_email: row.pending_email,
         identities,
-    }))
+    })
 }
 
 async fn disconnect(

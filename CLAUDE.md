@@ -83,8 +83,18 @@ Successor to the archived `OxideOps/chess-v1`.
   sign-in methods (`/api/me/account` lists identities and whether there is a password,
   `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in,
   `PUT /api/me/password` sets or changes it — changing needs the current one — and signs out the
-  other sessions), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
-  `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
+  other sessions), `email.rs` an optional email address and password resets
+  (`PUT`/`DELETE /api/me/email`; the address stays pending until its mailed link is followed at
+  `POST /api/auth/verify-email`, and only then is it `users.email`, so an unverified address can
+  never get a reset; a change tells the old address; `POST /api/auth/forgot-password` answers
+  `202` at once for any address and looks up and mails afterwards, so neither the reply nor its
+  timing says who has an account; `POST /api/auth/reset-password` spends the link and signs every
+  session out; links are 256-bit tokens stored as SHA-256 in `email_tokens`, deleted when used,
+  verify 24 h, reset 1 h; mail rate-limited per recipient and per client), `mail.rs` the `Mailer`
+  (SMTP through `lettre` with `--smtp-url`/`--mail-from`, or `--fake-mail` writing to the log
+  and to `--fake-mail-dir`; without either there is no email at all, `GET /api/auth/mail` says
+  so and the UI hides it), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
+  `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets, the mailer), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
   `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
   attempt endpoints (only the first try at a puzzle rates), `coach.rs` the coach (Claude
@@ -138,7 +148,9 @@ that process's memory, written through to Postgres and reloaded on access, so tw
 would each hold their own copy), and nothing in front may strip COOP/COEP or the
 multi-threaded engine silently stops running. Setting `CHESS_E2E_URL` points the Playwright
 suite at a running deployment instead of one it starts itself; the tests needing
-`--fake-oauth` or `--fake-coach` are excluded from that, since a deployment has neither.
+`--fake-oauth`, `--fake-coach` or `--fake-mail` are excluded from that, since a deployment
+has none of them. Playwright's server writes its mail to `$TMPDIR/chess-e2e-mail`
+(`web/e2e/mail.ts` reads the links back).
 
 ## Working on the UI
 

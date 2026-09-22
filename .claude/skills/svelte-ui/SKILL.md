@@ -23,7 +23,11 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   plain `<a rel="external">` (full-page navigation to an API URL, which the same rule allows).
   `account.ts` backs `/account` (the nav's username links there; a guest's goes to `/games`):
   load the account, disconnect an identity, set the password, and which providers are left to
-  connect; `refusal.ts` turns a `{ "error": … }` reply into an `AuthError`.
+  connect; `refusal.ts` turns a `{ "error": … }` reply into an `AuthError`. `email.ts` is the
+  email address and password reset calls (`mailEnabled()` decides whether `/account`, `/signup`
+  and `/login` show any of it); the links land on `/verify-email` (spends the token on load) and
+  `/reset-password` (a new-password form), both reading `?token=`; `/forgot-password` asks for a
+  link and says the same thing whatever the address.
 - `src/lib/coach/` — `coach.svelte.ts` (`Coach`: whether the server has one, explanations per
   position; injectable fetch). `CoachPanel` shows it under the engine on `/analysis` and hides
   itself when the server has no coach. `CoachAnswer` renders an `Explanation`'s `parts`: the

@@ -86,6 +86,31 @@ struct Args {
     /// you type. For development and the end-to-end tests only.
     #[arg(long, env = "CHESS_FAKE_OAUTH", default_value_t = false)]
     fake_oauth: bool,
+
+    /// SMTP server for email (addresses on accounts, password resets), with
+    /// the credentials in it: `smtps://user:pass@smtp.example.com:465`, or
+    /// `smtp://…:587?tls=required` for STARTTLS. Without it (or
+    /// `--fake-mail`) accounts have no email and no password reset.
+    #[arg(
+        long,
+        env = "CHESS_SMTP_URL",
+        hide_env_values = true,
+        requires = "mail_from"
+    )]
+    smtp_url: Option<String>,
+
+    /// The From of every message, e.g. `Chess <noreply@chess.example>`.
+    #[arg(long, env = "CHESS_MAIL_FROM")]
+    mail_from: Option<String>,
+
+    /// Don't send email: write each message to the log (and to
+    /// `--fake-mail-dir`) instead. For development and the end-to-end tests.
+    #[arg(long, env = "CHESS_FAKE_MAIL", default_value_t = false)]
+    fake_mail: bool,
+
+    /// With `--fake-mail`, also write each message to a file here.
+    #[arg(long, env = "CHESS_FAKE_MAIL_DIR", requires = "fake_mail")]
+    fake_mail_dir: Option<PathBuf>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -186,6 +211,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .chain(oauth.iter().map(|p| p.name()))
         .collect();
     tracing::info!("sign-in: {}", methods.join(", "));
+    let mail = match (&args.smtp_url, args.fake_mail) {
+        (Some(url), _) => {
+            let from = args.mail_from.as_deref().unwrap_or_default();
+            let mailer = server::mail::Mailer::smtp(url, from)?;
+            tracing::info!("email: SMTP, from {from}");
+            Some(mailer)
+        }
+        (None, true) => {
+            tracing::warn!("email is the offline stand-in (--fake-mail): nothing is sent");
+            Some(server::mail::Mailer::fake(args.fake_mail_dir.clone())?)
+        }
+        (None, false) => {
+            tracing::info!("email: none (no --smtp-url), so no password resets");
+            None
+        }
+    };
     let config = server::Config {
         secure_cookies: args.secure_cookies,
         trust_proxy: args.trust_proxy,
@@ -205,6 +246,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             (None, false) => None,
         },
+        mail,
     };
     let state = match &args.database_url {
         Some(url) => {

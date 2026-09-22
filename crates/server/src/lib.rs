@@ -9,9 +9,11 @@ pub mod account;
 pub mod auth;
 pub mod coach;
 pub mod db;
+pub mod email;
 pub mod games;
 pub mod limit;
 pub mod lobby;
+pub mod mail;
 pub mod oauth;
 pub mod origin;
 pub mod players;
@@ -63,6 +65,28 @@ pub struct Config {
     pub abandon_after: Option<std::time::Duration>,
     /// The coach, if there is one (an API key, or the offline stand-in).
     pub coach: Option<coach::CoachConfig>,
+    /// Where email goes (SMTP, or the offline stand-in). Without it there
+    /// are no addresses on accounts and no password resets.
+    pub mail: Option<mail::Mailer>,
+}
+
+impl Config {
+    /// Where browsers reach this server, for links that leave it (OAuth
+    /// redirects, links in emails): the configured public URL, else this
+    /// request's own host.
+    pub fn public_origin(&self, headers: &axum::http::HeaderMap) -> String {
+        match &self.public_url {
+            Some(url) => url.trim_end_matches('/').to_string(),
+            None => {
+                let host = headers
+                    .get(header::HOST)
+                    .and_then(|h| h.to_str().ok())
+                    .unwrap_or("localhost");
+                let scheme = if self.secure_cookies { "https" } else { "http" };
+                format!("{scheme}://{host}")
+            }
+        }
+    }
 }
 
 /// Everything the handlers share.
@@ -76,6 +100,8 @@ pub struct AppState {
     pub lobby: Option<lobby::Lobby>,
     pub config: Arc<Config>,
     pub coach: Option<coach::Coach>,
+    /// `None` when the server can't send email: no addresses, no resets.
+    pub mail: Option<mail::Mailer>,
 }
 
 impl AppState {
@@ -87,6 +113,7 @@ impl AppState {
             lobby: None,
             config: Arc::default(),
             coach: None,
+            mail: None,
         }
     }
 
@@ -99,6 +126,7 @@ impl AppState {
             games,
             auth: Some(auth::Auth::new(db, config.secure_cookies)),
             coach: config.coach.clone().map(coach::Coach::new),
+            mail: config.mail.clone(),
             config: Arc::new(config),
         }
     }
@@ -141,6 +169,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(lobby::router())
         .merge(auth::router())
         .merge(account::router())
+        .merge(email::router())
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())

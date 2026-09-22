@@ -24,6 +24,13 @@ impl Limit {
             window: Duration::from_secs(60),
         }
     }
+
+    pub const fn per_hour(hits: u32) -> Limit {
+        Limit {
+            hits,
+            window: Duration::from_secs(60 * 60),
+        }
+    }
 }
 
 #[derive(Debug)]

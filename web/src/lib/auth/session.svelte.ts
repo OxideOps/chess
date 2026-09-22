@@ -56,9 +56,15 @@ export class Session {
 		return this.user ?? this.#post('/api/auth/guest');
 	}
 
-	/** Register. A guest is upgraded in place and keeps their games. */
-	signup(username: string, password: string): Promise<User> {
-		return this.#post('/api/auth/signup', { username, password });
+	/**
+	 * Register. A guest is upgraded in place and keeps their games. An
+	 * `email` is optional; the server mails it a link to verify it.
+	 */
+	signup(username: string, password: string, email: string | null = null): Promise<User> {
+		return this.#post(
+			'/api/auth/signup',
+			email ? { username, password, email } : { username, password }
+		);
 	}
 
 	login(username: string, password: string): Promise<User> {

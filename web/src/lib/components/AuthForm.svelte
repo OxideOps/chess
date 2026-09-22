@@ -5,6 +5,7 @@
 	import { session } from '$lib/auth/session.svelte';
 	import { safeNext, withNext } from '$lib/auth/next';
 	import { listProviders, startUrl } from '$lib/auth/providers';
+	import { mailEnabled } from '$lib/auth/email';
 	import type { ProviderInfo } from '$lib/generated/ProviderInfo';
 
 	// Sign-up and log-in are the same form with a different verb. On success
@@ -16,12 +17,16 @@
 
 	let username = $state('');
 	let password = $state('');
+	let email = $state('');
 	// An OAuth round trip that failed comes back here with `?error=`.
 	let error: string | null = $state(page.url.searchParams.get('error'));
 	let busy = $state(false);
 	let providers: ProviderInfo[] = $state([]);
+	// Whether the server can mail: an address at signup, a reset at login.
+	let mail = $state(false);
 	$effect(() => {
 		listProviders().then((list) => (providers = list));
+		mailEnabled().then((enabled) => (mail = enabled));
 	});
 
 	const verb = $derived(mode === 'signup' ? 'Sign up' : 'Log in');
@@ -32,7 +37,7 @@
 		busy = true;
 		error = null;
 		try {
-			if (mode === 'signup') await session.signup(username, password);
+			if (mode === 'signup') await session.signup(username, password, email.trim() || null);
 			else await session.login(username, password);
 			await goto(next);
 		} catch (e) {
@@ -79,10 +84,20 @@
 				maxlength="128"
 			/>
 		</label>
+		{#if mode === 'signup' && mail}
+			<label>
+				Email (optional)
+				<input name="email" type="email" bind:value={email} autocomplete="email" maxlength="254" />
+			</label>
+			<p class="note">Only for resetting a forgotten password. We send a link to verify it.</p>
+		{/if}
 		<button type="submit" class="btn primary" disabled={busy}>{busy ? `${verb}…` : verb}</button>
 	</form>
 	{#if error}
 		<p class="error" role="alert">{error}</p>
+	{/if}
+	{#if mode === 'login' && mail}
+		<p class="switch"><a href={resolve('/forgot-password')}>Forgot your password?</a></p>
 	{/if}
 	{#if providers.length > 0}
 		<div class="providers">
