@@ -86,9 +86,12 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   prompt change did, case by case. Scores swing between runs on identical code, so judge a
   change with `-- --repeat 3` (each case answered and graded that many times) and read the
   means, not one sample.
-- Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
-  then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
-  "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
+- Lessons (`/lessons`): eighteen drills, in order (`lesson::drills()`); `/lessons/back-rank-mate`
+  is won by a1→a8 ("Checkmate!", then "Next: …" and "✓ Done" on the list). In the others
+  Stockfish answers after "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your
+  move · N moves left". The material drills (`/lessons/knight-fork`: d5→e7, then e7→c6) judge
+  the last move only after Stockfish's reply, so it reads "Stockfish is thinking…" before the
+  result.
   A blunder (Qh2-e5+ in `/lessons/queen-mate`) shows `[data-testid=mistake]` with Stockfish's
   better move and, for an account with a coach, "Why was that a mistake?".
 - Puzzles (`/puzzles`) need puzzles in the database: `cargo run -p server -- import-puzzles

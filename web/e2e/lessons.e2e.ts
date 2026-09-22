@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 test('win the first drill, see it marked, and move on', async ({ page }) => {
 	await page.goto('/lessons');
-	await expect(page.locator('ol li')).toHaveCount(6);
+	await expect(page.locator('ol li')).toHaveCount(18);
 	await page.getByTestId('lesson-back-rank-mate').click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Back-rank mate');
 	const status = page.getByTestId('drill-status');
@@ -11,11 +11,27 @@ test('win the first drill, see it marked, and move on', async ({ page }) => {
 	await sq(page, 'a1').click();
 	await sq(page, 'a8').click();
 	await expect(status).toHaveText('Checkmate!');
-	await expect(page.getByRole('link', { name: 'Next: Two rooks: the ladder' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Next: Develop and castle' })).toBeVisible();
 
 	await page.goto('/lessons');
 	await expect(page.getByTestId('lesson-back-rank-mate')).toContainText('Done');
-	await expect(page.getByTestId('lesson-two-rooks')).not.toContainText('Done');
+	await expect(page.getByTestId('lesson-develop-and-castle')).not.toContainText('Done');
+});
+
+test('a tactic is won by the material once Stockfish has answered', async ({ page }) => {
+	await page.goto('/lessons/knight-fork');
+	await expect(page.getByText('Goal: win at least 6 points of material')).toBeVisible();
+	const status = page.getByTestId('drill-status');
+	await expect(status).toHaveText('Your move · 2 moves left', { timeout: 30_000 });
+	await sq(page, 'd5').click();
+	await sq(page, 'e7').click(); // Ne7+ forks the king and the queen
+	await expect(status).toHaveText('Your move · 1 move left', { timeout: 30_000 });
+	await sq(page, 'e7').click();
+	await sq(page, 'c6').click();
+	await expect(status).toHaveText(/^You're \d+ points up on the start: a won game\.$/, {
+		timeout: 30_000
+	});
+	await expect(page.getByRole('link', { name: 'Next: Pin' })).toBeVisible();
 });
 
 test('Stockfish answers your moves, and restart starts over', async ({ page }) => {
