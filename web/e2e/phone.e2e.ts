@@ -48,7 +48,9 @@ test('the play page stacks, fills the width, and plays by tapping', async ({ pag
 
 test('the analysis page fits, with long engine lines truncated', async ({ page }) => {
 	await page.goto('/analysis');
-	await expect(page.locator('.engine .lines li')).toHaveCount(3, { timeout: 30_000 });
+	await expect(page.locator('.engine .lines li:not(.pending)')).toHaveCount(3, {
+		timeout: 30_000
+	});
 	await fitsTheScreen(page);
 });
 
