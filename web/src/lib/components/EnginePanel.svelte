@@ -12,7 +12,16 @@
 	}
 	let { game, analyser, enabled = $bindable() }: Props = $props();
 
-	const name = $derived(analyser.name ?? 'Stockfish');
+	/**
+	 * What the engine calls itself is "Stockfish 18 Lite WASM Multithreaded",
+	 * which is too long for the header beside the depth and the thread count:
+	 * it wrapped onto a second line the moment the engine answered, pushing
+	 * the whole sidebar down. The version is what anyone wants to know, and
+	 * "multithreaded" is already said by the threads label, so show
+	 * "Stockfish 18" and keep the rest for the tooltip.
+	 */
+	const fullName = $derived(analyser.name ?? 'Stockfish');
+	const name = $derived(/^Stockfish \d+/i.exec(fullName)?.[0] ?? fullName);
 	const lines = $derived(
 		analyser.fen === null
 			? []
@@ -55,7 +64,7 @@
 	<header>
 		<label>
 			<input type="checkbox" bind:checked={enabled} disabled={analyser.status === 'failed'} />
-			<span class="name">{name}</span>
+			<span class="name" title={fullName}>{name}</span>
 		</label>
 		<span class="summary">{summary}</span>
 		{#if analyser.threads > 1}
@@ -109,8 +118,16 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		min-width: 0;
 		font-weight: 600;
 		cursor: pointer;
+	}
+
+	/* One line whatever an engine calls itself: the header must not grow. */
+	.name {
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
 
 	header input {
@@ -157,6 +174,10 @@
 		color: var(--text);
 		font-family: var(--font-mono);
 		font-size: var(--type-sm);
+		/* Set, not inherited: a button's line height is the browser's own and
+		   a span's is the page's, and the placeholder rows are spans. Left to
+		   inherit, they were 3px taller than the lines that replace them. */
+		line-height: 1.25;
 		text-align: left;
 		cursor: pointer;
 	}

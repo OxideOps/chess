@@ -1,3 +1,6 @@
+// The real stylesheet: heights depend on it, and a test without it measured
+// the placeholder rows equal to the real ones when on the site they weren't.
+import '../../app.css';
 import { tick } from 'svelte';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -12,8 +15,10 @@ const AFTER_E4 = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1';
 
 /** Plays the engine's side of the conversation for the test. */
 class FakeEngine implements EngineLike {
-	readonly threads = 1;
-	constructor(private emit: (event: EngineEvent) => void) {}
+	constructor(
+		private emit: (event: EngineEvent) => void,
+		readonly threads = 8
+	) {}
 	send() {}
 	terminate() {}
 	say(text: string) {
@@ -31,7 +36,10 @@ describe('EnginePanel', () => {
 			createEngine: (onEvent) => (engine = new FakeEngine(onEvent))
 		});
 		const game = new GameStore();
-		render(EnginePanel, { game, analyser, enabled: true });
+		// As wide as the sidebar lets it be, where the header has to fit.
+		const container = document.body.appendChild(document.createElement('div'));
+		container.style.width = '418px';
+		render(EnginePanel, { props: { game, analyser, enabled: true }, target: container });
 
 		const panel = () => document.querySelector('.engine')!;
 		const height = () => Math.round(panel().getBoundingClientRect().height);
@@ -43,10 +51,14 @@ describe('EnginePanel', () => {
 		heights.push(height());
 		expect(panel().querySelectorAll('.lines li')).toHaveLength(3);
 
+		// Named as the real build names itself, with a thread count beside it:
+		// the longest the header ever has to hold.
+		engine.say('id name Stockfish 18 Lite WASM Multithreaded');
 		engine.say('uciok');
 		engine.say('readyok');
 		analyser.request(START);
 		await tick();
+		expect(panel().querySelector('.name')?.textContent).toBe('Stockfish 18');
 		heights.push(height());
 
 		// They arrive one at a time; the panel does not grow as they do.
