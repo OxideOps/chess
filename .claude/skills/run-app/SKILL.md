@@ -90,9 +90,12 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   `[data-testid=review-progress]` counts positions, then `[data-testid=swings]` (or
   `no-swings`) with "Your moves"/"Both sides"; "Open on the analysis board" loads the game
   with the better lines as variations. `e2e/review.e2e.ts` plays a Scholar's mate and checks it.
-- Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
-  then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
-  "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
+- Lessons (`/lessons`): eighteen drills, in order (`lesson::drills()`); `/lessons/back-rank-mate`
+  is won by a1→a8 ("Checkmate!", then "Next: …" and "✓ Done" on the list). In the others
+  Stockfish answers after "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your
+  move · N moves left". The material drills (`/lessons/knight-fork`: d5→e7, then e7→c6) judge
+  the last move only after Stockfish's reply, so it reads "Stockfish is thinking…" before the
+  result.
   A blunder (Qh2-e5+ in `/lessons/queen-mate`) shows `[data-testid=mistake]` with Stockfish's
   better move and, for an account with a coach, "Why was that a mistake?".
 - Puzzles (`/puzzles`) need puzzles in the database: `cargo run -p server -- import-puzzles

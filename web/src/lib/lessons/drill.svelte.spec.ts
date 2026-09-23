@@ -78,6 +78,29 @@ describe('DrillSession', () => {
 		s.dispose();
 	});
 
+	it('judges material won on the last move once the engine has answered it', async () => {
+		// Sizing up the start, then the replies to Ne7+ and Nxc6.
+		const { asked, opponent } = scripted(null, 'g8f8', 'b7c6');
+		const s = new DrillSession(drill('knight-fork'), opponent);
+		await s.start();
+		expect(s.status).toEqual({ state: 'going', moves_left: 2 });
+		s.tryMove('d5', 'e7');
+		await settle();
+		expect(s.status).toEqual({ state: 'going', moves_left: 1 });
+		s.tryMove('e7', 'c6');
+		// The queen is taken, but the drill waits for the recapture before judging it.
+		expect(s.status).toEqual({ state: 'going', moves_left: 0 });
+		expect(s.canMove).toBe(false);
+		await settle();
+		expect(asked.at(-1)).toEqual(['d5e7', 'g8f8', 'e7c6']);
+		expect(s.status).toEqual({
+			state: 'won',
+			reason: "You're 6 points up on the start: a won game."
+		});
+		expect(completed().has('knight-fork')).toBe(true);
+		s.dispose();
+	});
+
 	it('spots a move that throws the win away, and names the better one', async () => {
 		const mate = (n: number) => ({ kind: 'mate' as const, value: n });
 		const { opponent } = scripted(

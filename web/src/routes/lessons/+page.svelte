@@ -20,8 +20,9 @@
 <div class="page-header">
 	<h1>Lessons</h1>
 	<p>
-		Short drills from set positions, played against Stockfish. Each one teaches a technique every
-		player needs: the basic checkmates and the key king and pawn endings.
+		Short drills from set positions, played against Stockfish. Each one teaches something every
+		player needs, easiest first: opening the game, the common tactics, the basic checkmates and the
+		key king, pawn and rook endings.
 	</p>
 </div>
 
