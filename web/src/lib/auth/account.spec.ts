@@ -69,4 +69,29 @@ describe('account', () => {
 		await setPassword({ current: 'old password', password: 'new password' }, ok);
 		expect(sent).toEqual({ current: 'old password', password: 'new password' });
 	});
+
+	it('passes on which provider to sign in with again', async () => {
+		const stale = async () =>
+			new Response(
+				JSON.stringify({
+					error: 'sign in again with Lichess to set a password',
+					sign_in_again: { id: 'lichess', name: 'Lichess' }
+				}),
+				{ status: 403 }
+			);
+		await expect(
+			setPassword({ current: null, password: 'new password' }, stale)
+		).rejects.toMatchObject({
+			status: 403,
+			message: 'sign in again with Lichess to set a password',
+			signInAgain: { id: 'lichess', name: 'Lichess' }
+		});
+		const wrong = async () =>
+			new Response(JSON.stringify({ error: 'your current password is not that' }), {
+				status: 403
+			});
+		await expect(
+			setPassword({ current: 'x', password: 'new password' }, wrong)
+		).rejects.toMatchObject({ signInAgain: null });
+	});
 });

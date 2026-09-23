@@ -3,7 +3,11 @@
 //! `GET /api/me/account` lists the connected provider identities and whether
 //! there is a password; `DELETE /api/me/identities/{provider}/{subject}`
 //! disconnects one, refused when it is the last way in (no password and no
-//! other identity); `PUT /api/me/password` sets or changes the password.
+//! other identity with a provider that is switched on); `PUT /api/me/password`
+//! sets or changes the password. Changing it needs the current one; setting a
+//! first one needs a session from a sign-in in the last
+//! [`FRESH_SIGN_IN_MINUTES`], so a stolen session cookie can't plant a
+//! password of its own. Either signs out every other session.
 //! Connecting a provider is the ordinary OAuth flow started while signed in
 //! (see [`crate::oauth`]), which links rather than creating a user.
 
@@ -18,10 +22,15 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AppState,
     auth::{
-        Auth, AuthError, LOGIN_PER_USER, RequireUser, SessionId, User, hash_password,
-        valid_password, verify_password,
+        Auth, AuthError, ClientIp, LOGIN_PER_ADDR, LOGIN_PER_USER, RequireUser, SessionId, User,
+        hash_password, valid_password, verify_password,
     },
+    oauth::ProviderInfo,
 };
+
+/// How recent the sign-in behind a session must be for it to set an
+/// account's first password.
+pub const FRESH_SIGN_IN_MINUTES: i32 = 10;
 
 /// How the signed-in account gets in.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -97,6 +106,17 @@ fn provider_name(state: &AppState, id: &str) -> String {
     .to_string()
 }
 
+/// The ids of the providers this server is configured with. An identity
+/// with any other provider can't be signed in with, so it is no way in.
+fn configured(state: &AppState) -> Vec<String> {
+    state
+        .config
+        .oauth
+        .iter()
+        .map(|p| p.id().to_string())
+        .collect()
+}
+
 async fn account(
     State(state): State<AppState>,
     RequireUser(user): RequireUser,
@@ -160,13 +180,17 @@ async fn disconnect(
     )
     .fetch_one(&mut *tx)
     .await?;
+    // Other identities count as a way in only while their provider is
+    // switched on; the one being removed needs no provider to go.
     let counts = sqlx::query!(
         r#"SELECT count(*) FILTER (WHERE provider = $2 AND subject = $3) AS "this!",
-                  count(*) FILTER (WHERE NOT (provider = $2 AND subject = $3)) AS "others!"
+                  count(*) FILTER (WHERE NOT (provider = $2 AND subject = $3)
+                                   AND provider = ANY($4::text[])) AS "others!"
            FROM identities WHERE user_id = $1"#,
         user.id,
         provider,
-        subject
+        subject,
+        &configured(&state)
     )
     .fetch_one(&mut *tx)
     .await?;
@@ -196,32 +220,68 @@ async fn set_password(
     State(state): State<AppState>,
     RequireUser(user): RequireUser,
     SessionId(session): SessionId,
+    ip: ClientIp,
     Json(change): Json<PasswordChange>,
 ) -> Result<StatusCode, AuthError> {
     let auth = registered(&state, &user)?;
-    // Guessing the current password here is guessing it at the login form.
-    auth.limit(&format!("password:{}", user.id), LOGIN_PER_USER)?;
+    // Guessing the current password here is guessing it at the login form,
+    // so it spends the login form's attempts: holding a session buys no
+    // extra guesses.
+    auth.limit(&format!("login:{}", ip.key()), LOGIN_PER_ADDR)?;
+    let username = user.username.as_deref().unwrap_or_default();
+    auth.limit(
+        &format!("login:{}", username.to_lowercase()),
+        LOGIN_PER_USER,
+    )?;
     if !valid_password(&change.password) {
         return Err(AuthError::WeakPassword);
     }
+    let pool = auth.db().pool();
     let current_hash =
         sqlx::query_scalar!("SELECT password_hash FROM users WHERE id = $1", user.id)
-            .fetch_one(auth.db().pool())
+            .fetch_one(pool)
             .await?;
-    if let Some(hash) = current_hash {
-        let given = change.current.unwrap_or_default();
-        if !verify_password(given, hash).await {
-            return Err(AuthError::WrongPassword);
+    let first = current_hash.is_none();
+    match current_hash {
+        Some(hash) => {
+            let given = change.current.unwrap_or_default();
+            if !verify_password(given, hash).await {
+                return Err(AuthError::WrongPassword);
+            }
+        }
+        // With no password to confirm, the session is the only proof, and a
+        // stolen one would do. So it has to come from a sign-in just now.
+        None => {
+            let fresh = sqlx::query_scalar!(
+                r#"SELECT created_at > now() - make_interval(mins => $2) AS "fresh!"
+                   FROM sessions WHERE id = $1"#,
+                session.as_deref().unwrap_or_default(),
+                FRESH_SIGN_IN_MINUTES
+            )
+            .fetch_optional(pool)
+            .await?
+            .unwrap_or(false);
+            if !fresh {
+                let provider = sign_in_again_with(&state, auth, &user).await?;
+                return Err(AuthError::SignInAgain(provider));
+            }
         }
     }
     let hash = hash_password(change.password).await;
-    sqlx::query!(
-        "UPDATE users SET password_hash = $2 WHERE id = $1",
+    // A first password is set only while there still is none, so a second
+    // tab racing this one can't skip the current-password check.
+    let updated = sqlx::query!(
+        "UPDATE users SET password_hash = $2
+         WHERE id = $1 AND (password_hash IS NULL) = $3",
         user.id,
-        hash
+        hash,
+        first
     )
-    .execute(auth.db().pool())
+    .execute(pool)
     .await?;
+    if updated.rows_affected() == 0 {
+        return Err(AuthError::WrongPassword);
+    }
     // Anyone else signed in as this account (the reason to change a
     // password, often) is signed out; this browser stays in.
     sqlx::query!(
@@ -229,7 +289,28 @@ async fn set_password(
         user.id,
         session
     )
-    .execute(auth.db().pool())
+    .execute(pool)
     .await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// The provider to send the account back through for a fresh sign-in: the
+/// oldest of its identities whose provider is switched on.
+async fn sign_in_again_with(
+    state: &AppState,
+    auth: &Auth,
+    user: &User,
+) -> Result<Option<ProviderInfo>, AuthError> {
+    let provider = sqlx::query_scalar!(
+        "SELECT provider FROM identities WHERE user_id = $1 AND provider = ANY($2::text[])
+         ORDER BY created_at, provider, subject LIMIT 1",
+        user.id,
+        &configured(state)
+    )
+    .fetch_optional(auth.db().pool())
+    .await?;
+    Ok(provider.map(|id| ProviderInfo {
+        name: provider_name(state, &id),
+        id,
+    }))
 }

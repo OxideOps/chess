@@ -34,7 +34,7 @@ const SESSION_DAYS: i64 = 30;
 // through many usernames); signups and guests per address bound account
 // spam. Generous enough that a person never sees them.
 pub(crate) const LOGIN_PER_USER: Limit = Limit::per_minute(10);
-const LOGIN_PER_ADDR: Limit = Limit::per_minute(30);
+pub(crate) const LOGIN_PER_ADDR: Limit = Limit::per_minute(30);
 const SIGNUP_PER_ADDR: Limit = Limit::per_minute(10);
 const GUEST_PER_ADDR: Limit = Limit::per_minute(30);
 
@@ -74,6 +74,9 @@ pub enum AuthError {
     NoSuchIdentity,
     /// Changing a password needs the current one, and this wasn't it.
     WrongPassword,
+    /// Setting a first password needs a session from a recent sign-in; this
+    /// one is older. Carries the provider to sign in again with, if any.
+    SignInAgain(Option<crate::oauth::ProviderInfo>),
     /// Guests have no account settings; they sign up first.
     GuestAccount,
     /// Rate limited; try again after this long.
@@ -134,6 +137,13 @@ impl IntoResponse for AuthError {
                 StatusCode::FORBIDDEN,
                 "your current password is not that".into(),
             ),
+            AuthError::SignInAgain(provider) => (
+                StatusCode::FORBIDDEN,
+                match provider {
+                    Some(p) => format!("sign in again with {} to set a password", p.name),
+                    None => "sign in again to set a password".into(),
+                },
+            ),
             AuthError::GuestAccount => (
                 StatusCode::FORBIDDEN,
                 "guests have no account settings; sign up first".into(),
@@ -174,7 +184,12 @@ impl IntoResponse for AuthError {
                 (StatusCode::INTERNAL_SERVER_ERROR, "database error".into())
             }
         };
-        let mut response = (status, Json(serde_json::json!({ "error": message }))).into_response();
+        let mut body = serde_json::json!({ "error": message });
+        // The page offers the way back: the provider flow, ending on /account.
+        if let AuthError::SignInAgain(Some(p)) = &self {
+            body["sign_in_again"] = serde_json::json!(p);
+        }
+        let mut response = (status, Json(body)).into_response();
         if let AuthError::TooManyAttempts(wait) = self {
             response.headers_mut().insert(
                 header::RETRY_AFTER,

@@ -12,6 +12,7 @@
 		setPassword
 	} from '$lib/auth/account';
 	import { changeEmail, emailState, mailEnabled, removeEmail } from '$lib/auth/email';
+	import { AuthError } from '$lib/auth/refusal';
 	import type { Account } from '$lib/generated/Account';
 	import type { LinkedIdentity } from '$lib/generated/LinkedIdentity';
 	import type { ProviderInfo } from '$lib/generated/ProviderInfo';
@@ -30,6 +31,9 @@
 	let saving = $state(false);
 	let passwordError: string | null = $state(null);
 	let passwordSaved: string | null = $state(null);
+	// A first password needs a recent sign-in; when this session is older the
+	// server names the provider to go back through, and it returns here.
+	let signInAgain: ProviderInfo | null = $state(null);
 
 	let mail = $state(false);
 	let email = $state('');
@@ -110,6 +114,7 @@
 		saving = true;
 		passwordError = null;
 		passwordSaved = null;
+		signInAgain = null;
 		const changing = account.has_password;
 		try {
 			await setPassword({ current: changing ? current : null, password });
@@ -121,6 +126,7 @@
 				: 'Password set. You can now log in with your username and it.';
 		} catch (e) {
 			passwordError = e instanceof Error ? e.message : String(e);
+			if (e instanceof AuthError) signInAgain = e.signInAgain;
 		} finally {
 			saving = false;
 		}
@@ -299,6 +305,13 @@
 			</form>
 			{#if passwordError}
 				<p class="error" role="alert">{passwordError}</p>
+			{/if}
+			{#if signInAgain}
+				<div class="connect">
+					<a class="btn" href={startUrl(signInAgain, resolve('/account'))} rel="external">
+						Sign in again with {signInAgain.name}
+					</a>
+				</div>
 			{/if}
 			{#if passwordSaved}
 				<p class="saved" role="status">{passwordSaved}</p>

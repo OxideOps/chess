@@ -81,17 +81,23 @@ Successor to the archived `OxideOps/chess-v1`.
   links instead, and refuses an identity that is someone else's; a built-in fake provider behind
   `--fake-oauth` for dev and tests, in-process, no network), `account.rs` the account's own
   sign-in methods (`/api/me/account` lists identities and whether there is a password,
-  `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in,
-  `PUT /api/me/password` sets or changes it — changing needs the current one — and signs out the
-  other sessions), `email.rs` an optional email address and password resets
+  `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in (an
+  identity whose provider is switched off doesn't count), `PUT /api/me/password` sets or changes
+  it — changing needs the current one, setting a first one a session from a sign-in in the last
+  10 minutes (else it names the provider to sign in with again; doing that while signed in
+  replaces the session) — spends the login form's rate limits and signs out the other sessions
+  and cancels any pending email links), `email.rs` an optional email address and password resets
   (`PUT`/`DELETE /api/me/email`; the address stays pending until its mailed link is followed at
   `POST /api/auth/verify-email`, and only then is it `users.email`, so an unverified address can
   never get a reset; a change tells the old address; `POST /api/auth/forgot-password` answers
   `202` at once for any address and looks up and mails afterwards, so neither the reply nor its
-  timing says who has an account; `POST /api/auth/reset-password` spends the link and signs every
-  session out; links are 256-bit tokens stored as SHA-256 in `email_tokens`, deleted when used,
-  verify 24 h, reset 1 h; mail rate-limited per recipient and per client), `mail.rs` the `Mailer`
-  (SMTP through `lettre` with `--smtp-url`/`--mail-from`, or `--fake-mail` writing to the log
+  timing says who has an account; `POST /api/auth/reset-password` spends the link, cancels every
+  other pending link and signs every session out; links are 256-bit tokens stored as SHA-256 in
+  `email_tokens`, deleted when used, verify 24 h, reset 1 h; links are built from `--public-url`,
+  never the request's `Host`; mail rate-limited per client, and per recipient only when a message
+  is actually sent), `mail.rs` the `Mailer`
+  (SMTP through `lettre` with `--smtp-url`/`--mail-from`, which refuses to start without
+  `--public-url`, or `--fake-mail` writing to the log
   and to `--fake-mail-dir`; without either there is no email at all, `GET /api/auth/mail` says
   so and the UI hides it), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets, the mailer), `rating.rs`

@@ -71,6 +71,48 @@ test('the last way in cannot be disconnected until there is a password', async (
 	await expect(page.getByRole('alert')).toContainText('current password');
 });
 
+test('a first password on an old session sends you to sign in again, then back', async ({
+	page
+}) => {
+	const name = `kay_${Date.now().toString(36)}`;
+	await page.goto('/login');
+	await page.getByRole('link', { name: 'Continue with Fake provider' }).click();
+	await continueAtProvider(page, name);
+	await page.locator('#navbar').getByRole('link', { name }).click();
+	await expect(page).toHaveURL('/account');
+	const before = await whoAmI(page);
+
+	// The session is minutes old here, so the server's refusal for an old one
+	// (covered by the server tests) is played once in its place.
+	let refused = false;
+	await page.route('**/api/me/password', async (route) => {
+		if (refused) return route.fallback();
+		refused = true;
+		await route.fulfill({
+			status: 403,
+			contentType: 'application/json',
+			body: JSON.stringify({
+				error: 'sign in again with Fake provider to set a password',
+				sign_in_again: { id: 'fake', name: 'Fake provider' }
+			})
+		});
+	});
+	await page.getByLabel('New password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Set password' }).click();
+	await expect(page.getByRole('alert')).toContainText('sign in again with Fake provider');
+	await page.getByRole('link', { name: 'Sign in again with Fake provider' }).click();
+	await continueAtProvider(page, name);
+
+	// Back on the account page as the same player, and now it takes.
+	await expect(page).toHaveURL('/account');
+	expect(await whoAmI(page)).toEqual(before);
+	await expect(page.getByTestId('password-state')).toHaveText('Not set');
+	await page.getByLabel('New password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Set password' }).click();
+	await expect(page.getByRole('status')).toContainText('Password set');
+	await expect(page.getByTestId('password-state')).toHaveText('Set');
+});
+
 async function continueAtProvider(page: Page, name: string) {
 	await expect(page.getByRole('heading', { name: 'Fake provider' })).toBeVisible();
 	await page.getByLabel('Sign in as').fill(name);
