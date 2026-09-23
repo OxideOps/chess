@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE puzzle_ratings SET rating = $2, deviation = $3, volatility = $4,\n                                   attempts = attempts + 1, last_at = now(),\n                                   streak = CASE WHEN $5 THEN streak + 1 ELSE 0 END,\n                                   best_streak = GREATEST(best_streak,\n                                       CASE WHEN $5 THEN streak + 1 ELSE 0 END)\n         WHERE user_id = $1\n         RETURNING streak, best_streak",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "streak",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "streak"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "best_streak",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "best_streak"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "12cfea45c998b0b867b0799a435e60199b66beba72326f4bf57076cf974d5624"
+}

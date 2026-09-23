@@ -11,6 +11,7 @@ pub mod coach;
 pub mod db;
 pub mod email;
 pub mod games;
+pub mod lessons;
 pub mod limit;
 pub mod lobby;
 pub mod mail;
@@ -73,6 +74,10 @@ pub struct Config {
     /// Where email goes (SMTP, or the offline stand-in). Without it there
     /// are no addresses on accounts and no password resets.
     pub mail: Option<mail::Mailer>,
+    /// Multiplies the signup, login and guest rate limits; 0 or 1 leaves
+    /// them as they are. Only for the end-to-end tests, which sign up more
+    /// accounts from one address in a minute than a person ever would.
+    pub rate_limit_scale: u32,
 }
 
 impl Config {
@@ -145,7 +150,10 @@ impl AppState {
         AppState {
             lobby: Some(lobby::Lobby::new(games.clone())),
             games,
-            auth: Some(auth::Auth::new(db, config.secure_cookies)),
+            auth: Some(
+                auth::Auth::new(db, config.secure_cookies)
+                    .rate_limit_scale(config.rate_limit_scale),
+            ),
             coach: config.coach.clone().map(coach::Coach::new),
             mail: config.mail.clone(),
             config: Arc::new(config),
@@ -194,6 +202,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())
+        .merge(lessons::router())
         .merge(coach::router())
         .with_state(state)
         .fallback_service(files)

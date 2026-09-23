@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import { page } from '$app/state';
 	import Board from '$lib/components/Board.svelte';
 	import CoachPanel from '$lib/components/CoachPanel.svelte';
 	import type { Arrow } from '$lib/components/CoachAnswer.svelte';
@@ -13,17 +14,35 @@
 	import { scoreForWhite } from '$lib/chess/wasm';
 	import { Analyser } from '$lib/engine/analysis.svelte';
 	import type { Side } from '$lib/generated/Side';
+	import { parsePly, parseSide } from '$lib/review/links';
 
 	// Free analysis: set up any position, step through a game, and let the
 	// engine comment. Moves can be made from anywhere in the history.
-	const game = new GameStore();
+	// `?pgn=…&ply=N&orientation=black` opens a game at a move (the game review
+	// links here with its better lines as variations).
+	const game = opened();
 	const analyser = new Analyser({ multipv: 3 });
-	let orientation: Side = $state('white');
+	let orientation: Side = $state(parseSide(page.url.searchParams.get('orientation')) ?? 'white');
 	let engineOn = $state(true);
 	onDestroy(() => {
 		analyser.dispose();
 		game.dispose();
 	});
+
+	function opened(): GameStore {
+		const pgn = page.url.searchParams.get('pgn');
+		if (pgn) {
+			try {
+				const store = GameStore.fromPgn(pgn);
+				const ply = parsePly(page.url.searchParams.get('ply'));
+				if (ply !== null) store.goToPly(ply);
+				return store;
+			} catch {
+				// A mangled link: start from the usual empty board instead.
+			}
+		}
+		return new GameStore();
+	}
 
 	// The engine follows the viewed position, unless it's off or the game is over there.
 	$effect(() => {

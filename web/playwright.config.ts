@@ -15,8 +15,10 @@ export default defineConfig({
 		? undefined
 		: {
 				// The fixture's 46 real Lichess puzzles are imported first (idempotent).
+				// The suite signs up more accounts from one address than the signup
+				// limit allows in a minute, so the account rate limits are raised.
 				command:
-					'npm run build && cargo run -p server -- import-puzzles ../crates/server/tests/fixtures/puzzles.csv && cargo run -p server -- --static-dir build --bind 127.0.0.1:4173 --fake-oauth --fake-coach --fake-mail --fake-mail-dir ' +
+					'npm run build && cargo run -p server -- import-puzzles ../crates/server/tests/fixtures/puzzles.csv && cargo run -p server -- --static-dir build --bind 127.0.0.1:4173 --fake-oauth --fake-coach --rate-limit-scale 10 --fake-mail --fake-mail-dir ' +
 					JSON.stringify(MAIL_DIR),
 				port: 4173,
 				timeout: 300_000,

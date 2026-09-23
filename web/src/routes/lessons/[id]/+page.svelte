@@ -43,15 +43,28 @@
 	const goal = $derived.by(() => {
 		if (!drill) return '';
 		const n = plural(drill.moves);
-		switch (drill.goal) {
+		const side = sideName(drill.student);
+		switch (drill.goal.kind) {
 			case 'checkmate':
-				return `Goal: checkmate within ${n}, playing ${sideName(drill.student)}.`;
+				return `Goal: checkmate within ${n}, playing ${side}.`;
 			case 'promote':
-				return `Goal: promote the pawn within ${n}, playing ${sideName(drill.student)}.`;
+				return `Goal: promote the pawn within ${n}, playing ${side}.`;
 			case 'draw':
-				return `Goal: hold the draw for ${n}, playing ${sideName(drill.student)}.`;
+				return `Goal: hold the draw for ${n}, playing ${side}, without losing material.`;
+			case 'win_material': {
+				const p = drill.goal.points;
+				return `Goal: win at least ${p} ${p === 1 ? 'point' : 'points'} of material (or mate) within ${n}, playing ${side}.`;
+			}
+			case 'develop':
+				return `Goal: within ${n}, playing ${side}, castle and get every knight and bishop off its starting square, without losing material.`;
 		}
 	});
+	// How material is counted, for the goals that count it.
+	const counting = $derived(
+		drill && (drill.goal.kind === 'win_material' || drill.goal.kind === 'develop')
+			? 'Pawn 1, knight and bishop 3, rook 5, queen 9. Material counts once Stockfish has answered your move.'
+			: null
+	);
 	const status = $derived.by(() => {
 		if (!session) return '';
 		const s = session.status;
@@ -79,6 +92,9 @@
 			<h1>{drill.title}</h1>
 			<p class="lesson">{drill.lesson}</p>
 			<p class="goal">{goal}</p>
+			{#if counting}
+				<p class="counting">{counting}</p>
+			{/if}
 			<p
 				class="status"
 				class:won={session.status.state === 'won'}
@@ -159,6 +175,12 @@
 
 	.goal {
 		color: var(--text-muted);
+	}
+
+	.counting {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: var(--type-sm);
 	}
 
 	.status.won {

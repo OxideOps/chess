@@ -8,7 +8,9 @@ import type { Drill } from '$lib/generated/Drill';
 import type { DrillStatus } from '$lib/generated/DrillStatus';
 import type { EngineMessage } from '$lib/generated/EngineMessage';
 import type { EngineScore } from '$lib/generated/EngineScore';
+import type { PositionEval } from '$lib/generated/PositionEval';
 import type { PuzzleVerdict } from '$lib/generated/PuzzleVerdict';
+import type { Review } from '$lib/generated/Review';
 import type { Side } from '$lib/generated/Side';
 
 export { Game } from '$lib/wasm/chess_core';
@@ -69,4 +71,14 @@ export function assessDrill(id: string, moves: string[]): DrillStatus {
 /** A principal variation as numbered SAN movetext from the position `fen`. */
 export function pvMovetext(fen: string, pv: string[]): string {
 	return raw.pvMovetext(fen, pv);
+}
+
+/**
+ * Review a finished game: its biggest swings, and the game as PGN with the
+ * engine's better lines added as variations. `evals` has one entry per
+ * position of the main line from the start (`null` where it wasn't
+ * searched); `side` keeps only that player's moves.
+ */
+export function reviewGame(pgn: string, evals: (PositionEval | null)[], side: Side | null): Review {
+	return raw.reviewGame(pgn, evals, side) as Review;
 }

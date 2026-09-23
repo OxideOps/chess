@@ -1,7 +1,9 @@
 import { Game, judgePuzzle, type PlayResult } from '$lib/chess/wasm';
 import { GameStore, type Promotion } from '$lib/chess/game.svelte';
 import type { AttemptResult } from '$lib/generated/AttemptResult';
+import type { DailyPuzzle } from '$lib/generated/DailyPuzzle';
 import type { PuzzleData } from '$lib/generated/PuzzleData';
+import type { PuzzleStreak } from '$lib/generated/PuzzleStreak';
 import type { Side } from '$lib/generated/Side';
 
 export type PuzzlePhase =
@@ -11,7 +13,7 @@ export type PuzzlePhase =
 	| 'solving'
 	| 'solved'
 	| 'failed'
-	/** The server has no puzzle for us (none imported, or all tried). */
+	/** The server has no puzzle for us (none imported, or all tried, or none of the theme). */
 	| 'empty'
 	| 'error';
 
@@ -29,8 +31,10 @@ export const MOVE_DELAY_MS = 450;
 /**
  * One puzzle at a time: load it from the server, play the setup move, judge
  * each of the solver's moves with chess-core (via `judgePuzzle`), answer
- * with the opponent's replies, and report the first try to the server,
- * which rates it.
+ * with the opponent's replies, and report the try to the server, which
+ * rates it (and moves the streak) if it is the first at that puzzle.
+ * `next()` serves the queue near your rating, of `theme` when one is set;
+ * `daily()` the daily puzzle.
  */
 export class PuzzleSession {
 	readonly game = new GameStore();
@@ -43,6 +47,12 @@ export class PuzzleSession {
 	/** What the server made of this puzzle, once reported. */
 	result: AttemptResult | null = $state(null);
 	error: string | null = $state(null);
+	/** Only puzzles with this Lichess theme (`fork`, `mateIn2`, …) from `next()`. */
+	theme: string | null = $state(null);
+	/** First tries solved in a row, and the best; from the server, so it survives a reload. */
+	streak: PuzzleStreak | null = $state(null);
+	/** The day of the daily puzzle being shown (`YYYY-MM-DD`), or null. */
+	date: string | null = $state(null);
 
 	readonly #fetch: FetchLike;
 	readonly #delay: (ms: number) => Promise<void>;
@@ -61,23 +71,41 @@ export class PuzzleSession {
 		return this.phase === 'solving' && !this.game.view.viewingHistory;
 	}
 
-	/** Load the next puzzle and play its setup move. */
-	async next(): Promise<void> {
+	/** Load the next puzzle (of `theme`, if set) and play its setup move. */
+	next(): Promise<void> {
+		const query = this.theme ? `?theme=${encodeURIComponent(this.theme)}` : '';
+		return this.#load(`/api/puzzles/next${query}`, (body) => {
+			this.date = null;
+			return body as PuzzleData;
+		});
+	}
+
+	/** Load the daily puzzle — today's, or `date`'s (`YYYY-MM-DD`) — and play its setup move. */
+	daily(date?: string): Promise<void> {
+		const path = date ? `/api/puzzles/daily/${encodeURIComponent(date)}` : '/api/puzzles/daily';
+		return this.#load(path, (body) => {
+			const daily = body as DailyPuzzle;
+			this.date = daily.date;
+			return daily.puzzle;
+		});
+	}
+
+	async #load(url: string, read: (body: unknown) => PuzzleData): Promise<void> {
 		const generation = ++this.#generation;
 		this.phase = 'loading';
 		this.expected = null;
 		this.result = null;
 		this.error = null;
 		this.#played = [];
-		let puzzle: PuzzleData;
+		let body: unknown;
 		try {
-			const response = await this.#fetch('/api/puzzles/next');
+			const response = await this.#fetch(url);
 			if (response.status === 404) {
 				if (generation === this.#generation) this.phase = 'empty';
 				return;
 			}
 			if (!response.ok) throw new Error(`the server said ${response.status}`);
-			puzzle = (await response.json()) as PuzzleData;
+			body = await response.json();
 		} catch (e) {
 			if (generation === this.#generation) {
 				this.error = e instanceof Error ? e.message : String(e);
@@ -86,7 +114,9 @@ export class PuzzleSession {
 			return;
 		}
 		if (generation !== this.#generation) return;
+		const puzzle = read(body);
 		this.puzzle = puzzle;
+		this.streak = puzzle.streak;
 		this.game.replace(Game.fromFen(puzzle.fen));
 		// The solver answers the side that plays the setup move.
 		this.solver = this.game.view.turn === 'white' ? 'black' : 'white';
@@ -166,7 +196,10 @@ export class PuzzleSession {
 			});
 			if (!response.ok) throw new Error(`the server said ${response.status}`);
 			const result = (await response.json()) as AttemptResult;
-			if (generation === this.#generation) this.result = result;
+			if (generation === this.#generation) {
+				this.result = result;
+				this.streak = result.streak;
+			}
 		} catch (e) {
 			// The puzzle still counts as done here; only the rating update is lost.
 			if (generation === this.#generation) {

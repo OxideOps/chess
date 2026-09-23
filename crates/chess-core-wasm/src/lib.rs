@@ -10,9 +10,10 @@
 use chess_core::{
     GameError, GameStatus,
     engine::{self, Score},
-    shakmaty::{Chess, Color, Position, Role, Square, fen::Fen, uci::UciMove},
+    review,
+    shakmaty::{Chess, Color, EnPassantMode, Position, Role, Square, fen::Fen, uci::UciMove},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 #[cfg(feature = "ts")]
@@ -458,7 +459,7 @@ impl Default for Game {
 
 // ----- engine output ----------------------------------------------------
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "value", rename_all = "lowercase")]
 #[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub enum EngineScore {
@@ -545,15 +546,19 @@ struct EngineScoreIn {
     value: i32,
 }
 
+fn parse_side(side: &str) -> Result<Color, JsError> {
+    match side {
+        "white" => Ok(Color::White),
+        "black" => Ok(Color::Black),
+        other => Err(JsError::new(&format!("not a side: {other:?}"))),
+    }
+}
+
 /// Convert an `EngineScore` given for the side to move (`turn`) into White's
 /// point of view.
 #[wasm_bindgen(js_name = scoreForWhite)]
 pub fn score_for_white(score: JsValue, turn: &str) -> Result<JsValue, JsError> {
-    let turn = match turn {
-        "white" => Color::White,
-        "black" => Color::Black,
-        other => return Err(JsError::new(&format!("not a side: {other:?}"))),
-    };
+    let turn = parse_side(turn)?;
     to_js(&EngineScore::from(score_from_js(score)?.for_white(turn)))
 }
 
@@ -613,6 +618,106 @@ pub fn assess_drill(id: &str, moves: Vec<String>) -> Result<JsValue, JsError> {
     let status =
         chess_core::lesson::assess(&drill, &moves).map_err(|e| JsError::new(&e.to_string()))?;
     to_js(&status)
+}
+
+// ----- game review ------------------------------------------------------
+
+/// What the engine made of one position of a game under review: its score
+/// for the side to move there and its line (UCI), best move first.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct PositionEval {
+    pub score: EngineScore,
+    pub pv: Vec<String>,
+}
+
+/// One of a game's biggest swings (`chess_core::review::Swing`), for display.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct ReviewSwing {
+    /// The ply the move leads to (1 for the first move).
+    pub ply: u32,
+    pub mover: Side,
+    /// The position the move was played from.
+    pub fen: String,
+    /// The move played, numbered: `12... Qxd4`.
+    pub played: String,
+    pub played_uci: String,
+    /// The evaluation before and after the move, from White's point of view.
+    pub before: EngineScore,
+    pub after: EngineScore,
+    /// The mover's share of an eval bar (0 to 1) before and after the move.
+    pub before_chance: f64,
+    pub after_chance: f64,
+    /// The engine's better line, numbered: `12... Nf6 13. Bd3`.
+    pub best: String,
+    pub best_uci: Vec<String>,
+}
+
+/// A finished game's review: its biggest swings, biggest first, and the game
+/// as PGN with each swing's better line added as a variation.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "ts", derive(TS), ts(export))]
+pub struct Review {
+    pub swings: Vec<ReviewSwing>,
+    pub pgn: String,
+}
+
+fn review(
+    game: &chess_core::Game,
+    evals: &[Option<PositionEval>],
+    side: Option<Color>,
+) -> Result<Review, String> {
+    let evals = evals
+        .iter()
+        .map(|e| {
+            e.as_ref()
+                .map(|e| {
+                    let pv =
+                        e.pv.iter()
+                            .map(|m| m.parse().map_err(|_| format!("not a UCI move: {m:?}")))
+                            .collect::<Result<_, _>>()?;
+                    Ok(review::Evaluation {
+                        score: e.score.into(),
+                        pv,
+                    })
+                })
+                .transpose()
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    let swings = review::swings(game, &evals, side, review::SWINGS);
+    let pgn = review::with_lines(game, &swings).pgn();
+    let swings = swings
+        .iter()
+        .map(|s| ReviewSwing {
+            ply: s.ply as u32,
+            mover: s.mover.into(),
+            fen: Fen::from_position(&s.before_position, EnPassantMode::Legal).to_string(),
+            played: s.played_movetext(),
+            played_uci: s.played_uci.to_string(),
+            before: s.before.for_white(s.mover).into(),
+            after: s.after.for_white(s.mover).into(),
+            before_chance: s.before.bar_fraction(),
+            after_chance: s.after.bar_fraction(),
+            best: s.best_movetext(),
+            best_uci: s.best.iter().map(ToString::to_string).collect(),
+        })
+        .collect();
+    Ok(Review { swings, pgn })
+}
+
+/// Review a finished game (`Review`): `pgn` is the game, `evals` a
+/// `PositionEval | null` for each position of its main line from the start
+/// (fewer if the analysis was cut short), and `side` keeps only that
+/// player's moves.
+#[wasm_bindgen(js_name = reviewGame)]
+pub fn review_game(pgn: &str, evals: JsValue, side: Option<String>) -> Result<JsValue, JsError> {
+    let game = chess_core::Game::from_pgn(pgn).map_err(game_error)?;
+    let evals: Vec<Option<PositionEval>> =
+        serde_wasm_bindgen::from_value(evals).map_err(|e| JsError::new(&e.to_string()))?;
+    let side = side.as_deref().map(parse_side).transpose()?;
+    to_js(&review(&game, &evals, side).map_err(|e| JsError::new(&e))?)
 }
 
 /// A principal variation as numbered SAN movetext from the position `fen`.
@@ -675,6 +780,59 @@ mod tests {
             json,
             r#"{"type":"info","line":{"depth":12,"multipv":1,"score":{"kind":"cp","value":35},"pv":["e2e4","e7e5"]}}"#
         );
+    }
+
+    #[test]
+    fn review_shape() {
+        let game = chess_core::Game::from_pgn("1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#").unwrap();
+        let cp = |value: i32, pv: &[&str]| {
+            Some(PositionEval {
+                score: EngineScore::Cp(value),
+                pv: pv.iter().map(ToString::to_string).collect(),
+            })
+        };
+        let evals = vec![
+            cp(30, &["e2e4"]),
+            cp(-30, &["e7e5"]),
+            cp(30, &["g1f3"]),
+            cp(-10, &["b8c6"]),
+            cp(40, &["f1c4"]),
+            cp(-60, &["g7g6", "h5f3"]),
+            Some(PositionEval {
+                score: EngineScore::Mate(1),
+                pv: vec!["h5f7".into()],
+            }),
+            None,
+        ];
+        let r = review(&game, &evals, None).unwrap();
+        assert_eq!(
+            r.pgn,
+            "1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 (3... g6 4. Qf3) 4. Qxf7# 1-0"
+        );
+        let json = serde_json::to_value(&r.swings[0]).unwrap();
+        assert_eq!(json["ply"], 6);
+        assert_eq!(json["mover"], "black");
+        assert_eq!(json["played"], "3... Nf6");
+        assert_eq!(json["playedUci"], "g8f6");
+        assert_eq!(json["best"], "3... g6 4. Qf3");
+        // White's point of view: Black was a little better, then White mates.
+        assert_eq!(
+            json["before"],
+            serde_json::json!({"kind": "cp", "value": 60})
+        );
+        assert_eq!(
+            json["after"],
+            serde_json::json!({"kind": "mate", "value": 1})
+        );
+        assert_eq!(json["afterChance"], 0.0);
+        assert!(
+            review(&game, &evals, Some(Color::White))
+                .unwrap()
+                .swings
+                .is_empty()
+        );
+        let garbage = vec![cp(0, &["xyz"])];
+        assert!(review(&game, &garbage, None).is_err());
     }
 
     /// Builds the same `GameView` as `Game::view` without going through JS.
