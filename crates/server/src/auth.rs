@@ -57,6 +57,9 @@ pub struct Auth {
     /// Mark the cookie `Secure` (only over https). Off for plain-http development.
     secure_cookies: bool,
     limiter: Arc<Limiter>,
+    /// Multiplies every limit above; 1 in production (see
+    /// [`crate::Config::rate_limit_scale`]).
+    rate_limit_scale: u32,
 }
 
 #[derive(Debug)]
@@ -242,7 +245,15 @@ impl Auth {
             db,
             secure_cookies,
             limiter: Arc::default(),
+            rate_limit_scale: 1,
         }
+    }
+
+    /// Allow `factor` times the normal rate limits. For the end-to-end
+    /// suite, whose many signups all come from one address.
+    pub fn rate_limit_scale(mut self, factor: u32) -> Auth {
+        self.rate_limit_scale = factor.max(1);
+        self
     }
 
     pub(crate) fn db(&self) -> &Db {
@@ -252,7 +263,7 @@ impl Auth {
     /// One hit against `limit` for `key`; `TooManyAttempts` when over.
     pub(crate) fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
         self.limiter
-            .hit(key, limit, Instant::now())
+            .hit(key, limit.scaled(self.rate_limit_scale), Instant::now())
             .map_err(AuthError::TooManyAttempts)
     }
 

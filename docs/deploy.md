@@ -33,6 +33,12 @@ service worker; the PWA's manifest and icons resolve; the 404 fallback and clean
 The tests left out are the ones that need `--fake-oauth` or `--fake-coach`,
 which a real deployment must never have.
 
+A deployment also keeps the real rate limits (10 signups a minute per
+address), which the local suite raises with `--rate-limit-scale 10`. The
+subset above signs up 7 accounts, under that, but running it twice within a
+minute, or adding files that sign up, can get "too many attempts": wait a
+minute and rerun.
+
 Against the real site, use the public URL — and remember it writes to the
 real database: those runs leave signed-up accounts and played games behind.
 
@@ -243,7 +249,9 @@ was last tested, so the next person doesn't have to guess.
 on) `CHESS_ANTHROPIC_API_KEY` come from the host's secret store. None of them
 belong in `fly.toml`, the repo, or a shell history. `--fake-oauth` and
 `--fake-coach` are for development and tests and must never be set on a
-deployment: the fake OAuth provider signs anyone in as anyone.
+deployment: the fake OAuth provider signs anyone in as anyone. Nor should
+`--rate-limit-scale` (`CHESS_RATE_LIMIT_SCALE`), which multiplies the signup,
+login and guest limits for the end-to-end tests; leave it at its default of 1.
 
 The coach is off unless `CHESS_ANTHROPIC_API_KEY` is set, and costs nothing
 while it is off. See #57 before turning it on.

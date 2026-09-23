@@ -86,6 +86,13 @@ struct Args {
     /// you type. For development and the end-to-end tests only.
     #[arg(long, env = "CHESS_FAKE_OAUTH", default_value_t = false)]
     fake_oauth: bool,
+
+    /// Multiply the signup, login and guest rate limits by this. For the
+    /// end-to-end tests only (their signups all come from one address);
+    /// leave it at 1 on a deployment.
+    #[arg(long, env = "CHESS_RATE_LIMIT_SCALE", default_value_t = 1,
+          value_parser = clap::value_parser!(u32).range(1..))]
+    rate_limit_scale: u32,
 }
 
 #[derive(Subcommand, Debug)]
@@ -186,7 +193,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .chain(oauth.iter().map(|p| p.name()))
         .collect();
     tracing::info!("sign-in: {}", methods.join(", "));
+    if args.rate_limit_scale != 1 {
+        tracing::warn!(
+            "account rate limits are {}x normal (--rate-limit-scale)",
+            args.rate_limit_scale
+        );
+    }
     let config = server::Config {
+        rate_limit_scale: args.rate_limit_scale,
         secure_cookies: args.secure_cookies,
         trust_proxy: args.trust_proxy,
         allowed_origins: args.allowed_origins.clone(),

@@ -155,6 +155,10 @@ would each hold their own copy), and nothing in front may strip COOP/COEP or the
 multi-threaded engine silently stops running. Setting `CHESS_E2E_URL` points the Playwright
 suite at a running deployment instead of one it starts itself; the tests needing
 `--fake-oauth` or `--fake-coach` are excluded from that, since a deployment has neither.
+The server the suite starts also gets `--rate-limit-scale 10` (signup/login/guest limits ×10):
+the whole suite signs up more accounts from one address in a minute than the real limit of
+10 allows. Test-only, like the fakes; a deployment keeps the defaults, and the Rust tests
+exercise the real limits.
 
 ## Working on the UI
 

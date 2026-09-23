@@ -24,6 +24,15 @@ impl Limit {
             window: Duration::from_secs(60),
         }
     }
+
+    /// `factor` times as many hits per window (at least one times).
+    pub const fn scaled(self, factor: u32) -> Limit {
+        let factor = if factor == 0 { 1 } else { factor };
+        Limit {
+            hits: self.hits.saturating_mul(factor),
+            window: self.window,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -92,6 +101,16 @@ mod tests {
             limiter.hit("a", limit, t0 + Duration::from_secs(60)),
             Ok(())
         );
+    }
+
+    #[test]
+    fn scaling_multiplies_hits_and_keeps_the_window() {
+        let limit = Limit::per_minute(10);
+        assert_eq!(limit.scaled(1), limit);
+        assert_eq!(limit.scaled(0), limit);
+        assert_eq!(limit.scaled(20).hits, 200);
+        assert_eq!(limit.scaled(20).window, limit.window);
+        assert_eq!(limit.scaled(u32::MAX).hits, u32::MAX);
     }
 
     #[test]
