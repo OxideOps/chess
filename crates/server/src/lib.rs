@@ -56,8 +56,13 @@ pub struct Config {
     /// host, e.g. the public URL when a proxy rewrites `Host`.
     pub allowed_origins: Vec<String>,
     /// Where browsers reach this server (`https://chess.example`), for
-    /// OAuth redirect URLs. Without it the request's own host is used.
+    /// OAuth redirect URLs and the links in emails. Without it OAuth uses
+    /// the request's own host; email never does (see [`Config::mail_origin`]).
     pub public_url: Option<String>,
+    /// Where this server listens (`http://127.0.0.1:4173`): the links in
+    /// the offline stand-in's mail when there is no public URL. Real mail
+    /// needs `public_url`; the binary refuses to start SMTP without it.
+    pub local_url: Option<String>,
     /// OAuth providers users can sign in with.
     pub oauth: Vec<oauth::Provider>,
     /// How long a disconnected player has to come back; `None` for
@@ -71,9 +76,9 @@ pub struct Config {
 }
 
 impl Config {
-    /// Where browsers reach this server, for links that leave it (OAuth
-    /// redirects, links in emails): the configured public URL, else this
-    /// request's own host.
+    /// Where browsers reach this server, for OAuth redirects: the
+    /// configured public URL, else this request's own host. Not for links
+    /// in emails: see [`Config::mail_origin`].
     pub fn public_origin(&self, headers: &axum::http::HeaderMap) -> String {
         match &self.public_url {
             Some(url) => url.trim_end_matches('/').to_string(),
@@ -87,7 +92,23 @@ impl Config {
             }
         }
     }
+
+    /// Where links in emails point: the public URL, else the address this
+    /// server listens on, else [`DEFAULT_MAIL_ORIGIN`]. Never the request's
+    /// `Host`: anyone can send any `Host`, and a reset link to their own
+    /// site, mailed by us to a real account, would hand them its token.
+    pub fn mail_origin(&self) -> String {
+        self.public_url
+            .as_deref()
+            .or(self.local_url.as_deref())
+            .unwrap_or(DEFAULT_MAIL_ORIGIN)
+            .trim_end_matches('/')
+            .to_string()
+    }
 }
+
+/// Where links in emails point when nothing says otherwise.
+pub const DEFAULT_MAIL_ORIGIN: &str = "http://localhost:8080";
 
 /// Everything the handlers share.
 #[derive(Clone)]

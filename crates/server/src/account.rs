@@ -7,7 +7,8 @@
 //! sets or changes the password. Changing it needs the current one; setting a
 //! first one needs a session from a sign-in in the last
 //! [`FRESH_SIGN_IN_MINUTES`], so a stolen session cookie can't plant a
-//! password of its own. Either signs out every other session.
+//! password of its own. Either signs out every other session and cancels
+//! every emailed link still out for the account.
 //! Connecting a provider is the ordinary OAuth flow started while signed in
 //! (see [`crate::oauth`]), which links rather than creating a user.
 
@@ -268,6 +269,7 @@ async fn set_password(
         }
     }
     let hash = hash_password(change.password).await;
+    let mut tx = pool.begin().await?;
     // A first password is set only while there still is none, so a second
     // tab racing this one can't skip the current-password check.
     let updated = sqlx::query!(
@@ -277,20 +279,26 @@ async fn set_password(
         hash,
         first
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
     if updated.rows_affected() == 0 {
         return Err(AuthError::WrongPassword);
     }
     // Anyone else signed in as this account (the reason to change a
-    // password, often) is signed out; this browser stays in.
+    // password, often) is signed out; this browser stays in. Links they had
+    // mailed themselves go too: a verification of their own address,
+    // followed later, would take the account's password resets.
     sqlx::query!(
         "DELETE FROM sessions WHERE user_id = $1 AND id IS DISTINCT FROM $2",
         user.id,
         session
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
+    sqlx::query!("DELETE FROM email_tokens WHERE user_id = $1", user.id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

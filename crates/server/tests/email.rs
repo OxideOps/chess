@@ -23,18 +23,55 @@ struct MailServer {
     mail: TempDir,
 }
 
+/// Where the test server says browsers reach it; every link is built on it.
+const PUBLIC_URL: &str = "https://chess.example";
+
 async fn mail_server() -> Option<MailServer> {
+    mail_server_with(Config {
+        public_url: Some(format!("{PUBLIC_URL}/")),
+        ..Config::default()
+    })
+    .await
+}
+
+/// A server with `config` and the fake mailer writing to a new directory.
+async fn mail_server_with(config: Config) -> Option<MailServer> {
     let db = db().await?;
     let mail = tempfile::tempdir().unwrap();
     let base = serve_with(
         db.clone(),
         Config {
             mail: Some(Mailer::fake(Some(mail.path().to_path_buf())).unwrap()),
-            ..Config::default()
+            ..config
         },
     )
     .await;
     Some(MailServer { base, db, mail })
+}
+
+/// A request from someone who picked their own `Host`; returns the status.
+async fn with_host(
+    base: &str,
+    host: &str,
+    method: &str,
+    path: &str,
+    cookie: Option<&str>,
+    body: &str,
+) -> u16 {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let mut stream = tokio::net::TcpStream::connect(base).await.unwrap();
+    let cookie = cookie
+        .map(|c| format!("Cookie: session={c}\r\n"))
+        .unwrap_or_default();
+    let request = format!(
+        "{method} {path} HTTP/1.1\r\nHost: {host}\r\nContent-Type: application/json\r\n\
+         Content-Length: {}\r\n{cookie}Connection: close\r\n\r\n{body}",
+        body.len()
+    );
+    stream.write_all(request.as_bytes()).await.unwrap();
+    let mut response = String::new();
+    stream.read_to_string(&mut response).await.unwrap();
+    response.split_whitespace().nth(1).unwrap().parse().unwrap()
 }
 
 /// One message from the fake mailer's directory.
@@ -180,7 +217,7 @@ async fn an_address_counts_only_once_its_link_is_followed() {
     assert!(link.body.contains(&name), "{}", link.body);
     assert!(
         link.body
-            .contains(&format!("http://{}/verify-email?token=", s.base)),
+            .contains(&format!("{PUBLIC_URL}/verify-email?token=")),
         "{}",
         link.body
     );
@@ -246,7 +283,7 @@ async fn a_reset_link_works_once_and_signs_every_session_out() {
     let mail = nth_mail(s.mail.path(), &email, 2).await;
     assert!(
         mail.body
-            .contains(&format!("http://{}/reset-password?token=", s.base)),
+            .contains(&format!("{PUBLIC_URL}/reset-password?token=")),
         "{}",
         mail.body
     );
@@ -354,8 +391,9 @@ async fn resets_are_rate_limited_per_address_and_per_client() {
     verified_account(&s, &name, &email).await;
     let before = inbox(s.mail.path(), &email).len();
 
-    // Five messages an hour to one address (the verification link was one),
-    // the same for an address with no account.
+    // Five messages an hour to one address (the verification link was one).
+    // Past that the reply is the same and nothing is sent. Asking about an
+    // address with no account sends nothing, so it spends nothing either.
     let unknown = format!("{}@example.com", unique("nobody"));
     for _ in 0..4 {
         assert_eq!(forgot(&s.base, &email).await.status, 202);
@@ -363,22 +401,190 @@ async fn resets_are_rate_limited_per_address_and_per_client() {
     for _ in 0..5 {
         assert_eq!(forgot(&s.base, &unknown).await.status, 202);
     }
-    let r = forgot(&s.base, &email).await;
-    assert_eq!(r.status, 429, "{}", r.body);
-    assert!(r.header("retry-after").is_some());
-    assert_eq!(forgot(&s.base, &unknown).await.status, 429);
     nth_mail(s.mail.path(), &email, before + 4).await;
+    assert_eq!(forgot(&s.base, &email).await.status, 202);
+    assert_eq!(forgot(&s.base, &unknown).await.status, 202);
     settle().await;
     assert_eq!(inbox(s.mail.path(), &email).len(), before + 4);
+    assert!(inbox(s.mail.path(), &unknown).is_empty());
 
-    // Twenty an hour from one client, whatever the addresses: eleven so far
-    // (refused ones count too).
+    // Twenty an hour from one client, whatever the addresses: eleven so far.
     for i in 0..9 {
         let other = format!("{}-{i}@example.com", unique("x"));
         assert_eq!(forgot(&s.base, &other).await.status, 202);
     }
     let other = format!("{}@example.com", unique("x"));
-    assert_eq!(forgot(&s.base, &other).await.status, 429);
+    let r = forgot(&s.base, &other).await;
+    assert_eq!(r.status, 429, "{}", r.body);
+    assert!(r.header("retry-after").is_some());
+}
+
+#[tokio::test]
+async fn asking_about_an_address_does_not_block_its_owner() {
+    let Some(s) = mail_server().await else { return };
+    let name = unique("olga");
+    let email = format!("{name}@example.com");
+    let session = signup(&s.base, &name, "correct horse").await;
+
+    // Someone asks about the address before it is on any account, as often
+    // as mail to it is allowed: nothing is sent, so nothing is spent.
+    for _ in 0..5 {
+        assert_eq!(forgot(&s.base, &email).await.status, 202);
+    }
+    settle().await;
+    assert!(inbox(s.mail.path(), &email).is_empty());
+
+    // The owner can still add it, and reset with it.
+    assert_eq!(put_email(&s.base, &session, &email).await.status, 200);
+    let link = nth_mail(s.mail.path(), &email, 1).await;
+    assert_eq!(verify(&s.base, &link.token()).await.status, 200);
+    assert_eq!(forgot(&s.base, &email).await.status, 202);
+    let mail = nth_mail(s.mail.path(), &email, 2).await;
+    assert_eq!(mail.subject, "Reset your password");
+    assert_eq!(
+        reset(&s.base, &mail.token(), "a new horse").await.status,
+        204
+    );
+}
+
+#[tokio::test]
+async fn a_new_password_cancels_the_links_still_out() {
+    let Some(s) = mail_server().await else { return };
+    let name = unique("pia");
+    let email = format!("{name}@example.com");
+    let theirs = format!("{}@example.org", unique("thief"));
+
+    // Someone signed in as the account starts moving it to their own
+    // address and keeps the link; the owner resets the password by email.
+    let session = verified_account(&s, &name, &email).await;
+    assert_eq!(put_email(&s.base, &session, &theirs).await.status, 200);
+    let kept = nth_mail(s.mail.path(), &theirs, 1).await.token();
+    assert_eq!(forgot(&s.base, &email).await.status, 202);
+    let mail = nth_mail(s.mail.path(), &email, 2).await;
+    assert_eq!(
+        reset(&s.base, &mail.token(), "a new horse").await.status,
+        204
+    );
+    assert_eq!(verify(&s.base, &kept).await.status, 400);
+
+    // The same when the owner changes the password while signed in.
+    let session = login(&s.base, &name, "a new horse").await.cookie.unwrap();
+    assert_eq!(put_email(&s.base, &session, &theirs).await.status, 200);
+    let kept = nth_mail(s.mail.path(), &theirs, 2).await.token();
+    let r = http(
+        &s.base,
+        "PUT",
+        "/api/me/password",
+        Some(&session),
+        r#"{"current":"a new horse","password":"a third horse"}"#,
+    )
+    .await;
+    assert_eq!(r.status, 204, "{}", r.body);
+    assert_eq!(verify(&s.base, &kept).await.status, 400);
+
+    let a = account(&s.base, &session).await;
+    assert_eq!(
+        (a.email.as_deref(), a.pending_email),
+        (Some(email.as_str()), None)
+    );
+}
+
+#[tokio::test]
+async fn mail_links_never_come_from_the_host_header() {
+    // With a public URL, links are built on it whatever `Host` says.
+    let Some(s) = mail_server().await else { return };
+    let name = unique("quin");
+    let email = format!("{name}@example.com");
+    let session = verified_account(&s, &name, &email).await;
+    let body = format!(r#"{{"email":"{email}"}}"#);
+    let path = "/api/auth/forgot-password";
+    let status = with_host(&s.base, "evil.example", "POST", path, None, &body).await;
+    assert_eq!(status, 202);
+    let mail = nth_mail(s.mail.path(), &email, 2).await;
+    assert!(
+        mail.body
+            .contains(&format!("{PUBLIC_URL}/reset-password?token=")),
+        "{}",
+        mail.body
+    );
+    assert!(!mail.body.contains("evil"), "{}", mail.body);
+
+    let other = format!("{name}@example.org");
+    let body = format!(r#"{{"email":"{other}"}}"#);
+    let status = with_host(
+        &s.base,
+        "evil.example",
+        "PUT",
+        "/api/me/email",
+        Some(&session),
+        &body,
+    )
+    .await;
+    assert_eq!(status, 200);
+    let link = nth_mail(s.mail.path(), &other, 1).await;
+    assert!(
+        link.body
+            .contains(&format!("{PUBLIC_URL}/verify-email?token=")),
+        "{}",
+        link.body
+    );
+
+    // Without one (only the fake mailer runs so), the address the server
+    // listens on, else a fixed default: still never `Host`.
+    let Some(s) = mail_server_with(Config {
+        local_url: Some("http://127.0.0.1:4173".into()),
+        ..Config::default()
+    })
+    .await
+    else {
+        return;
+    };
+    let session = signup(&s.base, &unique("rex"), "correct horse").await;
+    let email = format!("{}@example.com", unique("rex"));
+    let body = format!(r#"{{"email":"{email}"}}"#);
+    let status = with_host(
+        &s.base,
+        "evil.example",
+        "PUT",
+        "/api/me/email",
+        Some(&session),
+        &body,
+    )
+    .await;
+    assert_eq!(status, 200);
+    let link = nth_mail(s.mail.path(), &email, 1).await;
+    assert!(
+        link.body
+            .contains("http://127.0.0.1:4173/verify-email?token="),
+        "{}",
+        link.body
+    );
+    assert_eq!(Config::default().mail_origin(), server::DEFAULT_MAIL_ORIGIN);
+}
+
+#[test]
+fn smtp_refuses_to_start_without_a_public_url() {
+    let run = |public_url: Option<&str>| {
+        let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_chess-server"));
+        command
+            .args(["--smtp-url", "smtp://localhost:2525"])
+            .args(["--mail-from", "a@b.example"])
+            .args(["--static-dir", "/nonexistent-chess-build"])
+            .env_remove("CHESS_PUBLIC_URL")
+            .env_remove("CHESS_FAKE_MAIL")
+            .env_remove("DATABASE_URL");
+        if let Some(url) = public_url {
+            command.args(["--public-url", url]);
+        }
+        let out = command.output().unwrap();
+        assert!(!out.status.success());
+        String::from_utf8_lossy(&out.stderr).into_owned()
+    };
+    let refused = run(None);
+    assert!(refused.contains("needs --public-url"), "{refused}");
+    // With one it gets as far as looking for the client build.
+    let started = run(Some("https://chess.example"));
+    assert!(started.contains("is not a client build"), "{started}");
 }
 
 #[tokio::test]

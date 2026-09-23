@@ -5,8 +5,9 @@
 //!   until the link mailed to it is followed (`POST /api/auth/verify-email`),
 //!   and a change tells the old address. `DELETE /api/me/email` removes it.
 //! - `POST /api/auth/forgot-password` mails a reset link to a *verified*
-//!   address; `POST /api/auth/reset-password` spends it, sets the password
-//!   and signs every session of the account out.
+//!   address; `POST /api/auth/reset-password` spends it, sets the password,
+//!   cancels every other link out for the account and signs every session of
+//!   it out.
 //!
 //! Links carry a random token; the database keeps only its SHA-256, in
 //! `email_tokens`, and following a link deletes that row, so each link works
@@ -15,12 +16,17 @@
 //!
 //! "Forgot" answers `202` at once, whatever the address, and does the
 //! lookup and the sending afterwards: the reply can't say, by its content or
-//! its timing, whether the address has an account.
+//! its timing, whether the address has an account. Nor can "forgot" be used
+//! to block someone's resets: the per-recipient mail limit is spent only
+//! when a message is actually sent.
+//!
+//! Links point at [`crate::Config::mail_origin`], never at the request's
+//! `Host`.
 
 use axum::{
     Json, Router,
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     routing::{get, post, put},
 };
 use serde::{Deserialize, Serialize};
@@ -241,7 +247,6 @@ async fn status(State(state): State<AppState>) -> Json<MailStatus> {
 async fn change_email(
     State(state): State<AppState>,
     RequireUser(user): RequireUser,
-    headers: HeaderMap,
     Json(change): Json<EmailAddress>,
 ) -> Result<Json<Account>, AuthError> {
     let auth = registered(&state, &user)?;
@@ -263,7 +268,7 @@ async fn change_email(
         // Whether the address is someone else's is only found out when its
         // link is followed, by whoever reads that mailbox: nobody learns
         // here which addresses have accounts.
-        let origin = state.config.public_origin(&headers);
+        let origin = state.config.mail_origin();
         start_verification(&state, &user, &email, &origin).await?;
     }
     Ok(Json(load_account(&state, auth, &user).await?))
@@ -358,20 +363,16 @@ async fn verify_email(
 async fn forgot_password(
     State(state): State<AppState>,
     ip: ClientIp,
-    headers: HeaderMap,
     Json(request): Json<EmailAddress>,
 ) -> Result<StatusCode, AuthError> {
     let auth = auth(&state)?.clone();
     let mailer = mailer(&state)?.clone();
     auth.limit(&format!("forgot:{}", ip.key()), FORGOT_PER_ADDR)?;
     let email = parse_address(&request.email).ok_or(AuthError::InvalidEmail)?;
-    // Counted per address asked about, account or not, so the limit says
-    // nothing either.
-    auth.limit(
-        &format!("mailto:{}", email.to_lowercase()),
-        MAIL_PER_RECIPIENT,
-    )?;
-    let origin = state.config.public_origin(&headers);
+    // The per-recipient limit is spent later, and only on mail actually
+    // sent: charged here, anyone could use up an address's allowance by
+    // asking about it and block its owner's resets.
+    let origin = state.config.mail_origin();
     tokio::spawn(async move {
         if let Err(e) = send_reset(&auth, &mailer, &email, &origin).await {
             tracing::error!("forgot password: {e:?}");
@@ -399,6 +400,15 @@ async fn send_reset(
         tracing::info!("forgot password: no account has that address");
         return Ok(());
     };
+    // Over the limit is dropped as quietly as an unknown address: the reply
+    // went out long ago and said the same either way.
+    if let Err(e) = auth.limit(
+        &format!("mailto:{}", row.email.to_lowercase()),
+        MAIL_PER_RECIPIENT,
+    ) {
+        tracing::info!("forgot password: not sent, {e:?}");
+        return Ok(());
+    }
     let token = issue(auth, &row.id, Purpose::Reset, &row.email).await?;
     let body = format!(
         "Someone (hopefully you) asked to reset the password for {username} on Chess. \
@@ -449,8 +459,13 @@ async fn reset_password(
         tx.commit().await?;
         return Err(AuthError::BadLink);
     }
-    // Whoever knew the old password is out, this browser included.
+    // Whoever knew the old password is out, this browser included, and so
+    // is any link they had mailed themselves: a verification of their own
+    // address followed later would take the account's resets back.
     sqlx::query!("DELETE FROM sessions WHERE user_id = $1", user_id)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query!("DELETE FROM email_tokens WHERE user_id = $1", user_id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;

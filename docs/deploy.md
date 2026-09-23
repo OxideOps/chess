@@ -185,7 +185,7 @@ forgotten password is a lost account.
 | --- | --- |
 | `CHESS_SMTP_URL` | **Secret.** The relay, with the credentials in it: `smtps://USER:PASS@smtp.example.com:465` (TLS from the start), or `smtp://USER:PASS@smtp.example.com:587?tls=required` (STARTTLS). Percent-encode anything in the password that isn't a letter or digit. |
 | `CHESS_MAIL_FROM` | The From of every message, e.g. `Chess <noreply@chess.example>`. Required with `CHESS_SMTP_URL`. The provider must have verified that domain (SPF/DKIM), or the mail lands in spam or is refused. |
-| `CHESS_PUBLIC_URL` | Already set; the links in the mail (`/verify-email?token=…`, `/reset-password?token=…`) are built from it. |
+| `CHESS_PUBLIC_URL` | **Required with `CHESS_SMTP_URL`**: the server refuses to start without it. The links in the mail (`/verify-email?token=…`, `/reset-password?token=…`) are built from it and never from the request's `Host` header, which anyone can set — otherwise a "forgot password" sent with `Host: evil.example` would mail a real reset link pointing at someone else's site. Already set in `fly.toml`. |
 
 ```sh
 fly secrets set --stage CHESS_SMTP_URL='smtps://resend:re_...@smtp.resend.com:465' -a chess-oxideops
@@ -202,8 +202,15 @@ then add your own address on `/account` and follow the link.
 
 `--fake-mail` (`CHESS_FAKE_MAIL`) is the offline stand-in for development
 and the end-to-end tests: messages go to the log, and with
-`--fake-mail-dir` to one file each in that directory. Never on a deployment:
-it would "send" reset links to the log.
+`--fake-mail-dir` to one file each in that directory. Its links use
+`--public-url` when given, else the `--bind` address (`localhost` for
+`0.0.0.0`). Never on a deployment: it would "send" reset links to the log.
+
+The mail limits: five messages an hour to any one address, counted only for
+mail actually sent (asking "forgot" about an address with no account costs
+it nothing, so nobody can use up someone else's resets), and twenty "forgot"
+requests an hour from one client. A new password, by reset or on
+`/account`, cancels every link still out for the account.
 
 ## Check a deploy
 

@@ -38,7 +38,9 @@ struct Args {
     allowed_origins: Vec<String>,
 
     /// Where browsers reach this server, e.g. `https://chess.example`; used
-    /// for OAuth redirect URLs. Defaults to the request's own host.
+    /// for OAuth redirect URLs (default: the request's own host) and the
+    /// links in emails (never the request's host). Required with
+    /// `--smtp-url`.
     #[arg(long, env = "CHESS_PUBLIC_URL")]
     public_url: Option<String>,
 
@@ -161,6 +163,16 @@ async fn import_puzzles(
     Ok(())
 }
 
+/// `http://` and the address the server listens on, with `localhost` for
+/// an unspecified one (`0.0.0.0`), which a browser can't open.
+fn local_url(addr: SocketAddr) -> String {
+    if addr.ip().is_unspecified() {
+        format!("http://localhost:{}", addr.port())
+    } else {
+        format!("http://{addr}")
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
@@ -182,6 +194,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             per_band: *per_band,
         };
         return import_puzzles(args.database_url.as_deref(), file, options).await;
+    }
+
+    // Links in mail are built from the public URL and never from a
+    // request's `Host`, which anyone can set: real mail without one would
+    // have nowhere safe to point.
+    if args.smtp_url.is_some() && args.public_url.is_none() {
+        return Err(
+            "--smtp-url (CHESS_SMTP_URL) needs --public-url (CHESS_PUBLIC_URL): \
+                    the links in emails are built from it"
+                .into(),
+        );
     }
 
     let fallback = args.static_dir.join(server::FALLBACK_PAGE);
@@ -232,6 +255,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         trust_proxy: args.trust_proxy,
         allowed_origins: args.allowed_origins.clone(),
         public_url: args.public_url.clone(),
+        // Only reached by --fake-mail without a public URL: its links point
+        // here, where a developer's browser finds this server.
+        local_url: Some(local_url(args.bind)),
         oauth,
         abandon_after: Some(std::time::Duration::from_secs(args.abandon_after_secs)),
         coach: match (&args.anthropic_api_key, args.fake_coach) {

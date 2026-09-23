@@ -13,7 +13,7 @@ use std::{
 use axum::{
     Json, Router,
     extract::{ConnectInfo, FromRef, FromRequestParts, State},
-    http::{HeaderMap, HeaderValue, StatusCode, header, request::Parts},
+    http::{HeaderValue, StatusCode, header, request::Parts},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
@@ -651,7 +651,6 @@ async fn signup(
     CurrentUser(current): CurrentUser,
     SessionId(session): SessionId,
     ip: ClientIp,
-    headers: HeaderMap,
     jar: CookieJar,
     Json(creds): Json<Credentials>,
 ) -> Result<(StatusCode, CookieJar, Json<User>), AuthError> {
@@ -673,7 +672,7 @@ async fn signup(
         .await?;
     if let Some(email) = email {
         // The account exists either way; a failure to mail is only logged.
-        let origin = state.config.public_origin(&headers);
+        let origin = state.config.mail_origin();
         if let Err(e) = crate::email::start_verification(&state, &user, &email, &origin).await {
             tracing::warn!("signup: no verification sent: {e:?}");
         }
