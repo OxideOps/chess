@@ -42,6 +42,8 @@ pub enum Goal {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(TS), ts(export))]
 pub struct Drill {
+    /// Stable for good: finished lessons are stored under it, so never rename
+    /// or reuse one (see `drill_ids_are_stable`).
     pub id: String,
     pub title: String,
     /// One line, for the list of lessons.
@@ -595,6 +597,37 @@ mod tests {
             assert_ne!(Game::from_fen(&hold.fen).unwrap().turn(), hold.student);
         }
         assert_eq!(find("nope"), None);
+    }
+
+    /// Accounts store their finished lessons under these ids (the server's
+    /// `lesson_completions` table, and browsers' `localStorage`), so an id
+    /// is forever: reorder the drills or add new ones, but never rename or
+    /// reuse an id, or someone's progress silently goes missing.
+    #[test]
+    fn drill_ids_are_stable() {
+        let ids: Vec<_> = drills().into_iter().map(|d| d.id).collect();
+        for id in [
+            "back-rank-mate",
+            "hold-the-draw",
+            "king-in-front",
+            "queen-mate",
+            "rook-mate",
+            "two-rooks",
+            "develop-and-castle",
+            "early-queen",
+            "back-rank-combination",
+            "knight-fork",
+            "pin",
+            "skewer",
+            "discovered-attack",
+            "deflection",
+            "spare-tempo",
+            "rook-against-pawn",
+            "philidor",
+            "lucena",
+        ] {
+            assert!(ids.iter().any(|i| i == id), "{id} was renamed or removed");
+        }
     }
 
     /// One route through the material, not a shelf: the first mate, the

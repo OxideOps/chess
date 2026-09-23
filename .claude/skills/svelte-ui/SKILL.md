@@ -35,7 +35,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
 - `src/lib/lessons/` — `drill.svelte.ts` (`DrillSession`: the student's moves, `assessDrill`
   from the WASM after each, the engine's replies through an `OpponentLike`, and `mistake`:
   the engine's score before and after a student move, compared with `isMistake`), `progress.ts`
-  (completed lessons in localStorage). `src/lib/engine/opponent.svelte.ts` is Stockfish
+  (completed lessons in localStorage: a guest's progress, and for an account an outbox of what
+  the server hasn't taken yet), `progress.svelte.ts` (`LessonProgress`, `lessonProgress`: the
+  finished lessons from the right source — localStorage for guests, `/api/lessons/completed`
+  for an account, merging the browser's copy in on each `load()` and then forgetting it; a
+  completion is written locally first, so a failed write is retried on the next load; guests
+  never touch the server; injectable fetch and account for tests). `src/lib/engine/opponent.svelte.ts` is Stockfish
   playing a side (`search(fen, moves)` → its best move, score and line after `go movetime`).
 - `src/lib/sound/` — `cue.ts` (pure: a move's SAN and whether the game ended → which sound),
   `voice.ts` (`WebAudioVoice`: the sounds themselves, synthesised; its constructor takes the

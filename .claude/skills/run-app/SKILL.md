@@ -91,7 +91,9 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   `no-swings`) with "Your moves"/"Both sides"; "Open on the analysis board" loads the game
   with the better lines as variations. `e2e/review.e2e.ts` plays a Scholar's mate and checks it.
 - Lessons (`/lessons`): eighteen drills, in order (`lesson::drills()`); `/lessons/back-rank-mate`
-  is won by a1→a8 ("Checkmate!", then "Next: …" and "✓ Done" on the list). In the others
+  is won by a1→a8 ("Checkmate!", then "Next: …" and "✓ Done" on the list; a guest's progress
+  is in localStorage `chess.lessons.done`, an account's comes from `/api/lessons/completed` and
+  survives on another browser). In the others
   Stockfish answers after "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your
   move · N moves left". The material drills (`/lessons/knight-fork`: d5→e7, then e7→c6) judge
   the last move only after Stockfish's reply, so it reads "Stockfish is thinking…" before the

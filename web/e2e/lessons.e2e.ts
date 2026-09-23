@@ -16,6 +16,7 @@ test('win the first drill, see it marked, and move on', async ({ page }) => {
 	await page.goto('/lessons');
 	await expect(page.getByTestId('lesson-back-rank-mate')).toContainText('Done');
 	await expect(page.getByTestId('lesson-develop-and-castle')).not.toContainText('Done');
+	await expect(page.getByTestId('lessons-done')).toHaveText('1 of 18 done');
 });
 
 test('a tactic is won by the material once Stockfish has answered', async ({ page }) => {
@@ -98,6 +99,52 @@ test('a blunder is pointed out, and an account can ask the coach why', async ({ 
 	// Restarting clears it.
 	await page.getByRole('button', { name: 'Restart' }).click();
 	await expect(mistake).toHaveCount(0);
+});
+
+test("a guest's progress carries into their account and follows it to another device", async ({
+	page,
+	browser
+}) => {
+	// A guest finishes the first drill: kept in this browser.
+	await page.goto('/lessons/back-rank-mate');
+	const status = page.getByTestId('drill-status');
+	await expect(status).toHaveText('Your move · 1 move left');
+	await sq(page, 'a1').click();
+	await sq(page, 'a8').click();
+	await expect(status).toHaveText('Checkmate!');
+	await page.goto('/lessons');
+	await expect(page.getByTestId('lessons-done')).toHaveText('1 of 18 done');
+	await expect(page.getByText('Kept in this browser.')).toBeVisible();
+
+	// They sign up, and it is the account's now.
+	const username = `lsn_${Date.now().toString(36)}`;
+	await page.locator('main').getByRole('link', { name: 'Sign up' }).click();
+	await expect(page).toHaveURL(/\/signup\?next=%2Flessons/);
+	await page.getByLabel('Username').fill(username);
+	await page.getByLabel('Password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Sign up' }).click();
+	await expect(page).toHaveURL('/lessons');
+	await expect(page.getByTestId('lessons-done')).toHaveText('1 of 18 done');
+	await expect(page.getByTestId('lesson-back-rank-mate')).toContainText('Done');
+	await expect(page.getByText('Kept in this browser.')).toHaveCount(0);
+	await expect
+		.poll(() => page.evaluate(() => localStorage.getItem('chess.lessons.done')))
+		.toBeNull();
+
+	// Another device: nothing in its browser, so the progress comes from the account.
+	const other = await browser.newContext();
+	const phone = await other.newPage();
+	await phone.goto('/lessons');
+	await expect(phone.getByTestId('lessons-done')).toHaveText('0 of 18 done');
+	await phone.goto('/login');
+	await phone.getByLabel('Username').fill(username);
+	await phone.getByLabel('Password').fill('correct horse battery');
+	await phone.getByRole('button', { name: 'Log in' }).click();
+	await expect(phone).toHaveURL('/');
+	await phone.goto('/lessons');
+	await expect(phone.getByTestId('lessons-done')).toHaveText('1 of 18 done');
+	await expect(phone.getByTestId('lesson-back-rank-mate')).toContainText('Done');
+	await other.close();
 });
 
 function sq(page: Page, name: string) {
