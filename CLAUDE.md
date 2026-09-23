@@ -13,7 +13,10 @@ Successor to the archived `OxideOps/chess-v1`.
   engine-output parsing, puzzle checking (`puzzle.rs`: judges the solver's move, any mate
   counts), the lesson drills and their win/loss rules (`lesson.rs`: mate, promote, hold the
   draw, win N points of material, develop and castle; a capture counts once the side that lost
-  the piece has had a move to take back; one ordered list, ids never change), board facts for the
+  the piece has had a move to take back; one ordered list, ids never change), game review (`review.rs`:
+  a finished game's biggest swings in winning chances from per-position engine evaluations,
+  judged by `Score::is_mistake`, skipping moves made from already-lost positions and the
+  engine's own choice; `with_lines` adds the better lines as variations), board facts for the
   coach (`facts.rs`: pieces, material, attacked/defended pieces, pins, where each king can go,
   the pawn structure and how far each side's pieces are out, and what each move of a line does,
   in words — with the material after a capture and, after a check, what can legally reply), and the client↔server
@@ -83,8 +86,13 @@ Successor to the archived `OxideOps/chess-v1`.
   no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
-  `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
-  attempt endpoints (only the first try at a puzzle rates), `coach.rs` the coach (Claude
+  `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`; themes kept as a
+  `TEXT[]` with a GIN index), next-puzzle (`?theme=fork` filters, widening the rating range
+  until the theme runs out, then 404), `/api/puzzles/themes`, the daily puzzle
+  (`/api/puzzles/daily[/{YYYY-MM-DD}]`: picked from a hash of the UTC date among puzzles
+  nearest 1400–1700 the first time a day is asked for, then stored in `daily_puzzles`) and
+  attempt endpoints (only the first try at a puzzle rates or moves the streak, kept on
+  `puzzle_ratings` beside the rating), `coach.rs` the coach (Claude
   Messages API over `reqwest`; `/api/coach/explain` for a position and `/api/coach/mistake`
   for a drill mistake, both with prompts built from the engine's lines in SAN and the board
   facts from `chess_core::facts`, so the model reads the board instead of picturing it;

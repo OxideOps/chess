@@ -2,8 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { session } from '$lib/auth/session.svelte';
 	import { gameEndText } from '$lib/chess/status';
-	import { OUTCOME_TEXT, matchup, outcome, relativeTime } from '$lib/online/listing';
+	import { OUTCOME_TEXT, matchup, outcome, relativeTime, reviewable } from '$lib/online/listing';
 	import { formatDiff } from '$lib/online/ratings';
+	import { withQuery } from '$lib/review/links';
 	import type { GameListing } from '$lib/generated/GameListing';
 
 	// Every game the signed-in user has a seat in, newest activity first.
@@ -34,6 +35,7 @@
 
 <div class="page-header">
 	<h1>My games</h1>
+	<p>Every game you have a seat in. Review a finished one to see where it turned.</p>
 </div>
 
 <section class="games">
@@ -55,7 +57,7 @@
 			{#each games as game (game.id)}
 				{@const state = outcome(game)}
 				<li>
-					<a href={resolve('/game/[id]', { id: game.id })}>
+					<a class="game" href={resolve('/game/[id]', { id: game.id })}>
 						<span class="matchup">{matchup(game)}</span>
 						<span class="outcome {state}">{OUTCOME_TEXT[state]}</span>
 						<span class="detail">
@@ -72,6 +74,14 @@
 							{game.moves === 1 ? 'ply' : 'plies'} · {relativeTime(game.updated_at)}
 						</span>
 					</a>
+					{#if reviewable(game)}
+						<a
+							class="review"
+							href={withQuery(resolve('/games/[id]/review', { id: game.id }), {
+								side: game.your_color
+							})}>Review</a
+						>
+					{/if}
 				</li>
 			{/each}
 		</ul>
@@ -104,10 +114,14 @@
 	}
 
 	li {
+		display: flex;
+		align-items: stretch;
 		border-bottom: 1px solid var(--panel-border);
 	}
 
-	li a {
+	a.game {
+		flex: 1;
+		min-width: 0;
 		display: grid;
 		grid-template-columns: 1fr auto;
 		gap: 0.15rem 1rem;
@@ -119,6 +133,21 @@
 
 	li a:hover {
 		background: var(--panel);
+	}
+
+	a.review {
+		display: flex;
+		align-items: center;
+		min-height: var(--tap);
+		padding: 0 0.75rem;
+		border-left: 1px solid var(--panel-border);
+		color: var(--text-muted);
+		font-size: var(--type-sm);
+		text-decoration: none;
+	}
+
+	a.review:hover {
+		color: var(--text);
 	}
 
 	.matchup {

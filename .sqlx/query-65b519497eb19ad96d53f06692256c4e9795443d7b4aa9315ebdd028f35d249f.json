@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT theme AS \"theme!\", count(*) AS \"count!\"\n           FROM puzzles, unnest(themes) AS theme\n           GROUP BY theme ORDER BY count(*) DESC, theme",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "theme!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "65b519497eb19ad96d53f06692256c4e9795443d7b4aa9315ebdd028f35d249f"
+}

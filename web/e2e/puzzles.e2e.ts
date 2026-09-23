@@ -1,15 +1,21 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { DailyPuzzle } from '../src/lib/generated/DailyPuzzle';
 import type { PuzzleData } from '../src/lib/generated/PuzzleData';
 
 // The server imported the fixture puzzles at start-up. Which one is served is
 // random, so the test reads it from the response and plays its solution.
 
-async function loadPuzzle(page: Page, action: () => Promise<unknown>): Promise<PuzzleData> {
+async function loadPuzzle(
+	page: Page,
+	action: () => Promise<unknown>,
+	path = '/api/puzzles/next'
+): Promise<PuzzleData> {
 	const [response] = await Promise.all([
-		page.waitForResponse((r) => r.url().endsWith('/api/puzzles/next') && r.ok()),
+		page.waitForResponse((r) => r.url().endsWith(path) && r.ok()),
 		action()
 	]);
-	const puzzle = (await response.json()) as PuzzleData;
+	const body = (await response.json()) as PuzzleData | DailyPuzzle;
+	const puzzle = 'puzzle' in body ? body.puzzle : body;
 	await expect(page.getByTestId('puzzle-status')).toHaveText(
 		/^Find the best move for (White|Black)\.$/
 	);
@@ -62,6 +68,87 @@ test('solve a puzzle, then miss one and see the solution', async ({ page }) => {
 	const last = next.moves.at(-1)!;
 	await expect(sq(page, last.slice(0, 2))).toHaveClass(/last-move/);
 	await expect(sq(page, last.slice(2, 4))).toHaveClass(/last-move/);
+});
+
+async function solve(page: Page, puzzle: PuzzleData) {
+	const solution = puzzle.moves.slice(1);
+	for (let i = 0; i < solution.length; i += 2) {
+		await play(page, solution[i]);
+		if (i + 1 < solution.length) {
+			await expect(page.getByTestId('puzzle-status')).toHaveText('Correct! Find the next move.');
+		}
+	}
+	await expect(page.getByTestId('puzzle-status')).toHaveText('Solved!');
+}
+
+test('a streak counts solves in a row and survives a reload', async ({ page }) => {
+	const first = await loadPuzzle(page, () => page.goto('/puzzles'));
+	await expect(page.getByTestId('puzzle-streak')).toHaveText('0');
+	await solve(page, first);
+	await expect(page.getByTestId('puzzle-streak')).toHaveText('1');
+	await expect(page.getByTestId('puzzle-best-streak')).toHaveText('1');
+
+	await loadPuzzle(page, () => page.reload());
+	await expect(page.getByTestId('puzzle-streak')).toHaveText('1');
+	await expect(page.getByTestId('puzzle-best-streak')).toHaveText('1');
+});
+
+test('the theme picker serves only that theme, and the URL keeps it', async ({ page }) => {
+	await loadPuzzle(page, () => page.goto('/puzzles'));
+	const picker = page.getByTestId('puzzle-theme');
+	await expect(picker.locator('option[value="fork"]')).toHaveText(/^Fork \(\d+\)$/);
+	const fork = await loadPuzzle(
+		page,
+		() => picker.selectOption('fork'),
+		'/api/puzzles/next?theme=fork'
+	);
+	expect(fork.themes).toContain('fork');
+	await expect(page).toHaveURL(/\/puzzles\?theme=fork$/);
+
+	// A reload stays on forks.
+	const again = await loadPuzzle(page, () => page.reload(), '/api/puzzles/next?theme=fork');
+	expect(again.themes).toContain('fork');
+	await expect(picker).toHaveValue('fork');
+
+	// And "All themes" goes back to everything.
+	await loadPuzzle(page, () => picker.selectOption(''));
+	await expect(page).toHaveURL(/\/puzzles$/);
+});
+
+test('the daily puzzle is the same for everyone and rates only a first try', async ({
+	page,
+	browser
+}) => {
+	const [response] = await Promise.all([
+		page.waitForResponse((r) => r.url().endsWith('/api/puzzles/daily') && r.ok()),
+		page.goto('/puzzles/daily')
+	]);
+	const daily = (await response.json()) as DailyPuzzle;
+	await expect(page.getByTestId('puzzle-status')).toHaveText(
+		/^Find the best move for (White|Black)\.$/
+	);
+	await expect(page.getByTestId('daily-link')).toHaveValue(
+		new RegExp(`/puzzles/daily\\?date=${daily.date}$`)
+	);
+	await expect(page.getByTestId('puzzle-tried')).toHaveCount(0);
+	await solve(page, daily.puzzle);
+	await expect(page.getByTestId('puzzle-diff')).toHaveText(/^\+\d+$/);
+
+	// Back again: it says so, and solving it again changes nothing.
+	await loadPuzzle(page, () => page.reload(), '/api/puzzles/daily');
+	await expect(page.getByTestId('puzzle-tried')).toBeVisible();
+	await solve(page, daily.puzzle);
+	await expect(page.getByTestId('puzzle-diff')).toHaveCount(0);
+
+	// Someone else, through the dated link, gets the same puzzle.
+	const other = await browser.newPage();
+	const theirs = await loadPuzzle(
+		other,
+		() => other.goto(`/puzzles/daily?date=${daily.date}`),
+		`/api/puzzles/daily/${daily.date}`
+	);
+	expect(theirs.id).toBe(daily.puzzle.id);
+	await other.close();
 });
 
 /** Any legal move of the solver's other than `wanted`, found through the board's hints. */

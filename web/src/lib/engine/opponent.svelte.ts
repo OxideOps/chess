@@ -7,6 +7,8 @@ export const MOVE_TIME_MS = 400;
 
 export interface OpponentOptions {
 	movetime?: number;
+	/** Search to this depth instead of for `movetime` (the game review does). */
+	depth?: number;
 	/** Injected in tests; defaults to the Stockfish worker. */
 	createEngine?: (onEvent: (event: EngineEvent) => void) => EngineLike;
 }
@@ -32,7 +34,7 @@ export interface OpponentLike {
 
 /**
  * Stockfish playing a side: asked about a position, it thinks for `movetime`
- * and reports its best move with its evaluation and line. One request at a
+ * (or to `depth`) and reports its best move with its evaluation and line. One request at a
  * time; a new request stops the previous search and that one resolves `null`.
  */
 export class Opponent implements OpponentLike {
@@ -40,15 +42,15 @@ export class Opponent implements OpponentLike {
 	error: string | null = $state(null);
 
 	readonly #engine: EngineLike;
-	readonly #movetime: number;
+	readonly #go: string;
 	readonly #ready: Promise<boolean>;
 	#markReady!: (ok: boolean) => void;
 	#pending: ((search: Search | null) => void) | null = null;
 	/** The deepest main line seen in the current search. */
 	#line: { score: EngineScore; pv: string[]; depth: number } | null = null;
 
-	constructor({ movetime = MOVE_TIME_MS, createEngine }: OpponentOptions = {}) {
-		this.#movetime = movetime;
+	constructor({ movetime = MOVE_TIME_MS, depth, createEngine }: OpponentOptions = {}) {
+		this.#go = depth === undefined ? `go movetime ${movetime}` : `go depth ${depth}`;
 		this.#ready = new Promise((resolve) => (this.#markReady = resolve));
 		const create = createEngine ?? ((onEvent) => new Engine(onEvent));
 		this.#engine = create((event) => this.#onEvent(event));
@@ -66,7 +68,7 @@ export class Opponent implements OpponentLike {
 			this.#pending = resolve;
 			this.#line = null;
 			this.#engine.send(position);
-			this.#engine.send(`go movetime ${this.#movetime}`);
+			this.#engine.send(this.#go);
 		});
 	}
 

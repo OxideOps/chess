@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO daily_puzzles (day, puzzle_id)\n         SELECT $1::text::date, id FROM puzzles\n         ORDER BY GREATEST($2 - rating, rating - $3, 0), md5($1 || ':' || id), id\n         LIMIT 1\n         ON CONFLICT (day) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b627cd5570d719a176efb8554b316a8a8657161b973699c8d1a9824e23041a24"
+}
