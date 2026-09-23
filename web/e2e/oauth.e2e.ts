@@ -25,6 +25,7 @@ test('continue with a provider from the login page and land back where you were'
 
 	// Cancelling at the provider comes back to the login page with the reason.
 	await page.getByRole('button', { name: 'Log out' }).click();
+	await expect(page.locator('#navbar').getByRole('link', { name: 'Log in' })).toBeVisible();
 	await page.goto('/login');
 	await page.getByRole('link', { name: 'Continue with Fake provider' }).click();
 	await page.getByRole('button', { name: 'Cancel' }).click();

@@ -33,8 +33,8 @@ const SESSION_DAYS: i64 = 30;
 // can't work through a list) and per address (so one address can't work
 // through many usernames); signups and guests per address bound account
 // spam. Generous enough that a person never sees them.
-const LOGIN_PER_USER: Limit = Limit::per_minute(10);
-const LOGIN_PER_ADDR: Limit = Limit::per_minute(30);
+pub(crate) const LOGIN_PER_USER: Limit = Limit::per_minute(10);
+pub(crate) const LOGIN_PER_ADDR: Limit = Limit::per_minute(30);
 const SIGNUP_PER_ADDR: Limit = Limit::per_minute(10);
 const GUEST_PER_ADDR: Limit = Limit::per_minute(30);
 
@@ -57,6 +57,9 @@ pub struct Auth {
     /// Mark the cookie `Secure` (only over https). Off for plain-http development.
     secure_cookies: bool,
     limiter: Arc<Limiter>,
+    /// Multiplies every limit above; 1 in production (see
+    /// [`crate::Config::rate_limit_scale`]).
+    rate_limit_scale: u32,
 }
 
 #[derive(Debug)]
@@ -66,6 +69,24 @@ pub enum AuthError {
     WeakPassword,
     InvalidCredentials,
     NotSignedIn,
+    /// The provider identity being connected already belongs to another user.
+    IdentityTaken,
+    /// Removing this sign-in method would leave the account no way in.
+    LastWayIn,
+    /// No such sign-in method on this account.
+    NoSuchIdentity,
+    /// Changing a password needs the current one, and this wasn't it.
+    WrongPassword,
+    /// Planting a new way into the account (a first password, another
+    /// provider) needs a session from a recent sign-in; this one is older.
+    /// Carries the provider to sign in again with, if any, and what for.
+    SignInAgain {
+        provider: Option<crate::oauth::ProviderInfo>,
+        /// "set a password": finishes "sign in again with Lichess to …".
+        to: &'static str,
+    },
+    /// Guests have no account settings; they sign up first.
+    GuestAccount,
     /// Rate limited; try again after this long.
     TooManyAttempts(Duration),
     /// Accounts need a database and the server was started without one.
@@ -79,9 +100,10 @@ impl From<sqlx::Error> for AuthError {
     }
 }
 
-impl IntoResponse for AuthError {
-    fn into_response(self) -> Response {
-        let (status, message) = match &self {
+impl AuthError {
+    /// The status and the message a response carries.
+    pub(crate) fn describe(&self) -> (StatusCode, String) {
+        match self {
             AuthError::InvalidUsername => (
                 StatusCode::BAD_REQUEST,
                 "usernames are 3-20 letters, digits or underscores".to_string(),
@@ -96,6 +118,35 @@ impl IntoResponse for AuthError {
                 "wrong username or password".into(),
             ),
             AuthError::NotSignedIn => (StatusCode::UNAUTHORIZED, "not signed in".into()),
+            AuthError::IdentityTaken => (
+                StatusCode::CONFLICT,
+                "that account already signs in another player here".into(),
+            ),
+            AuthError::LastWayIn => (
+                StatusCode::CONFLICT,
+                "this is the only way into your account; set a password or connect another \
+                 sign-in method first"
+                    .into(),
+            ),
+            AuthError::NoSuchIdentity => (
+                StatusCode::NOT_FOUND,
+                "that sign-in method is not connected to your account".into(),
+            ),
+            AuthError::WrongPassword => (
+                StatusCode::FORBIDDEN,
+                "your current password is not that".into(),
+            ),
+            AuthError::SignInAgain { provider, to } => (
+                StatusCode::FORBIDDEN,
+                match provider {
+                    Some(p) => format!("sign in again with {} to {to}", p.name),
+                    None => format!("sign in again to {to}"),
+                },
+            ),
+            AuthError::GuestAccount => (
+                StatusCode::FORBIDDEN,
+                "guests have no account settings; sign up first".into(),
+            ),
             AuthError::TooManyAttempts(wait) => (
                 StatusCode::TOO_MANY_REQUESTS,
                 format!(
@@ -111,8 +162,22 @@ impl IntoResponse for AuthError {
                 tracing::error!("auth: {e}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "database error".into())
             }
-        };
-        let mut response = (status, Json(serde_json::json!({ "error": message }))).into_response();
+        }
+    }
+}
+
+impl IntoResponse for AuthError {
+    fn into_response(self) -> Response {
+        let (status, message) = self.describe();
+        let mut body = serde_json::json!({ "error": message });
+        // The page offers the way back: the provider flow, ending on /account.
+        if let AuthError::SignInAgain {
+            provider: Some(p), ..
+        } = &self
+        {
+            body["sign_in_again"] = serde_json::json!(p);
+        }
+        let mut response = (status, Json(body)).into_response();
         if let AuthError::TooManyAttempts(wait) = self {
             response.headers_mut().insert(
                 header::RETRY_AFTER,
@@ -138,7 +203,7 @@ fn new_id() -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-async fn hash_password(password: String) -> String {
+pub(crate) async fn hash_password(password: String) -> String {
     use argon2::{
         Argon2,
         password_hash::{PasswordHasher, SaltString},
@@ -156,7 +221,7 @@ async fn hash_password(password: String) -> String {
     .expect("hashing task")
 }
 
-async fn verify_password(password: String, hash: String) -> bool {
+pub(crate) async fn verify_password(password: String, hash: String) -> bool {
     use argon2::{
         Argon2,
         password_hash::{PasswordHash, PasswordVerifier},
@@ -180,7 +245,15 @@ impl Auth {
             db,
             secure_cookies,
             limiter: Arc::default(),
+            rate_limit_scale: 1,
         }
+    }
+
+    /// Allow `factor` times the normal rate limits. For the end-to-end
+    /// suite, whose many signups all come from one address.
+    pub fn rate_limit_scale(mut self, factor: u32) -> Auth {
+        self.rate_limit_scale = factor.max(1);
+        self
     }
 
     pub(crate) fn db(&self) -> &Db {
@@ -188,9 +261,9 @@ impl Auth {
     }
 
     /// One hit against `limit` for `key`; `TooManyAttempts` when over.
-    fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
+    pub(crate) fn limit(&self, key: &str, limit: Limit) -> Result<(), AuthError> {
         self.limiter
-            .hit(key, limit, Instant::now())
+            .hit(key, limit.scaled(self.rate_limit_scale), Instant::now())
             .map_err(AuthError::TooManyAttempts)
     }
 
@@ -324,6 +397,27 @@ impl Auth {
         Ok((user, session))
     }
 
+    /// Whether `session` comes from a sign-in in the last `minutes` (a
+    /// session's `created_at` is its sign-in; sliding the expiry leaves it).
+    pub(crate) async fn signed_in_within(
+        &self,
+        session: Option<&str>,
+        minutes: i32,
+    ) -> Result<bool, AuthError> {
+        let Some(session) = session else {
+            return Ok(false);
+        };
+        Ok(sqlx::query_scalar!(
+            r#"SELECT created_at > now() - make_interval(mins => $2) AS "fresh!"
+               FROM sessions WHERE id = $1"#,
+            session,
+            minutes
+        )
+        .fetch_optional(self.db.pool())
+        .await?
+        .unwrap_or(false))
+    }
+
     pub async fn logout(&self, session: &str) -> Result<(), AuthError> {
         sqlx::query!("DELETE FROM sessions WHERE id = $1", session)
             .execute(self.db.pool())
@@ -435,7 +529,7 @@ pub struct SessionId(pub Option<String>);
 pub struct ClientIp(pub Option<IpAddr>);
 
 impl ClientIp {
-    fn key(&self) -> String {
+    pub(crate) fn key(&self) -> String {
         match self.0 {
             Some(ip) => ip.to_string(),
             None => "unknown".to_string(),

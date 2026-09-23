@@ -5,6 +5,7 @@
 //! endpoints, [`room`] the rules of a game as the server enforces them.
 //! Games live in memory until persistence arrives.
 
+pub mod account;
 pub mod auth;
 pub mod coach;
 pub mod db;
@@ -63,6 +64,10 @@ pub struct Config {
     pub abandon_after: Option<std::time::Duration>,
     /// The coach, if there is one (an API key, or the offline stand-in).
     pub coach: Option<coach::CoachConfig>,
+    /// Multiplies the signup, login and guest rate limits; 0 or 1 leaves
+    /// them as they are. Only for the end-to-end tests, which sign up more
+    /// accounts from one address in a minute than a person ever would.
+    pub rate_limit_scale: u32,
 }
 
 /// Everything the handlers share.
@@ -97,7 +102,10 @@ impl AppState {
         AppState {
             lobby: Some(lobby::Lobby::new(games.clone())),
             games,
-            auth: Some(auth::Auth::new(db, config.secure_cookies)),
+            auth: Some(
+                auth::Auth::new(db, config.secure_cookies)
+                    .rate_limit_scale(config.rate_limit_scale),
+            ),
             coach: config.coach.clone().map(coach::Coach::new),
             config: Arc::new(config),
         }
@@ -140,6 +148,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(games::router())
         .merge(lobby::router())
         .merge(auth::router())
+        .merge(account::router())
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())

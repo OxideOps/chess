@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) FILTER (WHERE provider = $2 AND subject = $3) AS \"this!\",\n                  count(*) FILTER (WHERE NOT (provider = $2 AND subject = $3)\n                                   AND provider = ANY($4::text[])) AS \"others!\"\n           FROM identities WHERE user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "this!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "others!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "660b07eb2d4988cb17fb14a50f67c266fc432b0bff297db02bd7d418c1fa2880"
+}

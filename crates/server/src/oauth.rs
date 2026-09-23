@@ -6,8 +6,17 @@
 //! asks the provider who this is, and finds or creates the matching user:
 //! `identities (provider, subject)` maps onto `users`. A signed-in guest is
 //! upgraded in place, like signup; a signed-in account gets the identity
-//! linked; anyone else becomes a new user named after their provider
-//! account (with a suffix if the name is taken). A built-in fake provider
+//! linked (this is "Connect" on the account page, so its failures go back
+//! there, and an identity that already belongs to someone else is refused
+//! rather than switching accounts, and one it already has is a fresh sign-in
+//! that replaces the session). Linking a new identity needs a session from a
+//! recent sign-in ([`account::require_fresh_sign_in`]), checked at `start`
+//! and again at the callback, so a stolen session can't connect the thief's
+//! provider account; signing in again with one the account has is always
+//! allowed, since that is how a session gets fresh. Anyone else becomes a new user named
+//! after their provider account (with a suffix if the name is taken). The
+//! provider's label for the account is kept with the identity and refreshed
+//! at each sign-in, for the account page. A built-in fake provider
 //! ([`Provider::fake`]) serves development and the tests without any
 //! network: it signs in as whatever name is typed.
 
@@ -29,7 +38,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
 
 use crate::{
-    AppState,
+    AppState, account,
     auth::{Auth, AuthError, CurrentUser, SessionId, User, unique_to_taken},
 };
 
@@ -62,6 +71,9 @@ pub struct Identity {
     pub subject: String,
     /// What to call them, before it is made into a valid username.
     pub name: String,
+    /// How the account page shows this identity: the Lichess username, the
+    /// Google email. Empty when the provider gave nothing better.
+    pub label: String,
 }
 
 impl Provider {
@@ -214,17 +226,28 @@ impl Provider {
     fn parse_identity(&self, who: &serde_json::Value) -> Option<Identity> {
         let text = |key: &str| who.get(key).and_then(|v| v.as_str()).map(str::to_string);
         match self.kind {
-            ProviderKind::Lichess => Some(Identity {
-                subject: text("id")?,
-                name: text("username")?,
-            }),
+            ProviderKind::Lichess => {
+                let name = text("username")?;
+                Some(Identity {
+                    subject: text("id")?,
+                    label: name.clone(),
+                    name,
+                })
+            }
             ProviderKind::Google => {
                 let subject = text("sub")?;
-                let name = text("email")
+                let email = text("email");
+                let name = email
+                    .as_deref()
                     .and_then(|e| e.split('@').next().map(str::to_string))
                     .or_else(|| text("name"))
                     .unwrap_or_default();
-                Some(Identity { subject, name })
+                let label = email.or_else(|| text("name")).unwrap_or_default();
+                Some(Identity {
+                    subject,
+                    name,
+                    label,
+                })
             }
             ProviderKind::Fake => None,
         }
@@ -370,30 +393,133 @@ async fn start(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Query(query): Query<StartQuery>,
+    CurrentUser(current): CurrentUser,
+    SessionId(session): SessionId,
     headers: HeaderMap,
     jar: CookieJar,
-) -> Result<(CookieJar, Redirect), StatusCode> {
-    if state.auth.is_none() {
-        return Err(StatusCode::SERVICE_UNAVAILABLE);
+) -> Response {
+    let Some(auth) = &state.auth else {
+        return StatusCode::SERVICE_UNAVAILABLE.into_response();
+    };
+    let provider = match provider(&state, &id) {
+        Ok(provider) => provider,
+        Err(status) => return status.into_response(),
+    };
+    // Connecting a provider the account doesn't have yet can only end in
+    // linking a new identity, which a stale session may not do (see
+    // `sign_in`); say so now rather than after a trip through the provider.
+    // A provider it already has may be the "sign in again" that freshens
+    // the session, so that goes ahead, and `sign_in` still refuses a stale
+    // session linking a second identity with it.
+    if let Some(user) = current.as_ref().filter(|u| !u.is_guest)
+        && let Err(e) = may_start_connecting(&state, auth, user, provider, session.as_deref()).await
+    {
+        let refused = Refused::from(e);
+        return Redirect::to(&refused.location(provider, true, "/account")).into_response();
     }
-    let provider = provider(&state, &id)?;
     let flow = Flow {
         provider: provider.id().to_string(),
         state: random_urlsafe(16),
         verifier: random_urlsafe(32),
         next: safe_next(query.next.as_deref()),
     };
-    let url = provider
-        .authorize_url(
-            &redirect_uri(&state, &headers, provider),
-            &flow.state,
-            &code_challenge(&flow.verifier),
-        )
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok((
+    let Ok(url) = provider.authorize_url(
+        &redirect_uri(&state, &headers, provider),
+        &flow.state,
+        &code_challenge(&flow.verifier),
+    ) else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    (
         jar.add(flow.to_cookie(state.config.secure_cookies)),
         Redirect::to(&url),
-    ))
+    )
+        .into_response()
+}
+
+/// Whether a signed-in account may start the flow with `provider`: always
+/// when it already has an identity with it, else only on a fresh session.
+async fn may_start_connecting(
+    state: &AppState,
+    auth: &Auth,
+    user: &User,
+    provider: &Provider,
+    session: Option<&str>,
+) -> Result<(), AuthError> {
+    let has = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM identities WHERE user_id = $1 AND provider = $2) AS "has!""#,
+        user.id,
+        provider.id()
+    )
+    .fetch_one(auth.db().pool())
+    .await?;
+    if has {
+        return Ok(());
+    }
+    account::require_fresh_sign_in(state, auth, user, session, account::TO_CONNECT).await
+}
+
+/// Why a flow failed: the message for the page it goes back to, and, when
+/// the fix is a fresh sign-in, `Some` with the provider to use, if any.
+struct Refused {
+    message: String,
+    sign_in_again: Option<Option<ProviderInfo>>,
+}
+
+impl From<String> for Refused {
+    fn from(message: String) -> Self {
+        Refused {
+            message,
+            sign_in_again: None,
+        }
+    }
+}
+
+impl From<&str> for Refused {
+    fn from(message: &str) -> Self {
+        message.to_string().into()
+    }
+}
+
+impl From<AuthError> for Refused {
+    fn from(e: AuthError) -> Self {
+        let message = e.describe().1;
+        match e {
+            AuthError::SignInAgain { provider, .. } => Refused {
+                message,
+                sign_in_again: Some(provider),
+            },
+            _ => message.into(),
+        }
+    }
+}
+
+impl Refused {
+    /// Back to `/account` (connecting) or `/login` (signing in, then on to
+    /// `next`) with `?error=`. When connecting needs a fresh sign-in, also
+    /// `&sign_in_again=<provider id>` for the account page's "Sign in again"
+    /// button, empty when there is no provider to name (the page then offers
+    /// the password, if there is one).
+    fn location(&self, provider: &Provider, connecting: bool, next: &str) -> String {
+        let text = if connecting {
+            format!("Connecting {} failed: {}", provider.name(), self.message)
+        } else {
+            format!("Sign-in with {} failed: {}", provider.name(), self.message)
+        };
+        let page = if connecting { "/account" } else { "/login" };
+        let mut url = url::Url::parse("http://relative.invalid/")
+            .and_then(|base| base.join(page))
+            .expect("static");
+        url.query_pairs_mut().append_pair("error", &text);
+        if let Some(p) = self.sign_in_again.as_ref().filter(|_| connecting) {
+            let id = p.as_ref().map_or("", |p| p.id.as_str());
+            url.query_pairs_mut().append_pair("sign_in_again", id);
+        }
+        if !connecting {
+            url.query_pairs_mut().append_pair("next", next);
+        }
+        url[url::Position::BeforePath..].to_string()
+    }
 }
 
 #[derive(Deserialize)]
@@ -429,6 +555,10 @@ async fn callback(
         (Some(user), Some(session)) => Some((user, session.as_str())),
         _ => None,
     };
+    // For a signed-in account this flow links rather than signs in: it is
+    // connecting another method, which is done (and its failures shown) on
+    // the account page, not the login page.
+    let connecting = current.is_some_and(|(user, _)| !user.is_guest);
     match finish(&state, provider, auth, flow, query, current, &headers).await {
         Ok((user, session)) => {
             tracing::info!(
@@ -438,14 +568,9 @@ async fn callback(
             );
             (jar.add(auth.cookie(session)), Redirect::to(&next)).into_response()
         }
-        Err(message) => {
-            tracing::warn!("{} sign-in failed: {message}", provider.id());
-            let text = format!("Sign-in with {} failed: {message}", provider.name());
-            let mut url = url::Url::parse("http://relative.invalid/login").expect("static");
-            url.query_pairs_mut()
-                .append_pair("error", &text)
-                .append_pair("next", &next);
-            let location = url[url::Position::BeforePath..].to_string();
+        Err(refused) => {
+            tracing::warn!("{} sign-in failed: {}", provider.id(), refused.message);
+            let location = refused.location(provider, connecting, &next);
             (jar, Redirect::to(&location)).into_response()
         }
     }
@@ -460,17 +585,17 @@ async fn finish(
     query: CallbackQuery,
     current: Option<(&User, &str)>,
     headers: &HeaderMap,
-) -> Result<(User, String), String> {
+) -> Result<(User, String), Refused> {
     if let Some(error) = query.error {
         return Err(if error == "access_denied" {
-            "you cancelled".to_string()
+            "you cancelled".into()
         } else {
-            format!("the provider said {error}")
+            format!("the provider said {error}").into()
         });
     }
     let flow = flow.ok_or("the sign-in took too long or the cookie was lost; try again")?;
     if flow.provider != provider.id() || query.state.as_deref() != Some(flow.state.as_str()) {
-        return Err("the reply did not match the request; try again".to_string());
+        return Err("the reply did not match the request; try again".into());
     }
     let code = query.code.ok_or("no code came back")?;
     let identity = provider
@@ -480,12 +605,29 @@ async fn finish(
             &redirect_uri(state, headers, provider),
         )
         .await?;
-    sign_in(auth, provider.id(), &identity, current)
-        .await
-        .map_err(|e| {
+    match sign_in(auth, provider.id(), &identity, current).await {
+        Ok(signed_in) => Ok(signed_in),
+        Err(AuthError::IdentityTaken) => Err(format!(
+            "that {} account already signs in another player here",
+            provider.name()
+        )
+        .into()),
+        // `sign_in` has no provider list to name one from; the account's
+        // own oldest one is the way back, as for a first password.
+        Err(AuthError::SignInAgain { to, .. }) => {
+            let provider = match current {
+                Some((user, _)) => account::sign_in_again_with(state, auth, user)
+                    .await
+                    .map_err(Refused::from)?,
+                None => None,
+            };
+            Err(AuthError::SignInAgain { provider, to }.into())
+        }
+        Err(e) => {
             tracing::error!("oauth sign-in: {e:?}");
-            "database error".to_string()
-        })
+            Err("database error".into())
+        }
+    }
 }
 
 /// Find the user behind `identity`, or make one: upgrade a signed-in guest,
@@ -498,6 +640,7 @@ pub async fn sign_in(
     current: Option<(&User, &str)>,
 ) -> Result<(User, String), AuthError> {
     let pool = auth.db().pool();
+    let label = Some(identity.label.as_str()).filter(|l| !l.is_empty());
     let known = sqlx::query!(
         "SELECT u.id, u.username, u.is_guest FROM identities i JOIN users u ON u.id = i.user_id
          WHERE i.provider = $1 AND i.subject = $2",
@@ -512,13 +655,53 @@ pub async fn sign_in(
             username: row.username,
             is_guest: row.is_guest,
         };
-        let session = auth.create_session(&user.id).await?;
-        return Ok((user, session));
+        // Keep the label current: people rename themselves at the provider.
+        sqlx::query!(
+            "UPDATE identities SET label = COALESCE($3, label) WHERE provider = $1 AND subject = $2",
+            provider,
+            identity.subject,
+            label
+        )
+        .execute(pool)
+        .await?;
+        return match current {
+            // Signing in again with what is already connected: the provider
+            // has just vouched for this account, so it gets a new session in
+            // place of the old one. Its fresh `created_at` is what lets it set
+            // a first password (see `account::set_password`).
+            Some((me, old)) if me.id == user.id => {
+                let session = auth.create_session(&user.id).await?;
+                auth.logout(old).await?;
+                Ok((user, session))
+            }
+            // A signed-in account never silently becomes someone else by
+            // "connecting" an identity that belongs to another player.
+            Some((me, _)) if !me.is_guest => Err(AuthError::IdentityTaken),
+            _ => {
+                let session = auth.create_session(&user.id).await?;
+                Ok((user, session))
+            }
+        };
     }
 
     let (user, session) = match current {
-        // A registered account links the identity and keeps its session.
-        Some((user, session)) if !user.is_guest => (user.clone(), session.to_string()),
+        // A registered account links the identity and keeps its session. A
+        // new identity is a new way in, so as for a first password the
+        // session must come from a recent sign-in: a stolen cookie can't
+        // connect the thief's provider account. (`start` refuses this
+        // earlier; the flow cookie outlives freshness, so check again.)
+        Some((user, session)) if !user.is_guest => {
+            if !auth
+                .signed_in_within(Some(session), account::FRESH_SIGN_IN_MINUTES)
+                .await?
+            {
+                return Err(AuthError::SignInAgain {
+                    provider: None,
+                    to: account::TO_CONNECT,
+                });
+            }
+            (user.clone(), session.to_string())
+        }
         // A guest is upgraded in place: same id, same games.
         Some((guest, session)) => {
             let username = claim_username(pool, &identity.name, |name| {
@@ -574,10 +757,11 @@ pub async fn sign_in(
         }
     };
     sqlx::query!(
-        "INSERT INTO identities (provider, subject, user_id) VALUES ($1, $2, $3)",
+        "INSERT INTO identities (provider, subject, user_id, label) VALUES ($1, $2, $3, $4)",
         provider,
         identity.subject,
-        user.id
+        user.id,
+        label
     )
     .execute(pool)
     .await?;
@@ -691,6 +875,7 @@ fn fake_exchange(code: &str, verifier: &str) -> Result<Identity, String> {
     }
     Ok(Identity {
         subject: name.to_lowercase(),
+        label: name.clone(),
         name,
     })
 }
@@ -753,7 +938,8 @@ mod tests {
             lichess.parse_identity(&who).unwrap(),
             Identity {
                 subject: "dan".into(),
-                name: "Dan".into()
+                name: "Dan".into(),
+                label: "Dan".into(),
             }
         );
         assert!(lichess.parse_identity(&serde_json::json!({})).is_none());
@@ -764,11 +950,16 @@ mod tests {
             google.parse_identity(&who).unwrap(),
             Identity {
                 subject: "1234".into(),
-                name: "dillon.r".into()
+                name: "dillon.r".into(),
+                label: "dillon.r@gmail.com".into(),
             }
         );
         let who = serde_json::json!({"sub": "1234", "name": "Dillon"});
-        assert_eq!(google.parse_identity(&who).unwrap().name, "Dillon");
+        let parsed = google.parse_identity(&who).unwrap();
+        assert_eq!(
+            (parsed.name.as_str(), parsed.label.as_str()),
+            ("Dillon", "Dillon")
+        );
     }
 
     #[test]

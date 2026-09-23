@@ -82,8 +82,15 @@ Successor to the archived `OxideOps/chess-v1`.
   their laptop is one nobody can play. Rated seeks refuse guests, as rated games do
   elsewhere), `oauth.rs` sign-in with Lichess/Google (`/api/auth/{provider}/start` → provider →
   `/callback`; `state` + PKCE verifier in a 10-minute cookie; `identities(provider, subject)`
-  → `users`; a built-in fake provider behind `--fake-oauth` for dev and tests, in-process,
-  no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
+  → `users`, with the provider's label for the account; started while signed in to an account it
+  links instead, and refuses an identity that is someone else's; a built-in fake provider behind
+  `--fake-oauth` for dev and tests, in-process, no network), `account.rs` the account's own
+  sign-in methods (`/api/me/account` lists identities and whether there is a password,
+  `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in (an
+  identity whose provider is switched off doesn't count), `PUT /api/me/password` sets or changes
+  it — changing needs the current one, setting a first one a session from a sign-in in the last
+  10 minutes (else it names the provider to sign in with again; doing that while signed in
+  replaces the session) — spends the login form's rate limits and signs out the other sessions), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
   `lessons.rs` an account's finished lessons (`/api/lessons/completed`: GET lists,
@@ -148,6 +155,10 @@ would each hold their own copy), and nothing in front may strip COOP/COEP or the
 multi-threaded engine silently stops running. Setting `CHESS_E2E_URL` points the Playwright
 suite at a running deployment instead of one it starts itself; the tests needing
 `--fake-oauth` or `--fake-coach` are excluded from that, since a deployment has neither.
+The server the suite starts also gets `--rate-limit-scale 10` (signup/login/guest limits ×10):
+the whole suite signs up more accounts from one address in a minute than the real limit of
+10 allows. Test-only, like the fakes; a deployment keeps the defaults, and the Rust tests
+exercise the real limits.
 
 ## Working on the UI
 

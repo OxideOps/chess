@@ -66,11 +66,20 @@
 				{/if}
 			</svg>
 		</button>
-		{#if session.user}
+		{#if session.registered}
+			<a
+				href={resolve('/account')}
+				class="who"
+				aria-current={page.url.pathname === resolve('/account') ? 'page' : undefined}
+				title="Your account"
+			>
+				{session.displayName}
+			</a>
+		{:else if session.user}
+			<!-- A guest has no account to manage yet, only games. -->
 			<a
 				href={resolve('/games')}
-				class="who"
-				class:guest={!session.registered}
+				class="who guest"
 				aria-current={page.url.pathname === resolve('/games') ? 'page' : undefined}
 				title="My games"
 			>
