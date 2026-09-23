@@ -81,9 +81,11 @@ Successor to the archived `OxideOps/chess-v1`.
   links instead, and refuses an identity that is someone else's; a built-in fake provider behind
   `--fake-oauth` for dev and tests, in-process, no network), `account.rs` the account's own
   sign-in methods (`/api/me/account` lists identities and whether there is a password,
-  `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in,
-  `PUT /api/me/password` sets or changes it — changing needs the current one — and signs out the
-  other sessions), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
+  `DELETE /api/me/identities/{provider}/{subject}` refuses to remove the last way in (an
+  identity whose provider is switched off doesn't count), `PUT /api/me/password` sets or changes
+  it — changing needs the current one, setting a first one a session from a sign-in in the last
+  10 minutes (else it names the provider to sign in with again; doing that while signed in
+  replaces the session) — spends the login form's rate limits and signs out the other sessions), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
   `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and

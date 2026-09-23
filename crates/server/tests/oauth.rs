@@ -359,10 +359,20 @@ async fn the_account_page_connects_and_disconnects_but_keeps_a_way_in() {
             ("Fake provider".to_string(), Some(second.clone()))
         ]
     );
-    // Connecting it again changes nothing and keeps the session.
+    // Connecting it again is signing in again: same account, a new session
+    // in place of the old one.
     let r = sign_in(&base, &second, "/account", Some(&session), false).await;
     assert_eq!(r.header("location"), Some("/account"));
-    assert!(r.cookie.as_deref().is_none_or(|c| c == session));
+    let old_session = session;
+    let session = r.cookie.expect("a fresh session");
+    assert_ne!(session, old_session);
+    assert_eq!(
+        http(&base, "GET", "/api/me", Some(&old_session), "")
+            .await
+            .status,
+        401
+    );
+    assert_eq!(me(&base, &session).await, fran);
     assert_eq!(account(&base, &session).await.identities.len(), 2);
 
     // Signing in with the new one, signed out, lands on the same player,
@@ -489,4 +499,188 @@ async fn connecting_someone_elses_provider_account_is_refused() {
         location.starts_with("/account?error=") && location.contains("cancelled"),
         "{location}"
     );
+}
+
+/// Make `session` look as if it was signed in `minutes` ago.
+async fn age_session(session: &str, minutes: i32) {
+    let db = db().await.expect("the test database");
+    sqlx::query("UPDATE sessions SET created_at = now() - make_interval(mins => $2) WHERE id = $1")
+        .bind(session)
+        .bind(minutes)
+        .execute(db.pool())
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn a_first_password_needs_a_fresh_sign_in() {
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+    let name = unique("Ines");
+    let session = sign_in(&base, &name, "/", None, false)
+        .await
+        .cookie
+        .unwrap();
+    let ines = me(&base, &session).await;
+    let username = ines.username.clone().unwrap();
+    // Another device, signed in the same way.
+    let elsewhere = sign_in(&base, &name, "/", None, false)
+        .await
+        .cookie
+        .unwrap();
+
+    // A session from a sign-in eleven minutes ago (or a stolen cookie) can't
+    // plant a first password; the refusal names the provider to go back
+    // through.
+    age_session(&session, 11).await;
+    let r = put_password(&base, &session, r#"{"password":"planted password"}"#).await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    let body: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+    assert_eq!(
+        body["error"],
+        "sign in again with Fake provider to set a password"
+    );
+    assert_eq!(
+        body["sign_in_again"],
+        serde_json::json!({"id": "fake", "name": "Fake provider"})
+    );
+    assert!(!account(&base, &session).await.has_password);
+    let creds = format!(r#"{{"username":"{username}","password":"planted password"}}"#);
+    assert_eq!(
+        http(&base, "POST", "/api/auth/login", None, &creds)
+            .await
+            .status,
+        401
+    );
+
+    // Signing in again through the provider, from the account page, gives a
+    // new session in place of the stale one, and that one may.
+    let r = sign_in(&base, &name, "/account", Some(&session), false).await;
+    assert_eq!(r.header("location"), Some("/account"));
+    let fresh = r.cookie.expect("a new session");
+    assert_ne!(fresh, session);
+    assert_eq!(
+        http(&base, "GET", "/api/me", Some(&session), "")
+            .await
+            .status,
+        401,
+        "the stale session is gone"
+    );
+    assert_eq!(me(&base, &fresh).await, ines);
+    // Nine minutes on it is still fresh.
+    age_session(&fresh, 9).await;
+    let r = put_password(&base, &fresh, r#"{"password":"first password"}"#).await;
+    assert_eq!(r.status, 204, "{}", r.body);
+    assert!(account(&base, &fresh).await.has_password);
+    assert_eq!(
+        http(&base, "GET", "/api/me", Some(&elsewhere), "")
+            .await
+            .status,
+        401,
+        "a first password signs out the other sessions"
+    );
+    let creds = format!(r#"{{"username":"{username}","password":"first password"}}"#);
+    assert_eq!(
+        http(&base, "POST", "/api/auth/login", None, &creds)
+            .await
+            .status,
+        200
+    );
+
+    // Changing an existing one needs no fresh session, only the current
+    // password.
+    age_session(&fresh, 60).await;
+    let r = put_password(&base, &fresh, r#"{"password":"second password"}"#).await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    assert!(r.body.contains("current password"), "{}", r.body);
+    let body = r#"{"current":"first password","password":"second password"}"#;
+    assert_eq!(put_password(&base, &fresh, body).await.status, 204);
+}
+
+#[tokio::test]
+async fn a_provider_that_is_switched_off_is_no_way_in() {
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+    let Some(db) = db().await else { return };
+    // The same database, with no provider configured.
+    let plain = serve(db).await;
+
+    // Two identities, both with the fake provider, and no password.
+    let first = unique("Jude");
+    let session = sign_in(&base, &first, "/", None, false)
+        .await
+        .cookie
+        .unwrap();
+    let second = unique("JudeElsewhere");
+    sign_in(&base, &second, "/account", Some(&session), false).await;
+    let a = account(&base, &session).await;
+    assert_eq!(a.identities.len(), 2);
+    let path = format!("/api/me/identities/fake/{}", a.identities[0].subject);
+
+    // Where that provider is switched off, the other identity can't sign
+    // anyone in, so this one is the last way in.
+    let r = http(&plain, "DELETE", &path, Some(&session), "").await;
+    assert_eq!(r.status, 409, "{}", r.body);
+    assert!(r.body.contains("only way into your account"), "{}", r.body);
+    // And there is no provider to send a stale session back through.
+    age_session(&session, 11).await;
+    let r = put_password(&plain, &session, r#"{"password":"first password"}"#).await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&r.body).unwrap(),
+        serde_json::json!({"error": "sign in again to set a password"})
+    );
+
+    // Where it is on, the other one counts.
+    let r = http(&base, "DELETE", &path, Some(&session), "").await;
+    assert_eq!(r.status, 204, "{}", r.body);
+    assert_eq!(account(&base, &session).await.identities.len(), 1);
+}
+
+#[tokio::test]
+async fn the_password_form_spends_the_login_forms_attempts() {
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+    let name = unique("Kit");
+    let creds = format!(r#"{{"username":"{name}","password":"correct horse"}}"#);
+    let session = http(&base, "POST", "/api/auth/signup", None, &creds)
+        .await
+        .cookie
+        .unwrap();
+
+    // Ten wrong guesses at the login form, under any spelling of the name...
+    let wrong = format!(
+        r#"{{"username":"{}","password":"wrong horse"}}"#,
+        name.to_lowercase()
+    );
+    for _ in 0..10 {
+        let r = http(&base, "POST", "/api/auth/login", None, &wrong).await;
+        assert_eq!(r.status, 401, "{}", r.body);
+    }
+    // ...leave none for the password form, even with the right password.
+    let body = r#"{"current":"correct horse","password":"new horse battery"}"#;
+    let r = put_password(&base, &session, body).await;
+    assert_eq!(r.status, 429, "{}", r.body);
+
+    // And the other way round, on a fresh server: guesses through the
+    // password form use up the login form's.
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+    let name = unique("Lee");
+    let creds = format!(r#"{{"username":"{name}","password":"correct horse"}}"#);
+    let session = http(&base, "POST", "/api/auth/signup", None, &creds)
+        .await
+        .cookie
+        .unwrap();
+    let guess = r#"{"current":"wrong horse","password":"new horse battery"}"#;
+    for _ in 0..10 {
+        let r = put_password(&base, &session, guess).await;
+        assert_eq!(r.status, 403, "{}", r.body);
+    }
+    let r = http(&base, "POST", "/api/auth/login", None, &creds).await;
+    assert_eq!(r.status, 429, "{}", r.body);
 }

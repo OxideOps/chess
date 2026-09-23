@@ -8,7 +8,8 @@
 //! upgraded in place, like signup; a signed-in account gets the identity
 //! linked (this is "Connect" on the account page, so its failures go back
 //! there, and an identity that already belongs to someone else is refused
-//! rather than switching accounts); anyone else becomes a new user named
+//! rather than switching accounts, and one it already has is a fresh sign-in
+//! that replaces the session); anyone else becomes a new user named
 //! after their provider account (with a suffix if the name is taken). The
 //! provider's label for the account is kept with the identity and refreshed
 //! at each sign-in, for the account page. A built-in fake provider
@@ -559,8 +560,15 @@ pub async fn sign_in(
         .execute(pool)
         .await?;
         return match current {
-            // Connecting what is already connected: nothing changes.
-            Some((me, session)) if me.id == user.id => Ok((user, session.to_string())),
+            // Signing in again with what is already connected: the provider
+            // has just vouched for this account, so it gets a new session in
+            // place of the old one. Its fresh `created_at` is what lets it set
+            // a first password (see `account::set_password`).
+            Some((me, old)) if me.id == user.id => {
+                let session = auth.create_session(&user.id).await?;
+                auth.logout(old).await?;
+                Ok((user, session))
+            }
             // A signed-in account never silently becomes someone else by
             // "connecting" an identity that belongs to another player.
             Some((me, _)) if !me.is_guest => Err(AuthError::IdentityTaken),

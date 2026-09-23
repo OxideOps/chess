@@ -28,7 +28,11 @@ export async function disconnect(
 	if (!response.ok) throw await refusal(response);
 }
 
-/** Set a first password, or change it (then `current` is required). */
+/**
+ * Set a first password, or change it (then `current` is required). A first
+ * password needs a recent sign-in: an older session is refused with
+ * `signInAgain` naming the provider to go back through.
+ */
 export async function setPassword(
 	change: PasswordChange,
 	fetchImpl: FetchLike = defaultFetch
