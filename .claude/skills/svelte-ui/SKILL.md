@@ -44,6 +44,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   injectable `Voice` for tests, and `attach(game)` which sets `GameStore.onmove`). `Board`
   attaches on mount, so every mode gets sound from having a board — don't wire it per page.
   A new sound means a new `Cue`, a case in `voice.ts`, and a line in the audible-cues test.
+- `src/lib/review/` — `analysis.svelte.ts` (`GameAnalysis`: Stockfish through every position
+  of a finished game, one at a time at `REVIEW_DEPTH` via `Opponent({ depth })`; `stop()`
+  terminates the worker, `start()` resumes; each position is saved to localStorage as it is
+  done, so a reopened review searches nothing twice; `positionsOf(pgn)`), `links.ts` (query
+  strings for the review and `/analysis?pgn=…&ply=N&orientation=…`). The route is
+  `/games/[id]/review?side=white`; `reviewGame` from the WASM picks the swings.
 - `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle — `next()`, of
   `theme` if set, or `daily(date?)` — plays the setup move and the replies, judges each move
   with `judgePuzzle` from the WASM, reports the try and keeps the server's `streak`;

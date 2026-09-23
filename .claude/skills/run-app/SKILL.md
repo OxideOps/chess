@@ -86,6 +86,10 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
   prompt change did, case by case. Scores swing between runs on identical code, so judge a
   change with `-- --repeat 3` (each case answered and graded that many times) and read the
   means, not one sample.
+- Review: a finished game on `/games` has a "Review" link to `/games/<id>/review?side=…`;
+  `[data-testid=review-progress]` counts positions, then `[data-testid=swings]` (or
+  `no-swings`) with "Your moves"/"Both sides"; "Open on the analysis board" loads the game
+  with the better lines as variations. `e2e/review.e2e.ts` plays a Scholar's mate and checks it.
 - Lessons (`/lessons`): six drills; `/lessons/back-rank-mate` is won by a1→a8 ("Checkmate!",
   then "Next: …" and "✓ Done" on the list). In the others Stockfish answers after
   "Stockfish is thinking…"; `[data-testid=drill-status]` reads "Your move · N moves left".
