@@ -24,6 +24,12 @@
 	let loadError: string | null = $state(null);
 	let error: string | null = $state(page.url.searchParams.get('error'));
 	let removing: string | null = $state(null);
+	// Connecting a new provider needs a recent sign-in too; a refused one
+	// comes back with `?sign_in_again=<provider id>` (empty when the account
+	// has no provider to name, only its password).
+	const againId = page.url.searchParams.get('sign_in_again');
+	let connectStale = $state(againId !== null);
+	const connectAgain = $derived(providers.find((provider) => provider.id === againId) ?? null);
 
 	let current = $state('');
 	let password = $state('');
@@ -60,6 +66,7 @@
 	async function remove(identity: LinkedIdentity) {
 		removing = key(identity);
 		error = null;
+		connectStale = false;
 		try {
 			await disconnect(identity);
 			account = await loadAccount();
@@ -94,6 +101,21 @@
 		}
 	}
 </script>
+
+<!-- The ways back to a fresh session, which then returns here: through a
+     provider the account has, or its password at the login form. -->
+{#snippet signInAgainLinks(provider: ProviderInfo | null)}
+	<div class="connect">
+		{#if provider}
+			<a class="btn" href={startUrl(provider, resolve('/account'))} rel="external">
+				Sign in again with {provider.name}
+			</a>
+		{/if}
+		{#if account?.has_password}
+			<a class="btn" href={loginHref}>Log in again with your password</a>
+		{/if}
+	</div>
+{/snippet}
 
 <svelte:head>
 	<title>Account · Chess</title>
@@ -144,6 +166,9 @@
 			</ul>
 			{#if error}
 				<p class="error" role="alert">{error}</p>
+			{/if}
+			{#if connectStale}
+				{@render signInAgainLinks(connectAgain)}
 			{/if}
 			{#if toConnect.length > 0}
 				<div class="connect">
@@ -202,11 +227,7 @@
 				<p class="error" role="alert">{passwordError}</p>
 			{/if}
 			{#if signInAgain}
-				<div class="connect">
-					<a class="btn" href={startUrl(signInAgain, resolve('/account'))} rel="external">
-						Sign in again with {signInAgain.name}
-					</a>
-				</div>
+				{@render signInAgainLinks(signInAgain)}
 			{/if}
 			{#if passwordSaved}
 				<p class="saved" role="status">{passwordSaved}</p>

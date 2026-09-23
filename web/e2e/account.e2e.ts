@@ -113,6 +113,60 @@ test('a first password on an old session sends you to sign in again, then back',
 	await expect(page.getByTestId('password-state')).toHaveText('Set');
 });
 
+test('connecting on an old session sends you to log in again, then back', async ({ page }) => {
+	const stamp = Date.now().toString(36);
+	const name = `lou_${stamp}`;
+	// An account with only a password, made without the sign-up form (its
+	// per-address limit is spent by the other tests): a provider account that
+	// sets a password and drops the provider.
+	await page.goto('/login');
+	await page.getByRole('link', { name: 'Continue with Fake provider' }).click();
+	await continueAtProvider(page, name);
+	await page.locator('#navbar').getByRole('link', { name }).click();
+	await expect(page).toHaveURL('/account');
+	await page.getByLabel('New password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Set password' }).click();
+	await expect(page.getByTestId('password-state')).toHaveText('Set');
+	await page.getByRole('button', { name: `Disconnect Fake provider — ${name}` }).click();
+	await expect(page.getByTestId('sign-in-methods')).not.toContainText('Fake provider');
+	const before = await whoAmI(page);
+
+	// As above, the server's refusal of an old session (a redirect back here
+	// before the provider) is played once in place of the real start.
+	let refused = false;
+	await page.route('**/api/auth/fake/start**', async (route) => {
+		if (refused) return route.fallback();
+		refused = true;
+		const error =
+			'Connecting Fake provider failed: sign in again to connect another sign-in method';
+		await route.fulfill({
+			status: 303,
+			headers: {
+				location: `/account?error=${encodeURIComponent(error)}&sign_in_again=`
+			}
+		});
+	});
+	await page.getByRole('link', { name: 'Connect Fake provider' }).click();
+	await expect(page.getByRole('alert')).toContainText('sign in again to connect');
+	// No provider to go back through: the password is the way.
+	await expect(page.getByRole('link', { name: /^Sign in again with/ })).toHaveCount(0);
+	await page.getByRole('link', { name: 'Log in again with your password' }).click();
+	await expect(page).toHaveURL(/\/login\?next=%2Faccount$/);
+	await page.getByLabel('Username').fill(name);
+	await page.getByLabel('Password').fill('correct horse battery');
+	await page.getByRole('button', { name: 'Log in' }).click();
+
+	// Back on the account page as the same player, and now it connects.
+	await expect(page).toHaveURL('/account');
+	expect(await whoAmI(page)).toEqual(before);
+	await page.getByRole('link', { name: 'Connect Fake provider' }).click();
+	await continueAtProvider(page, `LouElsewhere_${stamp}`);
+	await expect(page).toHaveURL('/account');
+	await expect(page.getByTestId('sign-in-methods')).toContainText(
+		`Fake provider — LouElsewhere_${stamp}`
+	);
+});
+
 async function continueAtProvider(page: Page, name: string) {
 	await expect(page.getByRole('heading', { name: 'Fake provider' })).toBeVisible();
 	await page.getByLabel('Sign in as').fill(name);

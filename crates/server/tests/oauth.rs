@@ -684,3 +684,120 @@ async fn the_password_form_spends_the_login_forms_attempts() {
     let r = http(&base, "POST", "/api/auth/login", None, &creds).await;
     assert_eq!(r.status, 429, "{}", r.body);
 }
+
+/// Where a refused or failed flow sent the browser: the path, `?error=` and
+/// `?sign_in_again=`, decoded.
+fn refusal(r: &Reply) -> (String, String, Option<String>) {
+    let location = r.header("location").expect("a redirect");
+    let url = url::Url::parse("http://x").unwrap().join(location).unwrap();
+    let param = |key: &str| {
+        url.query_pairs()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v.into_owned())
+    };
+    (
+        url.path().to_string(),
+        param("error").unwrap_or_default(),
+        param("sign_in_again"),
+    )
+}
+
+#[tokio::test]
+async fn connecting_a_provider_needs_a_fresh_sign_in() {
+    let Some(base) = oauth_server().await else {
+        return;
+    };
+
+    // An account with only a password, on a session from long ago (or a
+    // stolen cookie): Connect is refused before the provider, back on the
+    // account page, with no provider to name.
+    let name = unique("Mo");
+    let creds = format!(r#"{{"username":"{name}","password":"correct horse"}}"#);
+    let session = http(&base, "POST", "/api/auth/signup", None, &creds)
+        .await
+        .cookie
+        .unwrap();
+    age_session(&session, 11).await;
+    let r = http(
+        &base,
+        "GET",
+        "/api/auth/fake/start?next=/account",
+        Some(&session),
+        "",
+    )
+    .await;
+    assert_eq!(r.status, 303, "{}", r.body);
+    assert!(!r.head.contains("set-cookie: oauth="), "{}", r.head);
+    assert_eq!(
+        refusal(&r),
+        (
+            "/account".into(),
+            "Connecting Fake provider failed: sign in again to connect another sign-in method"
+                .into(),
+            Some(String::new())
+        )
+    );
+    assert!(account(&base, &session).await.identities.is_empty());
+    // Its password is how it signs in again; that session may connect.
+    let fresh = http(&base, "POST", "/api/auth/login", None, &creds)
+        .await
+        .cookie
+        .unwrap();
+    let r = sign_in(&base, &unique("MoOnFake"), "/account", Some(&fresh), false).await;
+    assert_eq!(r.header("location"), Some("/account"));
+    assert_eq!(account(&base, &fresh).await.identities.len(), 1);
+
+    // An account from a provider, on an old session: starting that provider
+    // may be signing in again, so it goes ahead, but coming back with a new
+    // identity is refused at the callback, naming the provider to use.
+    let first = unique("Noor");
+    let session = sign_in(&base, &first, "/", None, false)
+        .await
+        .cookie
+        .unwrap();
+    let noor = me(&base, &session).await;
+    age_session(&session, 11).await;
+    let thief = unique("Thief");
+    let r = sign_in(&base, &thief, "/account", Some(&session), false).await;
+    assert_eq!(r.cookie, None, "no new session");
+    assert_eq!(
+        refusal(&r),
+        (
+            "/account".into(),
+            "Connecting Fake provider failed: sign in again with Fake provider to connect \
+             another sign-in method"
+                .into(),
+            Some("fake".into())
+        )
+    );
+    assert_eq!(account(&base, &session).await.identities.len(), 1);
+    assert_eq!(me(&base, &session).await, noor, "still signed in");
+    // Nor does the thief's provider account now sign in as anyone.
+    let r = sign_in(&base, &thief, "/", None, false).await;
+    assert_ne!(me(&base, &r.cookie.unwrap()).await.id, noor.id);
+
+    // Signing in again with the identity it has works at any age...
+    age_session(&session, 60 * 24).await;
+    let r = sign_in(&base, &first, "/account", Some(&session), false).await;
+    assert_eq!(r.header("location"), Some("/account"));
+    let fresh = r.cookie.expect("a new session");
+    assert_eq!(me(&base, &fresh).await, noor);
+    // ...and the new session may connect another.
+    let r = sign_in(
+        &base,
+        &unique("NoorElsewhere"),
+        "/account",
+        Some(&fresh),
+        false,
+    )
+    .await;
+    assert_eq!(r.header("location"), Some("/account"));
+    assert_eq!(account(&base, &fresh).await.identities.len(), 2);
+
+    // A guest's session of any age still upgrades through a provider.
+    let guest_session = guest(&base).await;
+    age_session(&guest_session, 60).await;
+    let r = sign_in(&base, &unique("Olu"), "/", Some(&guest_session), false).await;
+    assert_eq!(r.header("location"), Some("/"));
+    assert!(!me(&base, &guest_session).await.is_guest);
+}

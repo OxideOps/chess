@@ -74,9 +74,14 @@ pub enum AuthError {
     NoSuchIdentity,
     /// Changing a password needs the current one, and this wasn't it.
     WrongPassword,
-    /// Setting a first password needs a session from a recent sign-in; this
-    /// one is older. Carries the provider to sign in again with, if any.
-    SignInAgain(Option<crate::oauth::ProviderInfo>),
+    /// Planting a new way into the account (a first password, another
+    /// provider) needs a session from a recent sign-in; this one is older.
+    /// Carries the provider to sign in again with, if any, and what for.
+    SignInAgain {
+        provider: Option<crate::oauth::ProviderInfo>,
+        /// "set a password": finishes "sign in again with Lichess to …".
+        to: &'static str,
+    },
     /// Guests have no account settings; they sign up first.
     GuestAccount,
     /// Rate limited; try again after this long.
@@ -92,9 +97,10 @@ impl From<sqlx::Error> for AuthError {
     }
 }
 
-impl IntoResponse for AuthError {
-    fn into_response(self) -> Response {
-        let (status, message) = match &self {
+impl AuthError {
+    /// The status and the message a response carries.
+    pub(crate) fn describe(&self) -> (StatusCode, String) {
+        match self {
             AuthError::InvalidUsername => (
                 StatusCode::BAD_REQUEST,
                 "usernames are 3-20 letters, digits or underscores".to_string(),
@@ -127,11 +133,11 @@ impl IntoResponse for AuthError {
                 StatusCode::FORBIDDEN,
                 "your current password is not that".into(),
             ),
-            AuthError::SignInAgain(provider) => (
+            AuthError::SignInAgain { provider, to } => (
                 StatusCode::FORBIDDEN,
                 match provider {
-                    Some(p) => format!("sign in again with {} to set a password", p.name),
-                    None => "sign in again to set a password".into(),
+                    Some(p) => format!("sign in again with {} to {to}", p.name),
+                    None => format!("sign in again to {to}"),
                 },
             ),
             AuthError::GuestAccount => (
@@ -153,10 +159,19 @@ impl IntoResponse for AuthError {
                 tracing::error!("auth: {e}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "database error".into())
             }
-        };
+        }
+    }
+}
+
+impl IntoResponse for AuthError {
+    fn into_response(self) -> Response {
+        let (status, message) = self.describe();
         let mut body = serde_json::json!({ "error": message });
         // The page offers the way back: the provider flow, ending on /account.
-        if let AuthError::SignInAgain(Some(p)) = &self {
+        if let AuthError::SignInAgain {
+            provider: Some(p), ..
+        } = &self
+        {
             body["sign_in_again"] = serde_json::json!(p);
         }
         let mut response = (status, Json(body)).into_response();
@@ -369,6 +384,27 @@ impl Auth {
         };
         let session = self.create_session(&user.id).await?;
         Ok((user, session))
+    }
+
+    /// Whether `session` comes from a sign-in in the last `minutes` (a
+    /// session's `created_at` is its sign-in; sliding the expiry leaves it).
+    pub(crate) async fn signed_in_within(
+        &self,
+        session: Option<&str>,
+        minutes: i32,
+    ) -> Result<bool, AuthError> {
+        let Some(session) = session else {
+            return Ok(false);
+        };
+        Ok(sqlx::query_scalar!(
+            r#"SELECT created_at > now() - make_interval(mins => $2) AS "fresh!"
+               FROM sessions WHERE id = $1"#,
+            session,
+            minutes
+        )
+        .fetch_optional(self.db.pool())
+        .await?
+        .unwrap_or(false))
     }
 
     pub async fn logout(&self, session: &str) -> Result<(), AuthError> {
