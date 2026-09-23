@@ -51,6 +51,17 @@ describe('Opponent', () => {
 		expect(await quick).toEqual({ best: 'a1a2', score: null, pv: ['a1a2'] });
 	});
 
+	it('searches to a depth when given one', async () => {
+		let engine!: FakeEngine;
+		const o = new Opponent({ depth: 12, createEngine: (e) => (engine = new FakeEngine(e)) });
+		engine.say('uciok');
+		engine.say('readyok');
+		void o.search('8/8/8/8/8/8/8/K6k w - - 0 1', []);
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(engine.sent.at(-1)).toBe('go depth 12');
+	});
+
 	it('resolves null when replaced or when the engine fails', async () => {
 		let engine!: FakeEngine;
 		const o = new Opponent({ createEngine: (e) => (engine = new FakeEngine(e)) });

@@ -12,12 +12,20 @@ every game.
 
 ## Status
 
-Early scaffolding. What works today:
+Live at **[chess-oxideops.fly.dev](https://chess-oxideops.fly.dev)**, deployed from `main` on
+every green merge. You can play people online on a clock (by link or from the seek list),
+rated or casual, as a guest or with an account (password, Lichess or Google); solve rated
+puzzles from the Lichess database; work through drills against Stockfish; and analyse games on
+a board with variations and multi-threaded Stockfish. It is a PWA and works offline after one
+visit. The AI coach is built and tested but switched off on the live site (it costs API credit
+per answer; #57 has the plan for picking it back up).
+
+What's there, in more detail:
 
 - `chess-core`: full rules via [shakmaty](https://github.com/niklasf/shakmaty), game history with
   navigation, FEN in/out, SAN/UCI, promotion handling, repetition detection, and a first draft of
   the WebSocket protocol. Tested.
-- `chess-core` also reads PGN (tags, comments, variations skipped, NAGs) and parses UCI engine
+- `chess-core` also reads PGN (tags, comments, nested variations, NAGs) and parses UCI engine
   output (`info` lines, scores, principal variations).
 - `server`: an axum binary that serves the client build (clean URLs, 404 fallback,
   precompressed assets, cross-origin isolation headers) and hosts games in memory: create a
@@ -33,7 +41,8 @@ Early scaffolding. What works today:
   an `HttpOnly` cookie. Games have seats: the creator is White, the first person to join is
   Black, everyone else spectates; `GET /api/me/games` lists yours.
 - `web`: online play (`/online`): pick a time control, create a game, send the link; the
-  opponent clicks "Join as Black". The game page shows both clocks counting down with the
+  opponent clicks "Join as Black" — or post a seek to the lobby list for anyone to accept
+  (colours drawn when they do). The game page shows both clocks counting down with the
   players' names, your side only, draw offers, resign, and the result; reconnecting resumes;
   anyone else spectates. Online play needs the database (`DATABASE_URL`); the Vite dev proxy
   and the e2e suite start the server on `chess_test`.
@@ -65,7 +74,8 @@ Early scaffolding. What works today:
   `cargo run -p server --example coach_eval` checks it against a fixed set of positions.
   Accounts only, 30 fresh explanations per user per hour, answers cached per position. Set
   `CHESS_ANTHROPIC_API_KEY` to turn it on (`CHESS_COACH_MODEL`, default `claude-opus-5`;
-  `CHESS_COACH_PER_HOUR`); `--fake-coach` gives an offline stand-in for development.
+  `CHESS_COACH_PER_HOUR`); `--fake-coach` gives an offline stand-in for development. The live
+  site has no key set, so the coach is off there.
 - `web`: lessons (`/lessons`): six short drills against Stockfish from set positions, easiest
   first: a back-rank mate in one, mating with two rooks, with king and queen and with king and
   rook, winning a king and pawn ending, and holding one to a draw. Each has a move budget and
@@ -132,8 +142,9 @@ backups. Two things there are easy to get wrong and quiet when they are: the sit
 front of it must not strip the COOP/COEP headers, or every visitor silently drops to the
 single-threaded engine.
 
-Merging to main deploys, once the repository has the `FLY_APP` variable and `FLY_API_TOKEN`
-secret; until then the workflow does nothing.
+Merging to main deploys to [chess-oxideops.fly.dev](https://chess-oxideops.fly.dev) once CI on
+that commit is green (the repository's `FLY_APP` variable and `FLY_API_TOKEN` secret turn the
+workflow on; without them it does nothing).
 
 ## Development
 

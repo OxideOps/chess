@@ -282,7 +282,7 @@ fn ranks_ahead(rank: Rank, color: Color) -> Bitboard {
 }
 
 /// Whether a knight or bishop stands where its kind starts.
-fn home_square(role: Role, square: Square) -> bool {
+pub(crate) fn home_square(role: Role, square: Square) -> bool {
     match role {
         Role::Knight => matches!(square.file(), File::B | File::G),
         Role::Bishop => matches!(square.file(), File::C | File::F),
@@ -646,7 +646,7 @@ impl MoveFacts {
 }
 
 /// The points each side holds: White's, then Black's.
-fn material_of(board: &shakmaty::Board) -> [u32; 2] {
+pub(crate) fn material_of(board: &shakmaty::Board) -> [u32; 2] {
     COLORS.map(|color| {
         board
             .by_color(color)

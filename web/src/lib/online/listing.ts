@@ -40,6 +40,14 @@ export const OUTCOME_TEXT: Record<Outcome, string> = {
 	waiting: 'Waiting for an opponent'
 };
 
+/**
+ * Whether a game can be reviewed: it has finished with a result (not
+ * aborted) and has moves to look at.
+ */
+export function reviewable(listing: GameListing): boolean {
+	return listing.ended !== null && listing.ended.result !== 'aborted' && listing.moves > 0;
+}
+
 /** "You (White) vs alice", for a row heading. */
 export function matchup(listing: GameListing): string {
 	return `You (${sideName(listing.your_color)}) vs ${opponentName(listing)}`;
