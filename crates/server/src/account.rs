@@ -10,7 +10,13 @@
 //! password of its own. Either signs out every other session and cancels
 //! every emailed link still out for the account.
 //! Connecting a provider is the ordinary OAuth flow started while signed in
-//! (see [`crate::oauth`]), which links rather than creating a user.
+//! (see [`crate::oauth`]), which links rather than creating a user; a new
+//! identity is a new way in too, so it needs the same fresh sign-in
+//! ([`require_fresh_sign_in`]). The fix for a stale session is signing in
+//! again: through a provider the account has (the refusal names one), or
+//! with the password at the login form, which is how an account with a
+//! password proves itself here (the connect flow is a redirect and can't
+//! carry one).
 
 use axum::{
     Json, Router,
@@ -32,6 +38,9 @@ use crate::{
 /// How recent the sign-in behind a session must be for it to set an
 /// account's first password.
 pub const FRESH_SIGN_IN_MINUTES: i32 = 10;
+
+/// What a fresh sign-in is asked for when connecting a provider.
+pub(crate) const TO_CONNECT: &str = "connect another sign-in method";
 
 /// How the signed-in account gets in.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -253,19 +262,7 @@ async fn set_password(
         // With no password to confirm, the session is the only proof, and a
         // stolen one would do. So it has to come from a sign-in just now.
         None => {
-            let fresh = sqlx::query_scalar!(
-                r#"SELECT created_at > now() - make_interval(mins => $2) AS "fresh!"
-                   FROM sessions WHERE id = $1"#,
-                session.as_deref().unwrap_or_default(),
-                FRESH_SIGN_IN_MINUTES
-            )
-            .fetch_optional(pool)
-            .await?
-            .unwrap_or(false);
-            if !fresh {
-                let provider = sign_in_again_with(&state, auth, &user).await?;
-                return Err(AuthError::SignInAgain(provider));
-            }
+            require_fresh_sign_in(&state, auth, &user, session.as_deref(), "set a password").await?
         }
     }
     let hash = hash_password(change.password).await;
@@ -302,9 +299,33 @@ async fn set_password(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Refuse with [`AuthError::SignInAgain`] unless `session` comes from a
+/// sign-in in the last [`FRESH_SIGN_IN_MINUTES`]. This guards whatever would
+/// give the holder of a stolen (older) session cookie a way in of their own:
+/// a first password, another provider identity. `to` finishes the refusal's
+/// "sign in again with X to …".
+pub(crate) async fn require_fresh_sign_in(
+    state: &AppState,
+    auth: &Auth,
+    user: &User,
+    session: Option<&str>,
+    to: &'static str,
+) -> Result<(), AuthError> {
+    if auth
+        .signed_in_within(session, FRESH_SIGN_IN_MINUTES)
+        .await?
+    {
+        return Ok(());
+    }
+    Err(AuthError::SignInAgain {
+        provider: sign_in_again_with(state, auth, user).await?,
+        to,
+    })
+}
+
 /// The provider to send the account back through for a fresh sign-in: the
 /// oldest of its identities whose provider is switched on.
-async fn sign_in_again_with(
+pub(crate) async fn sign_in_again_with(
     state: &AppState,
     auth: &Auth,
     user: &User,
