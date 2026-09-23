@@ -50,9 +50,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   done, so a reopened review searches nothing twice; `positionsOf(pgn)`), `links.ts` (query
   strings for the review and `/analysis?pgn=…&ply=N&orientation=…`). The route is
   `/games/[id]/review?side=white`; `reviewGame` from the WASM picks the swings.
-- `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle, plays the setup
-  move and the replies, judges each move with `judgePuzzle` from the WASM, reports the first
-  try; injectable fetch and delay for tests).
+- `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle — `next()`, of
+  `theme` if set, or `daily(date?)` — plays the setup move and the replies, judges each move
+  with `judgePuzzle` from the WASM, reports the try and keeps the server's `streak`;
+  injectable fetch and delay for tests), `themes.ts` (Lichess theme keys → names),
+  `daily.ts`. `components/PuzzleView` is the board and sidebar both puzzle pages share;
+  `/puzzles` adds the theme picker (kept in `?theme=`), `/puzzles/daily` the date and link.
 - `src/lib/online/` — `lobby.svelte.ts` (`Lobby`: the seek list over `/api/lobby/ws`, same
   injectable-socket shape as `OnlineGame`. The server sends the whole list on every change,
   so there is nothing to merge; `mine` is our own seek, `others` is what is worth clicking.

@@ -84,8 +84,13 @@ Successor to the archived `OxideOps/chess-v1`.
   no network), `Config` in `lib.rs` for the deployment flags (`--secure-cookies`,
   `--trust-proxy`, `--allowed-origins`, `--public-url`, the provider ids/secrets), `rating.rs`
   pure Glicko-2 (checked against Glickman's worked example), `players.rs` the profile endpoint,
-  `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`), next-puzzle and
-  attempt endpoints (only the first try at a puzzle rates), `coach.rs` the coach (Claude
+  `puzzles.rs` the Lichess puzzle import (`chess-server import-puzzles`; themes kept as a
+  `TEXT[]` with a GIN index), next-puzzle (`?theme=fork` filters, widening the rating range
+  until the theme runs out, then 404), `/api/puzzles/themes`, the daily puzzle
+  (`/api/puzzles/daily[/{YYYY-MM-DD}]`: picked from a hash of the UTC date among puzzles
+  nearest 1400–1700 the first time a day is asked for, then stored in `daily_puzzles`) and
+  attempt endpoints (only the first try at a puzzle rates or moves the streak, kept on
+  `puzzle_ratings` beside the rating), `coach.rs` the coach (Claude
   Messages API over `reqwest`; `/api/coach/explain` for a position and `/api/coach/mistake`
   for a drill mistake, both with prompts built from the engine's lines in SAN and the board
   facts from `chess_core::facts`, so the model reads the board instead of picturing it;
