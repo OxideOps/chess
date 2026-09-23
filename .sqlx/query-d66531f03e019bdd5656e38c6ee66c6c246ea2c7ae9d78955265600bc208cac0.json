@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT streak, best_streak FROM puzzle_ratings WHERE user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "streak",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "streak"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "best_streak",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzle_ratings",
+            "name": "best_streak"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d66531f03e019bdd5656e38c6ee66c6c246ea2c7ae9d78955265600bc208cac0"
+}

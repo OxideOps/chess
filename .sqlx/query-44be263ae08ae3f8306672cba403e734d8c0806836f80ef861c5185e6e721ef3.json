@@ -1,0 +1,84 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.id, p.fen, p.moves, p.rating, p.themes,\n                  EXISTS (SELECT 1 FROM puzzle_attempts a\n                          WHERE a.user_id = $2 AND a.puzzle_id = p.id) AS \"tried!\"\n           FROM daily_puzzles d JOIN puzzles p ON p.id = d.puzzle_id\n           WHERE d.day = $1::text::date",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "fen",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "fen"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "moves",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "moves"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "rating",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "themes",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "puzzles",
+            "name": "themes"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "tried!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "44be263ae08ae3f8306672cba403e734d8c0806836f80ef861c5185e6e721ef3"
+}
