@@ -4,6 +4,7 @@
 // address. None of it exists when the server can't send mail.
 import type { Account } from '$lib/generated/Account';
 import type { EmailAddress } from '$lib/generated/EmailAddress';
+import type { EmailChange } from '$lib/generated/EmailChange';
 import type { EmailLink } from '$lib/generated/EmailLink';
 import type { EmailVerified } from '$lib/generated/EmailVerified';
 import type { MailStatus } from '$lib/generated/MailStatus';
@@ -40,13 +41,16 @@ async function send<T>(
 	return text ? (JSON.parse(text) as T) : null;
 }
 
-/** Add or change the address; it is pending until its link is followed. */
+/**
+ * Add or change the address; it is pending until its link is followed. A new
+ * address needs `current_password` (when the account has one) or a recent
+ * sign-in: an older session is refused with `signInAgain`.
+ */
 export async function changeEmail(
-	email: string,
+	change: EmailChange,
 	fetchImpl: FetchLike = defaultFetch
 ): Promise<Account> {
-	const body: EmailAddress = { email };
-	return (await send<Account>('PUT', '/api/me/email', body, fetchImpl)) as Account;
+	return (await send<Account>('PUT', '/api/me/email', change, fetchImpl)) as Account;
 }
 
 /** Take the address (and any pending one) off the account. */

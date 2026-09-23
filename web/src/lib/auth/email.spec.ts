@@ -44,14 +44,15 @@ describe('email', () => {
 	it('adds and removes the address, returning the account', async () => {
 		const pending = { ...account, pending_email: 'kay@example.com' };
 		const put = server(200, JSON.stringify(pending));
-		expect(await changeEmail('kay@example.com', put.fetchImpl)).toEqual(pending);
+		const change = { email: 'kay@example.com', current_password: 'correct horse' };
+		expect(await changeEmail(change, put.fetchImpl)).toEqual(pending);
 		expect(put.calls).toEqual([
 			[
 				'/api/me/email',
 				{
 					method: 'PUT',
 					headers: { 'content-type': 'application/json' },
-					body: '{"email":"kay@example.com"}'
+					body: '{"email":"kay@example.com","current_password":"correct horse"}'
 				}
 			]
 		]);
@@ -62,9 +63,21 @@ describe('email', () => {
 
 	it('passes a refusal on with its reason', async () => {
 		const refuse = server(400, '{"error":"that isn\'t an email address"}');
-		await expect(changeEmail('nope', refuse.fetchImpl)).rejects.toMatchObject({
+		await expect(changeEmail({ email: 'nope' }, refuse.fetchImpl)).rejects.toMatchObject({
 			status: 400,
 			message: "that isn't an email address"
+		});
+		// An old session: the provider to sign in again with comes along.
+		const stale = server(
+			403,
+			JSON.stringify({
+				error: 'sign in again with Lichess to set an email address',
+				sign_in_again: { id: 'lichess', name: 'Lichess' }
+			})
+		);
+		await expect(changeEmail({ email: 'kay@example.com' }, stale.fetchImpl)).rejects.toMatchObject({
+			status: 403,
+			signInAgain: { id: 'lichess', name: 'Lichess' }
 		});
 		const spent = server(400, '{"error":"that link has expired or was already used"}');
 		await expect(

@@ -26,7 +26,14 @@ test('verify an email, then reset a forgotten password with it', async ({ page, 
 	await expect(state).toHaveText('None');
 	await expect(page.getByTestId('no-recovery')).toContainText('can’t be recovered');
 
+	// A new address takes the password: someone holding only the session
+	// can't add theirs.
 	await page.getByLabel('Email address').fill(email);
+	await page.getByLabel('Your password').fill('not my password');
+	await page.getByRole('button', { name: 'Add email' }).click();
+	await expect(page.getByRole('alert')).toContainText('current password');
+	await expect(state).toHaveText('None');
+	await page.getByLabel('Your password').fill('correct horse battery');
 	await page.getByRole('button', { name: 'Add email' }).click();
 	await expect(
 		page.getByRole('status').filter({ hasText: `We sent a link to ${email}` })
@@ -85,4 +92,51 @@ test('verify an email, then reset a forgotten password with it', async ({ page, 
 	await page.getByLabel('Password').fill('a brand new horse');
 	await page.getByRole('button', { name: 'Log in' }).click();
 	await expect(page.locator('#navbar').getByRole('link', { name })).toBeVisible();
+});
+
+// An account with no password can only offer its session, so on an old one
+// adding an address sends it through its provider first, and back.
+test('an address on an old session without a password sends you to sign in again', async ({
+	page
+}) => {
+	const stamp = Date.now().toString(36);
+	const name = `lin_${stamp}`;
+	const email = `lin_${stamp}@example.com`;
+	await page.goto('/login');
+	await page.getByRole('link', { name: 'Continue with Fake provider' }).click();
+	await page.getByLabel('Sign in as').fill(name);
+	await page.getByRole('button', { name: 'Continue' }).click();
+	await page.locator('#navbar').getByRole('link', { name }).click();
+	await expect(page).toHaveURL('/account');
+	await expect(page.getByLabel('Your password')).toHaveCount(0);
+
+	// The session is minutes old here, so the server's refusal for an old one
+	// (covered by the server tests) is played once in its place.
+	let refused = false;
+	await page.route('**/api/me/email', async (route) => {
+		if (refused || route.request().method() !== 'PUT') return route.fallback();
+		refused = true;
+		await route.fulfill({
+			status: 403,
+			contentType: 'application/json',
+			body: JSON.stringify({
+				error: 'sign in again with Fake provider to set an email address',
+				sign_in_again: { id: 'fake', name: 'Fake provider' }
+			})
+		});
+	});
+	await page.getByLabel('Email address').fill(email);
+	await page.getByRole('button', { name: 'Add email' }).click();
+	await expect(page.getByRole('alert')).toContainText('sign in again with Fake provider');
+	await page.getByRole('link', { name: 'Sign in again with Fake provider' }).click();
+	await page.getByLabel('Sign in as').fill(name);
+	await page.getByRole('button', { name: 'Continue' }).click();
+
+	await expect(page).toHaveURL('/account');
+	await page.getByLabel('Email address').fill(email);
+	await page.getByRole('button', { name: 'Add email' }).click();
+	await expect(
+		page.getByRole('status').filter({ hasText: `We sent a link to ${email}` })
+	).toBeVisible();
+	await expect(page.getByTestId('email-state')).toHaveText('Not verified yet');
 });

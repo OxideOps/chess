@@ -3,7 +3,12 @@
 //! - `GET /api/auth/mail` says whether the server can send email at all.
 //! - `PUT /api/me/email` adds or changes the address: it is only *pending*
 //!   until the link mailed to it is followed (`POST /api/auth/verify-email`),
-//!   and a change tells the old address. `DELETE /api/me/email` removes it.
+//!   and a change tells the old address. Since a verified address can reset
+//!   the password, a new one is a new way in: it needs the current password
+//!   or, for an account without one, a recent sign-in, like a first password
+//!   ([`crate::account::require_fresh_sign_in`]).
+//!   `DELETE /api/me/email` removes it (unguarded: it takes a way in away,
+//!   and the old address is told).
 //! - `POST /api/auth/forgot-password` mails a reset link to a *verified*
 //!   address; `POST /api/auth/reset-password` spends it, sets the password,
 //!   cancels every other link out for the account and signs every session of
@@ -34,8 +39,11 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     AppState,
-    account::{Account, load_account, registered},
-    auth::{Auth, AuthError, ClientIp, RequireUser, User, hash_password, new_id, valid_password},
+    account::{Account, load_account, registered, require_fresh_sign_in},
+    auth::{
+        Auth, AuthError, ClientIp, LOGIN_PER_ADDR, LOGIN_PER_USER, RequireUser, SessionId, User,
+        hash_password, new_id, valid_password, verify_password,
+    },
     limit::Limit,
     mail::{Mailer, parse_address},
 };
@@ -44,6 +52,9 @@ use crate::{
 pub const VERIFY_HOURS: i32 = 24;
 /// How long a reset link works.
 pub const RESET_MINUTES: i32 = 60;
+
+/// What a fresh sign-in is asked for when adding or changing the address.
+const TO_SET_EMAIL: &str = "set an email address";
 
 /// Mail sent to any one address, whatever asked for it (signup, adding it,
 /// "forgot"), so the site can't be used to flood someone's inbox.
@@ -64,11 +75,23 @@ pub struct MailStatus {
     pub enabled: bool,
 }
 
-/// `PUT /api/me/email`, and `POST /api/auth/forgot-password`.
+/// `POST /api/auth/forgot-password`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct EmailAddress {
     pub email: String,
+}
+
+/// `PUT /api/me/email`. An address the account doesn't have yet is a new
+/// way in (a reset link can go to it), so it needs the account's current
+/// password, or without one a session from a recent sign-in.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct EmailChange {
+    pub email: String,
+    #[cfg_attr(feature = "ts", ts(optional = nullable))]
+    #[serde(default)]
+    pub current_password: Option<String>,
 }
 
 /// `POST /api/auth/verify-email`: the token from the link.
@@ -247,7 +270,9 @@ async fn status(State(state): State<AppState>) -> Json<MailStatus> {
 async fn change_email(
     State(state): State<AppState>,
     RequireUser(user): RequireUser,
-    Json(change): Json<EmailAddress>,
+    SessionId(session): SessionId,
+    ip: ClientIp,
+    Json(change): Json<EmailChange>,
 ) -> Result<Json<Account>, AuthError> {
     let auth = registered(&state, &user)?;
     mailer(&state)?;
@@ -265,6 +290,18 @@ async fn change_email(
         .execute(auth.db().pool())
         .await?;
     } else {
+        // A new address is a new way in: once verified, "forgot" sends a
+        // reset link to it. A stolen session cookie mustn't be able to add
+        // the thief's, so this needs what a first password needs.
+        confirm_it_is_you(
+            &state,
+            auth,
+            &user,
+            session.as_deref(),
+            &ip,
+            change.current_password,
+        )
+        .await?;
         // Whether the address is someone else's is only found out when its
         // link is followed, by whoever reads that mailbox: nobody learns
         // here which addresses have accounts.
@@ -272,6 +309,44 @@ async fn change_email(
         start_verification(&state, &user, &email, &origin).await?;
     }
     Ok(Json(load_account(&state, auth, &user).await?))
+}
+
+/// Proof that the person asking is the account's owner and not just holding
+/// its session: the current password, when one is given (an account with a
+/// password can always use it), else a session from a recent sign-in
+/// ([`require_fresh_sign_in`]). A wrong password is refused outright, and
+/// guessing it spends the login form's attempts, as on the password form.
+async fn confirm_it_is_you(
+    state: &AppState,
+    auth: &Auth,
+    user: &User,
+    session: Option<&str>,
+    ip: &ClientIp,
+    current_password: Option<String>,
+) -> Result<(), AuthError> {
+    let Some(given) = current_password.filter(|p| !p.is_empty()) else {
+        return require_fresh_sign_in(state, auth, user, session, TO_SET_EMAIL).await;
+    };
+    auth.limit(&format!("login:{}", ip.key()), LOGIN_PER_ADDR)?;
+    let username = user.username.as_deref().unwrap_or_default();
+    auth.limit(
+        &format!("login:{}", username.to_lowercase()),
+        LOGIN_PER_USER,
+    )?;
+    let hash = sqlx::query_scalar!("SELECT password_hash FROM users WHERE id = $1", user.id)
+        .fetch_one(auth.db().pool())
+        .await?;
+    match hash {
+        Some(hash) => {
+            if verify_password(given, hash).await {
+                Ok(())
+            } else {
+                Err(AuthError::WrongPassword)
+            }
+        }
+        // No password to check it against: the session has to do.
+        None => require_fresh_sign_in(state, auth, user, session, TO_SET_EMAIL).await,
+    }
 }
 
 async fn remove_email(

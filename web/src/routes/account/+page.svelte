@@ -46,6 +46,10 @@
 	let emailBusy = $state(false);
 	let emailError: string | null = $state(null);
 	let emailSent: string | null = $state(null);
+	// A new address is a new way in (a reset can go to it), so it takes the
+	// password, or on an account without one a recent sign-in.
+	let emailPassword = $state('');
+	let emailSignInAgain: ProviderInfo | null = $state(null);
 
 	const loginHref = $derived(withNext(resolve('/login'), resolve('/account')));
 	const signupHref = $derived(withNext(resolve('/signup'), resolve('/account')));
@@ -90,14 +94,18 @@
 		emailBusy = true;
 		emailError = null;
 		emailSent = null;
+		emailSignInAgain = null;
 		try {
-			account = await changeEmail(email);
+			const current_password = account?.has_password ? emailPassword : null;
+			account = await changeEmail({ email, current_password });
 			emailSent = account.pending_email
 				? `We sent a link to ${account.pending_email}. Follow it to verify the address.`
 				: null;
 			email = '';
+			emailPassword = '';
 		} catch (e) {
 			emailError = e instanceof Error ? e.message : String(e);
+			if (e instanceof AuthError) emailSignInAgain = e.signInAgain;
 		} finally {
 			emailBusy = false;
 		}
@@ -265,6 +273,18 @@
 								maxlength="254"
 							/>
 						</label>
+						{#if account.has_password}
+							<label>
+								Your password
+								<input
+									name="email-current-password"
+									type="password"
+									bind:value={emailPassword}
+									autocomplete="current-password"
+									required
+								/>
+							</label>
+						{/if}
 						<div class="row">
 							<button type="submit" class="btn" disabled={emailBusy}>
 								{account.email || account.pending_email ? 'Change email' : 'Add email'}
@@ -279,6 +299,9 @@
 				{/if}
 				{#if emailError}
 					<p class="error" role="alert">{emailError}</p>
+				{/if}
+				{#if emailSignInAgain}
+					{@render signInAgainLinks(emailSignInAgain)}
 				{/if}
 				{#if emailSent}
 					<p class="saved" role="status">{emailSent}</p>

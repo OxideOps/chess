@@ -693,3 +693,114 @@ async fn without_mail_there_are_no_addresses() {
     let a = account(&base, &r.cookie.unwrap()).await;
     assert_eq!((a.email, a.pending_email), (None, None));
 }
+
+/// Make `session` look as if it was signed in `minutes` ago.
+async fn age_session(db: &Db, session: &str, minutes: i32) {
+    sqlx::query("UPDATE sessions SET created_at = now() - make_interval(mins => $2) WHERE id = $1")
+        .bind(session)
+        .bind(minutes)
+        .execute(db.pool())
+        .await
+        .unwrap();
+}
+
+async fn put_email_with(base: &str, session: &str, email: &str, current: &str) -> Reply {
+    let body = format!(r#"{{"email":"{email}","current_password":"{current}"}}"#);
+    http(base, "PUT", "/api/me/email", Some(session), &body).await
+}
+
+#[tokio::test]
+async fn a_new_address_needs_the_password_or_a_fresh_sign_in() {
+    let Some(s) = mail_server_with(Config {
+        public_url: Some(format!("{PUBLIC_URL}/")),
+        oauth: vec![server::oauth::Provider::fake()],
+        ..Config::default()
+    })
+    .await
+    else {
+        return;
+    };
+    let name = unique("pia");
+    let session = signup(&s.base, &name, "correct horse").await;
+
+    // A session from a sign-in long ago (or a stolen cookie) can't add the
+    // thief's address, which a reset link could then go to: no mail, nothing
+    // pending.
+    age_session(&s.db, &session, 11).await;
+    let theirs = format!("{}@example.com", unique("thief"));
+    let r = put_email(&s.base, &session, &theirs).await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&r.body).unwrap(),
+        serde_json::json!({"error": "sign in again to set an email address"})
+    );
+    let r = put_email_with(&s.base, &session, &theirs, "wrong horse").await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    assert!(r.body.contains("current password"), "{}", r.body);
+    settle().await;
+    assert!(inbox(s.mail.path(), &theirs).is_empty());
+    assert_eq!(account(&s.base, &session).await.pending_email, None);
+
+    // The current password proves it, whatever the session's age.
+    let mine = format!("{name}@example.com");
+    let r = put_email_with(&s.base, &session, &mine, "correct horse").await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    let a: Account = serde_json::from_str(&r.body).unwrap();
+    assert_eq!(a.pending_email.as_deref(), Some(mine.as_str()));
+    let link = nth_mail(s.mail.path(), &mine, 1).await;
+    assert_eq!(verify(&s.base, &link.token()).await.status, 200);
+
+    // So does a fresh sign-in, without it: changing to another address.
+    let fresh = login(&s.base, &name, "correct horse").await.cookie.unwrap();
+    let other = format!("{name}.other@example.com");
+    let r = put_email(&s.base, &fresh, &other).await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    nth_mail(s.mail.path(), &other, 1).await;
+
+    // Giving the address it already has again needs nothing (it only drops
+    // the pending change), and removing it needs nothing either: it takes a
+    // way in away, and the address is told.
+    let r = put_email(&s.base, &session, &mine).await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    assert_eq!(account(&s.base, &session).await.pending_email, None);
+    let r = http(&s.base, "DELETE", "/api/me/email", Some(&session), "").await;
+    assert_eq!(r.status, 200, "{}", r.body);
+    assert_eq!(
+        nth_mail(s.mail.path(), &mine, 2).await.subject,
+        "Your email address was removed"
+    );
+
+    // An account with no password (one made through a provider) has only
+    // the session to go on: a password given is no proof, and the refusal
+    // names the provider to sign in again with.
+    let me = http(&s.base, "GET", "/api/me", Some(&session), "").await;
+    let id = serde_json::from_str::<serde_json::Value>(&me.body).unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    sqlx::query("UPDATE users SET password_hash = NULL WHERE id = $1")
+        .bind(&id)
+        .execute(s.db.pool())
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO identities (provider, subject, user_id) VALUES ('fake', $1, $2)")
+        .bind(name.to_lowercase())
+        .bind(&id)
+        .execute(s.db.pool())
+        .await
+        .unwrap();
+    let r = put_email_with(&s.base, &session, &theirs, "correct horse").await;
+    assert_eq!(r.status, 403, "{}", r.body);
+    let body: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+    assert_eq!(
+        body["error"],
+        "sign in again with Fake provider to set an email address"
+    );
+    assert_eq!(
+        body["sign_in_again"],
+        serde_json::json!({"id": "fake", "name": "Fake provider"})
+    );
+    age_session(&s.db, &fresh, 9).await;
+    let r = put_email(&s.base, &fresh, &mine).await;
+    assert_eq!(r.status, 200, "{}", r.body);
+}
