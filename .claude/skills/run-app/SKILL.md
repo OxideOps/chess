@@ -73,6 +73,12 @@ Playwright script run from `web/` (so it can resolve `playwright`), reading stat
 - `e2e/*.e2e.ts` already cover all of the above (the online test drives two pages against
   the real server); `corepack pnpm test:e2e` is often the quickest "does it work" answer.
 
+- Email: start the server with `--fake-mail --fake-mail-dir /some/dir` (Playwright does, into
+  `$TMPDIR/chess-e2e-mail`); each message is logged and written there as
+  `<millis>-<n>-<to>.txt`, links included. `/account` then has an Email panel
+  (`[data-testid=email-state]`: "None" / "Not verified yet" / "Verified"), `/signup` an optional
+  address, and `/login` "Forgot your password?". Without `--fake-mail` or `--smtp-url` none of
+  that shows. `e2e/email.e2e.ts` walks add → verify → forgot → reset.
 - Coach: start the server with `--fake-coach` (Playwright does) or a real
   `CHESS_ANTHROPIC_API_KEY`; on `/analysis` a signed-in account gets "Explain this position"
   once the engine reaches depth 16, guests a sign-up hint, and nothing shows without a coach.

@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
+import { MAIL_DIR } from './e2e/mail';
 
 // End-to-end tests run against the real Rust server serving the production
 // build, so the API, the game sockets and the 404 fallback are all exercised.
 // Normally the tests build the site and start the real server themselves.
 // Point CHESS_E2E_URL at a running deployment instead to check that
-// deployment — see docs/deploy.md. Tests needing the fake OAuth provider or
-// the fake coach are not part of that: a real deployment has neither.
+// deployment — see docs/deploy.md. Tests needing the fake OAuth provider, the
+// fake coach or the fake mailer are not part of that: a real deployment has
+// none of them.
 const deployed = process.env.CHESS_E2E_URL;
 
 export default defineConfig({
@@ -16,7 +18,8 @@ export default defineConfig({
 				// The suite signs up more accounts from one address than the signup
 				// limit allows in a minute, so the account rate limits are raised.
 				command:
-					'npm run build && cargo run -p server -- import-puzzles ../crates/server/tests/fixtures/puzzles.csv && cargo run -p server -- --static-dir build --bind 127.0.0.1:4173 --fake-oauth --fake-coach --rate-limit-scale 10',
+					'npm run build && cargo run -p server -- import-puzzles ../crates/server/tests/fixtures/puzzles.csv && cargo run -p server -- --static-dir build --bind 127.0.0.1:4173 --fake-oauth --fake-coach --rate-limit-scale 10 --fake-mail --fake-mail-dir ' +
+					JSON.stringify(MAIL_DIR),
 				port: 4173,
 				timeout: 300_000,
 				env: {

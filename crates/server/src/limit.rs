@@ -25,6 +25,13 @@ impl Limit {
         }
     }
 
+    pub const fn per_hour(hits: u32) -> Limit {
+        Limit {
+            hits,
+            window: Duration::from_secs(60 * 60),
+        }
+    }
+
     /// `factor` times as many hits per window (at least one times).
     pub const fn scaled(self, factor: u32) -> Limit {
         let factor = if factor == 0 { 1 } else { factor };

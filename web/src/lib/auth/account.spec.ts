@@ -9,7 +9,13 @@ const lichess = {
 	label: 'Dillon'
 };
 
-const account: Account = { username: 'dillon', has_password: false, identities: [lichess] };
+const account: Account = {
+	username: 'dillon',
+	has_password: false,
+	email: null,
+	pending_email: null,
+	identities: [lichess]
+};
 
 describe('account', () => {
 	it('offers only the providers not yet connected', () => {

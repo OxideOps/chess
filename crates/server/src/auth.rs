@@ -91,6 +91,16 @@ pub enum AuthError {
     TooManyAttempts(Duration),
     /// Accounts need a database and the server was started without one.
     Unavailable,
+    /// The server has no way to send email.
+    MailUnavailable,
+    /// The message couldn't be sent (the SMTP server said no).
+    MailFailed,
+    /// Not something mail can be sent to.
+    InvalidEmail,
+    /// The address is verified on another account.
+    EmailTaken,
+    /// An emailed link that expired, was already used, or never existed.
+    BadLink,
     Db(sqlx::Error),
 }
 
@@ -158,6 +168,26 @@ impl AuthError {
                 StatusCode::SERVICE_UNAVAILABLE,
                 "accounts are not available on this server".into(),
             ),
+            AuthError::MailUnavailable => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "this server can't send email".into(),
+            ),
+            AuthError::MailFailed => (
+                StatusCode::BAD_GATEWAY,
+                "the email couldn't be sent; try again later".into(),
+            ),
+            AuthError::InvalidEmail => (
+                StatusCode::BAD_REQUEST,
+                "that isn't an email address".into(),
+            ),
+            AuthError::EmailTaken => (
+                StatusCode::CONFLICT,
+                "that address is already on another account".into(),
+            ),
+            AuthError::BadLink => (
+                StatusCode::BAD_REQUEST,
+                "that link has expired or was already used".into(),
+            ),
             AuthError::Db(e) => {
                 tracing::error!("auth: {e}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "database error".into())
@@ -196,8 +226,9 @@ pub fn valid_password(password: &str) -> bool {
     (8..=128).contains(&password.len())
 }
 
-fn new_id() -> String {
-    // 256 random bits, hex. Used for session ids; user ids are UUIDs.
+pub(crate) fn new_id() -> String {
+    // 256 random bits, hex. Used for session ids and emailed links; user
+    // ids are UUIDs.
     let mut bytes = [0u8; 32];
     getrandom::fill(&mut bytes).expect("OS randomness");
     bytes.iter().map(|b| format!("{b:02x}")).collect()
@@ -267,9 +298,9 @@ impl Auth {
             .map_err(AuthError::TooManyAttempts)
     }
 
-    /// Delete sessions past their expiry, and guests who have no session
-    /// and no game (created for a visit that never played) once they are a
-    /// day old. Returns `(sessions, guests)` removed.
+    /// Delete sessions and emailed links past their expiry, and guests who
+    /// have no session and no game (created for a visit that never played)
+    /// once they are a day old. Returns `(sessions, guests)` removed.
     pub async fn purge_expired(&self) -> Result<(u64, u64), AuthError> {
         let sessions = sqlx::query!("DELETE FROM sessions WHERE expires_at < now()")
             .execute(self.db.pool())
@@ -286,6 +317,9 @@ impl Auth {
         .execute(self.db.pool())
         .await?
         .rows_affected();
+        sqlx::query!("DELETE FROM email_tokens WHERE expires_at < now()")
+            .execute(self.db.pool())
+            .await?;
         Ok((sessions, guests))
     }
 
@@ -626,6 +660,9 @@ where
 pub struct Credentials {
     pub username: String,
     pub password: String,
+    /// Signup only, optional: an address to verify for password resets.
+    #[serde(default)]
+    pub email: Option<String>,
 }
 
 pub fn router() -> Router<AppState> {
@@ -666,6 +703,13 @@ async fn signup(
 ) -> Result<(StatusCode, CookieJar, Json<User>), AuthError> {
     let auth = auth(&state)?;
     auth.limit(&format!("signup:{}", ip.key()), SIGNUP_PER_ADDR)?;
+    // An address is optional, and ignored when the server can't mail it.
+    let email = match creds.email.as_deref().map(str::trim) {
+        Some(given) if !given.is_empty() && state.mail.is_some() => {
+            Some(crate::mail::parse_address(given).ok_or(AuthError::InvalidEmail)?)
+        }
+        _ => None,
+    };
     let current = match (&current, &session) {
         (Some(user), Some(session)) => Some((user, session.as_str())),
         _ => None,
@@ -673,6 +717,13 @@ async fn signup(
     let (user, session) = auth
         .signup(&creds.username, &creds.password, current)
         .await?;
+    if let Some(email) = email {
+        // The account exists either way; a failure to mail is only logged.
+        let origin = state.config.mail_origin();
+        if let Err(e) = crate::email::start_verification(&state, &user, &email, &origin).await {
+            tracing::warn!("signup: no verification sent: {e:?}");
+        }
+    }
     Ok((
         StatusCode::CREATED,
         jar.add(auth.cookie(session)),

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users SET password_hash = $2 WHERE id = $1 AND lower(email) = lower($3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8b492f9aacf7886e520d99a44d28588f28d7d47095cea1785d3e1e6768cd9946"
+}

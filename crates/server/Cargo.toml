@@ -38,6 +38,9 @@ sha2 = "0.11.0"
 base64 = "0.23.1"
 url = "2.5.8"
 csv = "1.4.0"
+# Email over plain SMTP, with rustls (the same aws-lc provider reqwest uses)
+# rather than native-tls, so the image needs no OpenSSL.
+lettre = { version = "0.11.23", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1-rustls", "aws-lc-rs", "webpki-roots"] }
 
 [dev-dependencies]
 http-body-util.workspace = true

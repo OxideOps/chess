@@ -9,10 +9,12 @@ pub mod account;
 pub mod auth;
 pub mod coach;
 pub mod db;
+pub mod email;
 pub mod games;
 pub mod lessons;
 pub mod limit;
 pub mod lobby;
+pub mod mail;
 pub mod oauth;
 pub mod origin;
 pub mod players;
@@ -55,8 +57,13 @@ pub struct Config {
     /// host, e.g. the public URL when a proxy rewrites `Host`.
     pub allowed_origins: Vec<String>,
     /// Where browsers reach this server (`https://chess.example`), for
-    /// OAuth redirect URLs. Without it the request's own host is used.
+    /// OAuth redirect URLs and the links in emails. Without it OAuth uses
+    /// the request's own host; email never does (see [`Config::mail_origin`]).
     pub public_url: Option<String>,
+    /// Where this server listens (`http://127.0.0.1:4173`): the links in
+    /// the offline stand-in's mail when there is no public URL. Real mail
+    /// needs `public_url`; the binary refuses to start SMTP without it.
+    pub local_url: Option<String>,
     /// OAuth providers users can sign in with.
     pub oauth: Vec<oauth::Provider>,
     /// How long a disconnected player has to come back; `None` for
@@ -64,11 +71,49 @@ pub struct Config {
     pub abandon_after: Option<std::time::Duration>,
     /// The coach, if there is one (an API key, or the offline stand-in).
     pub coach: Option<coach::CoachConfig>,
+    /// Where email goes (SMTP, or the offline stand-in). Without it there
+    /// are no addresses on accounts and no password resets.
+    pub mail: Option<mail::Mailer>,
     /// Multiplies the signup, login and guest rate limits; 0 or 1 leaves
     /// them as they are. Only for the end-to-end tests, which sign up more
     /// accounts from one address in a minute than a person ever would.
     pub rate_limit_scale: u32,
 }
+
+impl Config {
+    /// Where browsers reach this server, for OAuth redirects: the
+    /// configured public URL, else this request's own host. Not for links
+    /// in emails: see [`Config::mail_origin`].
+    pub fn public_origin(&self, headers: &axum::http::HeaderMap) -> String {
+        match &self.public_url {
+            Some(url) => url.trim_end_matches('/').to_string(),
+            None => {
+                let host = headers
+                    .get(header::HOST)
+                    .and_then(|h| h.to_str().ok())
+                    .unwrap_or("localhost");
+                let scheme = if self.secure_cookies { "https" } else { "http" };
+                format!("{scheme}://{host}")
+            }
+        }
+    }
+
+    /// Where links in emails point: the public URL, else the address this
+    /// server listens on, else [`DEFAULT_MAIL_ORIGIN`]. Never the request's
+    /// `Host`: anyone can send any `Host`, and a reset link to their own
+    /// site, mailed by us to a real account, would hand them its token.
+    pub fn mail_origin(&self) -> String {
+        self.public_url
+            .as_deref()
+            .or(self.local_url.as_deref())
+            .unwrap_or(DEFAULT_MAIL_ORIGIN)
+            .trim_end_matches('/')
+            .to_string()
+    }
+}
+
+/// Where links in emails point when nothing says otherwise.
+pub const DEFAULT_MAIL_ORIGIN: &str = "http://localhost:8080";
 
 /// Everything the handlers share.
 #[derive(Clone)]
@@ -81,6 +126,8 @@ pub struct AppState {
     pub lobby: Option<lobby::Lobby>,
     pub config: Arc<Config>,
     pub coach: Option<coach::Coach>,
+    /// `None` when the server can't send email: no addresses, no resets.
+    pub mail: Option<mail::Mailer>,
 }
 
 impl AppState {
@@ -92,6 +139,7 @@ impl AppState {
             lobby: None,
             config: Arc::default(),
             coach: None,
+            mail: None,
         }
     }
 
@@ -107,6 +155,7 @@ impl AppState {
                     .rate_limit_scale(config.rate_limit_scale),
             ),
             coach: config.coach.clone().map(coach::Coach::new),
+            mail: config.mail.clone(),
             config: Arc::new(config),
         }
     }
@@ -149,6 +198,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(lobby::router())
         .merge(auth::router())
         .merge(account::router())
+        .merge(email::router())
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())

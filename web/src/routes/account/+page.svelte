@@ -11,6 +11,7 @@
 		loadAccount,
 		setPassword
 	} from '$lib/auth/account';
+	import { changeEmail, emailState, mailEnabled, removeEmail } from '$lib/auth/email';
 	import { AuthError } from '$lib/auth/refusal';
 	import type { Account } from '$lib/generated/Account';
 	import type { LinkedIdentity } from '$lib/generated/LinkedIdentity';
@@ -40,6 +41,16 @@
 	// server names the provider to go back through, and it returns here.
 	let signInAgain: ProviderInfo | null = $state(null);
 
+	let mail = $state(false);
+	let email = $state('');
+	let emailBusy = $state(false);
+	let emailError: string | null = $state(null);
+	let emailSent: string | null = $state(null);
+	// A new address is a new way in (a reset can go to it), so it takes the
+	// password, or on an account without one a recent sign-in.
+	let emailPassword = $state('');
+	let emailSignInAgain: ProviderInfo | null = $state(null);
+
 	const loginHref = $derived(withNext(resolve('/login'), resolve('/account')));
 	const signupHref = $derived(withNext(resolve('/signup'), resolve('/account')));
 	const toConnect = $derived(account ? connectable(providers, account) : []);
@@ -49,11 +60,12 @@
 	$effect(() => {
 		if (!session.registered) return;
 		let cancelled = false;
-		Promise.all([loadAccount(), listProviders()])
-			.then(([loaded, offered]) => {
+		Promise.all([loadAccount(), listProviders(), mailEnabled()])
+			.then(([loaded, offered, canMail]) => {
 				if (cancelled) return;
 				account = loaded;
 				providers = offered;
+				mail = canMail;
 			})
 			.catch((e: unknown) => {
 				if (!cancelled) loadError = e instanceof Error ? e.message : String(e);
@@ -75,6 +87,40 @@
 			error = `Can't disconnect ${identityText(identity)}: ${reason}.`;
 		} finally {
 			removing = null;
+		}
+	}
+
+	async function saveEmail() {
+		emailBusy = true;
+		emailError = null;
+		emailSent = null;
+		emailSignInAgain = null;
+		try {
+			const current_password = account?.has_password ? emailPassword : null;
+			account = await changeEmail({ email, current_password });
+			emailSent = account.pending_email
+				? `We sent a link to ${account.pending_email}. Follow it to verify the address.`
+				: null;
+			email = '';
+			emailPassword = '';
+		} catch (e) {
+			emailError = e instanceof Error ? e.message : String(e);
+			if (e instanceof AuthError) emailSignInAgain = e.signInAgain;
+		} finally {
+			emailBusy = false;
+		}
+	}
+
+	async function dropEmail() {
+		emailBusy = true;
+		emailError = null;
+		emailSent = null;
+		try {
+			account = await removeEmail();
+		} catch (e) {
+			emailError = e instanceof Error ? e.message : String(e);
+		} finally {
+			emailBusy = false;
 		}
 	}
 
@@ -123,7 +169,11 @@
 
 <div class="page-header">
 	<h1>{account?.username ?? 'Your account'}</h1>
-	<p>How you sign in. Your games are under <a href={resolve('/games')}>My games</a>.</p>
+	<p>
+		How you sign in, and how you get back in. Your games are under <a href={resolve('/games')}
+			>My games</a
+		>.
+	</p>
 </div>
 
 {#if !session.user}
@@ -180,6 +230,84 @@
 				</div>
 			{/if}
 		</section>
+
+		{#if mail || account.email}
+			<section class="panel" aria-labelledby="email">
+				<h2 id="email">Email</h2>
+				<ul>
+					<li>
+						<span>{account.email ?? account.pending_email ?? 'No address'}</span>
+						<span class={account.email ? 'saved' : 'muted'} data-testid="email-state"
+							>{emailState(account)}</span
+						>
+					</li>
+					{#if account.email && account.pending_email}
+						<li>
+							<span>Changing to {account.pending_email}</span>
+							<span class="muted">Not verified yet</span>
+						</li>
+					{/if}
+				</ul>
+				{#if !account.email}
+					<p class="muted" data-testid="no-recovery">
+						{account.pending_email
+							? 'Until you follow the link we sent, a forgotten password can’t be recovered.'
+							: 'Without a verified address, a forgotten password can’t be recovered.'}
+					</p>
+				{/if}
+				{#if mail}
+					<form
+						onsubmit={(event) => {
+							event.preventDefault();
+							saveEmail();
+						}}
+					>
+						<label>
+							{account.email ? 'New address' : 'Email address'}
+							<input
+								name="email"
+								type="email"
+								bind:value={email}
+								autocomplete="email"
+								required
+								maxlength="254"
+							/>
+						</label>
+						{#if account.has_password}
+							<label>
+								Your password
+								<input
+									name="email-current-password"
+									type="password"
+									bind:value={emailPassword}
+									autocomplete="current-password"
+									required
+								/>
+							</label>
+						{/if}
+						<div class="row">
+							<button type="submit" class="btn" disabled={emailBusy}>
+								{account.email || account.pending_email ? 'Change email' : 'Add email'}
+							</button>
+							{#if account.email || account.pending_email}
+								<button type="button" class="btn" disabled={emailBusy} onclick={dropEmail}>
+									Remove email
+								</button>
+							{/if}
+						</div>
+					</form>
+				{/if}
+				{#if emailError}
+					<p class="error" role="alert">{emailError}</p>
+				{/if}
+				{#if emailSignInAgain}
+					{@render signInAgainLinks(emailSignInAgain)}
+				{/if}
+				{#if emailSent}
+					<p class="saved" role="status">{emailSent}</p>
+				{/if}
+			</section>
+		{/if}
 
 		<section class="panel" aria-labelledby="password">
 			<h2 id="password">{account.has_password ? 'Change password' : 'Set a password'}</h2>
@@ -307,6 +435,12 @@
 
 	form .btn {
 		align-self: flex-start;
+	}
+
+	.row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 
 	p {

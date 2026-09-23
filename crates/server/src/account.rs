@@ -7,7 +7,8 @@
 //! sets or changes the password. Changing it needs the current one; setting a
 //! first one needs a session from a sign-in in the last
 //! [`FRESH_SIGN_IN_MINUTES`], so a stolen session cookie can't plant a
-//! password of its own. Either signs out every other session.
+//! password of its own. Either signs out every other session and cancels
+//! every emailed link still out for the account.
 //! Connecting a provider is the ordinary OAuth flow started while signed in
 //! (see [`crate::oauth`]), which links rather than creating a user; a new
 //! identity is a new way in too, so it needs the same fresh sign-in
@@ -47,6 +48,11 @@ pub(crate) const TO_CONNECT: &str = "connect another sign-in method";
 pub struct Account {
     pub username: String,
     pub has_password: bool,
+    /// The verified address password resets go to; `None` means a
+    /// forgotten password can't be recovered.
+    pub email: Option<String>,
+    /// An address added or changed to, waiting for its link to be followed.
+    pub pending_email: Option<String>,
     /// Oldest first.
     pub identities: Vec<LinkedIdentity>,
 }
@@ -87,7 +93,7 @@ pub fn router() -> Router<AppState> {
 }
 
 /// Accounts only: a guest has nothing here to change.
-fn registered<'a>(state: &'a AppState, user: &User) -> Result<&'a Auth, AuthError> {
+pub(crate) fn registered<'a>(state: &'a AppState, user: &User) -> Result<&'a Auth, AuthError> {
     let auth = state.auth.as_ref().ok_or(AuthError::Unavailable)?;
     if user.is_guest {
         return Err(AuthError::GuestAccount);
@@ -126,8 +132,21 @@ async fn account(
     RequireUser(user): RequireUser,
 ) -> Result<Json<Account>, AuthError> {
     let auth = registered(&state, &user)?;
-    let has_password = sqlx::query_scalar!(
-        r#"SELECT password_hash IS NOT NULL AS "has!" FROM users WHERE id = $1"#,
+    Ok(Json(load_account(&state, auth, &user).await?))
+}
+
+/// The signed-in account as `GET /api/me/account` shows it.
+pub(crate) async fn load_account(
+    state: &AppState,
+    auth: &Auth,
+    user: &User,
+) -> Result<Account, AuthError> {
+    let row = sqlx::query!(
+        r#"SELECT password_hash IS NOT NULL AS "has_password!", email,
+                  (SELECT t.email FROM email_tokens t
+                   WHERE t.user_id = u.id AND t.purpose = 'verify' AND t.expires_at > now()
+                   ORDER BY t.created_at DESC LIMIT 1) AS pending_email
+           FROM users u WHERE id = $1"#,
         user.id
     )
     .fetch_one(auth.db().pool())
@@ -141,17 +160,19 @@ async fn account(
     .await?
     .into_iter()
     .map(|row| LinkedIdentity {
-        provider_name: provider_name(&state, &row.provider),
+        provider_name: provider_name(state, &row.provider),
         provider: row.provider,
         subject: row.subject,
         label: row.label,
     })
     .collect();
-    Ok(Json(Account {
-        username: user.username.unwrap_or_default(),
-        has_password,
+    Ok(Account {
+        username: user.username.clone().unwrap_or_default(),
+        has_password: row.has_password,
+        email: row.email,
+        pending_email: row.pending_email,
         identities,
-    }))
+    })
 }
 
 async fn disconnect(
@@ -245,6 +266,7 @@ async fn set_password(
         }
     }
     let hash = hash_password(change.password).await;
+    let mut tx = pool.begin().await?;
     // A first password is set only while there still is none, so a second
     // tab racing this one can't skip the current-password check.
     let updated = sqlx::query!(
@@ -254,20 +276,26 @@ async fn set_password(
         hash,
         first
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
     if updated.rows_affected() == 0 {
         return Err(AuthError::WrongPassword);
     }
     // Anyone else signed in as this account (the reason to change a
-    // password, often) is signed out; this browser stays in.
+    // password, often) is signed out; this browser stays in. Links they had
+    // mailed themselves go too: a verification of their own address,
+    // followed later, would take the account's password resets.
     sqlx::query!(
         "DELETE FROM sessions WHERE user_id = $1 AND id IS DISTINCT FROM $2",
         user.id,
         session
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
+    sqlx::query!("DELETE FROM email_tokens WHERE user_id = $1", user.id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

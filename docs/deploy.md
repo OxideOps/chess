@@ -30,7 +30,8 @@ That covers what a deployment has to get right: two accounts sign up, play a
 rated game and both ratings move; a guest keeps their games after signing up;
 a seek taken while the poster is in another tab raises a notification from the
 service worker; the PWA's manifest and icons resolve; the 404 fallback and clean URLs work.
-The tests left out are the ones that need `--fake-oauth` or `--fake-coach`,
+The tests left out are the ones that need `--fake-oauth`, `--fake-coach` or
+`--fake-mail`,
 which a real deployment must never have.
 
 A deployment also keeps the real rate limits (10 signups a minute per
@@ -176,6 +177,47 @@ code only links a new provider to an existing account when you are already
 signed in when you use it. Until there is a way to connect a second method
 from a settings page, one person using both buttons ends up as two players.
 
+## Email and password resets
+
+Accounts can have an email address (optional, verified by a link), and a
+verified address is how a forgotten password gets reset. The server sends
+that mail over plain SMTP, so any provider with an SMTP relay works (Resend,
+Postmark, Amazon SES, Fastmail, a Gmail app password); nothing in the code
+is tied to one. Until it is configured the email section on `/account`, the
+signup field and "Forgot your password?" are simply not shown, and a
+forgotten password is a lost account.
+
+| Variable | What |
+| --- | --- |
+| `CHESS_SMTP_URL` | **Secret.** The relay, with the credentials in it: `smtps://USER:PASS@smtp.example.com:465` (TLS from the start), or `smtp://USER:PASS@smtp.example.com:587?tls=required` (STARTTLS). Percent-encode anything in the password that isn't a letter or digit. |
+| `CHESS_MAIL_FROM` | The From of every message, e.g. `Chess <noreply@chess.example>`. Required with `CHESS_SMTP_URL`. The provider must have verified that domain (SPF/DKIM), or the mail lands in spam or is refused. |
+| `CHESS_PUBLIC_URL` | **Required with `CHESS_SMTP_URL`**: the server refuses to start without it. The links in the mail (`/verify-email?token=…`, `/reset-password?token=…`) are built from it and never from the request's `Host` header, which anyone can set — otherwise a "forgot password" sent with `Host: evil.example` would mail a real reset link pointing at someone else's site. Already set in `fly.toml`. |
+
+```sh
+fly secrets set --stage CHESS_SMTP_URL='smtps://resend:re_...@smtp.resend.com:465' -a chess-oxideops
+```
+
+and `CHESS_MAIL_FROM` in `fly.toml` (it is not a secret). Nothing connects to
+the relay until the first message, so a wrong password shows up as
+`mail: … not sent` in the logs when someone adds an address, not at start;
+the start-up log says `email: SMTP, from …` when it is configured. Fly
+allows outbound 465 and 587.
+
+To check it took: `curl -s https://…/api/auth/mail` says `{"enabled":true}`;
+then add your own address on `/account` and follow the link.
+
+`--fake-mail` (`CHESS_FAKE_MAIL`) is the offline stand-in for development
+and the end-to-end tests: messages go to the log, and with
+`--fake-mail-dir` to one file each in that directory. Its links use
+`--public-url` when given, else the `--bind` address (`localhost` for
+`0.0.0.0`). Never on a deployment: it would "send" reset links to the log.
+
+The mail limits: five messages an hour to any one address, counted only for
+mail actually sent (asking "forgot" about an address with no account costs
+it nothing, so nobody can use up someone else's resets), and twenty "forgot"
+requests an hour from one client. A new password, by reset or on
+`/account`, cancels every link still out for the account.
+
 ## Check a deploy
 
 - `https://…/healthz` says `ok`.
@@ -185,6 +227,8 @@ from a settings page, one person using both buttons ends up as two players.
   single-threaded Stockfish. The analysis page shows "N threads" when the
   threaded build is running.
 - Sign in with Lichess and with Google both come back to the site signed in.
+- With email configured, "Forgot your password?" on `/login` mails a link to
+  a verified address, and the link sets a new password.
 - Two browsers (two profiles — the session is a cookie) can play a rated
   game to the end and both ratings move.
 - Assets come back precompressed: `curl -sI -H 'Accept-Encoding: br'
@@ -245,10 +289,11 @@ was last tested, so the next person doesn't have to guess.
 
 ## Secrets
 
-`DATABASE_URL`, `CHESS_GOOGLE_CLIENT_SECRET` and (if the coach is ever turned
-on) `CHESS_ANTHROPIC_API_KEY` come from the host's secret store. None of them
-belong in `fly.toml`, the repo, or a shell history. `--fake-oauth` and
-`--fake-coach` are for development and tests and must never be set on a
+`DATABASE_URL`, `CHESS_GOOGLE_CLIENT_SECRET`, `CHESS_SMTP_URL` (once email is
+set up) and (if the coach is ever turned on) `CHESS_ANTHROPIC_API_KEY` come
+from the host's secret store. None of them belong in `fly.toml`, the repo, or
+a shell history. `--fake-oauth`, `--fake-coach` and `--fake-mail` are for
+development and tests and must never be set on a
 deployment: the fake OAuth provider signs anyone in as anyone. Nor should
 `--rate-limit-scale` (`CHESS_RATE_LIMIT_SCALE`), which multiplies the signup,
 login and guest limits for the end-to-end tests; leave it at its default of 1.

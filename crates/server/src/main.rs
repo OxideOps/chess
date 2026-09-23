@@ -38,7 +38,9 @@ struct Args {
     allowed_origins: Vec<String>,
 
     /// Where browsers reach this server, e.g. `https://chess.example`; used
-    /// for OAuth redirect URLs. Defaults to the request's own host.
+    /// for OAuth redirect URLs (default: the request's own host) and the
+    /// links in emails (never the request's host). Required with
+    /// `--smtp-url`.
     #[arg(long, env = "CHESS_PUBLIC_URL")]
     public_url: Option<String>,
 
@@ -86,6 +88,31 @@ struct Args {
     /// you type. For development and the end-to-end tests only.
     #[arg(long, env = "CHESS_FAKE_OAUTH", default_value_t = false)]
     fake_oauth: bool,
+
+    /// SMTP server for email (addresses on accounts, password resets), with
+    /// the credentials in it: `smtps://user:pass@smtp.example.com:465`, or
+    /// `smtp://…:587?tls=required` for STARTTLS. Without it (or
+    /// `--fake-mail`) accounts have no email and no password reset.
+    #[arg(
+        long,
+        env = "CHESS_SMTP_URL",
+        hide_env_values = true,
+        requires = "mail_from"
+    )]
+    smtp_url: Option<String>,
+
+    /// The From of every message, e.g. `Chess <noreply@chess.example>`.
+    #[arg(long, env = "CHESS_MAIL_FROM")]
+    mail_from: Option<String>,
+
+    /// Don't send email: write each message to the log (and to
+    /// `--fake-mail-dir`) instead. For development and the end-to-end tests.
+    #[arg(long, env = "CHESS_FAKE_MAIL", default_value_t = false)]
+    fake_mail: bool,
+
+    /// With `--fake-mail`, also write each message to a file here.
+    #[arg(long, env = "CHESS_FAKE_MAIL_DIR", requires = "fake_mail")]
+    fake_mail_dir: Option<PathBuf>,
 
     /// Multiply the signup, login and guest rate limits by this. For the
     /// end-to-end tests only (their signups all come from one address);
@@ -143,6 +170,16 @@ async fn import_puzzles(
     Ok(())
 }
 
+/// `http://` and the address the server listens on, with `localhost` for
+/// an unspecified one (`0.0.0.0`), which a browser can't open.
+fn local_url(addr: SocketAddr) -> String {
+    if addr.ip().is_unspecified() {
+        format!("http://localhost:{}", addr.port())
+    } else {
+        format!("http://{addr}")
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
@@ -164,6 +201,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             per_band: *per_band,
         };
         return import_puzzles(args.database_url.as_deref(), file, options).await;
+    }
+
+    // Links in mail are built from the public URL and never from a
+    // request's `Host`, which anyone can set: real mail without one would
+    // have nowhere safe to point.
+    if args.smtp_url.is_some() && args.public_url.is_none() {
+        return Err(
+            "--smtp-url (CHESS_SMTP_URL) needs --public-url (CHESS_PUBLIC_URL): \
+                    the links in emails are built from it"
+                .into(),
+        );
     }
 
     let fallback = args.static_dir.join(server::FALLBACK_PAGE);
@@ -193,6 +241,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .chain(oauth.iter().map(|p| p.name()))
         .collect();
     tracing::info!("sign-in: {}", methods.join(", "));
+    let mail = match (&args.smtp_url, args.fake_mail) {
+        (Some(url), _) => {
+            let from = args.mail_from.as_deref().unwrap_or_default();
+            let mailer = server::mail::Mailer::smtp(url, from)?;
+            tracing::info!("email: SMTP, from {from}");
+            Some(mailer)
+        }
+        (None, true) => {
+            tracing::warn!("email is the offline stand-in (--fake-mail): nothing is sent");
+            Some(server::mail::Mailer::fake(args.fake_mail_dir.clone())?)
+        }
+        (None, false) => {
+            tracing::info!("email: none (no --smtp-url), so no password resets");
+            None
+        }
+    };
+
     if args.rate_limit_scale != 1 {
         tracing::warn!(
             "account rate limits are {}x normal (--rate-limit-scale)",
@@ -205,6 +270,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         trust_proxy: args.trust_proxy,
         allowed_origins: args.allowed_origins.clone(),
         public_url: args.public_url.clone(),
+        // Only reached by --fake-mail without a public URL: its links point
+        // here, where a developer's browser finds this server.
+        local_url: Some(local_url(args.bind)),
         oauth,
         abandon_after: Some(std::time::Duration::from_secs(args.abandon_after_secs)),
         coach: match (&args.anthropic_api_key, args.fake_coach) {
@@ -219,6 +287,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             (None, false) => None,
         },
+        mail,
     };
     let state = match &args.database_url {
         Some(url) => {

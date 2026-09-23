@@ -28,7 +28,7 @@ use std::{
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode, header},
+    http::{HeaderMap, StatusCode},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
 };
@@ -366,21 +366,7 @@ fn provider<'a>(state: &'a AppState, id: &str) -> Result<&'a Provider, StatusCod
 /// Where the provider sends the browser back to: the configured public
 /// URL, else this request's own host.
 fn redirect_uri(state: &AppState, headers: &HeaderMap, provider: &Provider) -> String {
-    let origin = match &state.config.public_url {
-        Some(url) => url.trim_end_matches('/').to_string(),
-        None => {
-            let host = headers
-                .get(header::HOST)
-                .and_then(|h| h.to_str().ok())
-                .unwrap_or("localhost");
-            let scheme = if state.config.secure_cookies {
-                "https"
-            } else {
-                "http"
-            };
-            format!("{scheme}://{host}")
-        }
-    };
+    let origin = state.config.public_origin(headers);
     format!("{origin}/api/auth/{}/callback", provider.id())
 }
 
