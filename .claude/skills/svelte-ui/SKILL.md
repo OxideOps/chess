@@ -38,7 +38,12 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
 - `src/lib/lessons/` — `drill.svelte.ts` (`DrillSession`: the student's moves, `assessDrill`
   from the WASM after each, the engine's replies through an `OpponentLike`, and `mistake`:
   the engine's score before and after a student move, compared with `isMistake`), `progress.ts`
-  (completed lessons in localStorage). `src/lib/engine/opponent.svelte.ts` is Stockfish
+  (completed lessons in localStorage: a guest's progress, and for an account an outbox of what
+  the server hasn't taken yet), `progress.svelte.ts` (`LessonProgress`, `lessonProgress`: the
+  finished lessons from the right source — localStorage for guests, `/api/lessons/completed`
+  for an account, merging the browser's copy in on each `load()` and then forgetting it; a
+  completion is written locally first, so a failed write is retried on the next load; guests
+  never touch the server; injectable fetch and account for tests). `src/lib/engine/opponent.svelte.ts` is Stockfish
   playing a side (`search(fen, moves)` → its best move, score and line after `go movetime`).
 - `src/lib/sound/` — `cue.ts` (pure: a move's SAN and whether the game ended → which sound),
   `voice.ts` (`WebAudioVoice`: the sounds themselves, synthesised; its constructor takes the
@@ -47,9 +52,18 @@ description: How to write or change UI in web/ (SvelteKit 2, Svelte 5 runes, Typ
   injectable `Voice` for tests, and `attach(game)` which sets `GameStore.onmove`). `Board`
   attaches on mount, so every mode gets sound from having a board — don't wire it per page.
   A new sound means a new `Cue`, a case in `voice.ts`, and a line in the audible-cues test.
-- `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle, plays the setup
-  move and the replies, judges each move with `judgePuzzle` from the WASM, reports the first
-  try; injectable fetch and delay for tests).
+- `src/lib/review/` — `analysis.svelte.ts` (`GameAnalysis`: Stockfish through every position
+  of a finished game, one at a time at `REVIEW_DEPTH` via `Opponent({ depth })`; `stop()`
+  terminates the worker, `start()` resumes; each position is saved to localStorage as it is
+  done, so a reopened review searches nothing twice; `positionsOf(pgn)`), `links.ts` (query
+  strings for the review and `/analysis?pgn=…&ply=N&orientation=…`). The route is
+  `/games/[id]/review?side=white`; `reviewGame` from the WASM picks the swings.
+- `src/lib/puzzles/` — `session.svelte.ts` (`PuzzleSession`: loads a puzzle — `next()`, of
+  `theme` if set, or `daily(date?)` — plays the setup move and the replies, judges each move
+  with `judgePuzzle` from the WASM, reports the try and keeps the server's `streak`;
+  injectable fetch and delay for tests), `themes.ts` (Lichess theme keys → names),
+  `daily.ts`. `components/PuzzleView` is the board and sidebar both puzzle pages share;
+  `/puzzles` adds the theme picker (kept in `?theme=`), `/puzzles/daily` the date and link.
 - `src/lib/online/` — `lobby.svelte.ts` (`Lobby`: the seek list over `/api/lobby/ws`, same
   injectable-socket shape as `OnlineGame`. The server sends the whole list on every change,
   so there is nothing to merge; `mine` is our own seek, `others` is what is worth clicking.

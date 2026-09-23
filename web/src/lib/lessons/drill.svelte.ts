@@ -4,7 +4,7 @@ import type { OpponentLike, Search } from '$lib/engine/opponent.svelte';
 import type { Drill } from '$lib/generated/Drill';
 import type { DrillStatus } from '$lib/generated/DrillStatus';
 import type { EngineScore } from '$lib/generated/EngineScore';
-import { markCompleted } from './progress';
+import { lessonProgress, type LessonProgress } from './progress.svelte';
 
 /** A student move that threw away the drill (or a lot of it). */
 export interface Mistake {
@@ -53,13 +53,19 @@ export class DrillSession {
 	mistake: Mistake | null = $state(null);
 
 	readonly #opponent: OpponentLike;
+	readonly #progress: Pick<LessonProgress, 'complete'>;
 	/** Bumped on restart so a late engine answer can't land in a new attempt. */
 	#generation = 0;
 	#expect: Expectation | null = null;
 
-	constructor(drill: Drill, opponent: OpponentLike) {
+	constructor(
+		drill: Drill,
+		opponent: OpponentLike,
+		progress: Pick<LessonProgress, 'complete'> = lessonProgress
+	) {
 		this.drill = drill;
 		this.#opponent = opponent;
+		this.#progress = progress;
 	}
 
 	get canMove(): boolean {
@@ -123,7 +129,7 @@ export class DrillSession {
 
 	#assess(): void {
 		this.status = assessDrill(this.drill.id, this.#moves());
-		if (this.status.state === 'won') markCompleted(this.drill.id);
+		if (this.status.state === 'won') void this.#progress.complete(this.drill.id);
 	}
 
 	#noteMistake(

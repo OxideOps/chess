@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT lesson_id FROM lesson_completions WHERE user_id = $1\n         ORDER BY finished_at, lesson_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "lesson_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "lesson_completions",
+            "name": "lesson_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "39bc12e29d2b835f6da3184af63bc04d8074edb990850519dcf84e1b1a9f4298"
+}

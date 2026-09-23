@@ -10,6 +10,7 @@ pub mod auth;
 pub mod coach;
 pub mod db;
 pub mod games;
+pub mod lessons;
 pub mod limit;
 pub mod lobby;
 pub mod oauth;
@@ -144,6 +145,7 @@ pub fn app_with(static_dir: impl AsRef<Path>, state: AppState) -> Router {
         .merge(oauth::router())
         .merge(players::router())
         .merge(puzzles::router())
+        .merge(lessons::router())
         .merge(coach::router())
         .with_state(state)
         .fallback_service(files)
